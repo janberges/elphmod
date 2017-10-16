@@ -192,9 +192,10 @@ def frequencies(dynamical_matrix):
     return np.sign(w2) * np.sqrt(np.absolute(w2))
 
 if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+
     # Check module against Quantum ESPRESSO's 'matdyn.x':
 
-    import matplotlib.pyplot as plt
     import bravais
 
     Ry2eV = 13.605693009
@@ -224,4 +225,28 @@ if __name__ == '__main__':
         plt.plot(x,  w [:, i], 'k' )
         plt.plot(x0, w0[:, i], 'ko')
 
+    plt.show()
+
+    # Calculate density of states via 2D tetrahedron method:
+
+    import dos
+
+    n = 36
+    q = np.linspace(0, 2 * np.pi, n, endpoint=False)
+    w = np.empty((n, n, 9))
+
+    for i, q1 in enumerate(q):
+        for j, q2 in enumerate(q):
+            w[i, j] = frequencies(D(q1, q2))
+
+    w *= Ry2eV * eV2cmm1
+
+    N = 300
+    W = np.linspace(w.min(), w.max(), N)
+    DOS = np.zeros(N)
+
+    for nu in range(9):
+        DOS += dos.hexDOS(w[:, :, nu])(W)
+
+    plt.fill_between(W, 0, DOS, facecolor='lightgray')
     plt.show()
