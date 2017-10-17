@@ -212,7 +212,7 @@ def dispersion(dynamical_matrix, nq, order=True):
     if not order:
         for n, q1 in enumerate(q):
             for m, q2 in enumerate(q):
-                w[n, m] = frequencies(D(q1, q2))
+                w[n, m] = frequencies(dynamical_matrix(q1, q2))
 
         return w
 
@@ -222,7 +222,8 @@ def dispersion(dynamical_matrix, nq, order=True):
 
     for n, q1 in enumerate(q):
         for m, q2 in enumerate(q):
-            w[n, m], e[n, m] = frequencies_and_displacements(D(q1, q2))
+            w[n, m], e[n, m] = frequencies_and_displacements(
+                dynamical_matrix(q1, q2))
 
     N = nq ** 2
 
@@ -265,12 +266,14 @@ def dispersion(dynamical_matrix, nq, order=True):
     # restore orginal array shape and order in q space:
 
     w = np.reshape(w, (nq, nq, bands))
+    order = np.reshape(order, (nq, nq, bands))
 
     for nu in range(bands):
         for n in range(0, nq, 2):
             w[n] = w[n, ::-1]
+            order[n] = order[n, ::-1]
 
-    return w
+    return w, order
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
@@ -312,13 +315,13 @@ if __name__ == '__main__':
 
     import dos
 
-    w = dispersion(D, 72) * Ry2eV * eV2cmm1
+    w, order = dispersion(D, 72)
+    w *= Ry2eV * eV2cmm1
 
-    for n in range(w.shape[0]):
-        for nu in range(w.shape[2]):
-            plt.plot(range(w.shape[1]), w[n, :, nu])
-
-        plt.show()
+    nq, nq, bands = w.shape
+    plt.plot(range(w.shape[0] * w.shape[1]),
+        np.reshape(w, (w.shape[0] * w.shape[1], w.shape[2])))
+    plt.show()
 
     N = 300
     W = np.linspace(w.min(), w.max(), N)

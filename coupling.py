@@ -21,7 +21,7 @@ def read(filename):
 def complete(elph, nq, bands):
     """Generate whole Brillouin zone from irreducible q points."""
 
-    elphmat = np.zeros((nq, nq, bands))
+    elphmat = np.empty((nq, nq, bands))
 
     for q in elph.keys():
         for Q in bravais.images(*q, nk=nq):
@@ -72,6 +72,22 @@ def plot(elphmat, points=50):
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
+    import phonons
 
-    plt.imshow(plot(complete(read('data/NbSe2-cDFPT-LR.elph'), 12, 9)))
+    nq = 12
+    multiple = 6
+    nQ = multiple * nq
+
+    D = phonons.dynamical_matrix(*phonons.read_flfrc('data/NbSe2-cDFPT-SR.ifc'))
+
+    w, order = phonons.dispersion(D, nQ)
+    order = order[::multiple, ::multiple]
+
+    elph = complete(read('data/NbSe2-cDFPT-LR.elph'), nq, 9)
+
+    for n in range(nq):
+        for m in range(nq):
+            elph[n, m] = elph[n, m, order[n, m]]
+
+    plt.imshow(plot(elph))
     plt.show()
