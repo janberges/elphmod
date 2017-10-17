@@ -2,6 +2,64 @@
 
 import numpy as np
 
+deg = np.pi / 180
+
+def rotate(vector, angle):
+    """Rotate vector."""
+
+    return np.array([
+        [np.cos(angle), -np.sin(angle)],
+        [np.sin(angle),  np.cos(angle)],
+        ]).dot(vector)
+
+def reciprocals(t1, t2):
+    """Get translation vectors of reciprocal lattice."""
+
+    u1 = rotate(t2, -90 * deg)
+    u2 = rotate(t1, +90 * deg)
+
+    u1 /= t1.dot(u1)
+    u2 /= t2.dot(u2)
+
+    return u1, u2
+
+# define real and reciprocal (without 2 pi) translation vectors:
+
+#1 Quantum ESPRESSO:
+
+t1 = np.array([1.0, 0.0])
+t2 = rotate(t1, 120 * deg)
+
+u1, u2 = reciprocals(t1, t2)
+
+#2 Brillouin-zone plots:
+
+T1 = rotate(t1, -30 * deg)
+T2 = rotate(t2, -30 * deg)
+
+U1, U2 = reciprocals(T1, T2)
+
+def images(k1, k2, nk):
+    """Get equivalents k points."""
+
+    points = set()
+
+    k = k1 * u1 + k2 * u2
+
+    for reflect in False, True:
+        for angle in range(0, 360, 60):
+            K = rotate(k, angle * deg)
+
+            if reflect:
+                K[0] *= -1
+
+            K1 = int(round(np.dot(K, t1))) % nk
+            K2 = int(round(np.dot(K, t2))) % nk
+
+            points.add((K1, K2))
+
+    return points
+
 def GMKG(N=30):
     """Generate path Gamma-M-K-Gamma through Brillouin zone."""
 
