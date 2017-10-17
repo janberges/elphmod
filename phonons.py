@@ -191,6 +191,87 @@ def frequencies(dynamical_matrix):
 
     return np.sign(w2) * np.sqrt(np.absolute(w2))
 
+def frequencies_and_displacements(dynamical_matrix):
+    """Calculate phonon frequencies and displacements."""
+
+    w2, e = scipy.linalg.eigh(dynamical_matrix)
+
+    return np.sign(w2) * np.sqrt(np.absolute(w2)), e
+
+def dispersion(dynamical_matrix, nq, order=True):
+    """Calculate dispersion on uniform 2D mesh and optionally order bands."""
+
+    bands = dynamical_matrix(0, 0).shape[0]
+
+    q = np.linspace(0, 2 * np.pi, nq, endpoint=False)
+
+    w = np.empty((nq, nq, bands))
+
+    # optionally, return phonon bands sorted by frequency:
+
+    if not order:
+        for n, q1 in enumerate(q):
+            for m, q2 in enumerate(q):
+                w[n, m] = frequencies(D(q1, q2))
+
+        return w
+
+    # otherwise, sort by character/atomic displacement:
+
+    e = np.empty((nq, nq, bands, bands), dtype=complex)
+
+    for n, q1 in enumerate(q):
+        for m, q2 in enumerate(q):
+            w[n, m], e[n, m] = frequencies_and_displacements(D(q1, q2))
+
+    N = nq ** 2
+
+    # flatten arrays along winding path in q space:
+
+    for nu in range(bands):
+        for n in range(0, nq, 2):
+            e[n] = e[n, ::-1]
+            w[n] = w[n, ::-1]
+
+    w = np.reshape(w, (N, bands))
+    e = np.reshape(e, (N, bands, bands))
+
+    # check if displacements of individual modes at a q point are reliable:
+
+    ok = np.empty(N, dtype=bool)
+
+    for n in range(N):
+        ok[n] = np.all(np.absolute(np.diff(w[n])) > 1e-10) # no degeneracy?
+
+    order = np.empty((N, bands), dtype=int)
+    order[0] = range(bands)
+
+    # sort bands by similarity of displacements at neighboring q points:
+
+    n0 = 0
+
+    for n in range(1, N):
+        for nu in range(bands):
+            order[n, nu] = max(range(bands), key=lambda mu: np.absolute(
+                np.dot(e[n0, :, order[n0, nu]], e[n, :, mu].conj())
+                ))
+
+        if ok[n]:
+            n0 = n
+
+    for n in range(N):
+        w[n] = w[n, order[n]]
+
+    # restore orginal array shape and order in q space:
+
+    w = np.reshape(w, (nq, nq, bands))
+
+    for nu in range(bands):
+        for n in range(0, nq, 2):
+            w[n] = w[n, ::-1]
+
+    return w
+
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
@@ -231,15 +312,13 @@ if __name__ == '__main__':
 
     import dos
 
-    n = 36
-    q = np.linspace(0, 2 * np.pi, n, endpoint=False)
-    w = np.empty((n, n, 9))
+    w = dispersion(D, 72) * Ry2eV * eV2cmm1
 
-    for i, q1 in enumerate(q):
-        for j, q2 in enumerate(q):
-            w[i, j] = frequencies(D(q1, q2))
+    for n in range(w.shape[0]):
+        for nu in range(w.shape[2]):
+            plt.plot(range(w.shape[1]), w[n, :, nu])
 
-    w *= Ry2eV * eV2cmm1
+        plt.show()
 
     N = 300
     W = np.linspace(w.min(), w.max(), N)
