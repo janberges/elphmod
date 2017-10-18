@@ -63,6 +63,10 @@ def plot(elphmat, points=50):
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
     import phonons
+    import dos
+
+    Ry2eV = 13.605693009
+    eV2cmm1 = 8065.54
 
     nq = 12
     multiple = 4
@@ -71,13 +75,35 @@ if __name__ == '__main__':
     D = phonons.dynamical_matrix(*phonons.read_flfrc('data/NbSe2-cDFPT-SR.ifc'))
 
     w, order = phonons.dispersion(D, nQ)
+    w *= Ry2eV * eV2cmm1
     order = order[::multiple, ::multiple]
 
     elph = complete(read('data/NbSe2-cDFPT-LR.elph'), nq, 9)
+    elph *= (1e-3 * eV2cmm1) ** 3
 
     for n in range(nq):
         for m in range(nq):
             elph[n, m] = elph[n, m, order[n, m]]
 
     plt.imshow(plot(elph))
+    plt.show()
+
+    g2 = np.empty_like(w)
+
+    shrinkage = 1.0 / multiple
+
+    for n in range(w.shape[0]):
+        for m in range(w.shape[1]):
+            for nu in range(w.shape[2]):
+                g2[n, m, nu] = bravais.interpolate(elph[:, :, nu],
+                        n * shrinkage, m * shrinkage) / (2 * w[n, m, nu])
+
+    N = 300
+    W = np.linspace(w.min(), w.max(), N)
+    a2F = np.zeros(N)
+
+    for nu in range(9):
+        a2F += dos.hexa2F(w[:, :, nu], g2[:, :, nu])(W)
+
+    plt.fill_between(W, 0, a2F, facecolor='lightgray')
     plt.show()
