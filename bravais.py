@@ -60,6 +60,38 @@ def images(k1, k2, nk):
 
     return points
 
+def interpolate(mesh, q1, q2, angle=30):
+    """Perform linear interpolation on triangular lattice."""
+
+    nq1, nq2 = mesh.shape
+
+    q01 = int(q1 % nq1)
+    q02 = int(q2 % nq2)
+    dq1 = q1 % 1
+    dq2 = q2 % 1
+
+    if angle == 30:
+        A = mesh[(q01 + 1) % nq1, q02]
+        B = mesh[q01, (q02 + 1) % nq2]
+
+        if dq1 + dq2 > 1:
+            C = mesh[(q01 + 1) % nq1, (q02 + 1) % nq2]
+            return (1 - dq2) * A + (1 - dq1) * B + (dq1 + dq2 - 1) * C
+        else:
+            C = mesh[q01, q02]
+            return dq1 * A + dq2 * B + (1 - dq1 - dq2) * C
+
+    elif angle == 60:
+        A = mesh[q01, q02]
+        B = mesh[(q01 + 1) % nq1, (q02 + 1) % nq2]
+
+        if dq1 > dq2:
+            C = mesh[(q01 + 1) % nq1, q02]
+            return (1 - dq1) * A + dq2 * B + (dq1 - dq2) * C
+        else:
+            C = mesh[q01, (q02 + 1) % nq2]
+            return (1 - dq2) * A + dq1 * B + (dq2 - dq1) * C
+
 def GMKG(N=30):
     """Generate path Gamma-M-K-Gamma through Brillouin zone."""
 

@@ -2,7 +2,6 @@
 
 import bravais
 import numpy as np
-from scipy.interpolate import interp2d
 
 def read(filename):
     """Read file with Fermi-surface averaged electron-phonon coupling."""
@@ -45,23 +44,14 @@ def plot(elphmat, points=50):
 
     image = np.empty((bands, nqy, nqx))
 
-    q = np.linspace(0.0, 1.0, nq + 1)
-
-    elphmatper = np.empty((nq + 1, nq + 1, bands))
-    elphmatper[:nq, :nq] = elphmat
-
-    elphmatper[nq, :] = elphmatper[0, :]
-    elphmatper[:, nq] = elphmatper[:, 0]
-
     for nu in range(bands):
-        elphfun = interp2d(q, q, elphmatper[:, :, nu], kind='linear')
-
         for i in reversed(range(len(qy))):
             for j in range(len(qx)):
                 q1 = qx[j] * bravais.T1[0] + qy[i] * bravais.T1[1]
                 q2 = qx[j] * bravais.T2[0] + qy[i] * bravais.T2[1]
 
-                image[nu, i, j] = elphfun(q1 % 1, q2 % 1)
+                image[nu, i, j] = bravais.interpolate(elphmat[:, :, nu],
+                    q1 * nq, q2 * nq)
 
     return \
         np.concatenate([
