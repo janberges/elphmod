@@ -75,7 +75,7 @@ if __name__ == '__main__':
     import phonons
 
     nq = 12
-    multiple = 6
+    multiple = 4
     nQ = multiple * nq
 
     D = phonons.dynamical_matrix(*phonons.read_flfrc('data/NbSe2-cDFPT-SR.ifc'))

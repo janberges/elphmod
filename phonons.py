@@ -1,5 +1,6 @@
 #/usr/bin/env python
 
+import bravais
 import numpy as np
 import scipy.linalg
 
@@ -204,6 +205,7 @@ def dispersion(dynamical_matrix, nq, order=True):
     bands = dynamical_matrix(0, 0).shape[0]
 
     q = np.linspace(0, 2 * np.pi, nq, endpoint=False)
+    q -= q[nq / 2]
 
     w = np.empty((nq, nq, bands))
 
@@ -224,6 +226,17 @@ def dispersion(dynamical_matrix, nq, order=True):
         for m, q2 in enumerate(q):
             w[n, m], e[n, m] = frequencies_and_displacements(
                 dynamical_matrix(q1, q2))
+
+            qx, qy = q1 * bravais.u1 + q2 * bravais.u2
+
+            phi = np.arctan2(qy, qx)
+
+            nat = bands / 3
+
+            for na in range(nat):
+                for nu in range(bands):
+                    e[n, m, [na, na + nat], nu] = bravais.rotate(
+                    e[n, m, [na, na + nat], nu], -phi)
 
     N = nq ** 2
 
@@ -273,6 +286,10 @@ def dispersion(dynamical_matrix, nq, order=True):
             w[n] = w[n, ::-1]
             order[n] = order[n, ::-1]
 
+    for axis in range(2):
+        w = np.roll(w, nq / 2, axis)
+        order = np.roll(order, nq / 2, axis)
+
     return w, order
 
 if __name__ == '__main__':
@@ -315,7 +332,7 @@ if __name__ == '__main__':
 
     import dos
 
-    w, order = dispersion(D, 72)
+    w, order = dispersion(D, 48)
     w *= Ry2eV * eV2cmm1
 
     nq, nq, bands = w.shape
