@@ -202,7 +202,7 @@ def frequencies_and_displacements(dynamical_matrix):
 def dispersion(dynamical_matrix, nq, order=True):
     """Calculate dispersion on uniform 2D mesh and optionally order bands."""
 
-    bands = dynamical_matrix(0, 0).shape[0]
+    bands = dynamical_matrix().shape[0]
 
     q = np.linspace(0, 2 * np.pi, nq, endpoint=False)
     q -= q[nq / 2]
@@ -291,61 +291,3 @@ def dispersion(dynamical_matrix, nq, order=True):
         order = np.roll(order, nq / 2, axis)
 
     return w, order
-
-if __name__ == '__main__':
-    import matplotlib.pyplot as plt
-
-    # Check module against Quantum ESPRESSO's 'matdyn.x':
-
-    import bravais
-
-    Ry2eV = 13.605693009
-    eV2cmm1 = 8065.54
-
-    phid, amass, at, tau = read_flfrc('data/NbSe2-cDFPT-SR.ifc')
-
-    asr(phid)
-
-    D = dynamical_matrix(phid, amass, at, tau)
-
-    path, x = bravais.GMKG()
-
-    w = np.empty((len(path), 9))
-
-    for n, q in enumerate(path):
-        w[n] = frequencies(D(*q))
-
-    w *= Ry2eV * eV2cmm1
-
-    ref = np.loadtxt('data/NbSe2-cDFPT-SR.disp.gp')
-
-    x0 = ref[:, 0] / ref[-1, 0] * x[-1]
-    w0 = ref[:, 1:]
-
-    for i in range(w.shape[1]):
-        plt.plot(x,  w [:, i], 'k' )
-        plt.plot(x0, w0[:, i], 'ko')
-
-    plt.show()
-
-    # Calculate density of states via 2D tetrahedron method:
-
-    import dos
-
-    w, order = dispersion(D, 48)
-    w *= Ry2eV * eV2cmm1
-
-    nq, nq, bands = w.shape
-    plt.plot(range(w.shape[0] * w.shape[1]),
-        np.reshape(w, (w.shape[0] * w.shape[1], w.shape[2])))
-    plt.show()
-
-    N = 300
-    W = np.linspace(w.min(), w.max(), N)
-    DOS = np.zeros(N)
-
-    for nu in range(9):
-        DOS += dos.hexDOS(w[:, :, nu])(W)
-
-    plt.fill_between(W, 0, DOS, facecolor='lightgray')
-    plt.show()
