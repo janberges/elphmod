@@ -11,7 +11,7 @@ import phonons
 Ry2eV = 13.605693009
 eV2cmm1 = 8065.54
 
-print "Read and fix force constants and set up dynamical matrix.."
+print("Read and fix force constants and set up dynamical matrix..")
 
 phid, amass, at, tau = phonons.read_flfrc('data/NbSe2-cDFPT-SR.ifc')
 
@@ -21,7 +21,7 @@ D = phonons.dynamical_matrix(phid, amass, at, tau)
 
 bands = D().shape[0]
 
-print "Check module against Quantum ESPRESSO's 'matdyn.x'.."
+print("Check module against Quantum ESPRESSO's 'matdyn.x'..")
 
 path, x = bravais.GMKG()
 
@@ -43,7 +43,7 @@ for i in range(w.shape[1]):
 
 plt.show()
 
-print "Calculate dispersion on whole Brillouin zone and sort bands.."
+print("Calculate dispersion on whole Brillouin zone and sort bands..")
 
 nq = 48
 
@@ -53,7 +53,7 @@ w *= Ry2eV * eV2cmm1
 plt.plot(range(nq * nq), np.reshape(w, (nq * nq, bands)))
 plt.show()
 
-print "Load and preprocess electron-phonon coupling.."
+print("Load and preprocess electron-phonon coupling..")
 
 nqelph = 12
 
@@ -82,7 +82,7 @@ for n in range(nq):
 
 g2 /= 2 * w
 
-print "Calculate DOS and a2F via 2D tetrahedron method.."
+print("Calculate DOS and a2F via 2D tetrahedron method..")
 
 N = 300
 
