@@ -3,7 +3,9 @@
 import numpy as np
 
 def hexDOS(energies):
-    """Calculate DOS from energies on triangular mesh (2D tetrahedron)."""
+    """Calculate DOS from energies on triangular mesh (2D tetrahedron).
+
+    Integration over all energies yields unity."""
 
     N, N = energies.shape
 
@@ -42,7 +44,9 @@ def hexDOS(energies):
     return np.vectorize(DOS)
 
 def hexa2F(energies, couplings):
-    """Calculate a2F from energies and coupling."""
+    """Calculate a2F from energies and coupling.
+
+    Integration over all energies yields the arithmetic mean of the coupling."""
 
     N, N = energies.shape
 
@@ -67,17 +71,17 @@ def hexa2F(energies, couplings):
                 if E == B == C:
                     D += 0.5 / (E - A) * 0.5 * (b + c)
                 else:
-                    D += (E - A) / (B - A) / (C - A) * 0.5 * \
-                        ( ((E - A) * b + (B - E) * a) / (B - A) \
-                        + ((E - A) * c + (C - E) * a) / (C - A) )
+                    D += (E - A) / (B - A) / (C - A) * 0.5 * (
+                        ((E - A) * b + (B - E) * a) / (B - A) +
+                        ((E - A) * c + (C - E) * a) / (C - A))
 
             elif B <= E < C:
                 if E == A == B:
                     D += 0.5 / (C - E) * 0.5 * (a + b)
                 else:
-                    D += (C - E) / (C - A) / (C - B) * 0.5 * \
-                        ( ((C - E) * a + (E - A) * c) / (C - A) \
-                        + ((C - E) * b + (E - B) * c) / (C - B) )
+                    D += (C - E) / (C - A) / (C - B) * 0.5 * (
+                        ((C - E) * a + (E - A) * c) / (C - A) +
+                        ((C - E) * b + (E - B) * c) / (C - B))
 
             elif E == A == B == C:
                 return float('inf')
@@ -87,7 +91,9 @@ def hexa2F(energies, couplings):
     return np.vectorize(a2F)
 
 def simpleDOS(energies, smearing):
-    """Calculate DOS from representative energy sample (Lorentzian sum)."""
+    """Calculate DOS from representative energy sample (Lorentzian sum).
+
+    Integration over all energies yields unity."""
 
     const = smearing / np.pi / energies.size
 

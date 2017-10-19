@@ -91,7 +91,7 @@ W = np.linspace(w.min(), w.max(), N)
 DOS = np.zeros(N)
 a2F = np.zeros(N)
 
-for nu in range(9):
+for nu in range(bands):
     DOS += dos.hexDOS(w[:, :, nu])(W)
     a2F += dos.hexa2F(w[:, :, nu], g2[:, :, nu])(W)
 
