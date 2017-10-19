@@ -11,9 +11,11 @@ import phonons
 Ry2eV = 13.605693009
 eV2cmm1 = 8065.54
 
+data = 'NbSe2-cDFPT-SR'
+
 print("Read and fix force constants and set up dynamical matrix..")
 
-phid, amass, at, tau = phonons.read_flfrc('data/NbSe2-cDFPT-SR.ifc')
+phid, amass, at, tau = phonons.read_flfrc('data/%s.ifc' % data)
 
 phonons.asr(phid)
 
@@ -32,7 +34,7 @@ for n, q in enumerate(path):
 
 w *= Ry2eV * eV2cmm1
 
-ref = np.loadtxt('data/NbSe2-cDFPT-SR.disp.gp')
+ref = np.loadtxt('data/%s.disp.gp' % data)
 
 x0 = ref[:, 0] / ref[-1, 0] * x[-1]
 w0 = ref[:, 1:]
@@ -57,8 +59,8 @@ print("Load and preprocess electron-phonon coupling..")
 
 nqelph = 12
 
-elph = coupling.complete(coupling.read('data/NbSe2-cDFPT-LR.elph'),
-    nqelph, bands) * (1e-3 * eV2cmm1) ** 3
+elph = coupling.complete(coupling.read('data/%s.elph'
+    % data.replace('SR', 'LR')), nqelph, bands) * (1e-3 * eV2cmm1) ** 3
 
 step = nq // nqelph
 orderelph = order[::step, ::step]
