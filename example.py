@@ -8,42 +8,71 @@ import coupling
 import dos
 import phonons
 
+from mpi4py import MPI
+comm = MPI.COMM_WORLD
+
 Ry2eV = 13.605693009
 eV2cmm1 = 8065.54
 
 data = 'NbSe2-cDFPT-SR'
 
-print("Read and fix force constants and set up dynamical matrix..")
+if comm.rank == 0:
+    print("Read and fix force constants and set up dynamical matrix..")
 
-phid, amass, at, tau = phonons.read_flfrc('data/%s.ifc' % data)
+    model = phonons.read_flfrc('data/%s.ifc' % data)
 
-phonons.asr(phid)
+    phonons.asr(model[0])
+else:
+    model = None
 
-D = phonons.dynamical_matrix(phid, amass, at, tau)
+model = comm.bcast(model)
+
+D = phonons.dynamical_matrix(comm, *model)
 
 bands = D().shape[0]
 
-print("Check module against Quantum ESPRESSO's 'matdyn.x'..")
+if comm.rank == 0:
+    print("Check module against Quantum ESPRESSO's 'matdyn.x'..")
 
-path, x = bravais.GMKG()
+    path, x = bravais.GMKG()
 
-w = np.empty((len(path), bands))
+    w = np.empty((len(path), bands))
 
-for n, q in enumerate(path):
-    w[n] = phonons.frequencies(D(*q))
+    offsets = np.array([len(path) * p // comm.size
+        for p in range(comm.size + 1)])
 
-w *= Ry2eV * eV2cmm1
+    sizes = np.diff(offsets)
+    offsets = offsets[:-1]
+else:
+    path = w = sizes = offsets = None
 
-ref = np.loadtxt('data/%s.disp.gp' % data)
+sizes = comm.bcast(sizes)
+offsets = comm.bcast(offsets)
 
-x0 = ref[:, 0] / ref[-1, 0] * x[-1]
-w0 = ref[:, 1:]
+my_path = np.empty((sizes[comm.rank], 2))
+my_w = np.empty((sizes[comm.rank], bands))
 
-for i in range(w.shape[1]):
-    plt.plot(x,  w [:, i], 'k' )
-    plt.plot(x0, w0[:, i], 'ko')
+comm.Scatterv((path, 2 * sizes, 2 * offsets, MPI.DOUBLE), my_path)
 
-plt.show()
+for n, q in enumerate(my_path):
+    my_w[n] = phonons.frequencies(D(*q)) * Ry2eV * eV2cmm1
+
+comm.Gatherv(my_w, recvbuf=(w, bands * sizes, MPI.DOUBLE))
+
+if comm.rank == 0:
+    ref = np.loadtxt('data/%s.disp.gp' % data)
+
+    x0 = ref[:, 0] / ref[-1, 0] * x[-1]
+    w0 = ref[:, 1:]
+
+    for i in range(w.shape[1]):
+        plt.plot(x,  w [:, i], 'k' )
+        plt.plot(x0, w0[:, i], 'ko')
+
+    plt.show()
+
+if comm.rank != 0:
+    quit()
 
 print("Calculate dispersion on whole Brillouin zone and sort bands..")
 

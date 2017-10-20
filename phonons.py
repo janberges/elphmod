@@ -33,7 +33,7 @@ def read_flfrc(flfrc, asr=True):
             at[1] = np.array([-1.0, np.sqrt(3), 0.0]) * celldim[0] / 2
             at[2] = np.array([ 0.0,        0.0, 1.0]) * celldim[0] * celldim[2]
         else:
-            print 'Bravais lattice unknown'
+            print('Bravais lattice unknown')
             return
 
         # read palette of atomic species and masses:
@@ -108,24 +108,30 @@ def asr(phid):
             for m3 in range(nr3)
             if na1 != na2 or m1 or m2 or m3)
 
-def dynamical_matrix(phid, amass, at, tau, eps=1e-7):
+def dynamical_matrix(comm, phid, amass, at, tau, eps=1e-7):
     """Set up dynamical matrix for force constants, masses, and geometry."""
 
     nat, nr1, nr2, nr3 = phid.shape[1:5]
 
     supercells = [-1, 0, 1] # indices of central and neighboring supercells
 
-    maxdim = nat ** 2 * nr1 * nr2 * nr3 * len(supercells) ** 3
+    maxdim = nat ** 2 * nr1 * nr2 * nr3 * len(supercells) ** 3 // comm.size
 
     atoms = np.empty((maxdim, 2), dtype=np.int8) # atom indices
     cells = np.empty((maxdim, 3), dtype=np.int8) # cell indices
     const = np.empty((maxdim, 3, 3)) # force constants divided by masses
 
-    n = 0 # 'spring' counter
+    n = 0 # 'spring' counter (per process)
+    N = 0 # 'spring' counter (overall)
 
     for m1 in range(nr1):
         for m2 in range(nr2):
             for m3 in range(nr3):
+                N += 1
+
+                if N % comm.size != comm.rank:
+                    continue
+
                 # determine equivalent unit cells within considered supercells:
 
                 copies = np.array([[
@@ -172,13 +178,26 @@ def dynamical_matrix(phid, amass, at, tau, eps=1e-7):
     cells = cells[:n]
     const = const[:n]
 
+    # gather data of all processes:
+
+    dim = comm.allreduce(n)
+    dims = np.array(comm.allgather(n))
+
+    allatoms = np.empty((dim, 2), dtype=np.int8)
+    allcells = np.empty((dim, 3), dtype=np.int8)
+    allconst = np.empty((dim, 3, 3))
+
+    comm.Allgatherv(atoms, (allatoms, dims * 2))
+    comm.Allgatherv(cells, (allcells, dims * 3))
+    comm.Allgatherv(const, (allconst, dims * 9))
+
     # return function to calculate dynamical matrix for arbitrary q points:
 
     def calculate_dynamical_matrix(q1=0, q2=0, q3=0):
         q = np.array([q1, q2, q3])
         D = np.zeros((3 * nat, 3 * nat), dtype=complex)
 
-        for (na1, na2), R, C in zip(atoms, cells, const):
+        for (na1, na2), R, C in zip(allatoms, allcells, allconst):
             D[na1::nat, na2::nat] += C * np.exp(1j * R.dot(q))
 
         return D

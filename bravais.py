@@ -123,5 +123,5 @@ def GMKG(N=30):
     x[     N1:N1 + N2     ] = np.linspace(     L1, L1 + L2,      N2, False)
     x[N2 + N1:N1 + N2 + N3] = np.linspace(L2 + L1, L1 + L2 + L3, N3, True)
 
-    return path, x
+    return np.array(path), x
 
