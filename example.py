@@ -52,11 +52,13 @@ my_w = np.empty((sizes[comm.rank], bands))
 comm.Scatterv((q, 2 * sizes), my_q)
 
 for n, (q1, q2) in enumerate(my_q):
-    my_w[n] = phonons.frequencies(D(q1, q2)) * Ry2eV * eV2cmm1
+    my_w[n] = phonons.frequencies(D(q1, q2))
 
 comm.Gatherv(my_w, (w, bands * sizes))
 
 if comm.rank == 0:
+    w *= Ry2eV * eV2cmm1
+
     ref = np.loadtxt('data/%s.disp.gp' % data)
 
     x0 = ref[:, 0] / ref[-1, 0] * x[-1]
