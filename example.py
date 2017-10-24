@@ -14,7 +14,7 @@ comm = MPI.COMM_WORLD
 Ry2eV = 13.605693009
 eV2cmm1 = 8065.54
 
-data = 'NbSe2-cDFPT-SR'
+data = 'NbSe2-cDFPT-LR'
 
 if comm.rank == 0:
     print("Read and fix force constants and set up dynamical matrix..")
@@ -87,8 +87,8 @@ if comm.rank == 0:
 
     nqelph = 12
 
-    elph = coupling.complete(coupling.read('data/%s.elph'
-        % data.replace('SR', 'LR')), nqelph, bands) * (1e-3 * eV2cmm1) ** 3
+    elph = coupling.complete(coupling.read('data/%s.elph' % data),
+        nqelph, bands) * (1e-3 * eV2cmm1) ** 3
 
     step = nq // nqelph
     orderelph = order[::step, ::step]
