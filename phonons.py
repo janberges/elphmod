@@ -172,24 +172,18 @@ def dynamical_matrix(comm, phid, amass, at, tau, eps=1e-7):
 
                             n += 1
 
-    # free unused memory:
-
-    atoms = atoms[:n]
-    cells = cells[:n]
-    const = const[:n]
-
     # gather data of all processes:
 
-    dim = comm.allreduce(n)
     dims = np.array(comm.allgather(n))
+    dim = dims.sum()
 
     allatoms = np.empty((dim, 2), dtype=np.int8)
     allcells = np.empty((dim, 3), dtype=np.int8)
     allconst = np.empty((dim, 3, 3))
 
-    comm.Allgatherv(atoms, (allatoms, dims * 2))
-    comm.Allgatherv(cells, (allcells, dims * 3))
-    comm.Allgatherv(const, (allconst, dims * 9))
+    comm.Allgatherv(atoms[:n], (allatoms, dims * 2))
+    comm.Allgatherv(cells[:n], (allcells, dims * 3))
+    comm.Allgatherv(const[:n], (allconst, dims * 9))
 
     # return function to calculate dynamical matrix for arbitrary q points:
 
