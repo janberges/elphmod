@@ -34,28 +34,26 @@ bands = D().shape[0]
 if comm.rank == 0:
     print("Check module against Quantum ESPRESSO's 'matdyn.x'..")
 
-    path, x = bravais.GMKG()
+    q, x = bravais.GMKG()
+    w = np.empty((len(q), bands))
 
-    w = np.empty((len(path), bands))
-
-    offsets = np.array([len(path) * p // comm.size
-        for p in range(comm.size + 1)])
+    offsets = np.array([len(q) * p // comm.size for p in range(comm.size + 1)])
 
     sizes = np.diff(offsets)
     offsets = offsets[:-1]
 else:
-    path = w = sizes = offsets = None
+    q = w = sizes = offsets = None
 
 sizes = comm.bcast(sizes)
 offsets = comm.bcast(offsets)
 
-my_path = np.empty((sizes[comm.rank], 2))
+my_q = np.empty((sizes[comm.rank], 2))
 my_w = np.empty((sizes[comm.rank], bands))
 
-comm.Scatterv((path, 2 * sizes, 2 * offsets, MPI.DOUBLE), my_path)
+comm.Scatterv((q, 2 * sizes, 2 * offsets, MPI.DOUBLE), my_q)
 
-for n, q in enumerate(my_path):
-    my_w[n] = phonons.frequencies(D(*q)) * Ry2eV * eV2cmm1
+for n, (q1, q2) in enumerate(my_q):
+    my_w[n] = phonons.frequencies(D(q1, q2)) * Ry2eV * eV2cmm1
 
 comm.Gatherv(my_w, recvbuf=(w, bands * sizes, MPI.DOUBLE))
 
