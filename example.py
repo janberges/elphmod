@@ -69,18 +69,20 @@ if comm.rank == 0:
 
     plt.show()
 
-if comm.rank != 0:
-    quit()
-
-print("Calculate dispersion on whole Brillouin zone and sort bands..")
+if comm.rank == 0:
+    print("Calculate dispersion on whole Brillouin zone and sort bands..")
 
 nq = 48
 
-w, order = phonons.dispersion(D, nq)
+w, order = phonons.dispersion(MPI, D, nq)
 w *= Ry2eV * eV2cmm1
 
-plt.plot(range(nq * nq), np.reshape(w, (nq * nq, bands)))
-plt.show()
+if comm.rank == 0:
+    plt.plot(range(nq * nq), np.reshape(w, (nq * nq, bands)))
+    plt.show()
+
+if comm.rank != 0:
+    quit()
 
 print("Load and preprocess electron-phonon coupling..")
 

@@ -218,8 +218,10 @@ def frequencies_and_displacements(dynamical_matrix):
 
     return np.sign(w2) * np.sqrt(np.absolute(w2)), e
 
-def dispersion(dynamical_matrix, nq, order=True):
+def dispersion(MPI, dynamical_matrix, nq, order=True):
     """Calculate dispersion on uniform 2D mesh and optionally order bands."""
+
+    comm = MPI.COMM_WORLD
 
     bands = dynamical_matrix().shape[0]
 
@@ -228,22 +230,41 @@ def dispersion(dynamical_matrix, nq, order=True):
 
     w = np.empty((nq, nq, bands))
 
+    if comm.rank == 0:
+        offsets = np.array([len(q) * p // comm.size
+            for p in range(comm.size + 1)])
+
+        sizes = np.diff(offsets)
+        offsets = offsets[:-1]
+    else:
+        sizes = offsets = None
+
+    sizes = comm.bcast(sizes)
+    offsets = comm.bcast(offsets)
+
+    my_q = np.empty((sizes[comm.rank]))
+    my_w = np.empty((sizes[comm.rank], nq, bands))
+
+    comm.Scatterv((q, sizes, offsets, MPI.DOUBLE), my_q)
+
     # optionally, return phonon bands sorted by frequency:
 
     if not order:
-        for n, q1 in enumerate(q):
+        for n, q1 in enumerate(my_q):
             for m, q2 in enumerate(q):
-                w[n, m] = frequencies(dynamical_matrix(q1, q2))
+                my_w[n, m] = frequencies(dynamical_matrix(q1, q2))
+
+        comm.Allgatherv(my_w, (w, nq * bands * sizes))
 
         return w
 
     # otherwise, sort by character/atomic displacement:
 
-    e = np.empty((nq, nq, bands, bands), dtype=complex)
+    my_e = np.empty((sizes[comm.rank], nq, bands, bands), dtype=complex)
 
-    for n, q1 in enumerate(q):
+    for n, q1 in enumerate(my_q):
         for m, q2 in enumerate(q):
-            w[n, m], e[n, m] = frequencies_and_displacements(
+            my_w[n, m], my_e[n, m] = frequencies_and_displacements(
                 dynamical_matrix(q1, q2))
 
             qx, qy = q1 * bravais.u1 + q2 * bravais.u2
@@ -254,59 +275,73 @@ def dispersion(dynamical_matrix, nq, order=True):
 
             for na in range(nat):
                 for nu in range(bands):
-                    e[n, m, [na, na + nat], nu] = bravais.rotate(
-                    e[n, m, [na, na + nat], nu], -phi)
+                    my_e[n, m, [na, na + nat], nu] = bravais.rotate(
+                    my_e[n, m, [na, na + nat], nu], -phi)
 
-    N = nq ** 2
+    if comm.rank == 0:
+        e = np.empty((nq, nq, bands, bands), dtype=complex)
+    else:
+        e = None
 
-    # flatten arrays along winding path in q space:
+    comm.Gatherv(my_w, (w, nq * bands * sizes, MPI.DOUBLE))
+    comm.Gatherv(my_e, (e, nq * bands * bands * 2 * sizes, MPI.DOUBLE))
 
-    for nu in range(bands):
-        for n in range(0, nq, 2):
-            e[n] = e[n, ::-1]
-            w[n] = w[n, ::-1]
+    order = np.empty((nq, nq, bands), dtype=int)
 
-    w = np.reshape(w, (N, bands))
-    e = np.reshape(e, (N, bands, bands))
+    if comm.rank == 0:
+        N = nq ** 2
 
-    # check if displacements of individual modes at a q point are reliable:
+        # flatten arrays along winding path in q space:
 
-    ok = np.empty(N, dtype=bool)
-
-    for n in range(N):
-        ok[n] = np.all(np.absolute(np.diff(w[n])) > 1e-10) # no degeneracy?
-
-    order = np.empty((N, bands), dtype=int)
-    order[0] = range(bands)
-
-    # sort bands by similarity of displacements at neighboring q points:
-
-    n0 = 0
-
-    for n in range(1, N):
         for nu in range(bands):
-            order[n, nu] = max(range(bands), key=lambda mu: np.absolute(
-                np.dot(e[n0, :, order[n0, nu]], e[n, :, mu].conj())
-                ))
+            for n in range(0, nq, 2):
+                e[n] = e[n, ::-1]
+                w[n] = w[n, ::-1]
 
-        if ok[n]:
-            n0 = n
+        w = np.reshape(w, (N, bands))
+        e = np.reshape(e, (N, bands, bands))
 
-    for n in range(N):
-        w[n] = w[n, order[n]]
+        order = np.reshape(order, (N, bands))
 
-    # restore orginal array shape and order in q space:
+        # check if displacements of individual modes at a q point are reliable:
 
-    w = np.reshape(w, (nq, nq, bands))
-    order = np.reshape(order, (nq, nq, bands))
+        ok = np.empty(N, dtype=bool)
 
-    for nu in range(bands):
-        for n in range(0, nq, 2):
-            w[n] = w[n, ::-1]
-            order[n] = order[n, ::-1]
+        for n in range(N):
+            ok[n] = np.all(np.absolute(np.diff(w[n])) > 1e-10) # no degeneracy?
 
-    for axis in range(2):
-        w = np.roll(w, nq / 2, axis)
-        order = np.roll(order, nq / 2, axis)
+        # sort bands by similarity of displacements at neighboring q points:
+
+        n0 = 0
+        order[n0] = range(bands)
+
+        for n in range(1, N):
+            for nu in range(bands):
+                order[n, nu] = max(range(bands), key=lambda mu: np.absolute(
+                    np.dot(e[n0, :, order[n0, nu]], e[n, :, mu].conj())
+                    ))
+
+            if ok[n]:
+                n0 = n
+
+        for n in range(N):
+            w[n] = w[n, order[n]]
+
+        # restore orginal array shape and order in q space:
+
+        w = np.reshape(w, (nq, nq, bands))
+        order = np.reshape(order, (nq, nq, bands))
+
+        for nu in range(bands):
+            for n in range(0, nq, 2):
+                w[n] = w[n, ::-1]
+                order[n] = order[n, ::-1]
+
+        for axis in range(2):
+            w = np.roll(w, nq / 2, axis)
+            order = np.roll(order, nq / 2, axis)
+
+    comm.Bcast(w)
+    comm.Bcast(order)
 
     return w, order
