@@ -218,10 +218,8 @@ def frequencies_and_displacements(dynamical_matrix):
 
     return np.sign(w2) * np.sqrt(np.absolute(w2)), e
 
-def dispersion(MPI, dynamical_matrix, nq, order=True):
+def dispersion(comm, dynamical_matrix, nq, order=True):
     """Calculate dispersion on uniform 2D mesh and optionally order bands."""
-
-    comm = MPI.COMM_WORLD
 
     bands = dynamical_matrix().shape[0]
 
@@ -230,22 +228,14 @@ def dispersion(MPI, dynamical_matrix, nq, order=True):
 
     w = np.empty((nq, nq, bands))
 
-    if comm.rank == 0:
-        offsets = np.array([len(q) * p // comm.size
-            for p in range(comm.size + 1)])
-
-        sizes = np.diff(offsets)
-        offsets = offsets[:-1]
-    else:
-        sizes = offsets = None
-
-    sizes = comm.bcast(sizes)
-    offsets = comm.bcast(offsets)
+    sizes = np.empty(comm.size, dtype=int)
+    sizes[:] = nq // comm.size
+    sizes[:nq % comm.size] += 1
 
     my_q = np.empty((sizes[comm.rank]))
     my_w = np.empty((sizes[comm.rank], nq, bands))
 
-    comm.Scatterv((q, sizes, offsets, MPI.DOUBLE), my_q)
+    comm.Scatterv((q, sizes), my_q)
 
     # optionally, return phonon bands sorted by frequency:
 
@@ -283,8 +273,8 @@ def dispersion(MPI, dynamical_matrix, nq, order=True):
     else:
         e = None
 
-    comm.Gatherv(my_w, (w, nq * bands * sizes, MPI.DOUBLE))
-    comm.Gatherv(my_e, (e, nq * bands * bands * 2 * sizes, MPI.DOUBLE))
+    comm.Gatherv(my_w, (w, nq * bands * sizes))
+    comm.Gatherv(my_e, (e, nq * bands * bands * sizes))
 
     order = np.empty((nq, nq, bands), dtype=int)
 
