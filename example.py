@@ -81,39 +81,41 @@ if comm.rank == 0:
     plt.plot(range(nq * nq), np.reshape(w, (nq * nq, bands)))
     plt.show()
 
-if comm.rank != 0:
-    quit()
+if comm.rank == 0:
+    print("Load and preprocess electron-phonon coupling..")
 
-print("Load and preprocess electron-phonon coupling..")
+    nqelph = 12
 
-nqelph = 12
+    elph = coupling.complete(coupling.read('data/%s.elph'
+        % data.replace('SR', 'LR')), nqelph, bands) * (1e-3 * eV2cmm1) ** 3
 
-elph = coupling.complete(coupling.read('data/%s.elph'
-    % data.replace('SR', 'LR')), nqelph, bands) * (1e-3 * eV2cmm1) ** 3
+    step = nq // nqelph
+    orderelph = order[::step, ::step]
 
-step = nq // nqelph
-orderelph = order[::step, ::step]
+    for n in range(nqelph):
+        for m in range(nqelph):
+            elph[n, m] = elph[n, m, orderelph[n, m]]
 
-for n in range(nqelph):
-    for m in range(nqelph):
-        elph[n, m] = elph[n, m, orderelph[n, m]]
-
-plt.imshow(coupling.plot(elph))
-plt.show()
+    plt.imshow(coupling.plot(elph))
+    plt.show()
 
 g2 = np.empty_like(w)
 
-scale = 1.0 / step
+if comm.rank == 0:
+    scale = 1.0 / step
 
-for n in range(nq):
-    for m in range(nq):
-        for nu in range(bands):
-            g2[n, m, nu] = bravais.interpolate(elph[:, :, nu],
-                scale * n, scale * m)
+    for n in range(nq):
+        for m in range(nq):
+            for nu in range(bands):
+                g2[n, m, nu] = bravais.interpolate(elph[:, :, nu],
+                    scale * n, scale * m)
 
-g2 /= 2 * w
+    g2 /= 2 * w
 
-print("Calculate DOS and a2F via 2D tetrahedron method..")
+comm.Bcast(g2)
+
+if comm.rank == 0:
+    print("Calculate DOS and a2F via 2D tetrahedron method..")
 
 N = 300
 
@@ -123,12 +125,13 @@ DOS = np.zeros(N)
 a2F = np.zeros(N)
 
 for nu in range(bands):
-    DOS += dos.hexDOS(w[:, :, nu])(W)
-    a2F += dos.hexa2F(w[:, :, nu], g2[:, :, nu])(W)
+    DOS += dos.hexDOS(w[:, :, nu], comm)(W)
+    a2F += dos.hexa2F(w[:, :, nu], g2[:, :, nu], comm)(W)
 
-a2F *= DOS.max() / a2F.max()
+if comm.rank == 0:
+    a2F *= DOS.max() / a2F.max()
 
-plt.fill_between(W, 0, DOS, facecolor='lightgray')
-plt.fill_between(W, 0, a2F, facecolor='blue', alpha=0.4)
+    plt.fill_between(W, 0, DOS, facecolor='lightgray')
+    plt.fill_between(W, 0, a2F, facecolor='blue', alpha=0.4)
 
-plt.show()
+    plt.show()

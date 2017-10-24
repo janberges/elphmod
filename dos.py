@@ -2,7 +2,7 @@
 
 import numpy as np
 
-def hexDOS(energies):
+def hexDOS(energies, comm=None):
     """Calculate DOS from energies on triangular mesh (2D tetrahedron).
 
     Integration over all energies yields unity."""
@@ -18,6 +18,7 @@ def hexDOS(energies):
         for i in range(N)
         for j in range(N)
         for k in range(2)
+        if comm is None or comm.rank == ((i * N + j) * 2 + k) % comm.size
         ]
 
     def DOS(E):
@@ -39,11 +40,11 @@ def hexDOS(energies):
             elif E == A == B == C:
                 return float('inf')
 
-        return D / N ** 2
+        return (D if comm is None else comm.allreduce(D)) / N ** 2
 
     return np.vectorize(DOS)
 
-def hexa2F(energies, couplings):
+def hexa2F(energies, couplings, comm=None):
     """Calculate a2F from energies and coupling.
 
     Integration over all energies yields the arithmetic mean of the coupling."""
@@ -59,6 +60,7 @@ def hexa2F(energies, couplings):
         for i in range(N)
         for j in range(N)
         for k in range(2)
+        if comm is None or comm.rank == ((i * N + j) * 2 + k) % comm.size
         ]
 
     triangles = [(energies[v], couplings[v]) for v in triangles]
@@ -86,7 +88,7 @@ def hexa2F(energies, couplings):
             elif E == A == B == C:
                 return float('inf')
 
-        return D / N ** 2
+        return (D if comm is None else comm.allreduce(D)) / N ** 2
 
     return np.vectorize(a2F)
 
