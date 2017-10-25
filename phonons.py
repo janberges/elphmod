@@ -302,7 +302,7 @@ def dispersion(comm, dynamical_matrix, nq, order=True, fix=True):
             if np.all(np.absolute(np.diff(w[n])) > 1e-10): # no degeneracy?
                 n0 = n
 
-        # restore orginal array shape and order in q space:
+        # restore orginal array shape and order:
 
         w = np.reshape(w, (nq, nq, bands))
         order = np.reshape(order, (nq, nq, bands))
@@ -315,6 +315,8 @@ def dispersion(comm, dynamical_matrix, nq, order=True, fix=True):
         for axis in range(2):
             w = np.roll(w, nq / 2, axis)
             order = np.roll(order, nq / 2, axis)
+
+        # fix band order, if it breaks hexagonal symmetry:
 
         if fix:
             for n in range(nq):
@@ -330,6 +332,8 @@ def dispersion(comm, dynamical_matrix, nq, order=True, fix=True):
                             counts[new] = 1
 
                     order[n, m] = min(counts, key=lambda x: (-counts[x], x))
+
+        # reorder and return:
 
         for n in range(nq):
             for m in range(nq):
