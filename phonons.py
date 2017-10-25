@@ -152,7 +152,7 @@ def dynamical_matrix(comm, phid, amass, at, tau, eps=1e-7):
                     for na2 in range(nat):
                         # find equivalent bond(s) within Wigner-Seitz cell:
 
-                        bonds = [r + tau[na2] - tau[na1] for r in shifts]
+                        bonds = [r + tau[na1] - tau[na2] for r in shifts]
                         lengths = [np.sqrt(np.dot(r, r)) for r in bonds]
                         length = min(lengths)
 
