@@ -288,13 +288,6 @@ def dispersion(comm, dynamical_matrix, nq, order=True):
 
         order = np.reshape(order, (N, bands))
 
-        # check if displacements of individual modes at a q point are reliable:
-
-        ok = np.empty(N, dtype=bool)
-
-        for n in range(N):
-            ok[n] = np.all(np.absolute(np.diff(w[n])) > 1e-10) # no degeneracy?
-
         # sort bands by similarity of displacements at neighboring q points:
 
         n0 = 0
@@ -306,7 +299,7 @@ def dispersion(comm, dynamical_matrix, nq, order=True):
                     np.dot(e[n0, :, order[n0, nu]], e[n, :, mu].conj())
                     ))
 
-            if ok[n]:
+            if np.all(np.absolute(np.diff(w[n])) > 1e-10): # no degeneracy?
                 n0 = n
 
         for n in range(N):
