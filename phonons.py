@@ -212,7 +212,7 @@ def frequencies_and_displacements(dynamical_matrix):
 
     return np.sign(w2) * np.sqrt(np.absolute(w2)), e
 
-def dispersion(comm, dynamical_matrix, nq, order=True):
+def dispersion(comm, dynamical_matrix, nq, order=True, fix=True):
     """Calculate dispersion on uniform 2D mesh and optionally order bands."""
 
     bands = dynamical_matrix().shape[0]
@@ -302,9 +302,6 @@ def dispersion(comm, dynamical_matrix, nq, order=True):
             if np.all(np.absolute(np.diff(w[n])) > 1e-10): # no degeneracy?
                 n0 = n
 
-        for n in range(N):
-            w[n] = w[n, order[n]]
-
         # restore orginal array shape and order in q space:
 
         w = np.reshape(w, (nq, nq, bands))
@@ -318,6 +315,25 @@ def dispersion(comm, dynamical_matrix, nq, order=True):
         for axis in range(2):
             w = np.roll(w, nq / 2, axis)
             order = np.roll(order, nq / 2, axis)
+
+        if fix:
+            for n in range(nq):
+                for m in range(nq):
+                    counts = dict()
+
+                    for N, M in bravais.images(n, m, nq):
+                        new = tuple(order[N, M])
+
+                        if new in counts:
+                            counts[new] += 1
+                        else:
+                            counts[new] = 1
+
+                    order[n, m] = min(counts, key=lambda x: (-counts[x], x))
+
+        for n in range(nq):
+            for m in range(nq):
+                w[n, m] = w[n, m, order[n, m]]
 
     comm.Bcast(w)
     comm.Bcast(order)
