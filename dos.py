@@ -71,7 +71,14 @@ def hexDOS(energies, comm=None):
 def hexa2F(energies, couplings, comm=None):
     """Calculate a2F from energies and coupling.
 
-    Integration over all energies yields the arithmetic mean of the coupling."""
+    Integration over all energies yields the arithmetic mean of the coupling.
+
+    Note that it may be more convenient to calculate the mass renormalization
+
+        lambda[n] = integral[w > 0] dw 2w a^2F(w) / (w^2 + w[n]^2)
+                  = N(0) sum[q, nu] 2w[q, nu] g^2[q nu] / (w[q, nu]^2 + w[n]^2)
+
+    directly from energies and couplings, without integrating this function."""
 
     N, N = energies.shape
 
