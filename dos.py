@@ -5,7 +5,31 @@ import numpy as np
 def hexDOS(energies, comm=None):
     """Calculate DOS from energies on triangular mesh (2D tetrahedron).
 
-    Integration over all energies yields unity."""
+    Integration over all energies yields unity.
+
+    Derivation: The density of states can be expressed as
+
+        DOS(E) = 1/V integral[W(k) = E] dk / |grad W(k)|,
+
+    where V is the volume of a reciprocal unit cell, W(k) is the dispersion
+    relation and the integral is over an iso-energy surface/line in k space.
+
+    In the following, consider a two dimensional reciprocal unit cell which can
+    be divided into 2 x N x N equilateral triangles of reciprocal side length a,
+    on each of which the energy is interpolated linearly. On a triangle with the
+    energies A, B, C at its corners, the squared gradient of the energy plane is
+
+        |grad W|^2 = 4/3a^2 (A^2 + B^2 + C^2 - AB - AC - BC).
+
+    For the special case A < B < E < C, the square of the reciprocal length of
+    the E isoline within the triangle reads
+
+        dk^2 = a^2 (A^2 + B^2 + C^2 - AB - AC - BC) (E-A)^2 / [(A-C) (B-C)]^2.
+
+    Taking into account that V = N^2 a^2 sqrt(3)/2, one finds the contribution
+    of this triangle to the density of states:
+
+        1/N^2 (E - C) / [(A - C) (B - C)."""
 
     N, N = energies.shape
 
