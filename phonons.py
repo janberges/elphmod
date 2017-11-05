@@ -92,7 +92,7 @@ def read_flfrc(flfrc, asr=True):
 
     # return force constants, masses, and geometry:
 
-    return phid, amass[ityp], at, tau
+    return [phid, amass[ityp], at, tau]
 
 def asr(phid):
     """Apply simple acoustic sum rule correction to force constants."""
