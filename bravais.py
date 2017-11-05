@@ -92,7 +92,7 @@ def interpolate(mesh, q1, q2, angle=30):
             C = mesh[q01, (q02 + 1) % nq2]
             return (1 - dq2) * A + dq1 * B + (dq2 - dq1) * C
 
-def GMKG(N=30):
+def GMKG(N=30, corner_indices=False):
     """Generate path Gamma-M-K-Gamma through Brillouin zone."""
 
     G = 2 * np.pi * np.array([0.0, 0.0])
@@ -123,5 +123,7 @@ def GMKG(N=30):
     x[     N1:N1 + N2     ] = np.linspace(     L1, L1 + L2,      N2, False)
     x[N2 + N1:N1 + N2 + N3] = np.linspace(L2 + L1, L1 + L2 + L3, N3, True)
 
-    return np.array(path), x
-
+    if corner_indices:
+        return np.array(path), x, (0, N1 - 1, N1 + N2 - 1, N1 + N2 + N3 - 1)
+    else:
+        return np.array(path), x
