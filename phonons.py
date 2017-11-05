@@ -212,6 +212,27 @@ def frequencies_and_displacements(dynamical_matrix):
 
     return np.sign(w2) * np.sqrt(np.absolute(w2)), e
 
+def band_order(w, e):
+    """Sort bands by similarity of displacements at neighboring q points."""
+
+    N, bands = w.shape
+
+    order = np.empty((N, bands), dtype=int)
+
+    n0 = 0
+    order[n0] = range(bands)
+
+    for n in range(1, N):
+        for nu in range(bands):
+            order[n, nu] = max(range(bands), key=lambda mu: np.absolute(
+                np.dot(e[n0, :, order[n0, nu]], e[n, :, mu].conj())
+                ))
+
+        if np.all(np.absolute(np.diff(w[n])) > 1e-10): # no degeneracy?
+            n0 = n
+
+    return order
+
 def dispersion(comm, dynamical_matrix, nq, order=True, fix=True):
     """Calculate dispersion on uniform 2D mesh and optionally order bands."""
 
@@ -271,8 +292,6 @@ def dispersion(comm, dynamical_matrix, nq, order=True, fix=True):
     comm.Gatherv(my_w, (w, sizes * bands))
     comm.Gatherv(my_e, (e, sizes * bands ** 2))
 
-    order = np.empty((nq, nq, bands), dtype=int)
-
     if comm.rank == 0:
         N = nq ** 2
 
@@ -286,21 +305,9 @@ def dispersion(comm, dynamical_matrix, nq, order=True, fix=True):
         w = np.reshape(w, (N, bands))
         e = np.reshape(e, (N, bands, bands))
 
-        order = np.reshape(order, (N, bands))
-
         # sort bands by similarity of displacements at neighboring q points:
 
-        n0 = 0
-        order[n0] = range(bands)
-
-        for n in range(1, N):
-            for nu in range(bands):
-                order[n, nu] = max(range(bands), key=lambda mu: np.absolute(
-                    np.dot(e[n0, :, order[n0, nu]], e[n, :, mu].conj())
-                    ))
-
-            if np.all(np.absolute(np.diff(w[n])) > 1e-10): # no degeneracy?
-                n0 = n
+        order = band_order(w, e)
 
         # restore orginal array shape and order:
 
