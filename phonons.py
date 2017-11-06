@@ -346,6 +346,9 @@ def dispersion(comm, dynamical_matrix, nq, order=True, fix=True):
             for m in range(nq):
                 w[n, m] = w[n, m, order[n, m]]
 
+    else:
+        order = np.empty((nq, nq, bands), dtype=int)
+
     comm.Bcast(w)
     comm.Bcast(order)
 
