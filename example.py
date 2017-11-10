@@ -105,11 +105,12 @@ g2 = np.empty_like(w)
 if comm.rank == 0:
     scale = 1.0 / step
 
-    for n in range(nq):
-        for m in range(nq):
-            for nu in range(bands):
-                g2[n, m, nu] = bravais.interpolate(elph[:, :, nu],
-                    scale * n, scale * m)
+    for nu in range(bands):
+        elphfun = bravais.Fourier_interpolation(elph[:, :, nu])
+
+        for n in range(nq):
+            for m in range(nq):
+                g2[n, m, nu] = elphfun(scale * n, scale * m)
 
     g2 /= 2 * w
 

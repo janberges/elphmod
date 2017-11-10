@@ -92,6 +92,60 @@ def interpolate(mesh, q1, q2, angle=60):
             C = mesh[q01, (q02 + 1) % nq2]
             return (1 - dq2) * A + dq1 * B + (dq2 - dq1) * C
 
+def Fourier_interpolation(data, angle=60):
+    """Perform Fourier interpolation on triangular or rectangular lattice."""
+
+    # squared distance from origin:
+
+    measure = {
+         60: lambda n, m: n * n + m * m + n * m,
+         90: lambda n, m: n * n + m * m,
+        120: lambda n, m: n * n + m * m - n * m,
+        }
+
+    angle = 180 - angle # real to reciprocal lattice or vice versa
+
+    N, N = data.shape
+
+    # do first Fourier transform to obtain coefficients:
+
+    i = np.arange(N)
+
+    transform = np.exp(2j * np.pi / N * np.outer(i, i)) / np.sqrt(N)
+
+    data = transform.dot(data).dot(transform)
+
+    # construct smooth inverse transform (formally tight-binding model):
+
+    values = np.empty((N * N * 4), dtype=complex)
+    points = np.empty((N * N * 4, 2), dtype=int)
+
+    count = 0
+    for n in range(N):
+        for m in range(N):
+            images = [(n, m), (n - N, m), (n, m - N), (n - N, m - N)]
+            distances = [measure[angle](*image) for image in images]
+            minimum = min(distances)
+            images = [image for image, distance in zip(images, distances)
+                if distance == minimum]
+
+            value = data[n, m] / len(images)
+
+            for point in images:
+                values[count] = value
+                points[count] = point
+                count += 1
+
+    values = values[:count]
+    points = points[:count]
+
+    idphi = -2j * np.pi / N
+
+    def transform(*point):
+        return values.dot(np.exp(idphi * points.dot(point))).real / N
+
+    return np.vectorize(transform)
+
 def GMKG(N=30, corner_indices=False):
     """Generate path Gamma-M-K-Gamma through Brillouin zone."""
 
