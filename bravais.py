@@ -60,7 +60,7 @@ def images(k1, k2, nk):
 
     return points
 
-def interpolate(mesh, q1, q2, angle=30):
+def interpolate(mesh, q1, q2, angle=60):
     """Perform linear interpolation on triangular lattice."""
 
     nq1, nq2 = mesh.shape
@@ -70,7 +70,7 @@ def interpolate(mesh, q1, q2, angle=30):
     dq1 = q1 % 1
     dq2 = q2 % 1
 
-    if angle == 30:
+    if angle == 60:
         A = mesh[(q01 + 1) % nq1, q02]
         B = mesh[q01, (q02 + 1) % nq2]
 
@@ -81,7 +81,7 @@ def interpolate(mesh, q1, q2, angle=30):
             C = mesh[q01, q02]
             return dq1 * A + dq2 * B + (1 - dq1 - dq2) * C
 
-    elif angle == 60:
+    elif angle == 120:
         A = mesh[q01, q02]
         B = mesh[(q01 + 1) % nq1, (q02 + 1) % nq2]
 
