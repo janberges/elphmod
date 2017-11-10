@@ -60,37 +60,48 @@ def images(k1, k2, nk):
 
     return points
 
-def interpolate(mesh, q1, q2, angle=60):
+def linear_interpolation(data, angle=60):
     """Perform linear interpolation on triangular lattice."""
 
-    nq1, nq2 = mesh.shape
+    N, M = data.shape
 
-    q01 = int(q1 % nq1)
-    q02 = int(q2 % nq2)
-    dq1 = q1 % 1
-    dq2 = q2 % 1
+    def split(n, m):
+        dn = n % 1
+        dm = m % 1
+        n0 = int(n % N)
+        m0 = int(m % M)
+
+        return (n0, dn), (m0, dm)
 
     if angle == 60:
-        A = mesh[(q01 + 1) % nq1, q02]
-        B = mesh[q01, (q02 + 1) % nq2]
+        def interpolant(n, m):
+            (n0, dn), (m0, dm) = split(n, m)
 
-        if dq1 + dq2 > 1:
-            C = mesh[(q01 + 1) % nq1, (q02 + 1) % nq2]
-            return (1 - dq2) * A + (1 - dq1) * B + (dq1 + dq2 - 1) * C
-        else:
-            C = mesh[q01, q02]
-            return dq1 * A + dq2 * B + (1 - dq1 - dq2) * C
+            A = data[(n0 + 1) % N, m0]
+            B = data[n0, (m0 + 1) % M]
+
+            if dn + dm > 1:
+                C = data[(n0 + 1) % N, (m0 + 1) % M]
+                return (1 - dm) * A + (1 - dn) * B + (dn + dm - 1) * C
+            else:
+                C = data[n0, m0]
+                return dn * A + dm * B + (1 - dn - dm) * C
 
     elif angle == 120:
-        A = mesh[q01, q02]
-        B = mesh[(q01 + 1) % nq1, (q02 + 1) % nq2]
+        def interpolant(n, m):
+            (n0, dn), (m0, dm) = split(n, m)
 
-        if dq1 > dq2:
-            C = mesh[(q01 + 1) % nq1, q02]
-            return (1 - dq1) * A + dq2 * B + (dq1 - dq2) * C
-        else:
-            C = mesh[q01, (q02 + 1) % nq2]
-            return (1 - dq2) * A + dq1 * B + (dq2 - dq1) * C
+            A = data[n0, m0]
+            B = data[(n0 + 1) % N, (m0 + 1) % M]
+
+            if dn > dm:
+                C = data[(n0 + 1) % N, m0]
+                return (1 - dn) * A + dm * B + (dn - dm) * C
+            else:
+                C = data[n0, (m0 + 1) % M]
+                return (1 - dm) * A + dn * B + (dm - dn) * C
+
+    return np.vectorize(interpolant)
 
 def Fourier_interpolation(data, angle=60):
     """Perform Fourier interpolation on triangular or rectangular lattice."""
@@ -141,10 +152,10 @@ def Fourier_interpolation(data, angle=60):
 
     idphi = -2j * np.pi / N
 
-    def transform(*point):
+    def interpolant(*point):
         return values.dot(np.exp(idphi * points.dot(point))).real / N
 
-    return np.vectorize(transform)
+    return np.vectorize(interpolant)
 
 def GMKG(N=30, corner_indices=False):
     """Generate path Gamma-M-K-Gamma through Brillouin zone."""
