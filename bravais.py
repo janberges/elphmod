@@ -66,10 +66,10 @@ def linear_interpolation(data, angle=60):
     N, M = data.shape
 
     def split(n, m):
-        dn = n % 1
-        dm = m % 1
-        n0 = int(n % N)
-        m0 = int(m % M)
+        n0, dn = divmod(n, 1)
+        m0, dm = divmod(m, 1)
+        n0 = int(n0) % N
+        m0 = int(m0) % M
 
         return (n0, dn), (m0, dm)
 
