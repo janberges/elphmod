@@ -21,8 +21,8 @@ def read_flfrc(flfrc, asr=True):
         # read crystal structure:
 
         tmp = cells()
-        ntyp, nat, ibrav = map(int, tmp[:3])
-        celldim = map(float, tmp[3:])
+        ntyp, nat, ibrav = list(map(int, tmp[:3]))
+        celldim = list(map(float, tmp[3:]))
 
         if ibrav == 0:
             at = table(3)
@@ -56,7 +56,7 @@ def read_flfrc(flfrc, asr=True):
             tmp = cells()
 
             ityp[na] = int(tmp[1]) - 1
-            tau[na, :] = map(float, tmp[2:5])
+            tau[na, :] = list(map(float, tmp[2:5]))
 
         tau *= celldim[0]
 
@@ -241,7 +241,7 @@ def dispersion(comm, dynamical_matrix, nq, order=True, fix=True):
     N = nq ** 2
 
     q = np.linspace(0, 2 * np.pi, nq, endpoint=False)
-    q -= q[nq / 2]
+    q -= q[nq // 2]
     q = np.array(np.meshgrid(q, q)).T.reshape(N, 2)
 
     w = np.empty((nq, nq, bands))
@@ -277,7 +277,7 @@ def dispersion(comm, dynamical_matrix, nq, order=True, fix=True):
 
         phi = np.arctan2(qy, qx)
 
-        nat = bands / 3
+        nat = bands // 3
 
         for na in range(nat):
             for nu in range(bands):
@@ -320,8 +320,8 @@ def dispersion(comm, dynamical_matrix, nq, order=True, fix=True):
                 order[n] = order[n, ::-1]
 
         for axis in range(2):
-            w = np.roll(w, nq / 2, axis)
-            order = np.roll(order, nq / 2, axis)
+            w = np.roll(w, nq // 2, axis)
+            order = np.roll(order, nq // 2, axis)
 
         # fix band order, if it breaks hexagonal symmetry:
 

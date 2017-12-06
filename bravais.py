@@ -176,7 +176,7 @@ def GMKG(N=30, corner_indices=False):
         q1 = np.linspace(k1[0], k2[0], N, endpoint)
         q2 = np.linspace(k1[1], k2[1], N, endpoint)
 
-        return zip(q1, q2)
+        return list(zip(q1, q2))
 
     path = line(G, M, N1, False) \
          + line(M, K, N2, False) \

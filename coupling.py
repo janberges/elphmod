@@ -13,7 +13,7 @@ def read(filename):
             columns = line.split()
 
             q = tuple(map(int, columns[:2]))
-            elph[q] = map(float, columns[2:])
+            elph[q] = list(map(float, columns[2:]))
 
     return elph
 
@@ -58,5 +58,5 @@ def plot(elphmat, points=50):
         np.concatenate([
         np.concatenate(
             image[3 * n:3 * n + 3],
-        axis=1) for n in range(bands / 3)],
+        axis=1) for n in range(bands // 3)],
         axis=0)
