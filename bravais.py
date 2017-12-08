@@ -60,6 +60,54 @@ def images(k1, k2, nk):
 
     return points
 
+def symmetries(data, epsilon=0.0, unity=True):
+    """Find symmetries of data on Monkhorst-Pack mesh."""
+
+    nk = len(data)
+
+    def get_image(reflect, angle):
+        image = np.empty((nk, nk, 2), dtype=int)
+
+        for k1 in range(nk):
+            for k2 in range(nk):
+                K = rotate(k1 * u1 + k2 * u2, angle * deg)
+
+                if reflect:
+                    K[0] *= -1
+
+                K1 = int(round(np.dot(K, t1))) % nk
+                K2 = int(round(np.dot(K, t2))) % nk
+
+                if abs(data[k1, k2] - data[K1, K2]) > epsilon:
+                    return None
+
+                image[k1, k2] = (K1, K2)
+
+        return image
+
+    for reflect in False, True:
+        for angle in range(0, 360, 60):
+            if reflect or angle or unity:
+                image = get_image(reflect, angle)
+
+                if image is not None:
+                    yield (reflect, angle), image
+
+def complete(data):
+    """Complete data on Monkhorst-Pack mesh."""
+
+    irreducible = list(zip(*np.where(np.logical_not(np.isnan(data)))))
+
+    if len(irreducible) == data.size:
+        return
+
+    for symmetry, image in symmetries(data, unity=False):
+        for k in irreducible:
+            data[tuple(image[k])] = data[k]
+
+        if not np.isnan(data).any():
+            return
+
 def linear_interpolation(data, angle=60):
     """Perform linear interpolation on triangular lattice."""
 

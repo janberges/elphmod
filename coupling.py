@@ -3,6 +3,57 @@
 import bravais
 import numpy as np
 
+def get_q(filename):
+    """Get list of irreducible q points."""
+
+    with open(filename) as data:
+        return [list(map(float, line.split()[:2])) for line in data]
+
+def coupling(comm, prefix, nQ, nb, nk, completion=True):
+    """Read and complete electron-phonon matrix elements."""
+
+    sizes = np.empty(comm.size, dtype=int)
+
+    if comm.rank == 0:
+        sizes[:] = nQ // comm.size
+        sizes[:nQ % comm.size] += 1
+
+        Q = 1 + np.arange(nQ, dtype=int)
+    else:
+        Q = None
+
+    comm.Bcast(sizes)
+
+    elph = np.empty((nQ, nb, nk, nk))
+
+    my_elph = np.empty((sizes[comm.rank], nb, nk, nk))
+    my_elph[:, :, :, :] = np.nan
+
+    my_Q = np.empty(sizes[comm.rank], dtype=int)
+    comm.Scatterv((Q, sizes), my_Q)
+
+    for n, iq in enumerate(my_Q):
+        with open('%s-%s.elph' % (prefix, iq)) as data:
+            for line in data:
+                columns = line.split()
+
+                if columns[0].startswith('#'):
+                    continue
+
+                k1, k2, k3, wk, ibnd, jbnd, nu \
+                    = [int(i) - 1 for i in columns[:7]]
+
+                my_elph[n, nu, k1, k2] = float(columns[7])
+
+    if completion:
+        for n in range(sizes[comm.rank]):
+            for nu in range(nb):
+                bravais.complete(my_elph[n, nu])
+
+    comm.Allgatherv(my_elph, (elph, sizes * nb * nk * nk))
+
+    return elph
+
 def read(filename):
     """Read file with Fermi-surface averaged electron-phonon coupling."""
 
