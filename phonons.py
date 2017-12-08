@@ -185,6 +185,9 @@ def dynamical_matrix(comm, phid, amass, at, tau, eps=1e-7):
     comm.Allgatherv(cells[:n], (allcells, dims * 3))
     comm.Allgatherv(const[:n], (allconst, dims * 9))
 
+    # (see cdef _p_message message_vector in mpi4py/src/mpi4py/MPI/msgbuffer.pxi
+    # for possible formats of second argument 'recvbuf')
+
     # return function to calculate dynamical matrix for arbitrary q points:
 
     def calculate_dynamical_matrix(q1=0, q2=0, q3=0):
