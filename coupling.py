@@ -9,7 +9,7 @@ def get_q(filename):
     with open(filename) as data:
         return [list(map(float, line.split()[:2])) for line in data]
 
-def coupling(comm, prefix, nQ, nb, nk, completion=True):
+def coupling(comm, filename, nQ, nb, nk, completion=True):
     """Read and complete electron-phonon matrix elements."""
 
     sizes = np.empty(comm.size, dtype=int)
@@ -33,7 +33,7 @@ def coupling(comm, prefix, nQ, nb, nk, completion=True):
     comm.Scatterv((Q, sizes), my_Q)
 
     for n, iq in enumerate(my_Q):
-        with open('%s-%s.elph' % (prefix, iq)) as data:
+        with open(filename % iq) as data:
             for line in data:
                 columns = line.split()
 
