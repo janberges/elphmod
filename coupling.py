@@ -18,10 +18,6 @@ def coupling(comm, filename, nQ, nb, nk, completion=True):
         sizes[:] = nQ // comm.size
         sizes[:nQ % comm.size] += 1
 
-        Q = 1 + np.arange(nQ, dtype=int)
-    else:
-        Q = None
-
     comm.Bcast(sizes)
 
     elph = np.empty((nQ, nb, nk, nk))
@@ -30,7 +26,7 @@ def coupling(comm, filename, nQ, nb, nk, completion=True):
     my_elph[:, :, :, :] = np.nan
 
     my_Q = np.empty(sizes[comm.rank], dtype=int)
-    comm.Scatterv((Q, sizes), my_Q)
+    comm.Scatterv((np.arange(nQ, dtype=int) + 1, sizes), my_Q)
 
     for n, iq in enumerate(my_Q):
         with open(filename % iq) as data:
