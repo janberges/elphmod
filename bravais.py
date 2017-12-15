@@ -170,7 +170,7 @@ def Fourier_interpolation(data, angle=60, hr_file=None):
 
     i = np.arange(N)
 
-    transform = np.exp(2j * np.pi / N * np.outer(i, i)) / np.sqrt(N)
+    transform = np.exp(2j * np.pi / N * np.outer(i, i)) / N
 
     data = transform.dot(data).dot(transform)
 
@@ -220,14 +220,14 @@ def Fourier_interpolation(data, angle=60, hr_file=None):
 
             for i in range(count):
                 hr.write(form % (points[i, 0], points[i, 1], 0, 1, 1,
-                    values[i].real / N, values[i].imag / N))
+                    values[i].real, values[i].imag))
 
     values /= counts
 
     idphi = -2j * np.pi / N
 
     def interpolant(*point):
-        return values.dot(np.exp(idphi * points.dot(point))).real / N
+        return values.dot(np.exp(idphi * points.dot(point))).real
 
     return np.vectorize(interpolant)
 
