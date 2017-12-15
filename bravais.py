@@ -162,6 +162,10 @@ def Fourier_interpolation(data, angle=60, hr_file=None):
         120: lambda n, m: n * n + m * m - n * m,
         }
 
+    # For 60 or 120 deg. (triangular lattice) this yields the Loeschian numbers.
+    # Non-equivalent lattice sites may have the same distance from the origin!
+    # (E.g., there are non-equivalent 20th neighbors in a triangular lattice)
+
     angle = 180 - angle # real to reciprocal lattice or vice versa
 
     N, N = data.shape
