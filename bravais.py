@@ -202,6 +202,8 @@ def Fourier_interpolation(data, angle=60, hr_file=None):
     if hr_file is not None:
         import time
 
+        order = np.lexsort((points[:,1], points[:,0]))
+
         with open(hr_file, 'w') as hr:
             hr.write(time.strftime(' written on %d%b%Y at %H:%M:%S\n'))
 
@@ -210,15 +212,15 @@ def Fourier_interpolation(data, angle=60, hr_file=None):
 
             columns = 15
 
-            for offset in range(0, count, columns):
-                for n in counts[offset:offset + columns]:
-                    hr.write('%5d' % n)
+            for n, i in enumerate(order, 1):
+                hr.write('%5d' % counts[i])
 
-                hr.write('\n')
+                if not n % columns or n == count:
+                    hr.write('\n')
 
             form = '%5d' * 5 + '%12.6f' * 2 + '\n'
 
-            for i in range(count):
+            for i in order:
                 hr.write(form % (points[i, 0], points[i, 1], 0, 1, 1,
                     values[i].real, values[i].imag))
 
