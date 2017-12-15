@@ -151,7 +151,7 @@ def linear_interpolation(data, angle=60):
 
     return np.vectorize(interpolant)
 
-def Fourier_interpolation(data, angle=60):
+def Fourier_interpolation(data, angle=60, hr_file=None):
     """Perform Fourier interpolation on triangular or rectangular lattice."""
 
     # squared distance from origin:
@@ -178,6 +178,7 @@ def Fourier_interpolation(data, angle=60):
 
     values = np.empty((N * N * 4), dtype=complex)
     points = np.empty((N * N * 4, 2), dtype=int)
+    counts = np.empty((N * N * 4), dtype=int)
 
     count = 0
     for n in range(N):
@@ -188,15 +189,40 @@ def Fourier_interpolation(data, angle=60):
             images = [image for image, distance in zip(images, distances)
                 if distance == minimum]
 
-            value = data[n, m] / len(images)
-
             for point in images:
-                values[count] = value
+                values[count] = data[n, m]
                 points[count] = point
+                counts[count] = len(images)
                 count += 1
 
     values = values[:count]
     points = points[:count]
+    counts = counts[:count]
+
+    if hr_file is not None:
+        import time
+
+        with open(hr_file, 'w') as hr:
+            hr.write(time.strftime(' written on %d%b%Y at %H:%M:%S\n'))
+
+            hr.write('%12d\n' % 1)
+            hr.write('%12d\n' % count)
+
+            columns = 15
+
+            for offset in range(0, count, columns):
+                for n in counts[offset:offset + columns]:
+                    hr.write('%5d' % n)
+
+                hr.write('\n')
+
+            form = '%5d' * 5 + '%12.6f' * 2 + '\n'
+
+            for i in range(count):
+                hr.write(form % (points[i, 0], points[i, 1], 0, 1, 1,
+                    values[i].real / N, values[i].imag / N))
+
+    values /= counts
 
     idphi = -2j * np.pi / N
 
