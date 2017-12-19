@@ -46,11 +46,11 @@ def hamiltonian(hr):
     # return function to calculate hamiltonian for arbitrary k points:
 
     def calculate_hamiltonian(k1=0, k2=0, k3=0):
-        q = np.array([k1, k2, k3])
+        k = np.array([k1, k2, k3])
         H = np.zeros((num_wann, num_wann), dtype=complex)
 
         for R, C in zip(cells, const):
-            H += C * np.exp(1j * R.dot(q))
+            H += C * np.exp(1j * R.dot(k))
 
         return H
 
