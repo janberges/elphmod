@@ -296,14 +296,11 @@ def dispersion(comm, dynamical_matrix, nq, order=True, fix=True):
     comm.Gatherv(my_e, (e, sizes * bands ** 2))
 
     if comm.rank == 0:
-        N = nq ** 2
-
         # flatten arrays along winding path in q space:
 
-        for nu in range(bands):
-            for n in range(0, nq, 2):
-                e[n] = e[n, ::-1]
-                w[n] = w[n, ::-1]
+        for n in range(0, nq, 2):
+            w[n] = w[n, ::-1]
+            e[n] = e[n, ::-1]
 
         w = np.reshape(w, (N, bands))
         e = np.reshape(e, (N, bands, bands))
@@ -317,10 +314,9 @@ def dispersion(comm, dynamical_matrix, nq, order=True, fix=True):
         w = np.reshape(w, (nq, nq, bands))
         order = np.reshape(order, (nq, nq, bands))
 
-        for nu in range(bands):
-            for n in range(0, nq, 2):
-                w[n] = w[n, ::-1]
-                order[n] = order[n, ::-1]
+        for n in range(0, nq, 2):
+            w[n] = w[n, ::-1]
+            order[n] = order[n, ::-1]
 
         for axis in range(2):
             w = np.roll(w, nq // 2, axis)
