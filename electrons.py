@@ -61,6 +61,31 @@ def energies(hamiltonian):
 
     return scipy.linalg.eigvalsh(hamiltonian)
 
+def energies_and_states(hamiltonian):
+    """Calculate electronic energies and states."""
+
+    return scipy.linalg.eigh(hamiltonian)
+
+def band_order(eps, psi):
+    """Sort bands by similarity of eigenstates at neighboring k points."""
+
+    N, bands = eps.shape
+
+    order = np.empty((N, bands), dtype=int)
+
+    n0 = 0
+    order[n0] = range(bands)
+
+    for n in range(1, N):
+        for i in range(bands):
+            order[n, i] = max(range(bands), key=lambda j: np.absolute(
+                np.dot(psi[n0, :, order[n0, i]], psi[n, :, j].conj())))
+
+        if np.all(np.absolute(np.diff(eps[n])) > 1e-10): # no degeneracy?
+            n0 = n
+
+    return order
+
 def read_bands(filband):
     """Read bands from 'filband' just like Quantum ESRESSO's 'plotband.x'."""
 
