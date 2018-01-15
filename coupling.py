@@ -9,7 +9,7 @@ def get_q(filename):
     with open(filename) as data:
         return [list(map(float, line.split()[:2])) for line in data]
 
-def coupling(comm, filename, nQ, nb, nk, completion=True):
+def coupling(comm, filename, nQ, nb, nk, band=None, completion=True):
     """Read and complete electron-phonon matrix elements."""
 
     sizes = np.empty(comm.size, dtype=int)
@@ -39,7 +39,8 @@ def coupling(comm, filename, nQ, nb, nk, completion=True):
                 k1, k2, k3, wk, ibnd, jbnd, nu \
                     = [int(i) - 1 for i in columns[:7]]
 
-                my_elph[n, nu, k1, k2] = float(columns[7])
+                if band is None or band == ibnd == jbnd:
+                    my_elph[n, nu, k1, k2] = float(columns[7])
 
     if completion:
         for n in range(sizes[comm.rank]):
