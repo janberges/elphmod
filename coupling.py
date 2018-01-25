@@ -9,7 +9,7 @@ def get_q(filename):
     with open(filename) as data:
         return [list(map(float, line.split()[:2])) for line in data]
 
-def coupling(comm, filename, nQ, nb, nk, band=None, completion=True):
+def coupling(comm, filename, nQ, nb, nk, bands, completion=True, squeeze=False):
     """Read and complete electron-phonon matrix elements."""
 
     sizes = np.empty(comm.size, dtype=int)
@@ -20,10 +20,10 @@ def coupling(comm, filename, nQ, nb, nk, band=None, completion=True):
 
     comm.Bcast(sizes)
 
-    elph = np.empty((nQ, nb, nk, nk))
+    elph = np.empty((nQ, nb, bands, bands, nk, nk))
 
-    my_elph = np.empty((sizes[comm.rank], nb, nk, nk))
-    my_elph[:, :, :, :] = np.nan
+    my_elph = np.empty((sizes[comm.rank], nb, bands, bands, nk, nk))
+    my_elph[:] = np.nan
 
     my_Q = np.empty(sizes[comm.rank], dtype=int)
     comm.Scatterv((np.arange(nQ, dtype=int) + 1, sizes), my_Q)
@@ -39,17 +39,18 @@ def coupling(comm, filename, nQ, nb, nk, band=None, completion=True):
                 k1, k2, k3, wk, ibnd, jbnd, nu \
                     = [int(i) - 1 for i in columns[:7]]
 
-                if band is None or band == ibnd == jbnd:
-                    my_elph[n, nu, k1, k2] = float(columns[7])
+                my_elph[n, nu, ibnd, jbnd, k1, k2] = float(columns[7])
 
     if completion:
         for n in range(sizes[comm.rank]):
             for nu in range(nb):
-                bravais.complete(my_elph[n, nu])
+                for ibnd in range(bands):
+                    for jbnd in range(bands):
+                        bravais.complete(my_elph[n, nu, ibnd, jbnd])
 
-    comm.Allgatherv(my_elph, (elph, sizes * nb * nk * nk))
+    comm.Allgatherv(my_elph, (elph, sizes * nb * bands * bands * nk * nk))
 
-    return elph
+    return elph[:, :, 0, 0, :, :] if bands == 1 and squeeze else elph
 
 def read(filename):
     """Read file with Fermi-surface averaged electron-phonon coupling."""
