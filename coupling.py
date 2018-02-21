@@ -91,14 +91,14 @@ def plot(elphmat, points=50):
     nqy = int(round(points * qymax))
 
     qx = np.linspace(0.0, qxmax, nqx, endpoint=False)
-    qy = np.linspace(0.0, qymax, nqy, endpoint=False)
+    qy = np.linspace(0.0, qymax, nqy, endpoint=False)[::-1]
 
     image = np.empty((bands, nqy, nqx))
 
     for nu in range(bands):
         elphfun = bravais.Fourier_interpolation(elphmat[:, :, nu])
 
-        for i in reversed(range(len(qy))):
+        for i in range(len(qy)):
             for j in range(len(qx)):
                 q1 = qx[j] * bravais.T1[0] + qy[i] * bravais.T1[1]
                 q2 = qx[j] * bravais.T2[0] + qy[i] * bravais.T2[1]
