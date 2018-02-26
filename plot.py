@@ -73,17 +73,16 @@ def save(filename, data):
 
     toimage(data, cmin=0, cmax=255).save(filename)
 
-def plot_pie_with_TeX(filename, image,
+def plot_pie_with_TeX(filename, data,
     title = 'Title',
     labels = range(1, 7),
+
+    points = 500,
 
     size           = 4.0, # distance between K and -K in plot (cm)
     margin         = 0.5, # lower margin (cm)
     title_spacing  = 0.2, # cm
     colorbar_width = 0.5, # cm
-
-    lower = -2.0,
-    upper = +2.0,
 
     ticks = np.linspace(-2.0, +2.0, 5),
     unit = 'Unit',
@@ -93,6 +92,11 @@ def plot_pie_with_TeX(filename, image,
     ):
     """Create 'pie diagram' of different data on Brillouin zone."""
 
+    image = filename.rsplit('.', 1)[0] + '.png'
+    save(image, color(toBZ(data, points=points)))
+
+    lower = data.min()
+    upper = data.max()
 
     with open(filename, 'w') as TeX:
         # write LaTeX header:

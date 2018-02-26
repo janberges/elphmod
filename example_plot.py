@@ -35,9 +35,7 @@ if comm.rank == 0:
     os.system('mkdir -p example_plot')
     os.chdir('example_plot')
 
-    plot.save('BZ.png', plot.color(plot.toBZ(w[:, :, 0], points=10 * nq)))
-
-    plot.plot_pie_with_TeX('BZ.tex', image='BZ.png')
+    plot.plot_pie_with_TeX('BZ.tex', w[:, :, 0])
 
     os.system('pdflatex BZ > /dev/null')
     os.chdir('..')
