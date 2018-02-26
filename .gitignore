@@ -2,3 +2,5 @@
 !.gitignore
 
 *.pyc
+
+example_plot
