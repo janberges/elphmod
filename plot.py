@@ -84,8 +84,9 @@ def plot_pie_with_TeX(filename, data,
     title_spacing  = 0.2, # cm
     colorbar_width = 0.5, # cm
 
-    ticks = np.linspace(-2.0, +2.0, 5),
-    unit = 'Unit',
+    ticks = [],
+    form  = lambda x: '$%g$' % x,
+    unit  = 'Unit',
 
     positive = (241, 101, 34),
     negative = (54, 99, 173),
@@ -152,8 +153,8 @@ def plot_pie_with_TeX(filename, data,
         y_zero = -size * lower / (upper - lower)
 
         positions = [size * (tick - lower) / (upper - lower) for tick in ticks]
-        tick_list = ','.join('%.3f/%+g' % pair
-            for pair in zip(positions, ticks))
+        tick_list = ','.join('%.3f/{%s}' % (position, form(tick))
+            for position, tick in zip(positions, ticks))
 
         TeX.write(r'''
     \begin{{tikzpicture}}
@@ -165,7 +166,7 @@ def plot_pie_with_TeX(filename, data,
         \draw [gray] (0, 0) rectangle ({colorbar_width}, {size});
         \node [above] at ({x_unit}, {size}) {{{unit}}};
         \foreach \position/\label in {{ {tick_list} }}
-            \node [right] at ({colorbar_width}, \position) {{$\label$}};
+            \node [right] at ({colorbar_width}, \position) {{\label}};
     \end{{tikzpicture}}%
 \end{{document}}'''.format(**locals()))
 

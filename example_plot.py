@@ -27,7 +27,7 @@ if comm.rank == 0:
 
 nq = 48
 
-w = phonons.dispersion(comm, D, nq, order=False) * Ry2eV
+w = phonons.dispersion(comm, D, nq, order=False) * Ry2eV * 1e3
 
 if comm.rank == 0:
     print("Plot dispersion on Brillouin zone..")
@@ -35,7 +35,9 @@ if comm.rank == 0:
     os.system('mkdir -p example_plot')
     os.chdir('example_plot')
 
-    plot.plot_pie_with_TeX('BZ.tex', [w[:, :, nu] for nu in range(6)])
+    plot.plot_pie_with_TeX('BZ.tex', [w[:, :, nu] for nu in range(6)],
+        ticks=range(-10, 30, 10), title=r'Phonon frequency', unit='meV',
+        form=lambda x: r'$%g\,\mathrm{i}$' % abs(x) if x < 0 else '$%g$' % x)
 
     os.system('pdflatex BZ > /dev/null')
     os.chdir('..')
