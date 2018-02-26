@@ -101,7 +101,7 @@ def plot_pie_with_TeX(filename, data,
         image += toBZ(datum, points=points, a=angle - 30, b=angle + 30)
 
     imagename = filename.rsplit('.', 1)[0] + '.png'
-    save(imagename, color(image))
+    save(imagename, color(image, positive=positive, negative=negative))
 
     lower = min(datum.min() for datum in data)
     upper = max(datum.max() for datum in data)
@@ -116,7 +116,7 @@ def plot_pie_with_TeX(filename, data,
 
 \usepackage[paperwidth={x_dim}cm, paperheight={y_dim}cm, margin=0cm]{{geometry}}
 \usepackage[math]{{iwona}}
-\usepackage{{tikz}}
+\usepackage{{tikz, bm}}
 
 \definecolor{{positive}}{{RGB}}{{{positive[0]}, {positive[1]}, {positive[2]}}}
 \definecolor{{negative}}{{RGB}}{{{negative[0]}, {negative[1]}, {negative[2]}}}
