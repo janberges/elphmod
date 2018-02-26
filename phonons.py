@@ -244,7 +244,10 @@ def dispersion(comm, dynamical_matrix, nq, order=True, fix=True):
     N = nq ** 2
 
     q = np.linspace(0, 2 * np.pi, nq, endpoint=False)
-    q -= q[nq // 2]
+
+    if order:
+        q -= q[nq // 2]
+
     q = np.array(np.meshgrid(q, q)).T.reshape(N, 2)
 
     w = np.empty((nq, nq, bands))
