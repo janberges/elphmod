@@ -92,11 +92,18 @@ def plot_pie_with_TeX(filename, data,
     ):
     """Create 'pie diagram' of different data on Brillouin zone."""
 
-    image = filename.rsplit('.', 1)[0] + '.png'
-    save(image, color(toBZ(data, points=points)))
+    angles = range(0, 360, 60)
 
-    lower = data.min()
-    upper = data.max()
+    image = 0
+
+    for datum, angle in zip(data, angles):
+        image += toBZ(datum, points=points, a=angle - 30, b=angle + 30)
+
+    imagename = filename.rsplit('.', 1)[0] + '.png'
+    save(imagename, color(image))
+
+    lower = min(datum.min() for datum in data)
+    upper = max(datum.max() for datum in data)
 
     with open(filename, 'w') as TeX:
         # write LaTeX header:
@@ -125,14 +132,13 @@ def plot_pie_with_TeX(filename, data,
         y_title = R + title_spacing
         y_top   = R + title_spacing + margin
 
-        angles = range(0, 360, 60)
         label_list = ','.join('%d/%s' % pair for pair in zip(angles, labels))
 
         TeX.write(r'''
     \begin{{tikzpicture}}[line join=round, line cap=round]
         \useasboundingbox (-{R}, -{R}) rectangle ({R}, {y_top});
         \node at (0, {y_title}) {{\large \bf \color{{negative}} {title}}};
-        \node {{\includegraphics[height={size}cm]{{{image}}}}};
+        \node {{\includegraphics[height={size}cm]{{{imagename}}}}};
         \foreach \angle in {{ 30, 90, ..., 330 }}
             \draw [gray] (0, 0) -- (\angle:{r}cm) -- (\angle+60:{r}cm);
         \foreach \angle/\label in {{ {label_list} }}

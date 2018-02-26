@@ -35,7 +35,7 @@ if comm.rank == 0:
     os.system('mkdir -p example_plot')
     os.chdir('example_plot')
 
-    plot.plot_pie_with_TeX('BZ.tex', w[:, :, 0])
+    plot.plot_pie_with_TeX('BZ.tex', [w[:, :, nu] for nu in range(6)])
 
     os.system('pdflatex BZ > /dev/null')
     os.chdir('..')
