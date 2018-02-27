@@ -77,7 +77,7 @@ def plot_pie_with_TeX(filename, data,
     title = 'Title',
     labels = range(1, 7),
 
-    points = 500,
+    points = 1000,
 
     size           = 4.0, # distance between K and -K in plot (cm)
     margin         = 0.5, # lower margin (cm)
