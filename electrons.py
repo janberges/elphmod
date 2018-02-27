@@ -106,3 +106,12 @@ def read_bands(filband):
                     = list(map(float, next(data).split()))
 
     return bands
+
+def read_Fermi_level(pw_scf_out):
+    """Read Fermi level from output of self-consistent PW run."""
+
+    with open(pw_scf_out) as data:
+        for line in data:
+            if 'Fermi energy' in line:
+                eF = float(line.split()[-2])
+    return eF
