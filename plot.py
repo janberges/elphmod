@@ -75,6 +75,9 @@ def save(filename, data):
 
 def label_pie_with_TeX(filename,
     imagename = None,
+
+    width = 7.0,
+
     title = 'Title',
     labels = range(1, 7),
 
@@ -95,15 +98,41 @@ def label_pie_with_TeX(filename,
     ):
     """Label 'pie diagram' of different data on Brillouin zone."""
 
+    r = 0.5 * size
+    M = 0.5 * np.sqrt(3) * r
+    R = r + margin
+
+    x_right = R + 2
+    y_title = R + title_spacing
+    y_top   = R + title_spacing + margin
+
+    x_unit = R + 0.5 * colorbar_width
+    x_ticks = R + colorbar_width
+    y_zero = -size * lower / (upper - lower) - r
+
+    label_list = ','.join('%d/%s' % pair
+        for pair in zip(range(0, 360, 60), labels))
+
+    positions = [size * (tick - lower) / (upper - lower) - r
+        for tick in ticks]
+
+    tick_list = ','.join('%.3f/{%s}' % (position, form(tick))
+        for position, tick in zip(positions, ticks))
+
+    x_dim = R + x_right
+    y_dim = R + y_top
+
+    height = width * y_dim / x_dim
+
+    scale = 1 / x_dim
+
     with open(filename, 'w') as TeX:
         # write LaTeX header:
 
-        x_dim = size + 2 * margin + 2.0
-        y_dim = size + 3 * margin + title_spacing
-
         TeX.write(r'''\documentclass{{article}}
 
-\usepackage[paperwidth={x_dim}cm, paperheight={y_dim}cm, margin=0cm]{{geometry}}
+\usepackage[paperwidth={width}cm, paperheight={height}cm, margin=0cm]
+    {{geometry}}
 \usepackage[math]{{iwona}}
 \usepackage{{tikz, bm}}
 
@@ -112,22 +141,14 @@ def label_pie_with_TeX(filename,
 
 \setlength\parindent{{0pt}}
 
-\begin{{document}}'''.format(**locals()))
+\begin{{document}}
+    \newlength\unit
+    \setlength\unit{{{scale}\linewidth}}'''.format(**locals()))
 
         # add frames and labels to Brillouin-zone plot:
 
-        r = 0.5 * size
-        R = r + margin
-
-        x_right = R + 2
-        y_title = R + title_spacing
-        y_top   = R + title_spacing + margin
-
-        label_list = ','.join('%d/%s' % pair
-            for pair in zip(range(0, 360, 60), labels))
-
         TeX.write(r'''
-    \begin{{tikzpicture}}
+    \begin{{tikzpicture}}[x=\unit, y=\unit]
         \useasboundingbox (-{R}, -{R}) rectangle ({x_right}, {y_top});
         \node at (0, {y_title}) {{\large \bf \color{{negative}}
             {title}}};'''.format(**locals()))
@@ -140,23 +161,12 @@ def label_pie_with_TeX(filename,
         TeX.write(r'''
         \foreach \angle in {{ 30, 90, ..., 330 }}
             \draw [gray, line join=round, line cap=round]
-                (0, 0) -- (\angle:{r}cm) -- (\angle+60:{r}cm);
+                (0, 0) -- (\angle:{r}) -- (\angle+60:{r});
         \foreach \angle/\label in {{ {label_list} }}
-            \node at (\angle:2cm) [rotate=\angle-90]
+            \node at (\angle:{M}) [above, rotate=\angle-90]
                 {{\label}};'''.format(**locals()))
 
         # print colorbar:
-
-        x_unit = R + 0.5 * colorbar_width
-        x_ticks = R + colorbar_width
-        y_top = size + title_spacing + 2 * margin
-        y_zero = -size * lower / (upper - lower) - r
-
-        positions = [size * (tick - lower) / (upper - lower) - r
-            for tick in ticks]
-
-        tick_list = ','.join('%.3f/{%s}' % (position, form(tick))
-            for position, tick in zip(positions, ticks))
 
         TeX.write(r'''
         \shade [bottom color=negative, top color=white]
