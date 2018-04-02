@@ -124,8 +124,9 @@ def label_pie_with_TeX(filename,
 
     y_zero = transform(0)
 
-    tick_list = ','.join('%g/{%s}' % (transform(_), form(_)) for _ in ticks)
-    label_list = ','.join('%d/%s' % _ for _ in zip(range(0, 360, 60), labels))
+    sep = ',%\n    '
+    ticks = sep.join('%g/{%s}' % (transform(_), form(_)) for _ in ticks)
+    labels = sep.join('%d/%s' % _ for _ in zip(range(0, 360, 60), labels))
 
     x_dim = radius + x_max
     y_dim = radius + y_max
@@ -154,7 +155,7 @@ def label_pie_with_TeX(filename,
 \setlength\parindent{{0pt}}
 
 \begin{{document}}
-    \input{{{filename}.in}}
+  \input{{{filename}.in}}
 \end{{document}}
 '''.format(**X))
 
@@ -162,51 +163,53 @@ def label_pie_with_TeX(filename,
         # write ebmedded LaTeX code:
 
         TeX.write(r'''\begingroup%
-    \newlength\unit%
-    \setlength\unit{{{scale}\linewidth}}%'''.format(**X))
+\newlength\unit%
+\setlength\unit{{{scale}\linewidth}}%'''.format(**X))
 
         # add frames and labels to Brillouin-zone plot:
 
         TeX.write(r'''
-    \begin{{tikzpicture}}[x=\unit, y=\unit]
-        \useasboundingbox
-            (-{radius}, -{radius}) rectangle ({x_max}, {y_max});'''.format(**X))
+\begin{{tikzpicture}}[x=\unit, y=\unit]
+  \useasboundingbox
+    (-{radius}, -{radius}) rectangle ({x_max}, {y_max});'''.format(**X))
 
         if title is not None:
             TeX.write(r'''
-        \node at (0, {y_title}) {{\large \bf \color{{negative}}
-            {title}}};'''.format(**X))
+  \node at (0, {y_title}) {{\large \bf \color{{negative}}
+    {title}}};'''.format(**X))
 
         if label is not None:
             TeX.write(r'''
-        \node [below right] at (-{radius}, {radius}) {{
-            {label}}};'''.format(**X))
+  \node [below right] at (-{radius}, {radius}) {{
+    {label}}};'''.format(**X))
 
         if imagename is not None:
             TeX.write(r'''
-        \node {{\includegraphics[height={height}\unit]
-            {{{imagename}}}}};'''.format(height=2 * GK, **X))
+  \node {{\includegraphics[height={height}\unit]
+    {{{imagename}}}}};'''.format(height=2 * GK, **X))
 
         TeX.write(r'''
-        \foreach \angle in {{ 30, 90, ..., 330 }}
-            \draw [gray, line join=round, line cap=round]
-                (0, 0) -- (\angle:{GK}) -- (\angle+60:{GK});
-        \foreach \angle/\label in {{ {label_list} }}
-            \node at (\angle:{GM}) [above, rotate=\angle-90]
-                {{\label}};'''.format(**X))
+  \foreach \angle in {{ 30, 90, ..., 330 }}
+    \draw [gray, line join=round, line cap=round]
+      (0, 0) -- (\angle:{GK}) -- (\angle+60:{GK});
+  \foreach \angle/\label in {{
+    {labels}}}
+    \node [above, rotate=\angle-90] at (\angle:{GM}) {{\label}};'''.format(**X))
 
         # print colorbar:
 
         TeX.write(r'''
-        \shade [bottom color=negative, top color=white]
-            ({radius}, -{GK}) rectangle ({x_ticks}, {y_zero});
-        \shade [bottom color=white, top color=positive]
-            ({radius}, {y_zero}) rectangle ({x_ticks}, {GK});
-        \draw [gray] ({radius}, -{GK}) rectangle ({x_ticks}, {GK});
-        \node [above] at ({x_unit}, {GK}) {{{unit}}};
-        \foreach \position/\label in {{ {tick_list} }}
-            \node [right] at ({x_ticks}, \position) {{\label}};
-    \end{{tikzpicture}}%
+  \shade [bottom color=negative, top color=white]
+    ({radius}, -{GK}) rectangle ({x_ticks}, {y_zero});
+  \shade [bottom color=white, top color=positive]
+    ({radius}, {y_zero}) rectangle ({x_ticks}, {GK});
+  \draw [gray]
+    ({radius}, -{GK}) rectangle ({x_ticks}, {GK});
+  \node [above] at ({x_unit}, {GK}) {{{unit}}};
+  \foreach \position/\label in {{
+    {ticks}}}
+    \node [right] at ({x_ticks}, \position) {{\label}};
+\end{{tikzpicture}}%
 \endgroup%
 '''.format(**X))
 
