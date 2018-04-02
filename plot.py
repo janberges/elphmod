@@ -140,7 +140,7 @@ def label_pie_with_TeX(filename,
     X = locals()
 
     with open(filename, 'w') as TeX:
-        # write LaTeX header:
+        # write embedding LaTeX document:
 
         TeX.write(r'''\documentclass{{article}}
 
@@ -154,8 +154,16 @@ def label_pie_with_TeX(filename,
 \setlength\parindent{{0pt}}
 
 \begin{{document}}
-    \newlength\unit
-    \setlength\unit{{{scale}\linewidth}}'''.format(**X))
+    \input{{{filename}.in}}
+\end{{document}}
+'''.format(**X))
+
+    with open('%s.in' % filename, 'w') as TeX:
+        # write ebmedded LaTeX code:
+
+        TeX.write(r'''\begingroup%
+    \newlength\unit%
+    \setlength\unit{{{scale}\linewidth}}%'''.format(**X))
 
         # add frames and labels to Brillouin-zone plot:
 
@@ -199,7 +207,8 @@ def label_pie_with_TeX(filename,
         \foreach \position/\label in {{ {tick_list} }}
             \node [right] at ({x_ticks}, \position) {{\label}};
     \end{{tikzpicture}}%
-\end{{document}}'''.format(**X))
+\endgroup%
+'''.format(**X))
 
 def plot_pie_with_TeX(filename, data,
     points = 1000,
