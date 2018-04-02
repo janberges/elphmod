@@ -128,13 +128,13 @@ def label_pie_with_TeX(filename,
         TeX.write(r'''
     \begin{{tikzpicture}}[line join=round, line cap=round]
         \useasboundingbox (-{R}, -{R}) rectangle ({R}, {y_top});
-        \node at (0, {y_title}) {{\large \bf \color{{negative}} {title}}};'''
-        .format(**locals()))
+        \node at (0, {y_title}) {{\large \bf \color{{negative}}
+            {title}}};'''.format(**locals()))
 
         if imagename is not None:
             TeX.write(r'''
-        \node {{\includegraphics[height={}cm]{{{}}}}};'''.format(
-            size, imagename))
+        \node {{\includegraphics[height={}cm]
+            {{{}}}}};'''.format(size, imagename))
 
         TeX.write(r'''
         \foreach \angle in {{ 30, 90, ..., 330 }}
