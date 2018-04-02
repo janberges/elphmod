@@ -176,7 +176,7 @@ def Fourier_interpolation(data, angle=60, hr_file=None):
 
     transform = np.exp(2j * np.pi / N * np.outer(i, i)) / N
 
-    data = np.dot(np.dot(transform, data), transform))
+    data = np.dot(np.dot(transform, data), transform)
 
     # construct smooth inverse transform (formally tight-binding model):
 
