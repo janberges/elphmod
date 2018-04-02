@@ -73,7 +73,8 @@ def save(filename, data):
 
     toimage(data, cmin=0, cmax=255).save(filename)
 
-def label_pie_with_TeX(filename, imagename,
+def label_pie_with_TeX(filename,
+    imagename = None,
     title = 'Title',
     labels = range(1, 7),
 
@@ -82,10 +83,10 @@ def label_pie_with_TeX(filename, imagename,
     title_spacing  = 0.2, # cm
     colorbar_width = 0.5, # cm
 
-    upper = 1.0,
-    lower = 0.0,
+    upper = +1.0,
+    lower = -1.0,
 
-    ticks = [0.0, 0.5, 1.0],
+    ticks = [-1.0, 0.0, 1.0],
     form  = lambda x: '$%g$' % x,
     unit  = 'Unit',
 
@@ -127,8 +128,15 @@ def label_pie_with_TeX(filename, imagename,
         TeX.write(r'''
     \begin{{tikzpicture}}[line join=round, line cap=round]
         \useasboundingbox (-{R}, -{R}) rectangle ({R}, {y_top});
-        \node at (0, {y_title}) {{\large \bf \color{{negative}} {title}}};
-        \node {{\includegraphics[height={size}cm]{{{imagename}}}}};
+        \node at (0, {y_title}) {{\large \bf \color{{negative}} {title}}};'''
+        .format(**locals()))
+
+        if imagename is not None:
+            TeX.write(r'''
+        \node {{\includegraphics[height={}cm]{{{}}}}};'''.format(
+            size, imagename))
+
+        TeX.write(r'''
         \foreach \angle in {{ 30, 90, ..., 330 }}
             \draw [gray] (0, 0) -- (\angle:{r}cm) -- (\angle+60:{r}cm);
         \foreach \angle/\label in {{ {label_list} }}
@@ -178,3 +186,14 @@ def plot_pie_with_TeX(filename, data,
         positive = positive, lower = min(datum.min() for datum in data),
         negative = negative, upper = max(datum.max() for datum in data),
         **kwargs)
+
+if __name__ == '__main__':
+    import os
+
+    os.system('mkdir -p plot_test')
+    os.chdir('plot_test')
+
+    label_pie_with_TeX('pie_plot.tex')
+
+    os.system('pdflatex pie_plot')
+    os.chdir('..')
