@@ -81,7 +81,7 @@ def label_pie_with_TeX(filename,
     # dimensions in arbitrary units:
 
     width_L   = 5.0, # width of part left of colorbar (Brillouin zone)
-    width_R   = 1.5, # width of part right of colorbar (ticks)
+    width_R   = 1.0, # width of part right of colorbar (ticks)
     width_C   = 0.5, # width of colorbar
     spacing   = 0.5, # minimum spacing around Brillouin zone
     spacing_T = 0.7, # extra spacing for title on top
