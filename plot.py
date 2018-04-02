@@ -76,15 +76,18 @@ def save(filename, data):
 def label_pie_with_TeX(filename,
     imagename = None,
 
-    width = 7.0,
+    width = 7.0, # total width in cm
 
-    title = 'Title',
+    # dimensions in arbitrary units:
+
+    width_L   = 5.0, # width of part left of colorbar (Brillouin zone)
+    width_R   = 1.5, # width of part right of colorbar (ticks)
+    width_C   = 0.5, # width of colorbar
+    spacing   = 0.5, # minimum spacing around Brillouin zone
+    spacing_T = 0.7, # extra spacing for title on top
+
+    title = None,
     labels = range(1, 7),
-
-    size           = 4.0, # distance between K and -K in plot (cm)
-    margin         = 0.5, # lower margin (cm)
-    title_spacing  = 0.2, # cm
-    colorbar_width = 0.5, # cm
 
     upper = +1.0,
     lower = -1.0,
@@ -98,87 +101,99 @@ def label_pie_with_TeX(filename,
     ):
     """Label 'pie diagram' of different data on Brillouin zone."""
 
-    r = 0.5 * size
-    M = 0.5 * np.sqrt(3) * r
-    R = r + margin
+    radius = 0.5 * width_L
 
-    x_right = R + 2
-    y_title = R + title_spacing
-    y_top   = R + title_spacing + margin
+    GK = radius - spacing      # Gamma to K
+    GM = 0.5 * np.sqrt(3) * GK # Gamma to M
+    KK = 2 * GK                # -K to K
 
-    x_unit = R + 0.5 * colorbar_width
-    x_ticks = R + colorbar_width
-    y_zero = -size * lower / (upper - lower) - r
+    x_max = radius + width_C + width_R
+    y_max = radius
 
-    label_list = ','.join('%d/%s' % pair
-        for pair in zip(range(0, 360, 60), labels))
+    if title is not None:
+        y_max += spacing_T
 
-    positions = [size * (tick - lower) / (upper - lower) - r
-        for tick in ticks]
+        y_title = radius + 0.4 * spacing_T
 
-    tick_list = ','.join('%.3f/{%s}' % (position, form(tick))
-        for position, tick in zip(positions, ticks))
+    x_unit  = radius + width_C * 0.5
+    x_ticks = radius + width_C
 
-    x_dim = R + x_right
-    y_dim = R + y_top
+    def transform(y):
+        return GK * (2 * (y - lower) / (upper - lower) - 1)
+
+    y_zero = transform(0)
+
+    tick_list = ','.join('%g/{%s}' % (transform(_), form(_)) for _ in ticks)
+    label_list = ','.join('%d/%s' % _ for _ in zip(range(0, 360, 60), labels))
+
+    x_dim = radius + x_max
+    y_dim = radius + y_max
 
     height = width * y_dim / x_dim
 
     scale = 1 / x_dim
+
+    positive = ', '.join(map(str, positive))
+    negative = ', '.join(map(str, negative))
+
+    X = locals()
 
     with open(filename, 'w') as TeX:
         # write LaTeX header:
 
         TeX.write(r'''\documentclass{{article}}
 
-\usepackage[paperwidth={width}cm, paperheight={height}cm, margin=0cm]
-    {{geometry}}
+\usepackage[paperwidth={width}cm, paperheight={height}cm, margin=0cm]{{geometry}}
 \usepackage[math]{{iwona}}
-\usepackage{{tikz, bm}}
+\usepackage{{tikz}}
 
-\definecolor{{positive}}{{RGB}}{{{positive[0]}, {positive[1]}, {positive[2]}}}
-\definecolor{{negative}}{{RGB}}{{{negative[0]}, {negative[1]}, {negative[2]}}}
+\definecolor{{positive}}{{RGB}}{{{positive}}}
+\definecolor{{negative}}{{RGB}}{{{negative}}}
 
 \setlength\parindent{{0pt}}
 
 \begin{{document}}
     \newlength\unit
-    \setlength\unit{{{scale}\linewidth}}'''.format(**locals()))
+    \setlength\unit{{{scale}\linewidth}}'''.format(**X))
 
         # add frames and labels to Brillouin-zone plot:
 
         TeX.write(r'''
     \begin{{tikzpicture}}[x=\unit, y=\unit]
-        \useasboundingbox (-{R}, -{R}) rectangle ({x_right}, {y_top});
+        \useasboundingbox
+            (-{radius}, -{radius}) rectangle ({x_max}, {y_max});'''.format(**X))
+
+        if title is not None:
+            TeX.write(r'''
         \node at (0, {y_title}) {{\large \bf \color{{negative}}
-            {title}}};'''.format(**locals()))
+            {title}}};'''.format(**X))
 
         if imagename is not None:
             TeX.write(r'''
-        \node {{\includegraphics[height={}cm]
-            {{{}}}}};'''.format(size, imagename))
+        \node {{\includegraphics[height={height}\unit]
+            {{{imagename}}}}};'''.format(height=2 * GK, **X))
 
         TeX.write(r'''
         \foreach \angle in {{ 30, 90, ..., 330 }}
             \draw [gray, line join=round, line cap=round]
-                (0, 0) -- (\angle:{r}) -- (\angle+60:{r});
+                (0, 0) -- (\angle:{GK}) -- (\angle+60:{GK});
         \foreach \angle/\label in {{ {label_list} }}
-            \node at (\angle:{M}) [above, rotate=\angle-90]
-                {{\label}};'''.format(**locals()))
+            \node at (\angle:{GM}) [above, rotate=\angle-90]
+                {{\label}};'''.format(**X))
 
         # print colorbar:
 
         TeX.write(r'''
         \shade [bottom color=negative, top color=white]
-            ({R}, -{r}) rectangle ({x_ticks}, {y_zero});
+            ({radius}, -{GK}) rectangle ({x_ticks}, {y_zero});
         \shade [bottom color=white, top color=positive]
-            ({R}, {y_zero}) rectangle ({x_ticks}, {r});
-        \draw [gray] ({R}, -{r}) rectangle ({x_ticks}, {r});
-        \node [above] at ({x_unit}, {r}) {{{unit}}};
+            ({radius}, {y_zero}) rectangle ({x_ticks}, {GK});
+        \draw [gray] ({radius}, -{GK}) rectangle ({x_ticks}, {GK});
+        \node [above] at ({x_unit}, {GK}) {{{unit}}};
         \foreach \position/\label in {{ {tick_list} }}
             \node [right] at ({x_ticks}, \position) {{\label}};
     \end{{tikzpicture}}%
-\end{{document}}'''.format(**locals()))
+\end{{document}}'''.format(**X))
 
 def plot_pie_with_TeX(filename, data,
     points = 1000,
