@@ -87,6 +87,7 @@ def label_pie_with_TeX(filename,
     spacing_T = 0.7, # extra spacing for title on top
 
     title = None,
+    label = None, # e.g. '(a)'
     labels = range(1, 7),
 
     upper = +1.0,
@@ -167,6 +168,11 @@ def label_pie_with_TeX(filename,
             TeX.write(r'''
         \node at (0, {y_title}) {{\large \bf \color{{negative}}
             {title}}};'''.format(**X))
+
+        if label is not None:
+            TeX.write(r'''
+        \node [below right] at (-{radius}, {radius}) {{
+            {label}}};'''.format(**X))
 
         if imagename is not None:
             TeX.write(r'''
