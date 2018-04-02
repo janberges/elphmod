@@ -73,38 +73,26 @@ def save(filename, data):
 
     toimage(data, cmin=0, cmax=255).save(filename)
 
-def plot_pie_with_TeX(filename, data,
+def label_pie_with_TeX(filename, imagename,
     title = 'Title',
     labels = range(1, 7),
-
-    points = 1000,
 
     size           = 4.0, # distance between K and -K in plot (cm)
     margin         = 0.5, # lower margin (cm)
     title_spacing  = 0.2, # cm
     colorbar_width = 0.5, # cm
 
-    ticks = [],
+    upper = 1.0,
+    lower = 0.0,
+
+    ticks = [0.0, 0.5, 1.0],
     form  = lambda x: '$%g$' % x,
     unit  = 'Unit',
 
     positive = (241, 101, 34),
     negative = (54, 99, 173),
     ):
-    """Create 'pie diagram' of different data on Brillouin zone."""
-
-    angles = range(0, 360, 60)
-
-    image = 0
-
-    for datum, angle in zip(data, angles):
-        image += toBZ(datum, points=points, a=angle - 30, b=angle + 30)
-
-    imagename = filename.rsplit('.', 1)[0] + '.png'
-    save(imagename, color(image, positive=positive, negative=negative))
-
-    lower = min(datum.min() for datum in data)
-    upper = max(datum.max() for datum in data)
+    """Label 'pie diagram' of different data on Brillouin zone."""
 
     with open(filename, 'w') as TeX:
         # write LaTeX header:
@@ -133,7 +121,8 @@ def plot_pie_with_TeX(filename, data,
         y_title = R + title_spacing
         y_top   = R + title_spacing + margin
 
-        label_list = ','.join('%d/%s' % pair for pair in zip(angles, labels))
+        label_list = ','.join('%d/%s' % pair
+            for pair in zip(range(0, 360, 60), labels))
 
         TeX.write(r'''
     \begin{{tikzpicture}}[line join=round, line cap=round]
@@ -170,3 +159,22 @@ def plot_pie_with_TeX(filename, data,
     \end{{tikzpicture}}%
 \end{{document}}'''.format(**locals()))
 
+def plot_pie_with_TeX(filename, data,
+    points = 1000,
+    positive = (241, 101, 34),
+    negative = (54, 99, 173),
+    **kwargs):
+    """Create 'pie diagram' of different data on Brillouin zone."""
+
+    image = 0
+
+    for datum, angle in zip(data, range(0, 360, 60)):
+        image += toBZ(datum, points=points, a=angle - 30, b=angle + 30)
+
+    imagename = filename.rsplit('.', 1)[0] + '.png'
+    save(imagename, color(image, positive=positive, negative=negative))
+
+    label_pie_with_TeX(filename, imagename,
+        positive = positive, lower = min(datum.min() for datum in data),
+        negative = negative, upper = max(datum.max() for datum in data),
+        **kwargs)
