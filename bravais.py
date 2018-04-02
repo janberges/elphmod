@@ -7,10 +7,10 @@ deg = np.pi / 180
 def rotate(vector, angle):
     """Rotate vector."""
 
-    return np.array([
+    return np.dot(np.array([
         [np.cos(angle), -np.sin(angle)],
         [np.sin(angle),  np.cos(angle)],
-        ]).dot(vector)
+        ]), vector)
 
 def reciprocals(t1, t2):
     """Get translation vectors of reciprocal lattice."""
@@ -18,8 +18,8 @@ def reciprocals(t1, t2):
     u1 = rotate(t2, -90 * deg)
     u2 = rotate(t1, +90 * deg)
 
-    u1 /= t1.dot(u1)
-    u2 /= t2.dot(u2)
+    u1 /= np.dot(t1, u1)
+    u2 /= np.dot(t2, u2)
 
     return u1, u2
 
@@ -176,7 +176,7 @@ def Fourier_interpolation(data, angle=60, hr_file=None):
 
     transform = np.exp(2j * np.pi / N * np.outer(i, i)) / N
 
-    data = transform.dot(data).dot(transform)
+    data = np.dot(np.dot(transform, data), transform))
 
     # construct smooth inverse transform (formally tight-binding model):
 
@@ -233,7 +233,7 @@ def Fourier_interpolation(data, angle=60, hr_file=None):
     idphi = -2j * np.pi / N
 
     def interpolant(*point):
-        return values.dot(np.exp(idphi * points.dot(point))).real
+        return np.dot(values, np.exp(idphi * np.dot(points, point))).real
 
     return np.vectorize(interpolant)
 

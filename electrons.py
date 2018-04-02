@@ -50,7 +50,7 @@ def hamiltonian(hr):
         H = np.zeros((num_wann, num_wann), dtype=complex)
 
         for R, C in zip(cells, const):
-            H += C * np.exp(1j * R.dot(k))
+            H += C * np.exp(1j * np.dot(R, k))
 
         return H
 

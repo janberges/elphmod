@@ -195,7 +195,7 @@ def dynamical_matrix(comm, phid, amass, at, tau, eps=1e-7):
         D = np.zeros((3 * nat, 3 * nat), dtype=complex)
 
         for (na1, na2), R, C in zip(allatoms, allcells, allconst):
-            D[na1::nat, na2::nat] += C * np.exp(1j * R.dot(q))
+            D[na1::nat, na2::nat] += C * np.exp(1j * np.dot(R, q))
 
         return D
 
