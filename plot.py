@@ -88,7 +88,7 @@ def label_pie_with_TeX(filename,
 
     title = None,
     label = None, # e.g. '(a)'
-    labels = range(1, 7),
+    labels = ['Label %d' % _ for _ in range(1, 7)],
 
     upper = +1.0,
     lower = -1.0,
