@@ -119,6 +119,7 @@ def label_pie_with_TeX(filename,
         r = 0.5 * size
         R = r + margin
 
+        x_right = R + 2
         y_title = R + title_spacing
         y_top   = R + title_spacing + margin
 
@@ -126,8 +127,8 @@ def label_pie_with_TeX(filename,
             for pair in zip(range(0, 360, 60), labels))
 
         TeX.write(r'''
-    \begin{{tikzpicture}}[line join=round, line cap=round]
-        \useasboundingbox (-{R}, -{R}) rectangle ({R}, {y_top});
+    \begin{{tikzpicture}}
+        \useasboundingbox (-{R}, -{R}) rectangle ({x_right}, {y_top});
         \node at (0, {y_title}) {{\large \bf \color{{negative}}
             {title}}};'''.format(**locals()))
 
@@ -138,32 +139,34 @@ def label_pie_with_TeX(filename,
 
         TeX.write(r'''
         \foreach \angle in {{ 30, 90, ..., 330 }}
-            \draw [gray] (0, 0) -- (\angle:{r}cm) -- (\angle+60:{r}cm);
+            \draw [gray, line join=round, line cap=round]
+                (0, 0) -- (\angle:{r}cm) -- (\angle+60:{r}cm);
         \foreach \angle/\label in {{ {label_list} }}
-            \node at (\angle:2cm) [rotate=\angle-90] {{\label}};
-    \end{{tikzpicture}}%'''.format(**locals()))
+            \node at (\angle:2cm) [rotate=\angle-90]
+                {{\label}};'''.format(**locals()))
 
         # print colorbar:
 
-        x_unit = 0.5 * colorbar_width
+        x_unit = R + 0.5 * colorbar_width
+        x_ticks = R + colorbar_width
         y_top = size + title_spacing + 2 * margin
-        y_zero = -size * lower / (upper - lower)
+        y_zero = -size * lower / (upper - lower) - r
 
-        positions = [size * (tick - lower) / (upper - lower) for tick in ticks]
+        positions = [size * (tick - lower) / (upper - lower) - r
+            for tick in ticks]
+
         tick_list = ','.join('%.3f/{%s}' % (position, form(tick))
             for position, tick in zip(positions, ticks))
 
         TeX.write(r'''
-    \begin{{tikzpicture}}
-        \useasboundingbox (0, -{margin}) rectangle (2, {y_top});
         \shade [bottom color=negative, top color=white]
-            (0, 0) rectangle ({colorbar_width}, {y_zero});
+            ({R}, -{r}) rectangle ({x_ticks}, {y_zero});
         \shade [bottom color=white, top color=positive]
-            (0, {y_zero}) rectangle ({colorbar_width}, {size});
-        \draw [gray] (0, 0) rectangle ({colorbar_width}, {size});
-        \node [above] at ({x_unit}, {size}) {{{unit}}};
+            ({R}, {y_zero}) rectangle ({x_ticks}, {r});
+        \draw [gray] ({R}, -{r}) rectangle ({x_ticks}, {r});
+        \node [above] at ({x_unit}, {r}) {{{unit}}};
         \foreach \position/\label in {{ {tick_list} }}
-            \node [right] at ({colorbar_width}, \position) {{\label}};
+            \node [right] at ({x_ticks}, \position) {{\label}};
     \end{{tikzpicture}}%
 \end{{document}}'''.format(**locals()))
 
