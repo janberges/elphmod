@@ -196,11 +196,17 @@ def label_pie_with_TeX(filename,
 
         # print colorbar:
 
-        TeX.write(r'''
+        if lower < 0:
+            TeX.write(r'''
   \shade [bottom color=negative, top color=white]
-    ({radius}, -{GK}) rectangle ({x_ticks}, {y_zero});
+    ({radius}, -{GK}) rectangle ({x_ticks}, {y_zero});'''.format(**X))
+
+        if upper > 0:
+            TeX.write(r'''
   \shade [bottom color=white, top color=positive]
-    ({radius}, {y_zero}) rectangle ({x_ticks}, {GK});
+    ({radius}, {y_zero}) rectangle ({x_ticks}, {GK});'''.format(**X))
+
+        TeX.write(r'''
   \draw [gray]
     ({radius}, -{GK}) rectangle ({x_ticks}, {GK});
   \node [above] at ({x_unit}, {GK}) {{{unit}}};
