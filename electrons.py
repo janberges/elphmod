@@ -1,7 +1,7 @@
 #/usr/bin/env python
 
 import numpy as np
-import scipy.linalg
+import numpy.linalg
 
 def hamiltonian(hr):
     """Read '_hr.dat' file from Wannier 90 and set up Hamilton operator."""
@@ -59,12 +59,12 @@ def hamiltonian(hr):
 def energies(hamiltonian):
     """Calculate electronic energies."""
 
-    return scipy.linalg.eigvalsh(hamiltonian)
+    return numpy.linalg.eigvalsh(hamiltonian)
 
 def energies_and_states(hamiltonian):
     """Calculate electronic energies and states."""
 
-    return scipy.linalg.eigh(hamiltonian)
+    return numpy.linalg.eigh(hamiltonian)
 
 def band_order(eps, psi):
     """Sort bands by similarity of eigenstates at neighboring k points."""
