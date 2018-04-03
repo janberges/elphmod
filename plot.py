@@ -175,18 +175,15 @@ def label_pie_with_TeX(filename,
 
         if title is not None:
             TeX.write(r'''
-  \node at (0, {y_title}) {{\large \bf \color{{negative}}
-    {title}}};'''.format(**X))
+  \node at (0, {y_title}) {{\large \bf {title}}};'''.format(**X))
 
         if label is not None:
             TeX.write(r'''
-  \node [below right] at (-{radius}, {radius}) {{
-    {label}}};'''.format(**X))
+  \node [below right] at (-{radius}, {radius}) {{{label}}};'''.format(**X))
 
         if imagename is not None:
             TeX.write(r'''
-  \node {{\includegraphics[height={height}\unit]
-    {{{imagename}}}}};'''.format(height=2 * GK, **X))
+  \node {{\includegraphics[height={KK}\unit]{{{imagename}}}}};'''.format(**X))
 
         TeX.write(r'''
   \foreach \angle in {{ 30, 90, ..., 330 }}
