@@ -149,9 +149,6 @@ def label_pie_with_TeX(filename,
 \usepackage[math]{{iwona}}
 \usepackage{{tikz}}
 
-\definecolor{{positive}}{{RGB}}{{{positive}}}
-\definecolor{{negative}}{{RGB}}{{{negative}}}
-
 \setlength\parindent{{0pt}}
 
 \begin{{document}}
@@ -166,6 +163,14 @@ def label_pie_with_TeX(filename,
 \let\unit\relax%
 \newlength\unit%
 \setlength\unit{{{scale}\linewidth}}%'''.format(**X))
+
+        if upper > 0:
+            TeX.write(r'''
+\definecolor{{positive}}{{RGB}}{{{positive}}}%'''.format(**X))
+
+        if lower < 0:
+            TeX.write(r'''
+\definecolor{{negative}}{{RGB}}{{{negative}}}%'''.format(**X))
 
         # add frames and labels to Brillouin-zone plot:
 
