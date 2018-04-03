@@ -163,6 +163,7 @@ def label_pie_with_TeX(filename,
         # write ebmedded LaTeX code:
 
         TeX.write(r'''\begingroup%
+\let\unit\relax%
 \newlength\unit%
 \setlength\unit{{{scale}\linewidth}}%'''.format(**X))
 
