@@ -236,7 +236,9 @@ def band_order(w, e):
 
     reorder = sorted(range(bands), key=lambda nu: w[:, order[:, nu]].sum())
 
-    return order[:, reorder]
+    order[:] = np.copy(order[:, reorder])
+
+    return order
 
 def dispersion(comm, dynamical_matrix, nq, order=True, fix=True):
     """Calculate dispersion on uniform 2D mesh and optionally order bands."""
