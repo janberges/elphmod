@@ -234,7 +234,9 @@ def band_order(w, e):
         if np.all(np.absolute(np.diff(w[n])) > 1e-10): # no degeneracy?
             n0 = n
 
-    return order
+    reorder = sorted(range(bands), key=lambda nu: w[:, order[:, nu]].sum())
+
+    return order[:, reorder]
 
 def dispersion(comm, dynamical_matrix, nq, order=True, fix=True):
     """Calculate dispersion on uniform 2D mesh and optionally order bands."""
