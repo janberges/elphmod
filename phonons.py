@@ -303,9 +303,8 @@ def dispersion(comm, dynamical_matrix, nq, order=True, fix=True):
     if comm.rank == 0:
         # flatten arrays along winding path in q space:
 
-        for n in range(0, nq, 2):
-            w[n] = w[n, ::-1]
-            e[n] = e[n, ::-1]
+        w[::2] = w[::2, ::-1]
+        e[::2] = e[::2, ::-1]
 
         w = np.reshape(w, (N, bands))
         e = np.reshape(e, (N, bands, bands))
@@ -316,15 +315,14 @@ def dispersion(comm, dynamical_matrix, nq, order=True, fix=True):
 
         # restore orginal array shape and order:
 
-        w = np.reshape(w, (nq, nq, bands))
+        w     = np.reshape(w,     (nq, nq, bands))
         order = np.reshape(order, (nq, nq, bands))
 
-        for n in range(0, nq, 2):
-            w[n] = w[n, ::-1]
-            order[n] = order[n, ::-1]
+        w    [::2] = w    [::2, ::-1]
+        order[::2] = order[::2, ::-1]
 
         for axis in range(2):
-            w = np.roll(w, nq // 2, axis)
+            w     = np.roll(w,     nq // 2, axis)
             order = np.roll(order, nq // 2, axis)
 
         # fix band order, if it breaks hexagonal symmetry:
