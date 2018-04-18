@@ -60,6 +60,24 @@ def images(k1, k2, nk):
 
     return points
 
+def irreducibles(nk):
+    """Get irreducible k points."""
+
+    points = [
+        (k1, k2)
+        for k1 in range(nk)
+        for k2 in range(nk)]
+
+    irreducible = set(points)
+
+    for k in points:
+        if k in irreducible:
+            reducible = images(*k, nk=nk)
+            reducible.discard(k)
+            irreducible -= reducible
+
+    return irreducible
+
 def symmetries(data, epsilon=0.0, unity=True):
     """Find symmetries of data on Monkhorst-Pack mesh."""
 
