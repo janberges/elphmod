@@ -240,7 +240,7 @@ def band_order(w, e):
 
     return order
 
-def dispersion_path(comm, dynamical_matrix, q):
+def dispersion_path(comm, dynamical_matrix, q, vectors=False, rotate=False):
     """Calculate dispersion along given q path."""
 
     # to be implemented: """...and optionally order bands."""
@@ -254,15 +254,37 @@ def dispersion_path(comm, dynamical_matrix, q):
     my_q = np.empty((sizes[comm.rank], 2))
     my_w = np.empty((sizes[comm.rank], bands))
 
+    if vectors:
+        my_e = np.empty((sizes[comm.rank], bands, bands), dtype=complex)
+
     comm.Scatterv((q, 2 * sizes), my_q)
 
     for n, (q1, q2) in enumerate(my_q):
-        my_w[n] = frequencies(dynamical_matrix(q1, q2))
+        if vectors:
+            my_w[n], my_e[n] = frequencies_and_displacements(
+                dynamical_matrix(q1, q2))
+
+            if rotate:
+                x, y = q1 * bravais.u1 + q2 * bravais.u2
+                phi = np.arctan2(y, x)
+
+                nat = bands // 3
+
+                for na in range(nat):
+                    for nu in range(bands):
+                        my_e[n, [na, na + nat], nu] = bravais.rotate(
+                        my_e[n, [na, na + nat], nu], -phi)
+        else:
+            my_w[n] = frequencies(dynamical_matrix(q1, q2))
 
     w = np.empty((len(q), bands))
     comm.Allgatherv(my_w, (w, bands * sizes))
 
-    return w
+    if vectors:
+        e = np.empty((len(q), bands, bands), dtype=complex)
+        comm.Allgather(my_e, (w, bands ** 2 * sizes))
+
+    return (w, e) if vectors else w
 
 def dispersion_quick(comm, dynamical_matrix, nq):
     """Calculate dispersion for irreducible q points and complete data."""
