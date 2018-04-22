@@ -294,23 +294,20 @@ def dispersion_quick(comm, dynamical_matrix, nq, order=False):
         W, E = dispersion_path(comm, dynamical_matrix, 2 * np.pi / nq * Q,
             vectors=True, rotate=True)
 
-        O = np.empty((len(Q), W.shape[1]))
+        O = np.empty((len(Q), W.shape[1]), dtype=int)
 
         if comm.rank == 0:
             main_path = [n for n in range(len(Q)) if not Q[n, 0]]
             main_order = band_order(W[main_path], E[main_path])
 
             for n, N in zip(main_path, main_order):
-                W[n] = W[n, N]
-                E[n] = E[n, N]
-
                 side_path = [m for m in range(len(Q)) if Q[m, 1] == Q[n, 1]]
                 side_order = band_order(W[side_path], E[side_path],
                     by_mean=False)
 
                 for m, M in zip(side_path, side_order):
-                    W[m] = W[m, M]
                     O[m] = M[N]
+                    W[m] = W[m, O[m]]
 
         comm.Bcast(W)
         comm.Bcast(O)
