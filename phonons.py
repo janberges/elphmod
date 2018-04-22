@@ -269,34 +269,10 @@ def dispersion_quick(comm, dynamical_matrix, nq):
 
     # to be implemented in following routine dispersion()
 
-    bands = dynamical_matrix().shape[0]
+    Q = np.array(sorted(bravais.irreducibles(nq)))
+    W = dispersion_path(comm, dynamical_matrix, 2 * np.pi / nq * Q)
 
-    if comm.rank == 0:
-        Q = np.array(sorted(bravais.irreducibles(nq)))
-        nQ = len(Q)
-        W = np.empty((nQ, bands))
-    else:
-        Q = W = nQ = None
-
-    nQ = comm.bcast(nQ)
-
-    sizes = np.empty(comm.size, dtype=int)
-    sizes[:] = nQ // comm.size
-    sizes[:nQ % comm.size] += 1
-
-    my_Q = np.empty((sizes[comm.rank], 2), dtype=int)
-    my_W = np.empty((sizes[comm.rank], bands))
-
-    comm.Scatterv((Q, 2 * sizes), my_Q)
-
-    scale = 2 * np.pi / nq
-
-    for n, (q1, q2) in enumerate(my_Q):
-        my_W[n] = frequencies(dynamical_matrix(scale * q1, scale * q2))
-
-    comm.Gatherv(my_W, (W, sizes * bands))
-
-    w = np.empty((nq, nq, bands))
+    w = np.empty((nq, nq, W.shape[1]))
 
     if comm.rank == 0:
         w[:] = np.nan
@@ -304,7 +280,7 @@ def dispersion_quick(comm, dynamical_matrix, nq):
         for n, (q1, q2) in enumerate(Q):
             w[q1, q2] = W[n]
 
-        for nu in range(bands):
+        for nu in range(w.shape[2]):
             bravais.complete(w[:, :, nu])
 
     comm.Bcast(w)
