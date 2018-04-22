@@ -215,7 +215,7 @@ def frequencies_and_displacements(dynamical_matrix):
 
     return np.sign(w2) * np.sqrt(np.absolute(w2)), e
 
-def band_order(w, e):
+def band_order(w, e, by_mean=True):
     """Sort bands by similarity of displacements at neighboring q points."""
 
     N, bands = w.shape
@@ -234,16 +234,15 @@ def band_order(w, e):
         if np.all(np.absolute(np.diff(w[n])) > 1e-10): # no degeneracy?
             n0 = n
 
-    reorder = sorted(range(bands), key=lambda nu: w[:, order[:, nu]].sum())
+    if by_mean:
+        reorder = sorted(range(bands), key=lambda nu: w[:, order[:, nu]].sum())
 
-    order[:] = np.copy(order[:, reorder])
+        order[:] = np.copy(order[:, reorder])
 
     return order
 
 def dispersion_path(comm, dynamical_matrix, q, vectors=False, rotate=False):
-    """Calculate dispersion along given q path."""
-
-    # to be implemented: """...and optionally order bands."""
+    """Calculate dispersion and eigenvectors along given q path."""
 
     bands = dynamical_matrix().shape[0]
 
@@ -282,32 +281,73 @@ def dispersion_path(comm, dynamical_matrix, q, vectors=False, rotate=False):
 
     if vectors:
         e = np.empty((len(q), bands, bands), dtype=complex)
-        comm.Allgather(my_e, (w, bands ** 2 * sizes))
+        comm.Allgatherv(my_e, (e, bands ** 2 * sizes))
 
     return (w, e) if vectors else w
 
-def dispersion_quick(comm, dynamical_matrix, nq):
-    """Calculate dispersion for irreducible q points and complete data."""
-
-    # to be implemented in following routine dispersion()
+def dispersion_quick(comm, dynamical_matrix, nq, order=False):
+    """Calculate dispersion on wedge, order bands and complete data."""
 
     Q = np.array(sorted(bravais.irreducibles(nq)))
-    W = dispersion_path(comm, dynamical_matrix, 2 * np.pi / nq * Q)
+
+    if order:
+        W, E = dispersion_path(comm, dynamical_matrix, 2 * np.pi / nq * Q,
+            vectors=True, rotate=True)
+
+        O = np.empty((len(Q), W.shape[1]))
+
+        if comm.rank == 0:
+            main_path = [n for n in range(len(Q)) if not Q[n, 0]]
+            main_order = band_order(W[main_path], E[main_path])
+
+            for n_order, n in enumerate(main_path):
+                W[n] = W[n, main_order[n_order]]
+                E[n] = E[n, main_order[n_order]]
+
+                side_path = [m for m in range(len(Q)) if Q[m, 1] == Q[n, 1]]
+                side_order = band_order(W[side_path], E[side_path],
+                    by_mean=False)
+
+                for m_order, m in enumerate(side_path):
+                    W[m] = W[m, side_order[m_order]]
+
+                    O[m] = side_order[m_order, main_order[n_order]]
+
+        comm.Bcast(W)
+        comm.Bcast(O)
+
+    else:
+        W = dispersion_path(comm, dynamical_matrix, 2 * np.pi / nq * Q)
 
     w = np.empty((nq, nq, W.shape[1]))
+
+    if order:
+        o = np.empty((nq, nq, W.shape[1]))
 
     if comm.rank == 0:
         w[:] = np.nan
 
+        if order:
+            o[:] = np.nan
+
         for n, (q1, q2) in enumerate(Q):
             w[q1, q2] = W[n]
+
+            if order:
+                o[q1, q2] = O[n]
 
         for nu in range(w.shape[2]):
             bravais.complete(w[:, :, nu])
 
+            if order:
+                bravais.complete(o[:, :, nu])
+
     comm.Bcast(w)
 
-    return w
+    if order:
+        comm.bcast(o)
+
+    return (w, o.astype(int)) if order else w
 
 def dispersion(comm, dynamical_matrix, nq, order=True, fix=True):
     """Calculate dispersion on uniform 2D mesh and optionally order bands."""
