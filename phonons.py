@@ -240,6 +240,30 @@ def band_order(w, e):
 
     return order
 
+def dispersion_path(comm, dynamical_matrix, q):
+    """Calculate dispersion along given q path."""
+
+    # to be implemented: """...and optionally order bands."""
+
+    bands = dynamical_matrix().shape[0]
+
+    sizes = np.empty(comm.size, dtype=int)
+    sizes[:] = len(q) // comm.size
+    sizes[:len(q) % comm.size] += 1
+
+    my_q = np.empty((sizes[comm.rank], 2))
+    my_w = np.empty((sizes[comm.rank], bands))
+
+    comm.Scatterv((q, 2 * sizes), my_q)
+
+    for n, (q1, q2) in enumerate(my_q):
+        my_w[n] = frequencies(dynamical_matrix(q1, q2))
+
+    w = np.empty((len(q), bands))
+    comm.Allgatherv(my_w, (w, bands * sizes))
+
+    return w
+
 def dispersion_quick(comm, dynamical_matrix, nq):
     """Calculate dispersion for irreducible q points and complete data."""
 
