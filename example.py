@@ -31,30 +31,11 @@ D = phonons.dynamical_matrix(comm, *model)
 
 bands = D().shape[0]
 
-sizes = np.empty(comm.size, dtype=int)
-
 if comm.rank == 0:
     print("Check module against Quantum ESPRESSO's 'matdyn.x'..")
 
-    q, x = bravais.GMKG()
-    w = np.empty((len(q), bands))
-
-    sizes[:] = len(q) // comm.size
-    sizes[:len(q) % comm.size] += 1
-else:
-    q = w = None
-
-comm.Bcast(sizes)
-
-my_q = np.empty((sizes[comm.rank], 2))
-my_w = np.empty((sizes[comm.rank], bands))
-
-comm.Scatterv((q, 2 * sizes), my_q)
-
-for n, (q1, q2) in enumerate(my_q):
-    my_w[n] = phonons.frequencies(D(q1, q2))
-
-comm.Gatherv(my_w, (w, bands * sizes))
+q, x = bravais.GMKG()
+w, order = phonons.dispersion(comm, D, q, order=True)
 
 if comm.rank == 0:
     w *= Ry2eV * eV2cmm1
@@ -75,7 +56,7 @@ if comm.rank == 0:
 
 nq = 48
 
-w, order = phonons.dispersion(comm, D, nq)
+w, order = phonons.dispersion_full(comm, D, nq, order=True)
 w *= Ry2eV * eV2cmm1
 
 if comm.rank == 0:

@@ -241,7 +241,8 @@ def band_order(w, e, by_mean=True):
 
     return order
 
-def dispersion_path(comm, dynamical_matrix, q, vectors=False, rotate=False):
+def dispersion(comm, dynamical_matrix, q,
+    order=False, vectors=False, rotate=False):
     """Calculate dispersion and eigenvectors along given q path."""
 
     bands = dynamical_matrix().shape[0]
@@ -253,13 +254,13 @@ def dispersion_path(comm, dynamical_matrix, q, vectors=False, rotate=False):
     my_q = np.empty((sizes[comm.rank], 2))
     my_w = np.empty((sizes[comm.rank], bands))
 
-    if vectors:
+    if order or vectors:
         my_e = np.empty((sizes[comm.rank], bands, bands), dtype=complex)
 
     comm.Scatterv((q, 2 * sizes), my_q)
 
     for n, (q1, q2) in enumerate(my_q):
-        if vectors:
+        if order or vectors:
             my_w[n], my_e[n] = frequencies_and_displacements(
                 dynamical_matrix(q1, q2))
 
@@ -279,20 +280,34 @@ def dispersion_path(comm, dynamical_matrix, q, vectors=False, rotate=False):
     w = np.empty((len(q), bands))
     comm.Allgatherv(my_w, (w, bands * sizes))
 
-    if vectors:
+    if order or vectors:
         e = np.empty((len(q), bands, bands), dtype=complex)
         comm.Allgatherv(my_e, (e, bands ** 2 * sizes))
 
-    return (w, e) if vectors else w
+    if order:
+        if comm.rank == 0:
+            o = band_order(w, e)
 
-def dispersion_quick(comm, dynamical_matrix, nq, order=False):
+            for n in range(len(q)):
+                w[n] = w[n, o[n]]
+
+        else:
+            o = np.empty((len(q), bands), dtype=int)
+
+        comm.Bcast(w)
+        comm.Bcast(o)
+
+    return (w, e, o) if vectors and order else \
+        (w, e) if vectors else (w, o) if order else w
+
+def dispersion_full(comm, dynamical_matrix, nq, order=False):
     """Calculate dispersion on wedge, order bands and complete data."""
 
     Q = np.array(sorted(bravais.irreducibles(nq)))
 
     if order:
-        W, E = dispersion_path(comm, dynamical_matrix, 2 * np.pi / nq * Q,
-            vectors=True, rotate=True)
+        W, E = dispersion(comm, dynamical_matrix, 2 * np.pi / nq * Q,
+            order=False, vectors=True, rotate=True)
 
         O = np.empty((len(Q), W.shape[1]), dtype=int)
 
@@ -313,7 +328,7 @@ def dispersion_quick(comm, dynamical_matrix, nq, order=False):
         comm.Bcast(O)
 
     else:
-        W = dispersion_path(comm, dynamical_matrix, 2 * np.pi / nq * Q)
+        W = dispersion(comm, dynamical_matrix, 2 * np.pi / nq * Q)
 
     w = np.empty((nq, nq, W.shape[1]))
 
@@ -341,124 +356,6 @@ def dispersion_quick(comm, dynamical_matrix, nq, order=False):
     comm.Bcast(w)
 
     if order:
-        comm.bcast(o)
+        comm.Bcast(o)
 
     return (w, o.astype(int)) if order else w
-
-def dispersion(comm, dynamical_matrix, nq, order=True, fix=True):
-    """Calculate dispersion on uniform 2D mesh and optionally order bands."""
-
-    bands = dynamical_matrix().shape[0]
-
-    N = nq ** 2
-
-    q = np.linspace(0, 2 * np.pi, nq, endpoint=False)
-    q = np.array(np.meshgrid(q, q)).T.reshape(N, 2)
-
-    w = np.empty((nq, nq, bands))
-
-    sizes = np.empty(comm.size, dtype=int)
-    sizes[:] = N // comm.size
-    sizes[:N % comm.size] += 1
-
-    my_q = np.empty((sizes[comm.rank], 2))
-    my_w = np.empty((sizes[comm.rank], bands))
-
-    comm.Scatterv((q, 2 * sizes), my_q)
-
-    # optionally, return phonon bands sorted by frequency:
-
-    if not order:
-        for n, (q1, q2) in enumerate(my_q):
-            my_w[n] = frequencies(dynamical_matrix(q1, q2))
-
-        comm.Allgatherv(my_w, (w, sizes * bands))
-
-        return w
-
-    # otherwise, sort by character/atomic displacement:
-
-    my_e = np.empty((sizes[comm.rank], bands, bands), dtype=complex)
-
-    for n, (q1, q2) in enumerate(my_q):
-        my_w[n], my_e[n] = frequencies_and_displacements(
-            dynamical_matrix(q1, q2))
-
-        qx, qy = q1 * bravais.u1 + q2 * bravais.u2
-
-        phi = np.arctan2(qy, qx)
-
-        nat = bands // 3
-
-        for na in range(nat):
-            for nu in range(bands):
-                my_e[n, [na, na + nat], nu] = bravais.rotate(
-                my_e[n, [na, na + nat], nu], -phi)
-
-    if comm.rank == 0:
-        e = np.empty((nq, nq, bands, bands), dtype=complex)
-    else:
-        e = None
-
-    comm.Gatherv(my_w, (w, sizes * bands))
-    comm.Gatherv(my_e, (e, sizes * bands ** 2))
-
-    if comm.rank == 0:
-        # flatten arrays along winding path in q space not starting at Gamma:
-
-        for axis in range(2):
-            w = np.roll(w, -nq // 2, axis)
-            e = np.roll(e, -nq // 2, axis)
-
-        w[::2] = w[::2, ::-1]
-        e[::2] = e[::2, ::-1]
-
-        w = np.reshape(w, (N, bands))
-        e = np.reshape(e, (N, bands, bands))
-
-        # sort bands by similarity of displacements at neighboring q points:
-
-        order = band_order(w, e)
-
-        # restore orginal array shape and order:
-
-        w     = np.reshape(w,     (nq, nq, bands))
-        order = np.reshape(order, (nq, nq, bands))
-
-        w    [::2] = w    [::2, ::-1]
-        order[::2] = order[::2, ::-1]
-
-        for axis in range(2):
-            w     = np.roll(w,     nq // 2, axis)
-            order = np.roll(order, nq // 2, axis)
-
-        # fix band order, if it breaks hexagonal symmetry:
-
-        if fix:
-            for n in range(nq):
-                for m in range(nq):
-                    counts = dict()
-
-                    for N, M in bravais.images(n, m, nq):
-                        new = tuple(order[N, M])
-
-                        if new in counts:
-                            counts[new] += 1
-                        else:
-                            counts[new] = 1
-
-                    order[n, m] = min(counts, key=lambda x: (-counts[x], x))
-
-        # reorder and return:
-
-        for n in range(nq):
-            for m in range(nq):
-                w[n, m] = w[n, m, order[n, m]]
-
-    else:
-        order = np.empty((nq, nq, bands), dtype=int)
-
-    comm.Bcast(w)
-    comm.Bcast(order)
-
-    return w, order
