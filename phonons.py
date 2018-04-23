@@ -293,6 +293,10 @@ def dispersion(comm, dynamical_matrix, q,
             for n in range(len(q)):
                 w[n] = w[n, o[n]]
 
+                if vectors:
+                    for nu in range(bands):
+                        e[n, nu] = e[n, nu, o[n]]
+
         else:
             o = np.empty((len(q), bands), dtype=int)
 
@@ -361,3 +365,39 @@ def dispersion_full(comm, dynamical_matrix, nq, order=False):
         comm.Bcast(o)
 
     return (w, o.astype(int)) if order else w
+
+def polarization(e, path):
+    """Characterize as in-plane longitudinal/transverse or out-of-plane."""
+
+    bands = e.shape[1]
+
+    mode = np.empty((len(path), bands, 3))
+
+    nat = bands // 3
+
+    x = slice(0, nat)
+    y = slice(nat, 2 * nat)
+    z = slice(2 * nat, 3 * nat)
+
+    for n, q in enumerate(path):
+        q = q[0] * bravais.u1 + q[1] * bravais.u2
+        Q = np.sqrt(q.dot(q))
+
+        centered = Q < 1e-10
+
+        if centered:
+            q = np.array([1, 0])
+        else:
+            q /= Q
+
+        for band in range(bands):
+            L = sum(abs(e[n, x, band] * q[0] + e[n, y, band] * q[1]) ** 2)
+            T = sum(abs(e[n, x, band] * q[1] - e[n, y, band] * q[0]) ** 2)
+            Z = sum(abs(e[n, z, band]) ** 2)
+
+            if centered:
+                L = T = (L + T) / 2
+
+            mode[n, band, :] = [L, T, Z]
+
+    return mode

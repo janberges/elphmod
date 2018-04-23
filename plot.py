@@ -242,6 +242,27 @@ def plot_pie_with_TeX(filename, data,
         negative = negative, upper = max(datum.max() for datum in data),
         **kwargs)
 
+def compline(x, y, composition):
+    """Plot composition along line."""
+
+    nx, nc = composition.shape
+
+    lines = np.zeros((nc + 1, nx))
+
+    for ic in range(nc):
+        lines[ic + 1] = lines[ic] + composition[:, ic]
+
+    for ic in range(nc + 1):
+        lines[ic] += y - lines[nc] / 2
+
+    X = np.concatenate((x, x[::-1]))
+    Y = np.empty((nc, len(X)))
+
+    for ic in range(nc):
+        Y[ic] = np.concatenate((lines[ic], lines[ic + 1, ::-1]))
+
+    return X, Y
+
 if __name__ == '__main__':
     import os
 

@@ -7,6 +7,7 @@ import bravais
 import coupling
 import dos
 import phonons
+import plot
 
 from mpi4py import MPI
 comm = MPI.COMM_WORLD
@@ -33,7 +34,11 @@ if comm.rank == 0:
     print("Check module against Quantum ESPRESSO's 'matdyn.x'..")
 
 q, x = bravais.GMKG()
-w, order = phonons.dispersion(comm, D, q, order=True)
+w, e, order = phonons.dispersion(comm, D, q, vectors=True, order=True)
+
+pol = phonons.polarization(e, q)
+
+colors = ['skyblue', 'dodgerblue', 'orange']
 
 if comm.rank == 0:
     w *= Ry2eV * eV2cmm1
@@ -44,7 +49,11 @@ if comm.rank == 0:
     w0 = ref[:, 1:]
 
     for i in range(w.shape[1]):
-        plt.plot(x,  w [:, i], 'k' )
+        X, Y = plot.compline(x, w[:, i], 3 * pol[:, i])
+
+        for j in range(3):
+            plt.fill(X, Y[j], color=colors[j])
+
         plt.plot(x0, w0[:, i], 'ko')
 
     plt.show()
