@@ -199,6 +199,8 @@ def dynamical_matrix(comm, phid, amass, at, tau, eps=1e-7):
 
         return D
 
+    calculate_dynamical_matrix.size = 3 * nat
+
     return calculate_dynamical_matrix
 
 def frequencies(dynamical_matrix):
@@ -245,7 +247,7 @@ def dispersion(comm, dynamical_matrix, q,
     order=False, vectors=False, rotate=False):
     """Calculate dispersion and eigenvectors along given q path."""
 
-    bands = dynamical_matrix().shape[0]
+    bands = dynamical_matrix.size
 
     sizes = np.empty(comm.size, dtype=int)
     sizes[:] = len(q) // comm.size

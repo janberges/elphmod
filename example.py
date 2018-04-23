@@ -29,8 +29,6 @@ model = comm.bcast(model)
 
 D = phonons.dynamical_matrix(comm, *model)
 
-bands = D().shape[0]
-
 if comm.rank == 0:
     print("Check module against Quantum ESPRESSO's 'matdyn.x'..")
 
@@ -60,7 +58,7 @@ w, order = phonons.dispersion_full(comm, D, nq, order=True)
 w *= Ry2eV * eV2cmm1
 
 if comm.rank == 0:
-    plt.plot(range(nq * nq), np.reshape(w, (nq * nq, bands)))
+    plt.plot(range(nq * nq), np.reshape(w, (nq * nq, D.size)))
     plt.show()
 
 if comm.rank == 0:
@@ -69,7 +67,7 @@ if comm.rank == 0:
     nqelph = 12
 
     elph = coupling.complete(coupling.read('data/%s.elph' % data),
-        nqelph, bands) * (1e-3 * eV2cmm1) ** 3
+        nqelph, D.size) * (1e-3 * eV2cmm1) ** 3
 
     step = nq // nqelph
     orderelph = order[::step, ::step]
@@ -86,7 +84,7 @@ g2 = np.empty_like(w)
 if comm.rank == 0:
     scale = 1.0 / step
 
-    for nu in range(bands):
+    for nu in range(D.size):
         elphfun = bravais.Fourier_interpolation(elph[:, :, nu])
 
         for n in range(nq):
@@ -107,7 +105,7 @@ W = np.linspace(w.min(), w.max(), N)
 DOS = np.zeros(N)
 a2F = np.zeros(N)
 
-for nu in range(bands):
+for nu in range(D.size):
     DOS += dos.hexDOS(w[:, :, nu], comm)(W)
     a2F += dos.hexa2F(w[:, :, nu], g2[:, :, nu], comm)(W)
 
