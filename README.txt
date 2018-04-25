@@ -1,8 +1,12 @@
-~ elphmod ~
+~ e l p h m o d ~
 
-Some Python modules to handle force constants and electron-phonon interaction..
+Handle tight-binding and mass-spring models and their interaction
 
-    $ mpirun -np 4 python example.py
+
+E x a m p l e
+
+    $ cd examples
+    $ mpirun -np 4 python -u example.py
 
 will show you:
 
