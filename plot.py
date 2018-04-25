@@ -1,9 +1,9 @@
 #/usr/bin/env python
 
+from . import bravais
+
 import numpy as np
 from scipy.misc import toimage
-
-import bravais
 
 def toBZ(data, points=1000, outside=0.0, a=0, b=360):
     """Map data on uniform grid onto (wedge of) Brillouin zone."""

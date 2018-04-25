@@ -1,13 +1,9 @@
 #/usr/bin/env python
 
+import elphmod
+
 import numpy as np
 import matplotlib.pyplot as plt
-
-import bravais
-import coupling
-import dos
-import phonons
-import plot
 
 from mpi4py import MPI
 comm = MPI.COMM_WORLD
@@ -20,23 +16,23 @@ data = 'NbSe2-cDFPT-LR'
 if comm.rank == 0:
     print("Read and fix force constants and set up dynamical matrix..")
 
-    model = phonons.read_flfrc('data/%s.ifc' % data)
+    model = elphmod.phonons.read_flfrc('data/%s.ifc' % data)
 
-    phonons.asr(model[0])
+    elphmod.phonons.asr(model[0])
 else:
     model = None
 
 model = comm.bcast(model)
 
-D = phonons.dynamical_matrix(comm, *model)
+D = elphmod.phonons.dynamical_matrix(comm, *model)
 
 if comm.rank == 0:
     print("Check module against Quantum ESPRESSO's 'matdyn.x'..")
 
-q, x = bravais.GMKG()
-w, e, order = phonons.dispersion(comm, D, q, vectors=True, order=True)
+q, x = elphmod.bravais.GMKG()
+w, e, order = elphmod.phonons.dispersion(comm, D, q, vectors=True, order=True)
 
-pol = phonons.polarization(e, q)
+pol = elphmod.phonons.polarization(e, q)
 
 colors = ['skyblue', 'dodgerblue', 'orange']
 
@@ -49,7 +45,7 @@ if comm.rank == 0:
     w0 = ref[:, 1:]
 
     for i in range(w.shape[1]):
-        X, Y = plot.compline(x, w[:, i], 3 * pol[:, i])
+        X, Y = elphmod.plot.compline(x, w[:, i], 3 * pol[:, i])
 
         for j in range(3):
             plt.fill(X, Y[j], color=colors[j])
@@ -63,7 +59,7 @@ if comm.rank == 0:
 
 nq = 48
 
-w, order = phonons.dispersion_full(comm, D, nq, order=True)
+w, order = elphmod.phonons.dispersion_full(comm, D, nq, order=True)
 w *= Ry2eV * eV2cmm1
 
 if comm.rank == 0:
@@ -71,11 +67,11 @@ if comm.rank == 0:
     plt.show()
 
 if comm.rank == 0:
-    print("Load and preprocess electron-phonon coupling..")
+    print("Load and preprocess electron-phonon elphmod.coupling..")
 
     nqelph = 12
 
-    elph = coupling.complete(coupling.read('data/%s.elph' % data),
+    elph = elphmod.coupling.complete(elphmod.coupling.read('data/%s.elph' % data),
         nqelph, D.size) * (1e-3 * eV2cmm1) ** 3
 
     step = nq // nqelph
@@ -85,7 +81,7 @@ if comm.rank == 0:
         for m in range(nqelph):
             elph[n, m] = elph[n, m, orderelph[n, m]]
 
-    plt.imshow(coupling.plot(elph))
+    plt.imshow(elphmod.coupling.plot(elph))
     plt.show()
 
 g2 = np.empty_like(w)
@@ -94,7 +90,7 @@ if comm.rank == 0:
     scale = 1.0 / step
 
     for nu in range(D.size):
-        elphfun = bravais.Fourier_interpolation(elph[:, :, nu])
+        elphfun = elphmod.bravais.Fourier_interpolation(elph[:, :, nu])
 
         for n in range(nq):
             for m in range(nq):
@@ -115,8 +111,8 @@ DOS = np.zeros(N)
 a2F = np.zeros(N)
 
 for nu in range(D.size):
-    DOS += dos.hexDOS(w[:, :, nu], comm)(W)
-    a2F += dos.hexa2F(w[:, :, nu], g2[:, :, nu], comm)(W)
+    DOS += elphmod.dos.hexDOS(w[:, :, nu], comm)(W)
+    a2F += elphmod.dos.hexa2F(w[:, :, nu], g2[:, :, nu], comm)(W)
 
 if comm.rank == 0:
     a2F *= DOS.max() / a2F.max()

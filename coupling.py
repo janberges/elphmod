@@ -1,6 +1,6 @@
 #/usr/bin/env python
 
-import bravais
+from . import bravais
 import numpy as np
 
 def get_q(filename):
