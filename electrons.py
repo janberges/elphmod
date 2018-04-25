@@ -96,16 +96,17 @@ def read_bands(filband):
         nbnd = int(header[12:16])
         nks  = int(header[22:28])
 
+        k = np.empty((nks, 3))
         bands = np.empty((nbnd, nks))
 
         for ik in range(nks):
-            next(data)
+            k[ik] = list(map(float, next(data).split()))
 
             for lower in range(0, nbnd, 10):
                 bands[lower:lower + 10, ik] \
                     = list(map(float, next(data).split()))
 
-    return bands
+    return k, bands
 
 def read_Fermi_level(pw_scf_out):
     """Read Fermi level from output of self-consistent PW run."""
