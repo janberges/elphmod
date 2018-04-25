@@ -30,14 +30,16 @@ if comm.rank == 0:
     print("Check module against Quantum ESPRESSO's 'matdyn.x'..")
 
 q, x = elphmod.bravais.GMKG()
-w, e, order = elphmod.phonons.dispersion(comm, D, q, vectors=True, order=True)
 
-pol = elphmod.phonons.polarization(e, q)
+w2, e, order = elphmod.dispersion.dispersion(comm, D, q,
+    vectors=True, order=True, broadcast=False)
 
-colors = ['skyblue', 'dodgerblue', 'orange']
+w = elphmod.phonons.sgnsqrt(w2) * Ry2eV * eV2cmm1
 
 if comm.rank == 0:
-    w *= Ry2eV * eV2cmm1
+    pol = elphmod.phonons.polarization(e, q)
+
+    colors = ['skyblue', 'dodgerblue', 'orange']
 
     ref = np.loadtxt('data/%s.disp.gp' % data)
 
@@ -54,19 +56,18 @@ if comm.rank == 0:
 
     plt.show()
 
-if comm.rank == 0:
     print("Calculate dispersion on whole Brillouin zone and sort bands..")
 
 nq = 48
 
-w, order = elphmod.phonons.dispersion_full(comm, D, nq, order=True)
-w *= Ry2eV * eV2cmm1
+w2, order = elphmod.dispersion.dispersion_full(comm, D, nq, order=True)
+
+w = elphmod.phonons.sgnsqrt(w2) * Ry2eV * eV2cmm1
 
 if comm.rank == 0:
     plt.plot(range(nq * nq), np.reshape(w, (nq * nq, D.size)))
     plt.show()
 
-if comm.rank == 0:
     print("Load and preprocess electron-phonon elphmod.coupling..")
 
     nqelph = 12

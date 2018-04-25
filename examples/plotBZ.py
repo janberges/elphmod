@@ -27,9 +27,12 @@ if comm.rank == 0:
 
 nq = 48
 
-w = elphmod.phonons.dispersion_full(comm, D, nq, order=False) * Ry2eV * 1e3
+w2 = elphmod.dispersion.dispersion_full(comm, D, nq,
+    order=False, broadcast=False)
 
 if comm.rank == 0:
+    w = elphmod.phonons.sgnsqrt(w2) * Ry2eV * 1e3
+
     print("Plot dispersion on Brillouin zone..")
 
     os.system('mkdir -p example_plot')
