@@ -68,7 +68,7 @@ if comm.rank == 0:
     plt.plot(range(nq * nq), np.reshape(w, (nq * nq, D.size)))
     plt.show()
 
-    print("Load and preprocess electron-phonon elphmod.coupling..")
+    print("Load and preprocess electron-phonon coupling..")
 
     nqelph = 12
 
