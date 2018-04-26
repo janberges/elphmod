@@ -39,24 +39,17 @@ T2 = rotate(t2, -30 * deg)
 
 U1, U2 = reciprocals(T1, T2)
 
-def images(k1, k2, nk):
+def images(k1, k2, nk, angle=60):
     """Get equivalents k points."""
 
     points = set()
 
-    k = k1 * u1 + k2 * u2
+    for rot60 in range(6):
+        k1, k2 = (-k2, k1 + k2) if angle == 60 else (k1 - k2, k1)
 
-    for reflect in False, True:
-        for angle in range(0, 360, 60):
-            K = rotate(k, angle * deg)
+        points.add((k1 % nk, k2 % nk))
 
-            if reflect:
-                K[0] *= -1
-
-            K1 = int(round(np.dot(K, t1))) % nk
-            K2 = int(round(np.dot(K, t2))) % nk
-
-            points.add((K1, K2))
+    points.update(point[::-1] for point in points)
 
     return points
 
