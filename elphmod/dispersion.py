@@ -142,31 +142,17 @@ def dispersion_full(comm, matrix, size,
     v_mesh = np.empty((size, size, bands))
 
     if order:
-        o_mesh = np.empty((size, size, bands))
+        o_mesh = np.empty((size, size, bands), dtype=int)
 
     if comm.rank == 0:
-        # mark all values on mesh as unset:
-
-        v_mesh[:] = np.nan
-
-        if order:
-            o_mesh[:] = np.nan
-
         # transfer data points from wedge to mesh:
 
         for point, (k1, k2) in enumerate(k):
-            v_mesh[k1, k2] = v[point]
+            for K1, K2 in bravais.images(k1, k2, size):
+                v_mesh[K1, K2] = v[point]
 
-            if order:
-                o_mesh[k1, k2] = o[point]
-
-        # complete data on mesh using symmetry operations:
-
-        for band in range(bands):
-            bravais.complete(v_mesh[:, :, band])
-
-            if order:
-                bravais.complete(o_mesh[:, :, band])
+                if order:
+                    o_mesh[K1, K2] = o[point]
 
     # broadcast results:
 
@@ -176,7 +162,7 @@ def dispersion_full(comm, matrix, size,
         if order:
             comm.Bcast(o_mesh)
 
-    return (v_mesh, o_mesh.astype(int)) if order else v_mesh
+    return (v_mesh, o_mesh) if order else v_mesh
 
 def band_order(v, V, by_mean=True):
     """Sort bands by overlap of eigenvectors at neighboring k points."""
