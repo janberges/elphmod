@@ -157,6 +157,18 @@ def linear_interpolation(data, angle=60):
                 C = data[n0, m0]
                 return dn * A + dm * B + (1 - dn - dm) * C
 
+    elif angle == 90:
+        def interpolant(n, m):
+            (n0, dn), (m0, dm) = split(n, m)
+
+            A = data[n0, m0]
+            B = data[(n0 + 1) % N, m0]
+            C = data[(n0 + 1) % N, (m0 + 1) % M]
+            D = data[n0, (m0 + 1) % M]
+
+            return ((1 - dn) * (1 - dm) * A +      dn  * (1 - dm) * B
+                +        dn  *      dm  * C + (1 - dn)      * dm  * D)
+
     elif angle == 120:
         def interpolant(n, m):
             (n0, dn), (m0, dm) = split(n, m)
