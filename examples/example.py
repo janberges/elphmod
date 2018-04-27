@@ -66,8 +66,7 @@ if comm.rank == 0:
 
     nqelph = 12
 
-    elph = elphmod.coupling.complete(elphmod.coupling.read('data/%s.elph' % data),
-        nqelph, D.size) * (1e-3 * eV2cmm1) ** 3
+    elph = elphmod.coupling.read('data/%s.elph' % data, nqelph, D.size)
 
     step = nq // nqelph
     orderelph = order[::step, ::step]

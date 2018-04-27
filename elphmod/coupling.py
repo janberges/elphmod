@@ -54,30 +54,23 @@ def coupling(comm, filename, nQ, nb, nk, bands,
 
     return elph[:, :, 0, 0, :, :] if bands == 1 and squeeze else elph
 
-def read(filename):
-    """Read file with Fermi-surface averaged electron-phonon coupling."""
+def read(filename, nq, bands):
+    """Read and complete Fermi-surface averaged electron-phonon coupling."""
 
-    elph = dict()
+    elph = np.empty((nq, nq, bands))
 
     with open(filename) as data:
         for line in data:
             columns = line.split()
 
-            q = tuple(map(int, columns[:2]))
-            elph[q] = list(map(float, columns[2:]))
+            q1 = int(columns[0])
+            q2 = int(columns[1])
+
+            for Q1, Q2 in bravais.images(q1, q2, nq):
+                for band in range(bands):
+                    elph[Q1, Q2, band] = float(columns[2 + band])
 
     return elph
-
-def complete(elph, nq, bands):
-    """Generate whole Brillouin zone from irreducible q points."""
-
-    elphmat = np.empty((nq, nq, bands))
-
-    for q in elph.keys():
-        for Q in bravais.images(*q, nk=nq):
-            elphmat[Q] = elph[q]
-
-    return elphmat
 
 def plot(elphmat, points=50):
     """Plot electron-phonong coupling."""
