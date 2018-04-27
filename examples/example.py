@@ -16,13 +16,7 @@ data = 'NbSe2-cDFPT-LR'
 if comm.rank == 0:
     print("Read and fix force constants and set up dynamical matrix..")
 
-    model = elphmod.phonons.read_flfrc('data/%s.ifc' % data)
-
-    elphmod.phonons.asr(model[0])
-else:
-    model = None
-
-model = comm.bcast(model)
+model = elphmod.phonons.model(comm, 'data/%s.ifc' % data, apply_asr=True)
 
 D = elphmod.phonons.dynamical_matrix(comm, *model)
 

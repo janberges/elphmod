@@ -108,6 +108,23 @@ def asr(phid):
             for m3 in range(nr3)
             if na1 != na2 or m1 or m2 or m3)
 
+def model(comm, flfrc, apply_asr=False):
+    """Read, fix and broadcast mass-spring model."""
+
+    if comm.rank == 0:
+        model = read_flfrc(flfrc)
+
+        # optionally, apply acoustic sum rule:
+
+        if apply_asr:
+            asr(model[0])
+    else:
+        model = None
+
+    model = comm.bcast(model)
+
+    return model
+
 def dynamical_matrix(comm, phid, amass, at, tau, eps=1e-7):
     """Set up dynamical matrix for force constants, masses, and geometry."""
 
