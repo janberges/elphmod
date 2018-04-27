@@ -5,6 +5,50 @@ from . import bravais
 import numpy as np
 from scipy.misc import toimage
 
+def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
+        interpolation=bravais.linear_interpolation):
+    """Plot in cartesian reciprocal coordinates."""
+
+    nk, nk = mesh.shape
+
+    nkx = int(round(resolution * (kxmax - kxmin)))
+    nky = int(round(resolution * (kymax - kymin)))
+
+    kx, dkx = np.linspace(kxmin, kxmax, nkx, endpoint=False, retstep=True)
+    ky, dky = np.linspace(kymin, kymax, nky, endpoint=False, retstep=True)[::-1]
+
+    kx += dkx / 2
+    ky += dky / 2
+
+    image = np.empty((nky, nkx))
+
+    fun = interpolation(mesh)
+
+    for i in range(nky):
+        for j in range(nkx):
+            k1 = kx[j] * bravais.T1[0] + ky[i] * bravais.T1[1]
+            k2 = kx[j] * bravais.T2[0] + ky[i] * bravais.T2[1]
+
+            image[i, j] = fun(k1 * nk, k2 * nk)
+
+    return image
+
+def arrange(images, columns=None):
+    if columns is None:
+        columns = int(np.sqrt(len(images)))
+
+    while len(images) % columns:
+        columns += 1
+
+    rows = len(images) // columns
+
+    return \
+        np.concatenate([
+        np.concatenate(
+            images[columns * row:columns * (row + 1)],
+        axis=1) for row in range(rows)],
+        axis=0)
+
 def toBZ(data, points=1000, outside=0.0, a=0, b=360):
     """Map data on uniform grid onto (wedge of) Brillouin zone."""
 
