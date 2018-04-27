@@ -98,9 +98,20 @@ def plot(elphmat, points=50):
 
                 image[nu, i, j] = elphfun(q1 * nq, q2 * nq)
 
+    return image
+
+def arrange(images, columns=None):
+    if columns is None:
+        columns = int(np.sqrt(len(images)))
+
+    while len(images) % columns:
+        columns += 1
+
+    rows = len(images) // columns
+
     return \
         np.concatenate([
         np.concatenate(
-            image[3 * n:3 * n + 3],
-        axis=1) for n in range(bands // 3)],
+            images[columns * row:columns * (row + 1)],
+        axis=1) for row in range(rows)],
         axis=0)

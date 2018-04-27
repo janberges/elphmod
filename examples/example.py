@@ -75,7 +75,7 @@ if comm.rank == 0:
         for m in range(nqelph):
             elph[n, m] = elph[n, m, orderelph[n, m]]
 
-    plt.imshow(elphmod.coupling.plot(elph))
+    plt.imshow(elphmod.coupling.arrange(elphmod.coupling.plot(elph)))
     plt.show()
 
 g2 = np.empty_like(w)
