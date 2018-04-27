@@ -44,16 +44,27 @@ def images(k1, k2, nk, angle=60):
 
     points = set()
 
-    for rot60 in range(6):
-        k1, k2 = (-k2, k1 + k2) if angle == 60 else (k1 - k2, k1)
+    for _ in range(6):
+        # rotation by 60 degree:
 
-        points.add((k1 % nk, k2 % nk))
+        if angle == 60:
+            k1, k2 = -k2, k1 + k2
+        elif angle == 120:
+            k1, k2 = k1 - k2, k1
 
-    points.update(point[::-1] for point in points)
+        # mapping to [0, nk):
+
+        k1 %= nk
+        k2 %= nk
+
+        # add point and its reflection:
+
+        points.add((k1, k2))
+        points.add((k2, k1))
 
     return points
 
-def irreducibles(nk):
+def irreducibles(nk, angle=60):
     """Get irreducible k points."""
 
     points = [
@@ -65,7 +76,7 @@ def irreducibles(nk):
 
     for k in points:
         if k in irreducible:
-            reducible = images(*k, nk=nk)
+            reducible = images(*k, nk=nk, angle=angle)
             reducible.discard(k)
             irreducible -= reducible
 
