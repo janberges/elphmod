@@ -53,6 +53,8 @@ def hamiltonian(hr):
 
         return H
 
+    calculate_hamiltonian.size = num_wann
+
     return calculate_hamiltonian
 
 def read_bands(filband):
