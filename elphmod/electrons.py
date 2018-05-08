@@ -2,11 +2,13 @@
 
 import numpy as np
 
-def hamiltonian(hr):
+def hamiltonian(comm, hr):
     """Read '_hr.dat' file from Wannier 90 and set up Hamilton operator."""
 
-    with open(hr) as data:
-         # read all words of current line:
+    if comm.rank == 0:
+        data = open(hr)
+
+        # read all words of current line:
 
         def cols():
             return data.readline().split()
@@ -29,11 +31,17 @@ def hamiltonian(hr):
 
         while len(degeneracy) < nrpts:
             degeneracy.extend(map(float, cols()))
+    else:
+        num_wann = parameters = None
 
+    num_wann = comm.bcast(num_wann)
+    parameters = comm.bcast(parameters)
+
+    cells = np.empty((parameters, 3), dtype=int)
+    const = np.empty((parameters, 3, 3), dtype=complex)
+
+    if comm.rank == 0:
         # read lattice vectors and hopping constants:
-
-        cells = np.empty((parameters, 3), dtype=int)
-        const = np.empty((parameters, 3, 3), dtype=complex)
 
         for n in range(parameters):
             tmp = cols()
@@ -41,6 +49,11 @@ def hamiltonian(hr):
             cells[n] = list(map(int, tmp[:3]))
             const[n, int(tmp[3]) - 1, int(tmp[4]) - 1] = (
                 float(tmp[5]) + 1j * float(tmp[6])) / degeneracy[n // size]
+
+        data.close()
+
+    comm.Bcast(cells)
+    comm.Bcast(const)
 
     # return function to calculate hamiltonian for arbitrary k points:
 
