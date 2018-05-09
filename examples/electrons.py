@@ -63,3 +63,11 @@ if comm.rank == 0:
     ax2.fill(DOS, e, color='C')
 
     plt.show()
+
+if comm.rank == 0:
+    print("Calculate electron susceptibility..")
+
+    chi = elphmod.electrons.susceptibility(eps_full[:, :, 0])
+
+    plt.plot(x, [chi(q1, q2) for q1, q2 in q])
+    plt.show()
