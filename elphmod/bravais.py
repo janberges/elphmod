@@ -303,6 +303,6 @@ def GMKG(N=30, corner_indices=False):
     x[N2 + N1:N1 + N2 + N3] = np.linspace(L2 + L1, L1 + L2 + L3, N3, True)
 
     if corner_indices:
-        return np.array(path), x, (0, N1, N1 + N2, N1 + N2 + N3 - 1)
+        return np.array(path), x, [0, N1, N1 + N2, N1 + N2 + N3 - 1]
     else:
         return np.array(path), x
