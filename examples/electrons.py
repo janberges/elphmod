@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 from mpi4py import MPI
 comm = MPI.COMM_WORLD
 
+eF = -0.1665
+
 if comm.rank == 0:
     print("Set up Wannier Hamiltonian..")
 
@@ -21,12 +23,14 @@ q, x, GMKG = elphmod.bravais.GMKG(corner_indices=True)
 eps, psi, order = elphmod.dispersion.dispersion(comm, H, q,
     vectors=True, order=True)
 
+eps -= eF
+
 if comm.rank == 0:
     print("Diagonalize Hamiltonian on uniform mesh..")
 
 nk = 120
 
-eps_full = elphmod.dispersion.dispersion_full(comm, H, nk)
+eps_full = elphmod.dispersion.dispersion_full(comm, H, nk) - eF
 
 if comm.rank == 0:
     print("Calculate DOS of metallic band..")
