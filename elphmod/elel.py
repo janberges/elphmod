@@ -47,6 +47,22 @@ def read_band_Coulomb_interaction(comm, filename, nQ, nk):
 
     return U
 
+def write_band_Coulomb_interaction(comm, filename, U):
+    """Write Coulomb interaction for single band in band basis.."""
+
+    nQ, nk, nk, nk, nk = U.shape
+
+    if comm.rank == 0:
+        with open(filename, 'w') as data:
+            for iQ in range(len(Q)):
+                for k1 in range(nk):
+                    for k2 in range(nk):
+                        for K1 in range(nk):
+                            for K2 in range(nk):
+                                data.write('%14.9f %14.9f\n' % (
+                                    U[iQ, k1, k2, K1, K2].real
+                                    U[iQ, k1, k2, K1, K2].imag))
+
 def orbital2band(comm, U, H, nq, nk, band=0):
     """Transform Coulomb interaction from orbital basis onto single band."""
 
