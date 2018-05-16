@@ -37,7 +37,7 @@ def dispersion(comm, matrix, k,
             my_v[point], my_V[point] = np.linalg.eigh(matrix(k1, k2))
 
             if gauge:
-                for band in bands:
+                for band in range(bands):
                     my_V[point, :, band] *= np.exp(-1j * np.angle(
                         max(my_V[point, :, band], key=abs)))
 
