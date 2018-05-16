@@ -79,7 +79,7 @@ def orbital2band(comm, U, H, nq, nk, band=0):
 
     size = len(Q) * nk ** 4
 
-    points = np.empty((size, 5))
+    points = np.empty((size, 8))
 
     n = 0
     for iq, (q1, q2) in enumerate(Q):
@@ -104,8 +104,8 @@ def orbital2band(comm, U, H, nq, nk, band=0):
 
     comm.Bcast(sizes)
 
-    my_points = np.empty((sizes[comm.rank], 5), dtype=int)
-    comm.Scatterv((np.arange(points), sizes * 5), my_points)
+    my_points = np.empty((sizes[comm.rank], 8), dtype=int)
+    comm.Scatterv((np.arange(points), sizes * 8), my_points)
 
     # transform from orbital to band basis:
 
