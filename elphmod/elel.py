@@ -60,13 +60,14 @@ def orbital2band(comm, U, H, nq, nk, band=0):
 
     k = np.empty((nk * nk, 2))
 
-    n = 0
-    for k1 in range(nk):
-        for k2 in range(nk):
-            k[n] = k1, k2
-            n += 1
+    if comm.rank == 0:
+        n = 0
+        for k1 in range(nk):
+            for k2 in range(nk):
+                k[n] = k1, k2
+                n += 1
 
-    k *= 2 * np.pi / nk
+        k *= 2 * np.pi / nk
 
     eps, psi = dispersion(comm, H, k,
         vectors=True, gauge=True) # psi[k, a, n] = <a k|n k>
@@ -79,23 +80,6 @@ def orbital2band(comm, U, H, nq, nk, band=0):
 
     size = len(Q) * nk ** 4
 
-    points = np.empty((size, 8))
-
-    n = 0
-    for iq, (q1, q2) in enumerate(Q):
-        q1C = q1 * nqC // nq
-        q2C = q2 * nqC // nq
-
-        q1 *= nk // nq
-        q2 *= nk // nq
-
-        for k1 in range(nk):
-            for k2 in range(nk):
-                for K1 in range(nk):
-                    for K2 in range(nk):
-                        points[n] = q1C, q2C, q1, q2, k1, k2, K1, K2
-                        n += 1
-
     sizes = np.empty(comm.size, dtype=int)
 
     if comm.rank == 0:
@@ -104,7 +88,27 @@ def orbital2band(comm, U, H, nq, nk, band=0):
 
     comm.Bcast(sizes)
 
-    my_points = np.empty((sizes[comm.rank], 8), dtype=int)
+    if comm.rank == 0:
+        points = np.empty((size, 8), dtype=np.uint8)
+
+        n = 0
+        for iq, (q1, q2) in enumerate(Q):
+            q1C = q1 * nqC // nq
+            q2C = q2 * nqC // nq
+
+            q1 *= nk // nq
+            q2 *= nk // nq
+
+            for k1 in range(nk):
+                for k2 in range(nk):
+                    for K1 in range(nk):
+                        for K2 in range(nk):
+                            points[n] = q1C, q2C, q1, q2, k1, k2, K1, K2
+                            n += 1
+    else:
+        points = None
+
+    my_points = np.empty((sizes[comm.rank], 8), dtype=np.uint8)
     comm.Scatterv((np.arange(points), sizes * 8), my_points)
 
     # transform from orbital to band basis:
@@ -124,6 +128,6 @@ def orbital2band(comm, U, H, nq, nk, band=0):
 
     V = np.empty((len(Q), nk, nk, nk, nk), dtype=complex)
 
-    comm.Allgatherv(my_V, (V, sizes * 5))
+    comm.Gatherv(my_V, (V, sizes * 5))
 
     return V
