@@ -30,6 +30,8 @@ def coupling(comm, filename, nQ, nb, nk, bands,
     comm.Scatterv((np.arange(nQ, dtype=int) + 1, sizes), my_Q)
 
     for n, iq in enumerate(my_Q):
+        print("Read data for q point %d.." % (iq + 1))
+
         with open(filename % iq) as data:
             for line in data:
                 columns = line.split()
@@ -44,7 +46,9 @@ def coupling(comm, filename, nQ, nb, nk, bands,
                     columns[7])
 
     if completion:
-        for n in range(sizes[comm.rank]):
+        for n, iq in enumerate(my_Q):
+            print("Complete data for q point %d.." % (iq + 1))
+
             for nu in range(nb):
                 for ibnd in range(bands):
                     for jbnd in range(bands):
