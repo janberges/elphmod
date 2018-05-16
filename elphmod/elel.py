@@ -47,10 +47,14 @@ def read_band_Coulomb_interaction(comm, filename, nQ, nk):
 
     return U
 
-def orbital2band(comm, U, H, nk, band=0):
+def orbital2band(comm, U, H, nq, nk, band=0):
     """Transform Coulomb interaction from orbital basis onto single band."""
 
-    nq, nq, no, no, no, no = U.shape
+    nqC, nqC, no, no, no, no = U.shape
+
+    if nqC % nq:
+        print("Output q mesh must be subset of input q mesh!")
+        return
 
     # get eigenvectors of Hamiltonian:
 
@@ -79,6 +83,9 @@ def orbital2band(comm, U, H, nk, band=0):
 
     n = 0
     for iq, (q1, q2) in enumerate(Q):
+        q1C = q1 * nqC // nq
+        q2C = q2 * nqC // nq
+
         q1 *= nk // nq
         q2 *= nk // nq
 
@@ -86,7 +93,7 @@ def orbital2band(comm, U, H, nk, band=0):
             for k2 in range(nk):
                 for K1 in range(nk):
                     for K2 in range(nk):
-                        points[n] = q1, q2, k1, k2, K1, K2
+                        points[n] = q1C, q2C, q1, q2, k1, k2, K1, K2
                         n += 1
 
     sizes = np.empty(comm.size, dtype=int)
@@ -104,12 +111,12 @@ def orbital2band(comm, U, H, nk, band=0):
 
     my_V = np.zeros(sizes[comm.rank], dtype=complex)
 
-    for n, (q1, q2, k1, k2, K1, K2) in enumerate(my_points):
+    for n, (q1C, q2C, q1, q2, k1, k2, K1, K2) in enumerate(my_points):
         for a in range(no):
             for b in range(no):
                 for c in range(no):
                     for d in range(no):
-                        my_V[n] += (U[q1, q2, a, b, c, d]
+                        my_V[n] += (U[q1C, q2C, a, b, c, d]
                             * psi[ K1,             K2,            d].conj() \
                             * psi[ k1,             k2,            b].conj() \
                             * psi[(k1 + q1) % nk, (k2 + q2) % nk, a] \
