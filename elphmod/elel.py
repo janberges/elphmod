@@ -89,42 +89,53 @@ def orbital2band(comm, U, H, nq, nk, band=0):
     comm.Bcast(sizes)
 
     if comm.rank == 0:
-        points = np.empty((size, 8), dtype=np.uint8)
+        points = np.empty((size, 10), dtype=np.uint8)
 
         n = 0
-        for iq, (q1, q2) in enumerate(Q):
-            q1C = q1 * nqC // nq
-            q2C = q2 * nqC // nq
 
-            q1 *= nk // nq
-            q2 *= nk // nq
+        for iq, (q1, q2) in enumerate(Q):
+            Q1 = q1 * nk // nq
+            Q2 = q2 * nk // nq
+
+            q1 *= nqC // nq
+            q2 *= nqC // nq
 
             for k1 in range(nk):
+                kq1 = (k1 + Q1) % nk
+
                 for k2 in range(nk):
+                    kq2 = (k2 + Q2) % nk
+
                     for K1 in range(nk):
+                        Kq1 = (K1 - Q1) % nk
+
                         for K2 in range(nk):
-                            points[n] = q1C, q2C, q1, q2, k1, k2, K1, K2
+                            Kq2 = (K2 - Q2) % nk
+
+                            points[n] \
+                                = q1, q2, k1, k2, K1, K2, kq1, kq2, Kq1, Kq2
+
                             n += 1
     else:
         points = None
 
-    my_points = np.empty((sizes[comm.rank], 8), dtype=np.uint8)
-    comm.Scatterv((np.arange(points), sizes * 8), my_points)
+    my_points = np.empty((sizes[comm.rank], 10), dtype=np.uint8)
+    comm.Scatterv((np.arange(points), sizes * 10), my_points)
 
     # transform from orbital to band basis:
 
     my_V = np.zeros(sizes[comm.rank], dtype=complex)
 
-    for n, (q1C, q2C, q1, q2, k1, k2, K1, K2) in enumerate(my_points):
+    for n, (q1, q2, k1, k2, K1, K2, kq1, kq2, Kq1, Kq2) in enumerate(my_points):
         for a in range(no):
             for b in range(no):
                 for c in range(no):
                     for d in range(no):
-                        my_V[n] += (U[q1C, q2C, a, b, c, d]
-                            * psi[ K1,             K2,            d].conj() \
-                            * psi[ k1,             k2,            b].conj() \
-                            * psi[(k1 + q1) % nk, (k2 + q2) % nk, a] \
-                            * psi[(K1 - q1) % nk, (K2 - q2) % nk, c]
+                        my_V[n] += (U[q1, q2, a, b, c, d]
+                            * psi[K1,  K2,  d].conj() \
+                            * psi[k1,  k2,  b].conj() \
+                            * psi[kq1, kq2, a] \
+                            * psi[Kq1, Kq2, c]
 
     V = np.empty((len(Q), nk, nk, nk, nk), dtype=complex)
 
