@@ -70,19 +70,27 @@ def hamiltonian(comm, hr):
 
     return calculate_hamiltonian
 
-def read_bands(filband):
+def read_bands(comm, filband):
     """Read bands from 'filband' just like Quantum ESRESSO's 'plotband.x'."""
 
-    with open(filband) as data:
+    if comm.rank == 0:
+        data = open(filband)
+
         header = next(data)
 
         # &plot nbnd=  13, nks=  1296 /
         nbnd = int(header[12:16])
         nks  = int(header[22:28])
+    else:
+        nbnd = nks = None
 
-        k = np.empty((nks, 3))
-        bands = np.empty((nbnd, nks))
+    nbnd = comm.bcast(nbnd)
+    nks = comm.bcast(nks)
 
+    k = np.empty((nks, 3))
+    bands = np.empty((nbnd, nks))
+
+    if comm.rank == 0:
         for ik in range(nks):
             k[ik] = list(map(float, next(data).split()))
 
@@ -90,15 +98,26 @@ def read_bands(filband):
                 bands[lower:lower + 10, ik] \
                     = list(map(float, next(data).split()))
 
+        data.close()
+
+    comm.Bcast(k)
+    comm.Bcast(bands)
+
     return k, bands
 
-def read_Fermi_level(pw_scf_out):
+def read_Fermi_level(comm, pw_scf_out):
     """Read Fermi level from output of self-consistent PW run."""
 
-    with open(pw_scf_out) as data:
-        for line in data:
-            if 'Fermi energy' in line:
-                eF = float(line.split()[-2])
+    if comm.rank == 0:
+        with open(pw_scf_out) as data:
+            for line in data:
+                if 'Fermi energy' in line:
+                    eF = float(line.split()[-2])
+    else:
+        eF = None
+
+    eF = comm.bcast(eF)
+
     return eF
 
 def susceptibility(e, T=1.0, eta=1e-3):
