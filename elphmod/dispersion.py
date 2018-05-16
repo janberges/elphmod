@@ -6,7 +6,7 @@ import numpy as np
 import numpy.linalg
 
 def dispersion(comm, matrix, k,
-        vectors=False, rotate=False, order=False, broadcast=True):
+        vectors=False, gauge=False, rotate=False, order=False, broadcast=True):
     """Diagonalize Hamiltonian or dynamical matrix for given k points."""
 
     points = len(k)      # number of k points
@@ -35,6 +35,11 @@ def dispersion(comm, matrix, k,
     for point, (k1, k2) in enumerate(my_k):
         if order or vectors:
             my_v[point], my_V[point] = np.linalg.eigh(matrix(k1, k2))
+
+            if gauge:
+                for band in bands:
+                    my_V[point, :, band] *= np.exp(-1j * np.angle(
+                        max(my_V[point, :, band], key=abs)))
 
             # rotate phonon eigenvectors by negative angle of k point:
 
