@@ -4,7 +4,31 @@ from . import bravais
 
 import numpy as np
 
-def read_Coulomb_interaction(comm, filename, nQ, nk):
+def read_orbital_Coulomb_interaction(comm, filename, nq, no):
+    """Read Coulomb interaction in orbital basis.."""
+
+    U = np.empty((nq, nq, no, no, no, no), dtype=complex)
+
+    if comm.rank == 0:
+        with open(filename) as data:
+            next(data)
+            next(data)
+
+            for line in data:
+                columns = line.split()
+
+                q1, q2 = [int(round(float(q) * nq)) % nq for q in columns[0:2]]
+
+                i, j, k, l = [int(n) - 1 for n in columns[3:7]]
+
+                U[q1, q2, j, i, l, k] \
+                    = float(columns[7]) + 1j * float(columns[8])
+
+    comm.Bcast(U)
+
+    return U
+
+def read_band_Coulomb_interaction(comm, filename, nQ, nk):
     """Read Coulomb interaction for single band in band basis.."""
 
     U = np.empty((nQ, nk, nk, nk, nk), dtype=complex)
