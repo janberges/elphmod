@@ -36,7 +36,7 @@ def read_band_Coulomb_interaction(comm, filename, nQ, nk):
     # 'Shared memory for data structures and mpi4py.MPI.Win.Allocate_shared'
 
     size = nQ * nk ** 4
-    itemsize = MPI.COMPLEX.Get_size()
+    itemsize = MPI.COMPLEX16.Get_size()
 
     if comm.Get_rank() == 0:
         bytes = size * itemsize
@@ -51,7 +51,7 @@ def read_band_Coulomb_interaction(comm, filename, nQ, nk):
 
     if comm.rank == 0:
         with open(filename) as data:
-            for iQ in range(len(Q)):
+            for iQ in range(nQ):
                 for k1 in range(nk):
                     for k2 in range(nk):
                         for K1 in range(nk):
@@ -59,7 +59,7 @@ def read_band_Coulomb_interaction(comm, filename, nQ, nk):
                                 ReU, ImU = list(map(float, next(data).split()))
                                 U[iQ, k1, k2, K1, K2] = ReU + 1j * ImU
 
-    comm.Bcast(U)
+    comm.Barrier()
 
     return U
 
@@ -70,7 +70,7 @@ def write_band_Coulomb_interaction(comm, filename, U):
 
     if comm.rank == 0:
         with open(filename, 'w') as data:
-            for iQ in range(len(Q)):
+            for iQ in range(nQ):
                 for k1 in range(nk):
                     for k2 in range(nk):
                         for K1 in range(nk):
@@ -108,7 +108,7 @@ def orbital2band(comm, U, H, nq, nk, band=0):
 
     # distribute work among processors:
 
-    Q = bravais.irreducibles(nq)
+    Q = sorted(bravais.irreducibles(nq))
 
     size = len(Q) * nk ** 4
 
@@ -171,6 +171,6 @@ def orbital2band(comm, U, H, nq, nk, band=0):
 
     V = np.empty((len(Q), nk, nk, nk, nk), dtype=complex)
 
-    comm.Gatherv(my_V, (V, sizes * 5))
+    comm.Gatherv(my_V, (V, sizes))
 
     return V
