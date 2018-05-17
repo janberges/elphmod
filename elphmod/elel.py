@@ -3,6 +3,7 @@
 from . import bravais, dispersion
 
 import numpy as np
+from mpi4py import MPI
 
 def read_orbital_Coulomb_interaction(comm, filename, nq, no):
     """Read Coulomb interaction in orbital basis.."""
@@ -31,7 +32,22 @@ def read_orbital_Coulomb_interaction(comm, filename, nq, no):
 def read_band_Coulomb_interaction(comm, filename, nQ, nk):
     """Read Coulomb interaction for single band in band basis.."""
 
-    U = np.empty((nQ, nk, nk, nk, nk), dtype=complex)
+    # Shared memory allocation following Lisandro Dalcin on Google Groups:
+    # 'Shared memory for data structures and mpi4py.MPI.Win.Allocate_shared'
+
+    size = nQ * nk ** 4
+    itemsize = MPI.COMPLEX.Get_size()
+
+    if comm.Get_rank() == 0:
+        bytes = size * itemsize
+    else:
+        bytes = 0
+
+    win = MPI.Win.Allocate_shared(bytes, itemsize, comm=comm)
+    buf, itemsize = win.Shared_query(0)
+    buf = np.array(buf, dtype='B', copy=False)
+
+    U = np.ndarray((nQ, nk, nk, nk, nk), buffer=buf, dtype=complex)
 
     if comm.rank == 0:
         with open(filename) as data:
