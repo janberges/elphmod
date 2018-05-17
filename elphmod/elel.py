@@ -1,9 +1,8 @@
 #/usr/bin/env python
 
-from . import bravais, dispersion
+from . import bravais, dispersion, MPI
 
 import numpy as np
-from mpi4py import MPI
 
 def read_orbital_Coulomb_interaction(comm, filename, nq, no):
     """Read Coulomb interaction in orbital basis.."""
@@ -32,22 +31,7 @@ def read_orbital_Coulomb_interaction(comm, filename, nq, no):
 def read_band_Coulomb_interaction(comm, filename, nQ, nk):
     """Read Coulomb interaction for single band in band basis.."""
 
-    # Shared memory allocation following Lisandro Dalcin on Google Groups:
-    # 'Shared memory for data structures and mpi4py.MPI.Win.Allocate_shared'
-
-    size = nQ * nk ** 4
-    itemsize = MPI.COMPLEX16.Get_size()
-
-    if comm.Get_rank() == 0:
-        bytes = size * itemsize
-    else:
-        bytes = 0
-
-    win = MPI.Win.Allocate_shared(bytes, itemsize, comm=comm)
-    buf, itemsize = win.Shared_query(0)
-    buf = np.array(buf, dtype='B', copy=False)
-
-    U = np.ndarray((nQ, nk, nk, nk, nk), buffer=buf, dtype=complex)
+    U = MPI.shared_array(comm, (nQ, nk, nk, nk, nk), dtype=complex)
 
     if comm.rank == 0:
         with open(filename) as data:
@@ -169,7 +153,7 @@ def orbital2band(comm, U, H, nq, nk, band=0):
                             * psi[kq1, kq2, a]
                             * psi[Kq1, Kq2, c])
 
-    V = np.empty((len(Q), nk, nk, nk, nk), dtype=complex)
+    V = MPI.shared_array(comm, (len(Q), nk, nk, nk, nk), dtype=complex)
 
     comm.Gatherv(my_V, (V, sizes))
 
