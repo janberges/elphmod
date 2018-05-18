@@ -30,40 +30,49 @@ def read_orbital_Coulomb_interaction(filename, nq, no):
 
     return U
 
-def read_band_Coulomb_interaction(filename, nQ, nk):
+def read_band_Coulomb_interaction(filename, nQ, nk, binary=False):
     """Read Coulomb interaction for single band in band basis.."""
 
     U = MPI.shared_array((nQ, nk, nk, nk, nk), dtype=complex)
 
     if comm.rank == 0:
-        with open(filename) as data:
-            for iQ in range(nQ):
-                for k1 in range(nk):
-                    for k2 in range(nk):
-                        for K1 in range(nk):
-                            for K2 in range(nk):
-                                ReU, ImU = list(map(float, next(data).split()))
-                                U[iQ, k1, k2, K1, K2] = ReU + 1j * ImU
+        if binary:
+            if not filename.endswith('.npy'):
+                filename += '.npy'
+
+            U[:] = np.load(filename)
+        else:
+            with open(filename) as data:
+                for iQ in range(nQ):
+                    for k1 in range(nk):
+                        for k2 in range(nk):
+                            for K1 in range(nk):
+                                for K2 in range(nk):
+                                    a, b = list(map(float,next(data).split()))
+                                    U[iQ, k1, k2, K1, K2] = a + 1j * b
 
     comm.Barrier()
 
     return U
 
-def write_band_Coulomb_interaction(filename, U):
+def write_band_Coulomb_interaction(filename, U, binary=False):
     """Write Coulomb interaction for single band in band basis.."""
 
     nQ, nk, nk, nk, nk = U.shape
 
     if comm.rank == 0:
-        with open(filename, 'w') as data:
-            for iQ in range(nQ):
-                for k1 in range(nk):
-                    for k2 in range(nk):
-                        for K1 in range(nk):
-                            for K2 in range(nk):
-                                data.write('%14.9f %14.9f\n' % (
-                                    U[iQ, k1, k2, K1, K2].real,
-                                    U[iQ, k1, k2, K1, K2].imag))
+        if binary:
+            np.save(filename, U)
+        else:
+            with open(filename, 'w') as data:
+                for iQ in range(nQ):
+                    for k1 in range(nk):
+                        for k2 in range(nk):
+                            for K1 in range(nk):
+                                for K2 in range(nk):
+                                    data.write('%14.9f %14.9f\n' % (
+                                        U[iQ, k1, k2, K1, K2].real,
+                                        U[iQ, k1, k2, K1, K2].imag))
 
 def orbital2band(U, H, nq, nk, band=0):
     """Transform Coulomb interaction from orbital basis onto single band."""
