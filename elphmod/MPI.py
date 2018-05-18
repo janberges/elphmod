@@ -20,6 +20,6 @@ def shared_array(comm, shape, dtype):
 
     win = MPI.Win.Allocate_shared(bytes, itemsize, comm=comm)
     buf, itemsize = win.Shared_query(0)
-    buf = np.array(buf, dtype='B', copy=False)
+    buf = np.array(buf, dtype='B', copy=False) # Is this line really needed?
 
     return np.ndarray(shape, buffer=buf, dtype=dtype)

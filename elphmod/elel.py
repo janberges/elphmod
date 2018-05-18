@@ -153,8 +153,13 @@ def orbital2band(comm, U, H, nq, nk, band=0):
                             * psi[kq1, kq2, a]
                             * psi[Kq1, Kq2, c])
 
-    V = MPI.shared_array(comm, (len(Q), nk, nk, nk, nk), dtype=complex)
+    V = np.empty((len(Q), nk, nk, nk, nk), dtype=complex)
 
     comm.Gatherv(my_V, (V, sizes))
 
-    return V
+    W = MPI.shared_array(comm, (len(Q), nk, nk, nk, nk), dtype=complex)
+
+    if comm.rank == 0:
+        W[:] = V
+
+    return W
