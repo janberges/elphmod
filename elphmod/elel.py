@@ -2,6 +2,7 @@
 
 from . import bravais, dispersion, MPI
 
+import sys
 import numpy as np
 
 def read_orbital_Coulomb_interaction(comm, filename, nq, no):
@@ -143,6 +144,9 @@ def orbital2band(comm, U, H, nq, nk, band=0):
     my_V = np.zeros(sizes[comm.rank], dtype=complex)
 
     for n, (q1, q2, k1, k2, K1, K2, kq1, kq2, Kq1, Kq2) in enumerate(my_points):
+        if comm.rank == 0:
+            sys.stdout.write('%3.0f%%\r' % (n / len(my_points) * 100))
+
         for a in range(no):
             for b in range(no):
                 for c in range(no):
@@ -152,6 +156,9 @@ def orbital2band(comm, U, H, nq, nk, band=0):
                             * psi[k1,  k2,  b].conj()
                             * psi[kq1, kq2, a]
                             * psi[Kq1, Kq2, c])
+
+    if comm.rank == 0:
+        print('Done.')
 
     V = np.empty((len(Q), nk, nk, nk, nk), dtype=complex)
 
