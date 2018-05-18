@@ -1,6 +1,6 @@
 #/usr/bin/env python
 
-from . import bravais
+from . import bravais, MPI
 
 import numpy as np
 import numpy.linalg
@@ -14,9 +14,7 @@ def dispersion(comm, matrix, k,
 
     # choose number of k points to be processed by each processor:
 
-    my_points = np.empty(comm.size, dtype=int)
-    my_points[:] = points // comm.size
-    my_points[:points % comm.size] += 1
+    my_points = MPI.distribute(comm, points)
 
     # initialize local lists of k points, eigenvalues and eigenvectors:
 

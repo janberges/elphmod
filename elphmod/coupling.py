@@ -1,6 +1,6 @@
 #/usr/bin/env python
 
-from . import bravais
+from . import bravais, MPI
 import numpy as np
 
 def get_q(filename):
@@ -13,13 +13,7 @@ def coupling(comm, filename, nQ, nb, nk, bands,
              offset=0, completion=True, squeeze=False):
     """Read and complete electron-phonon matrix elements."""
 
-    sizes = np.empty(comm.size, dtype=int)
-
-    if comm.rank == 0:
-        sizes[:] = nQ // comm.size
-        sizes[:nQ % comm.size] += 1
-
-    comm.Bcast(sizes)
+    sizes = MPI.distribute(comm, nQ)
 
     elph = np.empty((nQ, nb, bands, bands, nk, nk))
 

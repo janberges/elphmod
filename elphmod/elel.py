@@ -97,13 +97,7 @@ def orbital2band(comm, U, H, nq, nk, band=0):
 
     size = len(Q) * nk ** 4
 
-    sizes = np.empty(comm.size, dtype=int)
-
-    if comm.rank == 0:
-        sizes[:] = size // comm.size
-        sizes[:size % comm.size] += 1
-
-    comm.Bcast(sizes)
+    sizes = MPI.distribute(comm, size)
 
     if comm.rank == 0:
         points = np.empty((size, 10), dtype=np.uint8)
