@@ -12,7 +12,7 @@ def get_q(filename):
         return [list(map(float, line.split()[:2])) for line in data]
 
 def coupling(filename, nQ, nb, nk, bands,
-             offset=0, completion=True, squeeze=False):
+             offset=0, completion=True, squeeze=False, status=False):
     """Read and complete electron-phonon matrix elements."""
 
     sizes = MPI.distribute(nQ)
@@ -26,7 +26,8 @@ def coupling(filename, nQ, nb, nk, bands,
     comm.Scatterv((np.arange(nQ, dtype=int) + 1, sizes), my_Q)
 
     for n, iq in enumerate(my_Q):
-        print("Read data for q point %d.." % (iq + 1))
+        if status:
+            print("Read data for q point %d.." % (iq + 1))
 
         with open(filename % iq) as data:
             for line in data:
@@ -43,7 +44,8 @@ def coupling(filename, nQ, nb, nk, bands,
 
     if completion:
         for n, iq in enumerate(my_Q):
-            print("Complete data for q point %d.." % (iq + 1))
+            if status:
+                print("Complete data for q point %d.." % (iq + 1))
 
             for nu in range(nb):
                 for ibnd in range(bands):
@@ -54,7 +56,7 @@ def coupling(filename, nQ, nb, nk, bands,
 
     return elph[:, :, 0, 0, :, :] if bands == 1 and squeeze else elph
 
-def read_EPW_output(epw_out, q, nq, nb, nk, eps=1e-4):
+def read_EPW_output(epw_out, q, nq, nb, nk, eps=1e-4, status=False):
     """Read electron-phonon coupling from EPW output file."""
 
     elph = np.empty((len(q), nb, nk, nk), dtype=complex)
@@ -94,7 +96,8 @@ def read_EPW_output(epw_out, q, nq, nb, nk, eps=1e-4):
                     iq = q.index((q1, q2))
                     q_set.remove((q1, q2))
 
-                    print('q = (%d, %d)' % (q1, q2))
+                    if status:
+                        print('q = (%d, %d)' % (q1, q2))
 
                 if iq is not None and line.startswith('     ik = '):
                     columns = line.split()

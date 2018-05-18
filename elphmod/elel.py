@@ -74,7 +74,7 @@ def write_band_Coulomb_interaction(filename, U, binary=False):
                                         U[iQ, k1, k2, K1, K2].real,
                                         U[iQ, k1, k2, K1, K2].imag))
 
-def orbital2band(U, H, nq, nk, band=0):
+def orbital2band(U, H, nq, nk, band=0, status=False):
     """Transform Coulomb interaction from orbital basis onto single band."""
 
     nqC, nqC, no, no, no, no = U.shape
@@ -148,7 +148,7 @@ def orbital2band(U, H, nq, nk, band=0):
     my_V = np.zeros(sizes[comm.rank], dtype=complex)
 
     for n, (q1, q2, k1, k2, K1, K2, kq1, kq2, Kq1, Kq2) in enumerate(my_points):
-        if comm.rank == 0:
+        if status and comm.rank == 0:
             sys.stdout.write('%3.0f%%\r' % (n / len(my_points) * 100))
 
         for a in range(no):
@@ -161,7 +161,7 @@ def orbital2band(U, H, nq, nk, band=0):
                             * psi[kq1, kq2, a]
                             * psi[Kq1, Kq2, c])
 
-    if comm.rank == 0:
+    if status and comm.rank == 0:
         print('Done.')
 
     V = np.empty((len(Q), nk, nk, nk, nk), dtype=complex)
