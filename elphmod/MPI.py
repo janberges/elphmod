@@ -1,9 +1,11 @@
 #/usr/bin/env python
 
 import numpy as np
-from mpi4py import MPI
 
-def distribute(comm, size):
+from mpi4py import MPI
+comm = MPI.COMM_WORLD
+
+def distribute(size):
     """Distribute work among processes."""
 
     sizes = np.empty(comm.size, dtype=int)
@@ -16,7 +18,7 @@ def distribute(comm, size):
 
     return sizes
 
-def shared_array(comm, shape, dtype):
+def shared_array(shape, dtype):
     "Create array whose memory is shared among all processes."
 
     # Shared memory allocation following Lisandro Dalcin on Google Groups:

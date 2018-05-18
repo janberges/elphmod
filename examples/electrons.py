@@ -5,23 +5,21 @@ import elphmod
 import numpy as np
 import matplotlib.pyplot as plt
 
-from mpi4py import MPI
-comm = MPI.COMM_WORLD
+comm = elphmod.MPI.comm
 
 eF = -0.1665
 
 if comm.rank == 0:
     print("Set up Wannier Hamiltonian..")
 
-H = elphmod.electrons.hamiltonian(comm, 'data/NbSe2_hr.dat')
+H = elphmod.electrons.hamiltonian('data/NbSe2_hr.dat')
 
 if comm.rank == 0:
     print("Diagonalize Hamiltonian along G-M-K-G..")
 
 q, x, GMKG = elphmod.bravais.GMKG(corner_indices=True)
 
-eps, psi, order = elphmod.dispersion.dispersion(comm, H, q,
-    vectors=True, order=True)
+eps, psi, order = elphmod.dispersion.dispersion(H, q, vectors=True, order=True)
 
 eps -= eF
 
@@ -30,7 +28,7 @@ if comm.rank == 0:
 
 nk = 120
 
-eps_full = elphmod.dispersion.dispersion_full(comm, H, nk) - eF
+eps_full = elphmod.dispersion.dispersion_full(H, nk) - eF
 
 if comm.rank == 0:
     print("Calculate DOS of metallic band..")
@@ -39,7 +37,7 @@ ne = 300
 
 e = np.linspace(eps_full[:, :, 0].min(), eps_full[:, :, 0].max(), ne)
 
-DOS = elphmod.dos.hexDOS(eps_full[:, :, 0], comm)(e)
+DOS = elphmod.dos.hexDOS(eps_full[:, :, 0])(e)
 
 if comm.rank == 0:
     print("Plot dispersion and DOS..")

@@ -1,11 +1,12 @@
 #/usr/bin/env python
 
-from . import bravais, MPI
-
 import numpy as np
 import numpy.linalg
 
-def dispersion(comm, matrix, k,
+from . import bravais, MPI
+comm = MPI.comm
+
+def dispersion(matrix, k,
         vectors=False, gauge=False, rotate=False, order=False, broadcast=True):
     """Diagonalize Hamiltonian or dynamical matrix for given k points."""
 
@@ -14,7 +15,7 @@ def dispersion(comm, matrix, k,
 
     # choose number of k points to be processed by each processor:
 
-    my_points = MPI.distribute(comm, points)
+    my_points = MPI.distribute(points)
 
     # initialize local lists of k points, eigenvalues and eigenvectors:
 
@@ -92,8 +93,7 @@ def dispersion(comm, matrix, k,
     return (v, V, o) if vectors and order \
         else (v, V) if vectors else (v, o) if order else v
 
-def dispersion_full(comm, matrix, size,
-        rotate=True, order=False, broadcast=True):
+def dispersion_full(matrix, size, rotate=True, order=False, broadcast=True):
     """Diagonalize Hamiltonian or dynamical matrix on uniform k-point mesh."""
 
     # choose irreducible set of k points:
@@ -106,7 +106,7 @@ def dispersion_full(comm, matrix, size,
     # calculate dispersion using the above routine:
 
     if order:
-        v, V = dispersion(comm, matrix, 2 * np.pi / size * k,
+        v, V = dispersion(matrix, 2 * np.pi / size * k,
             vectors=True, rotate=rotate, order=False, broadcast=False)
 
         # order bands along spider-web-like paths:
@@ -137,7 +137,7 @@ def dispersion_full(comm, matrix, size,
                     v[m] = v[m, o[m]]
 
     else:
-        v = dispersion(comm, matrix, 2 * np.pi / size * k,
+        v = dispersion(matrix, 2 * np.pi / size * k,
             vectors=False, rotate=False, order=False, broadcast=False)
 
     # fill uniform mesh with data from irreducible wedge:

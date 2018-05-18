@@ -1,9 +1,9 @@
 #/usr/bin/env python
 
-from . import bravais
-
 import numpy as np
 from scipy.misc import toimage
+
+from . import bravais
 
 def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
         interpolation=bravais.linear_interpolation):

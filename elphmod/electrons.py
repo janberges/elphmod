@@ -2,7 +2,10 @@
 
 import numpy as np
 
-def hamiltonian(comm, hr):
+from . import MPI
+comm = MPI.comm
+
+def hamiltonian(hr):
     """Read '_hr.dat' file from Wannier 90 and set up Hamilton operator."""
 
     if comm.rank == 0:
@@ -70,7 +73,7 @@ def hamiltonian(comm, hr):
 
     return calculate_hamiltonian
 
-def read_bands(comm, filband):
+def read_bands(filband):
     """Read bands from 'filband' just like Quantum ESRESSO's 'plotband.x'."""
 
     if comm.rank == 0:
@@ -105,7 +108,7 @@ def read_bands(comm, filband):
 
     return k, bands
 
-def read_Fermi_level(comm, pw_scf_out):
+def read_Fermi_level(pw_scf_out):
     """Read Fermi level from output of self-consistent PW run."""
 
     if comm.rank == 0:

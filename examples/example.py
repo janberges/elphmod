@@ -5,8 +5,7 @@ import elphmod
 import numpy as np
 import matplotlib.pyplot as plt
 
-from mpi4py import MPI
-comm = MPI.COMM_WORLD
+comm = elphmod.MPI.comm
 
 Ry2eV = 13.605693009
 eV2cmm1 = 8065.54
@@ -16,16 +15,16 @@ data = 'NbSe2-cDFPT-LR'
 if comm.rank == 0:
     print("Read and fix force constants and set up dynamical matrix..")
 
-model = elphmod.phonons.model(comm, 'data/%s.ifc' % data, apply_asr=True)
+model = elphmod.phonons.model('data/%s.ifc' % data, apply_asr=True)
 
-D = elphmod.phonons.dynamical_matrix(comm, *model)
+D = elphmod.phonons.dynamical_matrix(*model)
 
 if comm.rank == 0:
     print("Check module against Quantum ESPRESSO's 'matdyn.x'..")
 
 q, x = elphmod.bravais.GMKG()
 
-w2, e, order = elphmod.dispersion.dispersion(comm, D, q,
+w2, e, order = elphmod.dispersion.dispersion(D, q,
     vectors=True, order=True, broadcast=False)
 
 w = elphmod.phonons.sgnsqrt(w2) * Ry2eV * eV2cmm1
@@ -54,7 +53,7 @@ if comm.rank == 0:
 
 nq = 48
 
-w2, order = elphmod.dispersion.dispersion_full(comm, D, nq, order=True)
+w2, order = elphmod.dispersion.dispersion_full(D, nq, order=True)
 
 w = elphmod.phonons.sgnsqrt(w2) * Ry2eV * eV2cmm1
 
@@ -106,8 +105,8 @@ DOS = np.zeros(N)
 a2F = np.zeros(N)
 
 for nu in range(D.size):
-    DOS += elphmod.dos.hexDOS(w[:, :, nu], comm)(W)
-    a2F += elphmod.dos.hexa2F(w[:, :, nu], g2[:, :, nu], comm)(W)
+    DOS += elphmod.dos.hexDOS(w[:, :, nu])(W)
+    a2F += elphmod.dos.hexa2F(w[:, :, nu], g2[:, :, nu])(W)
 
 if comm.rank == 0:
     a2F *= DOS.max() / a2F.max()

@@ -4,25 +4,23 @@ import elphmod
 
 import os
 
-from mpi4py import MPI
-comm = MPI.COMM_WORLD
+comm = elphmod.MPI.comm
 
 Ry2eV = 13.605693009
 
 if comm.rank == 0:
     print("Read and fix force constants and set up dynamical matrix..")
 
-model = elphmod.phonons.model(comm, 'data/NbSe2-DFPT-LR.ifc', apply_asr=True)
+model = elphmod.phonons.model('data/NbSe2-DFPT-LR.ifc', apply_asr=True)
 
-D = elphmod.phonons.dynamical_matrix(comm, *model)
+D = elphmod.phonons.dynamical_matrix(*model)
 
 if comm.rank == 0:
     print("Calculate dispersion on whole Brillouin zone..")
 
 nq = 48
 
-w2 = elphmod.dispersion.dispersion_full(comm, D, nq,
-    order=False, broadcast=False)
+w2 = elphmod.dispersion.dispersion_full(D, nq, order=False, broadcast=False)
 
 if comm.rank == 0:
     w = elphmod.phonons.sgnsqrt(w2) * Ry2eV * 1e3

@@ -2,7 +2,10 @@
 
 import numpy as np
 
-def hexDOS(energies, comm=None):
+from . import MPI
+comm = MPI.comm
+
+def hexDOS(energies):
     """Calculate DOS from energies on triangular mesh (2D tetrahedron).
 
     Integration over all energies yields unity.
@@ -42,7 +45,7 @@ def hexDOS(energies, comm=None):
         for i in range(N)
         for j in range(N)
         for k in range(2)
-        if comm is None or comm.rank == ((i * N + j) * 2 + k) % comm.size
+        if comm.rank == ((i * N + j) * 2 + k) % comm.size
         ]
 
     def DOS(E):
@@ -64,11 +67,11 @@ def hexDOS(energies, comm=None):
             elif E == A == B == C:
                 return float('inf')
 
-        return (D if comm is None else comm.allreduce(D)) / N ** 2
+        return comm.allreduce(D) / N ** 2
 
     return np.vectorize(DOS)
 
-def hexa2F(energies, couplings, comm=None):
+def hexa2F(energies, couplings):
     """Calculate a2F from energies and coupling.
 
     Integration over all energies yields the arithmetic mean of the coupling.
@@ -91,7 +94,7 @@ def hexa2F(energies, couplings, comm=None):
         for i in range(N)
         for j in range(N)
         for k in range(2)
-        if comm is None or comm.rank == ((i * N + j) * 2 + k) % comm.size
+        if comm.rank == ((i * N + j) * 2 + k) % comm.size
         ]
 
     triangles = [(energies[v], couplings[v]) for v in triangles]
@@ -119,7 +122,7 @@ def hexa2F(energies, couplings, comm=None):
             elif E == A == B == C:
                 return float('inf')
 
-        return (D if comm is None else comm.allreduce(D)) / N ** 2
+        return comm.allreduce(D) / N ** 2
 
     return np.vectorize(a2F)
 

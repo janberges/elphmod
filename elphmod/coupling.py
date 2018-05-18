@@ -1,7 +1,9 @@
 #/usr/bin/env python
 
-from . import bravais, MPI
 import numpy as np
+
+from . import bravais, MPI
+comm = MPI.comm
 
 def get_q(filename):
     """Get list of irreducible q points."""
@@ -9,11 +11,11 @@ def get_q(filename):
     with open(filename) as data:
         return [list(map(float, line.split()[:2])) for line in data]
 
-def coupling(comm, filename, nQ, nb, nk, bands,
+def coupling(filename, nQ, nb, nk, bands,
              offset=0, completion=True, squeeze=False):
     """Read and complete electron-phonon matrix elements."""
 
-    sizes = MPI.distribute(comm, nQ)
+    sizes = MPI.distribute(nQ)
 
     elph = np.empty((nQ, nb, bands, bands, nk, nk))
 
@@ -52,7 +54,7 @@ def coupling(comm, filename, nQ, nb, nk, bands,
 
     return elph[:, :, 0, 0, :, :] if bands == 1 and squeeze else elph
 
-def read_EPW_output(comm, epw_out, q, nq, nb, nk, eps=1e-4):
+def read_EPW_output(epw_out, q, nq, nb, nk, eps=1e-4):
     """Read electron-phonon coupling from EPW output file."""
 
     elph = np.empty((len(q), nb, nk, nk), dtype=complex)

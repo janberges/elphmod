@@ -1,11 +1,12 @@
 #/usr/bin/env python
 
-from . import bravais, dispersion, MPI
-
 import sys
 import numpy as np
 
-def read_orbital_Coulomb_interaction(comm, filename, nq, no):
+from . import bravais, dispersion, MPI
+comm = MPI.comm
+
+def read_orbital_Coulomb_interaction(filename, nq, no):
     """Read Coulomb interaction in orbital basis.."""
 
     U = np.empty((nq, nq, no, no, no, no), dtype=complex)
@@ -29,10 +30,10 @@ def read_orbital_Coulomb_interaction(comm, filename, nq, no):
 
     return U
 
-def read_band_Coulomb_interaction(comm, filename, nQ, nk):
+def read_band_Coulomb_interaction(filename, nQ, nk):
     """Read Coulomb interaction for single band in band basis.."""
 
-    U = MPI.shared_array(comm, (nQ, nk, nk, nk, nk), dtype=complex)
+    U = MPI.shared_array((nQ, nk, nk, nk, nk), dtype=complex)
 
     if comm.rank == 0:
         with open(filename) as data:
@@ -48,7 +49,7 @@ def read_band_Coulomb_interaction(comm, filename, nQ, nk):
 
     return U
 
-def write_band_Coulomb_interaction(comm, filename, U):
+def write_band_Coulomb_interaction(filename, U):
     """Write Coulomb interaction for single band in band basis.."""
 
     nQ, nk, nk, nk, nk = U.shape
@@ -64,7 +65,7 @@ def write_band_Coulomb_interaction(comm, filename, U):
                                     U[iQ, k1, k2, K1, K2].real,
                                     U[iQ, k1, k2, K1, K2].imag))
 
-def orbital2band(comm, U, H, nq, nk, band=0):
+def orbital2band(U, H, nq, nk, band=0):
     """Transform Coulomb interaction from orbital basis onto single band."""
 
     nqC, nqC, no, no, no, no = U.shape
@@ -86,8 +87,8 @@ def orbital2band(comm, U, H, nq, nk, band=0):
 
         k *= 2 * np.pi / nk
 
-    eps, psi = dispersion.dispersion(comm, H, k,
-        vectors=True, gauge=True) # psi[k, a, n] = <a k|n k>
+    eps, psi = dispersion.dispersion(H, k, vectors=True, gauge=True)
+    # psi[k, a, n] = <a k|n k>
 
     psi = np.reshape(psi[:, :, band], (nk, nk, no))
 
@@ -97,7 +98,7 @@ def orbital2band(comm, U, H, nq, nk, band=0):
 
     size = len(Q) * nk ** 4
 
-    sizes = MPI.distribute(comm, size)
+    sizes = MPI.distribute(size)
 
     if comm.rank == 0:
         points = np.empty((size, 10), dtype=np.uint8)
@@ -158,7 +159,7 @@ def orbital2band(comm, U, H, nq, nk, band=0):
 
     comm.Gatherv(my_V, (V, sizes))
 
-    W = MPI.shared_array(comm, (len(Q), nk, nk, nk, nk), dtype=complex)
+    W = MPI.shared_array((len(Q), nk, nk, nk, nk), dtype=complex)
 
     if comm.rank == 0:
         W[:] = V
