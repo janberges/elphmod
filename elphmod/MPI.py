@@ -38,3 +38,17 @@ def shared_array(shape, dtype):
     buf = np.array(buf, dtype='B', copy=False) # Is this line really needed?
 
     return np.ndarray(shape, buffer=buf, dtype=dtype)
+
+def info(message, error=False):
+    """Print status message from first process."""
+
+    comm.barrier()
+
+    if comm.rank == 0:
+        if error:
+            sys.stdout.write('Error: ')
+
+        print(message)
+
+    if error:
+        sys.exit()

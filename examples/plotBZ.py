@@ -5,27 +5,26 @@ import elphmod
 import os
 
 comm = elphmod.MPI.comm
+info = elphmod.MPI.info
 
 Ry2eV = 13.605693009
 
-if comm.rank == 0:
-    print("Read and fix force constants and set up dynamical matrix..")
+info("Read and fix force constants and set up dynamical matrix..")
 
 model = elphmod.phonons.model('data/NbSe2-DFPT-LR.ifc', apply_asr=True)
 
 D = elphmod.phonons.dynamical_matrix(*model)
 
-if comm.rank == 0:
-    print("Calculate dispersion on whole Brillouin zone..")
+info("Calculate dispersion on whole Brillouin zone..")
 
 nq = 48
 
 w2 = elphmod.dispersion.dispersion_full(D, nq, order=False, broadcast=False)
 
+info("Plot dispersion on Brillouin zone..")
+
 if comm.rank == 0:
     w = elphmod.phonons.sgnsqrt(w2) * Ry2eV * 1e3
-
-    print("Plot dispersion on Brillouin zone..")
 
     os.system('mkdir -p plotBZ')
     os.chdir('plotBZ')

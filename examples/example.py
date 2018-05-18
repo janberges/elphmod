@@ -6,21 +6,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 comm = elphmod.MPI.comm
+info = elphmod.MPI.info
 
 Ry2eV = 13.605693009
 eV2cmm1 = 8065.54
 
 data = 'NbSe2-cDFPT-LR'
 
-if comm.rank == 0:
-    print("Read and fix force constants and set up dynamical matrix..")
+info("Read and fix force constants and set up dynamical matrix..")
 
 model = elphmod.phonons.model('data/%s.ifc' % data, apply_asr=True)
 
 D = elphmod.phonons.dynamical_matrix(*model)
 
-if comm.rank == 0:
-    print("Check module against Quantum ESPRESSO's 'matdyn.x'..")
+info("Check module against Quantum ESPRESSO's 'matdyn.x'..")
 
 q, x = elphmod.bravais.GMKG()
 
@@ -49,7 +48,7 @@ if comm.rank == 0:
 
     plt.show()
 
-    print("Calculate dispersion on whole Brillouin zone and sort bands..")
+info("Calculate dispersion on whole Brillouin zone and sort bands..")
 
 nq = 48
 
@@ -61,8 +60,9 @@ if comm.rank == 0:
     plt.plot(range(nq * nq), np.reshape(w, (nq * nq, D.size)))
     plt.show()
 
-    print("Load and preprocess electron-phonon coupling..")
+info("Load and preprocess electron-phonon coupling..")
 
+if comm.rank == 0:
     nqelph = 12
 
     elph = elphmod.coupling.read('data/%s.elph' % data, nqelph, D.size)
@@ -94,8 +94,7 @@ if comm.rank == 0:
 
 comm.Bcast(g2)
 
-if comm.rank == 0:
-    print("Calculate DOS and a2F via 2D tetrahedron method..")
+info("Calculate DOS and a2F via 2D tetrahedron method..")
 
 N = 300
 

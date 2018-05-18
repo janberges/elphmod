@@ -6,16 +6,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 comm = elphmod.MPI.comm
+info = elphmod.MPI.info
 
 eF = -0.1665
 
-if comm.rank == 0:
-    print("Set up Wannier Hamiltonian..")
+info("Set up Wannier Hamiltonian..")
 
 H = elphmod.electrons.hamiltonian('data/NbSe2_hr.dat')
 
-if comm.rank == 0:
-    print("Diagonalize Hamiltonian along G-M-K-G..")
+info("Diagonalize Hamiltonian along G-M-K-G..")
 
 q, x, GMKG = elphmod.bravais.GMKG(corner_indices=True)
 
@@ -23,15 +22,13 @@ eps, psi, order = elphmod.dispersion.dispersion(H, q, vectors=True, order=True)
 
 eps -= eF
 
-if comm.rank == 0:
-    print("Diagonalize Hamiltonian on uniform mesh..")
+info("Diagonalize Hamiltonian on uniform mesh..")
 
 nk = 120
 
 eps_full = elphmod.dispersion.dispersion_full(H, nk) - eF
 
-if comm.rank == 0:
-    print("Calculate DOS of metallic band..")
+info("Calculate DOS of metallic band..")
 
 ne = 300
 
@@ -39,9 +36,9 @@ e = np.linspace(eps_full[:, :, 0].min(), eps_full[:, :, 0].max(), ne)
 
 DOS = elphmod.dos.hexDOS(eps_full[:, :, 0])(e)
 
-if comm.rank == 0:
-    print("Plot dispersion and DOS..")
+info("Plot dispersion and DOS..")
 
+if comm.rank == 0:
     fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
 
     ax1.set_ylabel('energy (eV)')
@@ -62,9 +59,9 @@ if comm.rank == 0:
 
     plt.show()
 
-if comm.rank == 0:
-    print("Calculate electron susceptibility..")
+info("Calculate electron susceptibility..")
 
+if comm.rank == 0:
     chi = elphmod.electrons.susceptibility(eps_full[:, :, 0])
 
     plt.plot(x, [chi(q1, q2) for q1, q2 in q])
