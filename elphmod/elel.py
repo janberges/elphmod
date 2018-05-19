@@ -131,10 +131,10 @@ def orbital2band(U, H, nq, nk, band=0, status=False, share=False):
                     kq2 = (k2 + Q2) % nk
 
                     for K1 in range(nk):
-                        Kq1 = (K1 - Q1) % nk
+                        Kq1 = (K1 + Q1) % nk
 
                         for K2 in range(nk):
-                            Kq2 = (K2 - Q2) % nk
+                            Kq2 = (K2 + Q2) % nk
 
                             points[n] \
                                 = q1, q2, k1, k2, K1, K2, kq1, kq2, Kq1, Kq2
@@ -147,6 +147,12 @@ def orbital2band(U, H, nq, nk, band=0, status=False, share=False):
     comm.Scatterv((points, sizes * 10), my_points)
 
     # transform from orbital to band basis:
+    #
+    #  ---<---b           c---<---
+    #     k    \    q    /    K
+    #           o~~~~~~~o
+    #    k+q   /         \   K+q
+    #  --->---a           d--->---
 
     my_V = np.zeros(sizes[comm.rank], dtype=complex)
 
@@ -159,10 +165,10 @@ def orbital2band(U, H, nq, nk, band=0, status=False, share=False):
                 for c in range(no):
                     for d in range(no):
                         my_V[n] += (U[q1, q2, a, b, c, d]
-                            * psi[K1,  K2,  d].conj()
+                            * psi[Kq1, Kq2, d].conj()
                             * psi[k1,  k2,  b].conj()
                             * psi[kq1, kq2, a]
-                            * psi[Kq1, Kq2, c])
+                            * psi[K1,  K2,  c])
 
     if status and comm.rank == 0:
         print('Done.')
