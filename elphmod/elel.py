@@ -92,9 +92,9 @@ def orbital2band(U, H, nq, nk, band=0, status=False, share=False):
 
     # get eigenvectors of Hamiltonian:
 
-    k = np.empty((nk * nk, 2))
-
     if comm.rank == 0:
+        k = np.empty((nk * nk, 2))
+
         n = 0
         for k1 in range(nk):
             for k2 in range(nk):
@@ -102,15 +102,19 @@ def orbital2band(U, H, nq, nk, band=0, status=False, share=False):
                 n += 1
 
         k *= 2 * np.pi / nk
+    else:
+        k = None
 
-    eps, psi = dispersion.dispersion(H, k, vectors=True, gauge=True)
+    psi = dispersion.dispersion(H, k, vectors=True, gauge=True)[1]
     # psi[k, a, n] = <a k|n k>
 
-    psi = np.reshape(psi[:, :, band], (nk, nk, no))
+    psi = psi[:, :, band]
+    psi = np.reshape(psi, (nk, nk, no))
 
     # distribute work among processors:
 
-    Q = sorted(bravais.irreducibles(nq))
+    Q = sorted(bravais.irreducibles(nq)) if comm.rank == 0 else None
+    Q = comm.bcast(Q)
 
     size = len(Q) * nk ** 4
 

@@ -10,7 +10,9 @@ def dispersion(matrix, k,
         vectors=False, gauge=False, rotate=False, order=False, broadcast=True):
     """Diagonalize Hamiltonian or dynamical matrix for given k points."""
 
-    points = len(k)      # number of k points
+    points = len(k) if comm.rank == 0 else None
+    points = comm.bcast(points) # number of k points
+
     bands  = matrix.size # number of bands
 
     # choose number of k points to be processed by each processor:
