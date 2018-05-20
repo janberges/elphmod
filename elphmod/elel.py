@@ -173,7 +173,10 @@ def orbital2band(U, H, nq, nk, band=0, status=False, share=False):
     if status and comm.rank == 0:
         print('Done.')
 
-    V = np.empty((len(Q), nk, nk, nk, nk), dtype=complex)
+    if comm.rank == 0:
+        V = np.empty((len(Q), nk, nk, nk, nk), dtype=complex)
+    else:
+        V = None
 
     comm.Gatherv(my_V, (V, sizes))
 
