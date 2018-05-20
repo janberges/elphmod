@@ -36,7 +36,10 @@ def read_band_Coulomb_interaction(filename, nQ, nk, binary=False, share=False):
     if share:
         U = MPI.shared_array((nQ, nk, nk, nk, nk), dtype=complex)
     else:
-        U = np.empty((nQ, nk, nk, nk, nk), dtype=complex)
+        if comm.rank == 0:
+            U = np.empty((nQ, nk, nk, nk, nk), dtype=complex)
+        else:
+            U = None
 
     if comm.rank == 0:
         if binary:
@@ -54,7 +57,8 @@ def read_band_Coulomb_interaction(filename, nQ, nk, binary=False, share=False):
                                     a, b = list(map(float,next(data).split()))
                                     U[iQ, k1, k2, K1, K2] = a + 1j * b
 
-    comm.Barrier()
+    if share:
+        comm.Barrier()
 
     return U
 
