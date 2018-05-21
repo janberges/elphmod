@@ -167,6 +167,7 @@ def orbital2band(U, H, nq, nk, band=0, status=False, share=False):
     for n, (q1, q2, k1, k2, K1, K2, kq1, kq2, Kq1, Kq2) in enumerate(my_points):
         if status and comm.rank == 0:
             sys.stdout.write('%3.0f%%\r' % (n / len(my_points) * 100))
+            sys.stdout.flush()
 
         for a in range(no):
             for b in range(no):
