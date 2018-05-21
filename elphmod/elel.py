@@ -65,9 +65,9 @@ def read_band_Coulomb_interaction(filename, nQ, nk, binary=False, share=False):
 def write_band_Coulomb_interaction(filename, U, binary=False):
     """Write Coulomb interaction for single band in band basis.."""
 
-    nQ, nk, nk, nk, nk = U.shape
-
     if comm.rank == 0:
+        nQ, nk, nk, nk, nk = U.shape
+
         if binary:
             np.save(filename, U)
         else:
