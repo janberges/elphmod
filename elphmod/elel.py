@@ -118,8 +118,9 @@ def orbital2band(U, H, nq, nk, band=0, status=False, share=False):
 
     Q = sorted(bravais.irreducibles(nq)) if comm.rank == 0 else None
     Q = comm.bcast(Q)
+    nQ = len(Q)
 
-    size = len(Q) * nk ** 4
+    size = nQ * nk ** 4
 
     sizes = MPI.distribute(size)
 
@@ -191,24 +192,19 @@ def orbital2band(U, H, nq, nk, band=0, status=False, share=False):
     if status and comm.rank == 0:
         print('Done.')
 
-    if comm.rank == 0:
-        V = np.empty((len(Q), nk, nk, nk, nk), dtype=complex)
+    if share:
+        node, images, V = MPI.shared_array((nQ, nk, nk, nk, nk), dtype=complex)
     else:
-        V = None
+        if comm.rank == 0:
+            V = np.empty((nQ, nk, nk, nk, nk), dtype=complex)
+        else:
+            V = None
 
     comm.Gatherv(my_V, (V, sizes))
 
     if share:
-        node, images, W = MPI.shared_array((len(Q), nk, nk, nk, nk),
-            dtype=complex)
-
-        if comm.rank == 0:
-            W[:] = V
-
-        V = W
-
         if node.rank == 0:
-            images.Bcast(W)
+            images.Bcast(V)
 
         comm.Barrier()
 
