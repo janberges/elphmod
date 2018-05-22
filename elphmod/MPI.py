@@ -29,16 +29,25 @@ def shared_array(shape, dtype):
     dtype = np.dtype(dtype)
     itemsize = dtype.itemsize
 
-    if comm.rank == 0:
+    # From article from Intel Developer Zone
+    # 'An Introduction to MPI-3 Shared Memory Programming':
+
+    node = comm.Split_type(MPI.COMM_TYPE_SHARED, key=comm.rank) # same node
+
+    # From Gilles reply to StackOverflow question
+    # 'get Nodes with MPI program in C':
+
+    images = comm.Split(node.rank, key=comm.rank) # same node.rank
+
+    if node.rank == 0:
         bytes = size * itemsize
     else:
         bytes = 0
 
-    win = MPI.Win.Allocate_shared(bytes, itemsize, comm=comm)
+    win = MPI.Win.Allocate_shared(bytes, itemsize, comm=node)
     buf, itemsize = win.Shared_query(0)
-    buf = np.array(buf, dtype='B', copy=False) # Is this line really needed?
 
-    return np.ndarray(shape, buffer=buf, dtype=dtype)
+    return node, images, np.ndarray(shape, buffer=buf, dtype=dtype)
 
 def info(message, error=False):
     """Print status message from first process."""

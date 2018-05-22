@@ -34,7 +34,7 @@ def read_band_Coulomb_interaction(filename, nQ, nk, binary=False, share=False):
     """Read Coulomb interaction for single band in band basis.."""
 
     if share:
-        U = MPI.shared_array((nQ, nk, nk, nk, nk), dtype=complex)
+        node, images, U = MPI.shared_array((nQ, nk, nk, nk, nk), dtype=complex)
     else:
         if comm.rank == 0:
             U = np.empty((nQ, nk, nk, nk, nk), dtype=complex)
@@ -58,6 +58,9 @@ def read_band_Coulomb_interaction(filename, nQ, nk, binary=False, share=False):
                                     U[iQ, k1, k2, K1, K2] = a + 1j * b
 
     if share:
+        if node.rank == 0:
+            images.Bcast(U)
+
         comm.Barrier()
 
     return U
@@ -196,11 +199,17 @@ def orbital2band(U, H, nq, nk, band=0, status=False, share=False):
     comm.Gatherv(my_V, (V, sizes))
 
     if share:
-        W = MPI.shared_array((len(Q), nk, nk, nk, nk), dtype=complex)
+        node, images, W = MPI.shared_array((len(Q), nk, nk, nk, nk),
+            dtype=complex)
 
         if comm.rank == 0:
             W[:] = V
 
         V = W
+
+        if node.rank == 0:
+            images.Bcast(W)
+
+        comm.Barrier()
 
     return V
