@@ -156,7 +156,7 @@ def orbital2band(U, H, nq, nk, band=0, status=False, share=False):
     # Chunk-wise scattering to overcome MPI's array-length limit of 2^32 - 1:
     # (adapted from L. Dalcin's reply to 'Gatherv seg fault?' on Google Groups)
 
-    chunk = MPI.UNSIGNED_CHAR.Create_contiguous(10).Commit()
+    chunk = MPI.MPI.UNSIGNED_CHAR.Create_contiguous(10).Commit()
     comm.Scatterv((points, sizes, chunk), (my_points, chunk))
     chunk.Free()
 
