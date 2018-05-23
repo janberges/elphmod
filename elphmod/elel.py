@@ -84,7 +84,7 @@ def write_band_Coulomb_interaction(filename, U, binary=False):
                                         U[iQ, k1, k2, K1, K2].real,
                                         U[iQ, k1, k2, K1, K2].imag))
 
-def orbital2band(U, H, nq, nk, band=0, status=False, share=False):
+def orbital2band(U, H, nq, nk, band=0, status=False, share=False, dd=False):
     """Transform Coulomb interaction from orbital basis onto single band."""
 
     nqC, nqC, no, no, no, no = U.shape
@@ -179,15 +179,24 @@ def orbital2band(U, H, nq, nk, band=0, status=False, share=False):
             sys.stdout.write('%3.0f%%\r' % (n / len(my_points) * 100))
             sys.stdout.flush()
 
-        for a in range(no):
-            for b in range(no):
-                for c in range(no):
-                    for d in range(no):
-                        my_V[n] += (U[q1, q2, a, b, c, d]
-                            * psi[Kq1, Kq2, d].conj()
-                            * psi[k1,  k2,  b].conj()
-                            * psi[kq1, kq2, a]
-                            * psi[K1,  K2,  c])
+        if dd: # consider only density-density terms
+            for a in range(no):
+                for b in range(no):
+                    my_V[n] += (U[q1, q2, a, a, b, b]
+                        * psi[Kq1, Kq2, b].conj()
+                        * psi[k1,  k2,  a].conj()
+                        * psi[kq1, kq2, a]
+                        * psi[K1,  K2,  b])
+        else:
+            for a in range(no):
+                for b in range(no):
+                    for c in range(no):
+                        for d in range(no):
+                            my_V[n] += (U[q1, q2, a, b, c, d]
+                                * psi[Kq1, Kq2, d].conj()
+                                * psi[k1,  k2,  b].conj()
+                                * psi[kq1, kq2, a]
+                                * psi[K1,  K2,  c])
 
     if status and comm.rank == 0:
         print('Done.')
