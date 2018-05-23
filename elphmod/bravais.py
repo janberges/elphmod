@@ -271,7 +271,7 @@ def Fourier_interpolation(data, angle=60, hr_file=None):
 
     return np.vectorize(interpolant)
 
-def GMKG(N=30, corner_indices=False):
+def GMKG(N=30, corner_indices=False, mesh=False):
     """Generate path Gamma-M-K-Gamma through Brillouin zone."""
 
     G = 2 * np.pi * np.array([0.0, 0.0])
@@ -282,9 +282,16 @@ def GMKG(N=30, corner_indices=False):
     L2 = 1.0
     L3 = 2.0
 
-    N1 = int(round(N * L1))
-    N2 = int(round(N * L2))
-    N3 = int(round(N * L3)) + 1
+    if mesh and not N % 6: # use only points of N x N mesh
+        N1 = N // 2
+        N2 = N // 6
+        N3 = N // 3
+    else:
+        N1 = int(round(N * L1))
+        N2 = int(round(N * L2))
+        N3 = int(round(N * L3))
+
+    N3 += 1
 
     def line(k1, k2, N=100, endpoint=True):
         q1 = np.linspace(k1[0], k2[0], N, endpoint)
