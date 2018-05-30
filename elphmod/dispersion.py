@@ -201,6 +201,31 @@ def dispersion_full(matrix, size,
 
     return v_mesh
 
+def dispersion_full_nosym(matrix, size, *args, **kwargs):
+    """Diagonalize Hamiltonian or dynamical matrix on uniform k-point mesh.
+
+    Use this routine to get eigenvectors less symmetric than the eigenvalues!"""
+
+    if comm.rank == 0:
+        k = np.empty((size * size, 2))
+
+        n = 0
+        for k1 in range(size):
+            for k2 in range(size):
+                k[n] = k1, k2
+                n += 1
+
+        k *= 2 * np.pi / size
+    else:
+        k = None
+
+    out = list(dispersion(matrix, k, *args, **kwargs))
+
+    for n in range(len(out)):
+        out[n] = np.reshape(out[n], (size, size) + out[n].shape[1:])
+
+    return out
+
 def band_order(v, V, by_mean=True):
     """Sort bands by overlap of eigenvectors at neighboring k points."""
 

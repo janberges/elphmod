@@ -95,24 +95,10 @@ def orbital2band(U, H, nq, nk, band=0, status=False, share=False, dd=False):
 
     # get eigenvectors of Hamiltonian:
 
-    if comm.rank == 0:
-        k = np.empty((nk * nk, 2))
-
-        n = 0
-        for k1 in range(nk):
-            for k2 in range(nk):
-                k[n] = k1, k2
-                n += 1
-
-        k *= 2 * np.pi / nk
-    else:
-        k = None
-
-    psi = dispersion.dispersion(H, k, vectors=True, gauge=True)[1]
+    psi = dispersion.dispersion_full_nosym(H, k, vectors=True, gauge=True)[1]
     # psi[k, a, n] = <a k|n k>
 
-    psi = psi[:, :, band]
-    psi = np.reshape(psi, (nk, nk, no))
+    psi = psi[:, :, :, band].copy()
 
     # distribute work among processors:
 
