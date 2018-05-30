@@ -92,10 +92,19 @@ def dispersion(matrix, k,
         if order:
             comm.Bcast(o)
 
-    return (v, V, o) if vectors and order \
-        else (v, V) if vectors else (v, o) if order else v
+    if vectors and order:
+        return v, V, o
 
-def dispersion_full(matrix, size, rotate=True, order=False, broadcast=True):
+    if vectors:
+        return v, V
+
+    if order:
+        return v, o
+
+    return v
+
+def dispersion_full(matrix, size,
+        vectors=False, gauge=False, rotate=True, order=False, broadcast=True):
     """Diagonalize Hamiltonian or dynamical matrix on uniform k-point mesh."""
 
     # choose irreducible set of k points:
@@ -107,9 +116,9 @@ def dispersion_full(matrix, size, rotate=True, order=False, broadcast=True):
 
     # calculate dispersion using the above routine:
 
-    if order:
-        v, V = dispersion(matrix, 2 * np.pi / size * k,
-            vectors=True, rotate=rotate, order=False, broadcast=False)
+    if order or vectors:
+        v, V = dispersion(matrix, 2 * np.pi / size * k, vectors=True,
+            gauge=gauge, rotate=rotate, order=False, broadcast=False)
 
         # order bands along spider-web-like paths:
         #
@@ -123,7 +132,7 @@ def dispersion_full(matrix, size, rotate=True, order=False, broadcast=True):
         #      /   /   /   /   /
         # G---o---o---o---o---o---M  (main path from G to M)
 
-        if comm.rank == 0:
+        if order and comm.rank == 0:
             o = np.empty((points, bands), dtype=int)
 
             main_path = [n for n in range(points) if not k[n, 0]]
@@ -138,6 +147,9 @@ def dispersion_full(matrix, size, rotate=True, order=False, broadcast=True):
                     o[m] = M[N]
                     v[m] = v[m, o[m]]
 
+                    if vectors:
+                        V[m] = V[m, :, o[m]]
+
     else:
         v = dispersion(matrix, 2 * np.pi / size * k,
             vectors=False, rotate=False, order=False, broadcast=False)
@@ -145,6 +157,9 @@ def dispersion_full(matrix, size, rotate=True, order=False, broadcast=True):
     # fill uniform mesh with data from irreducible wedge:
 
     v_mesh = np.empty((size, size, bands))
+
+    if vectors:
+        V_mesh = np.empty((size, size, bands, bands), dtype=complex)
 
     if order:
         o_mesh = np.empty((size, size, bands), dtype=int)
@@ -156,6 +171,9 @@ def dispersion_full(matrix, size, rotate=True, order=False, broadcast=True):
             for K1, K2 in bravais.images(k1, k2, size):
                 v_mesh[K1, K2] = v[point]
 
+                if vectors:
+                    V_mesh[K1, K2] = V[point]
+
                 if order:
                     o_mesh[K1, K2] = o[point]
 
@@ -164,10 +182,22 @@ def dispersion_full(matrix, size, rotate=True, order=False, broadcast=True):
     if broadcast:
         comm.Bcast(v_mesh)
 
+        if vectors:
+            comm.Bcast(V_mesh)
+
         if order:
             comm.Bcast(o_mesh)
 
-    return (v_mesh, o_mesh) if order else v_mesh
+    if vectors and order:
+        return v_mesh, V_mesh, o_mesh
+
+    if vectors:
+        return v_mesh, V_mesh
+
+    if order:
+        return v_mesh, o_mesh
+
+    return v_mesh
 
 def band_order(v, V, by_mean=True):
     """Sort bands by overlap of eigenvectors at neighboring k points."""
