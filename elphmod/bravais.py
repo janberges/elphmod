@@ -185,8 +185,8 @@ def linear_interpolation(data, angle=60):
 
     return np.vectorize(interpolant)
 
-def Fourier_interpolation(data, angle=60, hr_file=None):
-    """Perform Fourier interpolation on triangular or rectangular lattice."""
+def MPM2IBZ(k1, k2, nk, angle=60):
+    """Map from positive Monkhorst-Pack mesh to first Brillouin zone."""
 
     # squared distance from origin:
 
@@ -200,7 +200,16 @@ def Fourier_interpolation(data, angle=60, hr_file=None):
     # Non-equivalent lattice sites may have the same distance from the origin!
     # (E.g., there are non-equivalent 20th neighbors in a triangular lattice)
 
-    angle = 180 - angle # real to reciprocal lattice or vice versa
+    images = [(k1, k2), (k1 - nk, k2), (k1, k2 - nk), (k1 - nk, k2 - nk)]
+    distances = [measure[angle](*image) for image in images]
+    minimum = min(distances)
+    images = [image for image, distance in zip(images, distances)
+        if distance == minimum]
+
+    return images
+
+def Fourier_interpolation(data, angle=60, hr_file=None):
+    """Perform Fourier interpolation on triangular or rectangular lattice."""
 
     N, N = data.shape
 
@@ -221,11 +230,9 @@ def Fourier_interpolation(data, angle=60, hr_file=None):
     count = 0
     for n in range(N):
         for m in range(N):
-            images = [(n, m), (n - N, m), (n, m - N), (n - N, m - N)]
-            distances = [measure[angle](*image) for image in images]
-            minimum = min(distances)
-            images = [image for image, distance in zip(images, distances)
-                if distance == minimum]
+            images = MPM2IBZ(n, m, N, angle=180 - angle)
+
+            # angle transform: from real to reciprocal lattice or vice versa
 
             for point in images:
                 values[count] = data[n, m]
