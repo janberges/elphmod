@@ -6,7 +6,7 @@ from . import MPI
 comm = MPI.comm
 
 def hamiltonian(hr):
-    """Read '_hr.dat' file from Wannier 90 and set up Hamilton operator."""
+    """Read '_hr.dat' file from Wannier90 and set up Hamilton operator."""
 
     if comm.rank == 0:
         data = open(hr)
