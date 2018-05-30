@@ -45,7 +45,9 @@ def dispersion(matrix, k,
             # rotate phonon eigenvectors by negative angle of k point:
 
             if rotate:
-                x, y = k1 * bravais.u1 + k2 * bravais.u2
+                K1, K2 = bravais.MPM2IBZ(k1, k2, 2 * np.pi)[0]
+
+                x, y = K1 * bravais.u1 + K2 * bravais.u2
                 phi = np.arctan2(y, x)
 
                 atoms = bands // 3
