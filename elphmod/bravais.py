@@ -133,7 +133,7 @@ def complete(data):
 def linear_interpolation(data, angle=60):
     """Perform linear interpolation on triangular lattice."""
 
-    N, M = data.shape
+    N, M = data.shape[:2]
 
     def split(n, m):
         n0, dn = divmod(n, 1)
