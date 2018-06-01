@@ -41,7 +41,7 @@ def hamiltonian(hr):
     parameters = comm.bcast(parameters)
 
     cells = np.empty((parameters, 3), dtype=int)
-    const = np.empty((parameters, 3, 3), dtype=complex)
+    const = np.empty((parameters, num_wann, num_wann), dtype=complex)
 
     if comm.rank == 0:
         # read lattice vectors and hopping constants:
