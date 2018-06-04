@@ -11,9 +11,14 @@ def get_q(filename):
     with open(filename) as data:
         return [list(map(float, line.split()[:2])) for line in data]
 
-def coupling(filename, nQ, nb, nk, bands,
+def coupling(filename, nQ, nb, nk, bands, Q=None,
              offset=0, completion=True, squeeze=False, status=False):
     """Read and complete electron-phonon matrix elements."""
+
+    if Q is not None:
+        nQ = len(Q)
+    else:
+        Q = np.arange(nQ, dtype=int) + 1
 
     sizes = MPI.distribute(nQ)
 
@@ -23,7 +28,7 @@ def coupling(filename, nQ, nb, nk, bands,
     my_elph[:] = np.nan
 
     my_Q = np.empty(sizes[comm.rank], dtype=int)
-    comm.Scatterv((np.arange(nQ, dtype=int) + 1, sizes), my_Q)
+    comm.Scatterv((Q, sizes), my_Q)
 
     for n, iq in enumerate(my_Q):
         if status:
