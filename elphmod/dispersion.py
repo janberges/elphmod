@@ -254,3 +254,23 @@ def band_order(v, V, by_mean=True):
         o[:] = o[:, sorted(range(bands), key=lambda i: v[:, o[:, i]].sum())]
 
     return o
+
+def map_dispersions(V1, V2):
+    """Map two similar arrays of eigenvectors onto each other."""
+
+    shape = V1.shape
+
+    points = np.prod(shape[:-2])
+    bands = shape[-2]
+
+    V1 = np.reshape(V1, (points, bands, bands))
+    V2 = np.reshape(V2, (points, bands, bands))
+
+    mapping = np.empty((points, bands), dtype=int)
+
+    for n in range(points):
+        for i in range(bands):
+            mapping[n, i] = max(range(bands), key=lambda j:
+                np.absolute(np.dot(V1[n, :, i], V2[n, :, j].conj())))
+
+    return np.reshape(mapping, shape[:-1])
