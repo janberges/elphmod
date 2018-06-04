@@ -27,7 +27,7 @@ def coupling(filename, nQ, nb, nk, bands,
 
     for n, iq in enumerate(my_Q):
         if status:
-            print("Read data for q point %d.." % (iq + 1))
+            print("Read data for q point %d.." % iq)
 
         with open(filename % iq) as data:
             for line in data:
@@ -45,7 +45,7 @@ def coupling(filename, nQ, nb, nk, bands,
     if completion:
         for n, iq in enumerate(my_Q):
             if status:
-                print("Complete data for q point %d.." % (iq + 1))
+                print("Complete data for q point %d.." % iq)
 
             for nu in range(nb):
                 for ibnd in range(bands):
