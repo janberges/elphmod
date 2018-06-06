@@ -95,7 +95,7 @@ def orbital2band(U, H, nq, nk, band=0, status=False, share=False, dd=False):
 
     # get eigenvectors of Hamiltonian:
 
-    psi = dispersion.dispersion_full_nosym(H, k, vectors=True, gauge=True)[1]
+    psi = dispersion.dispersion_full_nosym(H, nk, vectors=True, gauge=True)[1]
     # psi[k, a, n] = <a k|n k>
 
     psi = psi[:, :, :, band].copy()
