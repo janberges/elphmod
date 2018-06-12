@@ -208,7 +208,7 @@ def MPM2IBZ(k1, k2, nk, angle=60):
 
     return images
 
-def Fourier_interpolation(data, angle=60, hr_file=None):
+def Fourier_interpolation(data, angle=60, hr_file=None, function=True):
     """Perform Fourier interpolation on triangular or rectangular lattice."""
 
     N, N = data.shape
@@ -276,7 +276,10 @@ def Fourier_interpolation(data, angle=60, hr_file=None):
     def interpolant(*point):
         return np.dot(values, np.exp(idphi * np.dot(points, point))).real
 
-    return np.vectorize(interpolant)
+    if function:
+        return np.vectorize(interpolant)
+
+    return dict((tuple(point), value) for point, value in zip(points, values))
 
 def GMKG(N=30, corner_indices=False, mesh=False):
     """Generate path Gamma-M-K-Gamma through Brillouin zone."""
