@@ -15,7 +15,9 @@ def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
     nky = int(round(resolution * (kymax - kymin)))
 
     kx, dkx = np.linspace(kxmin, kxmax, nkx, endpoint=False, retstep=True)
-    ky, dky = np.linspace(kymin, kymax, nky, endpoint=False, retstep=True)[::-1]
+    ky, dky = np.linspace(kymin, kymax, nky, endpoint=False, retstep=True)
+
+    ky = ky[::-1]
 
     kx += dkx / 2
     ky += dky / 2
