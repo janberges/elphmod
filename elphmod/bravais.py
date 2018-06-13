@@ -281,12 +281,17 @@ def Fourier_interpolation(data, angle=60, hr_file=None, function=True):
 
     return dict((tuple(point), value) for point, value in zip(points, values))
 
-def GMKG(N=30, corner_indices=False, mesh=False):
+def GMKG(N=30, corner_indices=False, mesh=False, angle=60):
     """Generate path Gamma-M-K-Gamma through Brillouin zone."""
+
+    if angle == 60:
+        K1 = 1.0
+    elif angle == 120:
+        K1 = 2.0
 
     G = 2 * np.pi * np.array([0.0, 0.0])
     M = 2 * np.pi * np.array([1.0, 0.0]) / 2
-    K = 2 * np.pi * np.array([1.0, 1.0]) / 3
+    K = 2 * np.pi * np.array([K1,  1.0]) / 3
 
     L1 = np.sqrt(3)
     L2 = 1.0
