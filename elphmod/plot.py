@@ -6,7 +6,7 @@ from scipy.misc import toimage
 from . import bravais
 
 def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
-        interpolation=bravais.linear_interpolation):
+        interpolation=bravais.linear_interpolation, angle=60):
     """Plot in cartesian reciprocal coordinates."""
 
     nk, nk = mesh.shape
@@ -24,12 +24,15 @@ def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
 
     image = np.empty((nky, nkx))
 
-    fun = interpolation(mesh)
+    fun = interpolation(mesh, angle=angle)
+
+    t1 = np.array([1.0, 0.0])
+    t2 = bravais.rotate(t1, (180 - angle) * bravais.deg)
 
     for i in range(nky):
         for j in range(nkx):
-            k1 = kx[j] * bravais.T1[0] + ky[i] * bravais.T1[1]
-            k2 = kx[j] * bravais.T2[0] + ky[i] * bravais.T2[1]
+            k1 = kx[j] * t1[0] + ky[i] * t1[1]
+            k2 = kx[j] * t2[0] + ky[i] * t2[1]
 
             image[i, j] = fun(k1 * nk, k2 * nk)
 
