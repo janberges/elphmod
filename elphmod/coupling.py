@@ -61,10 +61,12 @@ def coupling(filename, nQ, nb, nk, bands, Q=None,
 
     return elph[:, :, 0, 0, :, :] if bands == 1 and squeeze else elph
 
-def read_EPW_output(epw_out, q, nq, nb, nk, eps=1e-4, status=False):
+def read_EPW_output(epw_out, q, nq, nb, nk, bands=1,
+                    eps=1e-4, squeeze=False, status=False, epf=False):
     """Read electron-phonon coupling from EPW output file."""
 
-    elph = np.empty((len(q), nb, nk, nk), dtype=complex)
+    elph = np.empty((len(q), nb, bands, bands, nk, nk),
+        dtype=complex if epf else float)
 
     if comm.rank == 0:
         q_set = set(q)
@@ -122,20 +124,29 @@ def read_EPW_output(epw_out, q, nq, nb, nk, eps=1e-4, status=False):
                     next(data)
                     next(data)
 
-                    for nu in range(nb):
+                    for _ in range(bands * bands * nb):
                         columns = next(data).split()
 
-                        elph[iq, nu, k1, k2] = complex(
-                            float(columns[-2]), float(columns[-1]))
+                        ibnd, jbnd, nu = [int(i) - 1 for i in columns[:3]]
+
+                        if epf:
+                            elph[iq, nu, ibnd, jbnd, k1, k2] = complex(
+                                float(columns[-2]), float(columns[-1]))
+                        else:
+                            elph[iq, nu, ibnd, jbnd, k1, k2] = float(
+                                columns[-1])
 
         if np.isnan(elph).any():
             print("Warning: EPW output incomplete!")
 
-        elph *= 1e-3 ** 1.5 # meV^(3/2) to eV^(3/2)
+        if epf:
+            elph *= 1e-3 ** 1.5 # meV^(3/2) to eV^(3/2)
+        else:
+            elph *= 1e-3 # meV to eV
 
     comm.Bcast(elph)
 
-    return elph
+    return elph[:, :, 0, 0, :, :] if bands == 1 and squeeze else elph
 
 def read(filename, nq, bands):
     """Read and complete Fermi-surface averaged electron-phonon coupling."""
