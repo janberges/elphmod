@@ -17,7 +17,7 @@ def read_flfrc(flfrc):
         # read table:
 
         def table(rows):
-            return np.array([map(float, cells()) for row in range(rows)])
+            return np.array([list(map(float, cells())) for row in range(rows)])
 
         # read crystal structure:
 
