@@ -71,6 +71,7 @@ def read_flfrc(flfrc):
             zeu = np.empty((nat, 3, 3))
 
             for na in range(nat):
+                na = int(cells()[0]) - 1
                 zeu[na] = table(3)
 
         # read interatomic force constants:
