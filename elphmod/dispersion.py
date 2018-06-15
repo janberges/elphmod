@@ -105,7 +105,7 @@ def dispersion(matrix, k,
 
     return v
 
-def dispersion_full(matrix, size,
+def dispersion_full(matrix, size, angle=60,
         vectors=False, gauge=False, rotate=True, order=False, broadcast=True):
     """Diagonalize Hamiltonian or dynamical matrix on uniform k-point mesh."""
 
@@ -115,6 +115,18 @@ def dispersion_full(matrix, size,
 
     points = len(k)      # number of k points
     bands  = matrix.size # number of bands
+
+    # define main and side paths for different axes:
+
+    def on_main_path(n):
+        return not k[n, 0]
+
+    if angle == 60:
+        def on_side_path(n, m):
+            return k[m, 1] == k[n, 1]
+    elif angle == 120:
+        def on_side_path(n, m):
+            return k[m, 1] - k[m, 0] == k[n, 1] - k[n, 0]
 
     # calculate dispersion using the above routine:
 
@@ -126,7 +138,7 @@ def dispersion_full(matrix, size,
         #
         # irreducible wedge       K      G = (0 0)
         # of 12 x 12 mesh:       /       M = (0 6)
-        #                   o   o        K = (4 4)
+        #                   o   o        K = (4 4) [= (4 8) for angle = 120]
         #                  /   /
         #             o   o   o   o
         #            /   /   /   /   (side paths to K)
@@ -137,11 +149,11 @@ def dispersion_full(matrix, size,
         if order and comm.rank == 0:
             o = np.empty((points, bands), dtype=int)
 
-            main_path = [n for n in range(points) if not k[n, 0]]
+            main_path = [n for n in range(points) if on_main_path(n)]
             main_order = band_order(v[main_path], V[main_path])
 
             for n, N in zip(main_path, main_order):
-                side_path = [m for m in range(points) if k[m, 1] == k[n, 1]]
+                side_path = [m for m in range(points) if on_side_path(n, m)]
                 side_order = band_order(v[side_path], V[side_path],
                     by_mean=False)
 
