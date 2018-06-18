@@ -173,7 +173,8 @@ def dispersion_full(matrix, size, angle=60,
 
     else:
         v = dispersion(matrix, 2 * np.pi / size * k, angle=angle,
-            vectors=False, rotate=False, order=False, broadcast=False)
+            vectors=False, gauge=False, rotate=False, order=False,
+            broadcast=True)
 
     # fill uniform mesh with data from irreducible wedge:
 
