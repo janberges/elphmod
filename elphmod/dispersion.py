@@ -13,7 +13,7 @@ def dispersion(matrix, k, angle=60,
     points = len(k) if comm.rank == 0 else None
     points = comm.bcast(points) # number of k points
 
-    bands  = matrix.size # number of bands
+    bands = matrix.size # number of bands
 
     # choose number of k points to be processed by each processor:
 
