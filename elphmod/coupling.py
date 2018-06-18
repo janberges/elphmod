@@ -11,8 +11,8 @@ def get_q(filename):
     with open(filename) as data:
         return [list(map(float, line.split()[:2])) for line in data]
 
-def coupling(filename, nQ, nb, nk, bands, Q=None,
-             offset=0, completion=True, squeeze=False, status=False):
+def coupling(filename, nQ, nb, nk, bands, Q=None, offset=0,
+        completion=True, complete_k=False, squeeze=False, status=False):
     """Read and complete electron-phonon matrix elements."""
 
     if Q is not None:
@@ -57,9 +57,42 @@ def coupling(filename, nQ, nb, nk, bands, Q=None,
                     for jbnd in range(bands):
                         bravais.complete(my_elph[n, nu, ibnd, jbnd])
 
-    comm.Allgatherv(my_elph, (elph, sizes * nb * bands * bands * nk * nk))
+    if complete_k and Q is None: # to be improved considerably
+        comm.Gatherv(my_elph, (elph, sizes * nb * bands * bands * nk * nk))
 
-    return elph[:, :, 0, 0, :, :] if bands == 1 and squeeze else elph
+        elph_complete = np.empty((nq, nq, nb, bands, bands, nk, nk))
+
+        if comm.rank == 0:
+            symmetries = [image for name, image in elphmod.bravais.symmetries(
+                np.zeros((nk, nk)), unity=False)]
+
+            scale = nk // nq
+
+            done = bravais.irreducibles(nq)
+            q_irr = sorted(done)
+
+            for sym in symmetries:
+                for iq, (q1, q2) in enumerate(q_irr):
+                    Q1, Q2 = sym[q1 * scale, q2 * scale] // scale
+
+                    if (Q1, Q2) in done:
+                        continue
+
+                    done.add((Q1, Q2))
+
+                    for k1 in range(nk):
+                        for k2 in range(nk):
+                            K1, K2 = sym[k1, k2]
+
+                            elph_complete[Q1, Q2, ..., K1, K2] \
+                                = elph_complete[iq, ..., k1, k2]
+
+        comm.Bcast(elph_complete)
+        elph = elph_complete
+    else:
+        comm.Allgatherv(my_elph, (elph, sizes * nb * bands * bands * nk * nk))
+
+    return elph[..., 0, 0, :, :] if bands == 1 and squeeze else elph
 
 def read_EPW_output(epw_out, q, nq, nb, nk, bands=1,
                     eps=1e-4, squeeze=False, status=False, epf=False):
