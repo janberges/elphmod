@@ -6,7 +6,7 @@ import numpy.linalg
 from . import bravais, MPI
 comm = MPI.comm
 
-def dispersion(matrix, k,
+def dispersion(matrix, k, angle=60,
         vectors=False, gauge=False, rotate=False, order=False, broadcast=True):
     """Diagonalize Hamiltonian or dynamical matrix for given k points."""
 
@@ -33,6 +33,12 @@ def dispersion(matrix, k,
 
     # diagonalize matrix for local lists of k points:
 
+    if rotate:
+        t1 = np.array([1.0, 0.0])
+        t2 = bravais.rotate(t1, (180 - angle) * bravais.deg)
+
+        u1, u2 = bravais.reciprocals(t1, t2)
+
     for point, (k1, k2) in enumerate(my_k):
         if order or vectors:
             my_v[point], my_V[point] = np.linalg.eigh(matrix(k1, k2))
@@ -45,9 +51,9 @@ def dispersion(matrix, k,
             # rotate phonon eigenvectors by negative angle of k point:
 
             if rotate:
-                K1, K2 = bravais.MPM2IBZ(k1, k2, 2 * np.pi)[0]
+                K1, K2 = bravais.MPM2IBZ(k1, k2, 2 * np.pi, angle=angle)[0]
 
-                x, y = K1 * bravais.u1 + K2 * bravais.u2
+                x, y = K1 * u1 + K2 * u2
                 phi = np.arctan2(y, x)
 
                 atoms = bands // 3
@@ -111,7 +117,7 @@ def dispersion_full(matrix, size, angle=60,
 
     # choose irreducible set of k points:
 
-    k = np.array(sorted(bravais.irreducibles(size)))
+    k = np.array(sorted(bravais.irreducibles(size, angle=angle)))
 
     points = len(k)      # number of k points
     bands  = matrix.size # number of bands
@@ -131,8 +137,9 @@ def dispersion_full(matrix, size, angle=60,
     # calculate dispersion using the above routine:
 
     if order or vectors:
-        v, V = dispersion(matrix, 2 * np.pi / size * k, vectors=True,
-            gauge=gauge, rotate=rotate, order=False, broadcast=False)
+        v, V = dispersion(matrix, 2 * np.pi / size * k, angle=angle,
+            vectors=True, gauge=gauge, rotate=rotate, order=False,
+            broadcast=False)
 
         # order bands along spider-web-like paths:
         #
@@ -165,7 +172,7 @@ def dispersion_full(matrix, size, angle=60,
                         V[m] = V[m, :, o[m]]
 
     else:
-        v = dispersion(matrix, 2 * np.pi / size * k,
+        v = dispersion(matrix, 2 * np.pi / size * k, angle=angle,
             vectors=False, rotate=False, order=False, broadcast=False)
 
     # fill uniform mesh with data from irreducible wedge:
@@ -182,7 +189,7 @@ def dispersion_full(matrix, size, angle=60,
         # transfer data points from wedge to mesh:
 
         for point, (k1, k2) in enumerate(k):
-            for K1, K2 in bravais.images(k1, k2, size):
+            for K1, K2 in bravais.images(k1, k2, size, angle=angle):
                 v_mesh[K1, K2] = v[point]
 
                 if vectors:
