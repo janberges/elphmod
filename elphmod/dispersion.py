@@ -112,7 +112,7 @@ def dispersion(matrix, k, angle=60,
     return v
 
 def dispersion_full(matrix, size, angle=60,
-        vectors=False, gauge=False, rotate=True, order=False, broadcast=True):
+        vectors=False, gauge=False, rotate=False, order=False, broadcast=True):
     """Diagonalize Hamiltonian or dynamical matrix on uniform k-point mesh."""
 
     # choose irreducible set of k points:
