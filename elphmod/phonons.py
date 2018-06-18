@@ -227,7 +227,7 @@ def sgnsqrt(w2):
 
     return np.sign(w2) * np.sqrt(np.absolute(w2))
 
-def polarization(e, path):
+def polarization(e, path, angle=60):
     """Characterize as in-plane longitudinal/transverse or out-of-plane."""
 
     bands = e.shape[1]
@@ -240,8 +240,13 @@ def polarization(e, path):
     y = slice(nat, 2 * nat)
     z = slice(2 * nat, 3 * nat)
 
+    t1 = np.array([1.0, 0.0])
+    t2 = bravais.rotate(t1, (180 - angle) * bravais.deg)
+
+    u1, u2 = bravais.reciprocals(t1, t2)
+
     for n, q in enumerate(path):
-        q = q[0] * bravais.u1 + q[1] * bravais.u2
+        q = q[0] * u1 + q[1] * u2
         Q = np.sqrt(q.dot(q))
 
         centered = Q < 1e-10
