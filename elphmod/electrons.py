@@ -108,6 +108,74 @@ def read_bands(filband):
 
     return k, bands
 
+def read_atomic_projections(atomic_proj_xml):
+    """Read projected bands from 'outdir/prefix.save/atomic_proj.xml'."""
+
+    if comm.rank == 0:
+        data = open(atomic_proj_xml)
+
+        def goto(pattern):
+            for line in data:
+                if pattern in line:
+                    return line
+
+        goto('<NUMBER_OF_BANDS ')
+        bands = int(next(data))
+
+        goto('<NUMBER_OF_K-POINTS ')
+        nk = int(next(data))
+
+        goto('<NUMBER_OF_ATOMIC_WFC ')
+        no = int(next(data))
+
+        goto('<FERMI_ENERGY ')
+        mu = float(next(data))
+    else:
+        bands = nk = no = None
+
+    bands = comm.bcast(bands)
+    nk = comm.bcast(nk)
+    no = comm.bcast(no)
+
+    x = np.empty(nk)
+    k = np.empty((nk, 3))
+    eps = np.empty((nk, bands))
+    proj = np.empty((nk, bands, no))
+
+    if comm.rank == 0:
+        goto('<K-POINTS ')
+        for i in range(nk):
+            k[i] = list(map(float, next(data).split()))
+
+        for i in range(nk):
+            goto('<EIG ')
+            for n in range(bands):
+                eps[i, n] = float(next(data))
+
+        for ik in range(nk):
+            for a in range(no):
+                goto('<ATMWFC.')
+                for n in range(bands):
+                    Re, Im = list(map(float, next(data).split(',')))
+                    proj[ik, n, a] = Re * Re + Im * Im
+
+        data.close()
+
+        x[0] = 0
+
+        for i in range(1, nk):
+            dk = k[i] - k[i - 1]
+            x[i] = x[i - 1] + np.sqrt(np.dot(dk, dk))
+
+        eps -= mu
+
+    comm.Bcast(x)
+    comm.Bcast(k)
+    comm.Bcast(eps)
+    comm.Bcast(proj)
+
+    return x, k, eps, proj
+
 def read_Fermi_level(pw_scf_out):
     """Read Fermi level from output of self-consistent PW run."""
 
