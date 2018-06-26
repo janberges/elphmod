@@ -6,7 +6,7 @@ import numpy as np
 from mpi4py import MPI
 comm = MPI.COMM_WORLD
 
-def distribute(size):
+def distribute(size, bounds=False):
     """Distribute work among processes."""
 
     sizes = np.empty(comm.size, dtype=int)
@@ -16,6 +16,19 @@ def distribute(size):
         sizes[:size % comm.size] += 1
 
     comm.Bcast(sizes)
+
+    if bounds:
+        cumsum = np.empty(comm.size + 1, dtype=int)
+
+        if comm.rank == 0:
+            cumsum[0] = 0
+
+            for rank in range(comm.size):
+                cumsum[rank + 1] = cumsum[rank] + sizes[rank]
+
+        comm.Bcast(cumsum)
+
+        return sizes, cumsum
 
     return sizes
 
