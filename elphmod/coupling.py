@@ -11,7 +11,7 @@ def get_q(filename):
     with open(filename) as data:
         return [list(map(float, line.split()[:2])) for line in data]
 
-def coupling(filename, nQ, nb, nk, bands, Q=None, offset=0,
+def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
         completion=True, complete_k=False, squeeze=False, status=False):
     """Read and complete electron-phonon matrix elements."""
 
@@ -57,23 +57,24 @@ def coupling(filename, nQ, nb, nk, bands, Q=None, offset=0,
                     for jbnd in range(bands):
                         bravais.complete(my_elph[n, nu, ibnd, jbnd])
 
-    if complete_k and Q is None: # to be improved considerably
+    if complete_k and nq: # to be improved considerably
         comm.Gatherv(my_elph, (elph, sizes * nb * bands * bands * nk * nk))
 
         elph_complete = np.empty((nq, nq, nb, bands, bands, nk, nk))
 
         if comm.rank == 0:
-            symmetries = [image for name, image in elphmod.bravais.symmetries(
-                np.zeros((nk, nk)), unity=False)]
+            symmetries_q = [image for name, image in bravais.symmetries(
+                np.zeros((nq, nq)), unity=True)]
 
-            scale = nk // nq
+            symmetries_k = [image for name, image in bravais.symmetries(
+                np.zeros((nk, nk)), unity=True)]
 
-            done = bravais.irreducibles(nq)
-            q_irr = sorted(done)
+            done = set()
+            q_irr = sorted(bravais.irreducibles(nq))
 
-            for sym in symmetries:
+            for sym_q, sym_k in zip(symmetries_q, symmetries_k):
                 for iq, (q1, q2) in enumerate(q_irr):
-                    Q1, Q2 = sym[q1 * scale, q2 * scale] // scale
+                    Q1, Q2 = sym_q[q1, q2]
 
                     if (Q1, Q2) in done:
                         continue
@@ -82,10 +83,10 @@ def coupling(filename, nQ, nb, nk, bands, Q=None, offset=0,
 
                     for k1 in range(nk):
                         for k2 in range(nk):
-                            K1, K2 = sym[k1, k2]
+                            K1, K2 = sym_k[k1, k2]
 
                             elph_complete[Q1, Q2, ..., K1, K2] \
-                                = elph_complete[iq, ..., k1, k2]
+                                = elph[iq, ..., k1, k2]
 
         comm.Bcast(elph_complete)
         elph = elph_complete
