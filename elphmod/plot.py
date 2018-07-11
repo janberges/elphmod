@@ -69,20 +69,20 @@ def toBZ(data, points=1000, outside=0.0):
     if data.ndim == 2:
         data = data[np.newaxis]
 
-    ndata, nq, nq = data.shape
+    ndata, nk, nk = data.shape
 
     fun = list(map(bravais.linear_interpolation, data))
 
     M =     bravais.U1[0] / 2
     K = 2 * bravais.U2[1] / 3
 
-    nqx = int(round(points * M))
-    nqy = int(round(points * K))
+    nkx = int(round(points * M))
+    nky = int(round(points * K))
 
-    qx = np.linspace(-M, M, nqx)
-    qy = np.linspace(K, -K, nqy)
+    kx = np.linspace(-M, M, nkx)
+    ky = np.linspace(K, -K, nky)
 
-    sizes, bounds = MPI.distribute(nqy * nqx, bounds=True)
+    sizes, bounds = MPI.distribute(nky * nkx, bounds=True)
 
     my_image = np.empty(sizes[comm.rank])
     my_image[:] = outside
@@ -94,24 +94,24 @@ def toBZ(data, points=1000, outside=0.0):
     shift = 13.0 / 12.0
 
     for n, m in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
-        i = m // nqx
-        j = m % nqx
+        i = m // nkx
+        j = m % nkx
 
-        q = np.array([qx[j], qy[i]])
+        k = np.array([kx[j], ky[i]])
 
-        q1 = np.dot(q, bravais.T1)
-        q2 = np.dot(q, bravais.T2)
+        k1 = np.dot(k, bravais.T1)
+        k2 = np.dot(k, bravais.T2)
 
-        if abs(np.dot(q, U1)) > M: continue
-        if abs(np.dot(q, U2)) > M: continue
-        if abs(np.dot(q, U3)) > M: continue
+        if abs(np.dot(k, U1)) > M: continue
+        if abs(np.dot(k, U2)) > M: continue
+        if abs(np.dot(k, U3)) > M: continue
 
-        idata = int((np.arctan2(qy[i], qx[j]) / (2 * np.pi) + shift)
+        idata = int((np.arctan2(ky[i], kx[j]) / (2 * np.pi) + shift)
             * ndata) % ndata
 
-        my_image[n] = fun[idata](q1 * nq, q2 * nq)
+        my_image[n] = fun[idata](k1 * nk, k2 * nk)
 
-    image = np.empty((nqy, nqx))
+    image = np.empty((nky, nkx))
 
     comm.Gatherv(my_image, (image, sizes))
 
