@@ -6,6 +6,9 @@ from scipy.misc import toimage
 from . import bravais, MPI
 comm = MPI.comm
 
+color1 = 255, 0, 0
+color2 = 0, 0, 255
+
 def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
         interpolation=bravais.linear_interpolation, angle=60):
     """Plot in cartesian reciprocal coordinates."""
@@ -117,7 +120,7 @@ def toBZ(data, points=1000, outside=0.0):
 
     return image
 
-def color(data, positive=(241, 101, 34), negative=(54, 99, 173)):
+def color(data, positive=color1, negative=color2):
     """Transform gray-scale image to RGB, where zero is displayed as white."""
 
     lt0 = np.where(data < 0)
@@ -165,8 +168,8 @@ def label_pie_with_TeX(filename,
     form  = lambda x: '$%g$' % x,
     unit  = 'Unit',
 
-    positive = (241, 101, 34),
-    negative = (54, 99, 173),
+    positive = color1,
+    negative = color2,
 
     nCDW = 10,
     ):
@@ -327,11 +330,8 @@ def label_pie_with_TeX(filename,
 \endgroup%
 ''')
 
-def plot_pie_with_TeX(filename, data,
-    points = 1000,
-    positive = (241, 101, 34),
-    negative = (54, 99, 173),
-    **kwargs):
+def plot_pie_with_TeX(filename, data, points=1000,
+        positive=color1, negative=color2, **kwargs):
     """Create 'pie diagram' of different data on Brillouin zone."""
 
     data = np.array(data)
