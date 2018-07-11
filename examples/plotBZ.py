@@ -31,7 +31,4 @@ elphmod.plot.plot_pie_with_TeX(
     form=lambda x: r'$%g\,\mathrm{i}$' % abs(x) if x < 0 else '$%g$' % x)
 
 if comm.rank == 0:
-    os.system('mkdir -p plotBZ')
-    os.chdir('plotBZ')
     os.system('pdflatex plotBZ > /dev/null')
-    os.chdir('..')

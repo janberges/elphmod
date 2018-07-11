@@ -1,6 +1,10 @@
 .*
 !.gitignore
 
+*.aux
+*.in
+*.log
+*.pdf
+*.png
 *.pyc
-
-plotBZ
+*.tex
