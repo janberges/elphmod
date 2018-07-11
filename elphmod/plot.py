@@ -82,8 +82,10 @@ def toBZ(data, points=1000, outside=0.0):
     qx = np.linspace(-M, M, nqx)
     qy = np.linspace(K, -K, nqy)
 
-    image = np.empty((nqy, nqx))
-    image[:] = outside
+    sizes, bounds = MPI.distribute(nqy * nqx, bounds=True)
+
+    my_image = np.empty(sizes[comm.rank])
+    my_image[:] = outside
 
     U1 = bravais.U1 / np.sqrt(np.dot(bravais.U1, bravais.U1))
     U2 = bravais.U2 / np.sqrt(np.dot(bravais.U2, bravais.U2))
@@ -91,21 +93,27 @@ def toBZ(data, points=1000, outside=0.0):
 
     shift = 13.0 / 12.0
 
-    for i in range(len(qy)):
-        for j in range(len(qx)):
-            q = np.array([qx[j], qy[i]])
+    for n, m in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
+        i = m // nqx
+        j = m % nqx
 
-            q1 = np.dot(q, bravais.T1)
-            q2 = np.dot(q, bravais.T2)
+        q = np.array([qx[j], qy[i]])
 
-            if abs(np.dot(q, U1)) > M: continue
-            if abs(np.dot(q, U2)) > M: continue
-            if abs(np.dot(q, U3)) > M: continue
+        q1 = np.dot(q, bravais.T1)
+        q2 = np.dot(q, bravais.T2)
 
-            n = int((np.arctan2(qy[i], qx[j]) / (2 * np.pi) + shift)
-                * ndata) % ndata
+        if abs(np.dot(q, U1)) > M: continue
+        if abs(np.dot(q, U2)) > M: continue
+        if abs(np.dot(q, U3)) > M: continue
 
-            image[i, j] = fun[n](q1 * nq, q2 * nq)
+        idata = int((np.arctan2(qy[i], qx[j]) / (2 * np.pi) + shift)
+            * ndata) % ndata
+
+        my_image[n] = fun[idata](q1 * nq, q2 * nq)
+
+    image = np.empty((nqy, nqx))
+
+    comm.Gatherv(my_image, (image, sizes))
 
     return image
 
@@ -293,12 +301,13 @@ def plot_pie_with_TeX(filename, data,
 
     image = toBZ(data, points=points)
 
-    imagename = filename.rsplit('.', 1)[0] + '.png'
-    save(imagename, color(image, positive=positive, negative=negative))
+    if comm.rank == 0:
+        imagename = filename.rsplit('.', 1)[0] + '.png'
+        save(imagename, color(image, positive=positive, negative=negative))
 
-    label_pie_with_TeX(filename, imagename,
-        positive=positive, lower=data.min(),
-        negative=negative, upper=data.max(), **kwargs)
+        label_pie_with_TeX(filename, imagename,
+            positive=positive, lower=data.min(),
+            negative=negative, upper=data.max(), **kwargs)
 
 def compline(x, y, composition):
     """Plot composition along line."""
