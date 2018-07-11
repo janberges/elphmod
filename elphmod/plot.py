@@ -3,7 +3,8 @@
 import numpy as np
 from scipy.misc import toimage
 
-from . import bravais
+from . import bravais, MPI
+comm = MPI.comm
 
 def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
         interpolation=bravais.linear_interpolation, angle=60):
@@ -22,19 +23,27 @@ def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
     kx += dkx / 2
     ky += dky / 2
 
-    image = np.empty((nky, nkx))
-
     fun = interpolation(mesh, angle=angle)
 
     t1 = np.array([1.0, 0.0])
     t2 = bravais.rotate(t1, (180 - angle) * bravais.deg)
 
-    for i in range(nky):
-        for j in range(nkx):
-            k1 = kx[j] * t1[0] + ky[i] * t1[1]
-            k2 = kx[j] * t2[0] + ky[i] * t2[1]
+    sizes, bounds = MPI.distribute(nky * nkx, bounds=True)
 
-            image[i, j] = fun(k1 * nk, k2 * nk)
+    my_image = np.empty(sizes[comm.rank])
+
+    for n, m in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
+        i = m // nkx
+        j = m % nkx
+
+        k1 = kx[j] * t1[0] + ky[i] * t1[1]
+        k2 = kx[j] * t2[0] + ky[i] * t2[1]
+
+        my_image[n] = fun(k1 * nk, k2 * nk)
+
+    image = np.empty((nky, nkx))
+
+    comm.Gatherv(my_image, (image, sizes))
 
     return image
 

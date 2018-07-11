@@ -62,10 +62,12 @@ if comm.rank == 0:
 
 info("Load and preprocess electron-phonon coupling..")
 
-if comm.rank == 0:
-    nqelph = 12
+nqelph = 12
 
-    elph = elphmod.coupling.read('data/%s.elph' % data, nqelph, D.size)
+elph = np.empty((nqelph, nqelph, D.size))
+
+if comm.rank == 0:
+    elph[:] = elphmod.coupling.read('data/%s.elph' % data, nqelph, D.size)
 
     step = nq // nqelph
     orderelph = order[::step, ::step]
@@ -74,8 +76,12 @@ if comm.rank == 0:
         for m in range(nqelph):
             elph[n, m] = elph[n, m, orderelph[n, m]]
 
-    plt.imshow(elphmod.plot.arrange([elphmod.plot.plot(elph[:, :, nu])
-        for nu in range(D.size)]))
+comm.Bcast(elph)
+
+plots = [elphmod.plot.plot(elph[:, :, nu]) for nu in range(D.size)]
+
+if comm.rank == 0:
+    plt.imshow(elphmod.plot.arrange(plots))
     plt.show()
 
 g2 = np.empty_like(w)
