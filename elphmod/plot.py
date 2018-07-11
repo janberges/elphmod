@@ -167,6 +167,8 @@ def label_pie_with_TeX(filename,
 
     positive = (241, 101, 34),
     negative = (54, 99, 173),
+
+    nCDW = 10,
     ):
     """Label 'pie diagram' of different data on Brillouin zone."""
 
@@ -205,6 +207,29 @@ def label_pie_with_TeX(filename,
 
     positive = ', '.join(map(str, positive))
     negative = ', '.join(map(str, negative))
+
+    if nCDW:
+        A = sorted(set(n * n + n * m + m * m
+          for n in range(13)
+          for m in range(13)))[2:2 + nCDW]
+
+        height_over_side = 0.5 * np.sqrt(3)
+
+        kCDW = 1 / (np.sqrt(A) * height_over_side)
+
+        indices = range(-12, 13)
+        t = [(i, j) for i in indices for j in indices if i or j]
+        T = [i * bravais.T1 + j * bravais.T2 for i, j in t]
+        K = [bravais.rotate(t / t.dot(t), 90 * bravais.deg)
+            / height_over_side for t in T]
+
+        scaleCDW = GM / (0.5 * np.sqrt(np.dot(bravais.U1, bravais.U1)))
+
+        KCDW = []
+
+        for k in kCDW:
+            KCDW.append([q * scaleCDW for q in K
+                if abs(np.sqrt(q.dot(q)) - k) < 1e-10])
 
     X = locals()
 
@@ -285,10 +310,22 @@ def label_pie_with_TeX(filename,
   \node [above] at ({x_unit}, {GK}) {{{unit}}};
   \foreach \position/\label in {{
     {ticks}}}
-    \node [right] at ({x_ticks}, \position) {{\label}};
-\end{{tikzpicture}}%
+    \node [right] at ({x_ticks}, \position) {{\label}};'''.format(**X))
+
+        if nCDW:
+            for k, scale, a in zip(KCDW, kCDW / kCDW.max(), A):
+                positions = sep.join('%g/%g' % tuple(xy) for xy in k)
+                TeX.write(r'''
+  \foreach \x/\y in {{
+    {positions}}}
+    \node [circle, inner sep=0.3pt, draw=gray, fill=white] at (\x, \y)
+      {{\tiny \scalebox{{{scale}}}{{{a}}}}};'''.format(positions=positions,
+            scale=scale, a=a))
+
+        TeX.write(r'''
+\end{tikzpicture}%
 \endgroup%
-'''.format(**X))
+''')
 
 def plot_pie_with_TeX(filename, data,
     points = 1000,
