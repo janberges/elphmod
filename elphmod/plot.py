@@ -54,10 +54,15 @@ def arrange(images, columns=None):
         axis=1) for row in range(rows)],
         axis=0)
 
-def toBZ(data, points=1000, outside=0.0, a=0, b=360):
+def toBZ(data, points=1000, outside=0.0):
     """Map data on uniform grid onto (wedge of) Brillouin zone."""
 
-    nq, nq = data.shape
+    if data.ndim == 2:
+        data = data[np.newaxis]
+
+    ndata, nq, nq = data.shape
+
+    fun = list(map(bravais.linear_interpolation, data))
 
     M =     bravais.U1[0] / 2
     K = 2 * bravais.U2[1] / 3
@@ -75,10 +80,7 @@ def toBZ(data, points=1000, outside=0.0, a=0, b=360):
     U2 = bravais.U2 / np.sqrt(np.dot(bravais.U2, bravais.U2))
     U3 = U2 - U1
 
-    a %= 360
-    b %= 360
-
-    fun = bravais.linear_interpolation(data)
+    shift = 13.0 / 12.0
 
     for i in range(len(qy)):
         for j in range(len(qx)):
@@ -91,10 +93,10 @@ def toBZ(data, points=1000, outside=0.0, a=0, b=360):
             if abs(np.dot(q, U2)) > M: continue
             if abs(np.dot(q, U3)) > M: continue
 
-            x = 180 * np.arctan2(qy[i], qx[j]) / np.pi % 360
+            n = int((np.arctan2(qy[i], qx[j]) / (2 * np.pi) + shift)
+                * ndata) % ndata
 
-            if a <= x < b or b <= a <= x or x < b <= a:
-                image[i, j] = fun(q1 * nq, q2 * nq)
+            image[i, j] = fun[n](q1 * nq, q2 * nq)
 
     return image
 
@@ -278,18 +280,16 @@ def plot_pie_with_TeX(filename, data,
     **kwargs):
     """Create 'pie diagram' of different data on Brillouin zone."""
 
-    image = 0
+    data = np.array(data)
 
-    for datum, angle in zip(data, range(0, 360, 60)):
-        image += toBZ(datum, points=points, a=angle - 30, b=angle + 30)
+    image = toBZ(data, points=points)
 
     imagename = filename.rsplit('.', 1)[0] + '.png'
     save(imagename, color(image, positive=positive, negative=negative))
 
     label_pie_with_TeX(filename, imagename,
-        positive = positive, lower = min(datum.min() for datum in data),
-        negative = negative, upper = max(datum.max() for datum in data),
-        **kwargs)
+        positive=positive, lower=data.min(),
+        negative=negative, upper=data.max(), **kwargs)
 
 def compline(x, y, composition):
     """Plot composition along line."""
