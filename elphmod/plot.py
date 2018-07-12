@@ -258,12 +258,12 @@ def label_pie_with_TeX(filename,
 
     scale = 1 / x_dim
 
+    stem = filename.rsplit('.', 1)[0]
+
     colorbar = color(np.reshape(np.linspace(upper, lower, 300), (-1, 1)),
         color1, color2)
 
-    colorbarfile = filename.rsplit('.', 1)[0] + '_colorbar.png'
-
-    save(colorbarfile, colorbar)
+    save('%s_colorbar.png' % stem, colorbar)
 
     if nCDW:
         A = sorted(set(n * n + n * m + m * m
@@ -302,11 +302,11 @@ def label_pie_with_TeX(filename,
 \setlength\parindent{{0pt}}
 
 \begin{{document}}
-  \input{{{filename}.in}}
+  \input{{{stem}.tikz}}
 \end{{document}}
 '''.format(**X))
 
-    with open('%s.in' % filename, 'w') as TeX:
+    with open('%s.tikz' % stem, 'w') as TeX:
         # write ebmedded LaTeX code:
 
         TeX.write(r'''\begingroup%
@@ -346,7 +346,7 @@ def label_pie_with_TeX(filename,
         TeX.write(r'''
   \node [inner sep=0, outer sep=0] at ({x_unit}, 0)
      {{\includegraphics[width={width_C}\unit, height={KK}\unit]
-     {{{colorbarfile}}}}};'''.format(**X))
+     {{{stem}_colorbar.png}}}};'''.format(**X))
 
         TeX.write(r'''
   \draw [gray]
