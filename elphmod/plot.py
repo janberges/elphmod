@@ -120,7 +120,18 @@ def toBZ(data, points=1000, outside=0.0):
 
     return image
 
-def color(data, positive=color1, negative=color2):
+def color(data, color1, color2):
+    """Choose color scheme depending on type of color arguments."""
+
+    if hasattr(color1, '__len__'):
+        data = data.copy()
+        data[np.where(np.isnan(data))] = 0
+
+        return sign_color(data, color1, color2)
+    else:
+        return rainbow(data, color1, color2)
+
+def sign_color(data, positive=color1, negative=color2):
     """Transform gray-scale image to RGB, where zero is displayed as white."""
 
     lt0 = np.where(data < 0)
@@ -138,6 +149,45 @@ def color(data, positive=color1, negative=color2):
         image[:, :, c][gt0] *= 255 - positive[c]
 
     return (255 - image).astype(int)
+
+def HSV2RGB(H, S=1, V=1):
+    """Transform hue, saturation, value to red, green, blue."""
+
+    H %= 360
+
+    h = np.floor(H / 60)
+    f = H / 60 - h
+
+    p = V * (1 - S)
+    q = V * (1 - S * f)
+    t = V * (1 - S * (1 - f))
+
+    if h == 0: return V, t, p
+    if h == 1: return q, V, p
+    if h == 2: return p, V, t
+    if h == 3: return p, q, V
+    if h == 4: return t, p, V
+    if h == 5: return V, p, q
+
+def rainbow(data, angle1=240, angle2=0):
+    """Transform gray scale to rainbow scale."""
+
+    image = data.copy()
+
+    image -= np.nanmin(image)
+    image /= np.nanmax(image)
+
+    image_RGB = np.empty(image.shape + (3,))
+
+    for i in range(image.shape[0]):
+        for j in range(image.shape[1]):
+            if np.isnan(image[i, j]):
+                image_RGB[i, j] = (255, 255, 255)
+            else:
+                H = (1 - image[i, j]) * angle1 + image[i, j] * angle2
+                image_RGB[i, j] = HSV2RGB(H, S=1, V=255)
+
+    return image_RGB
 
 def save(filename, data):
     """Save image as 8-bit bitmap."""
@@ -168,8 +218,8 @@ def label_pie_with_TeX(filename,
     form  = lambda x: '$%g$' % x,
     unit  = 'Unit',
 
-    positive = color1,
-    negative = color2,
+    color1 = color1,
+    color2 = color2,
 
     nCDW = 10,
     ):
@@ -208,8 +258,12 @@ def label_pie_with_TeX(filename,
 
     scale = 1 / x_dim
 
-    positive = ', '.join(map(str, positive))
-    negative = ', '.join(map(str, negative))
+    colorbar = color(np.reshape(np.linspace(upper, lower, 300), (-1, 1)),
+        color1, color2)
+
+    colorbarfile = filename.rsplit('.', 1)[0] + '_colorbar.png'
+
+    save(colorbarfile, colorbar)
 
     if nCDW:
         A = sorted(set(n * n + n * m + m * m
@@ -260,14 +314,6 @@ def label_pie_with_TeX(filename,
 \newlength\unit%
 \setlength\unit{{{scale}\linewidth}}%'''.format(**X))
 
-        if upper > 0:
-            TeX.write(r'''
-\definecolor{{positive}}{{RGB}}{{{positive}}}%'''.format(**X))
-
-        if lower < 0:
-            TeX.write(r'''
-\definecolor{{negative}}{{RGB}}{{{negative}}}%'''.format(**X))
-
         # add frames and labels to Brillouin-zone plot:
 
         TeX.write(r'''
@@ -297,15 +343,10 @@ def label_pie_with_TeX(filename,
 
         # print colorbar:
 
-        if lower < 0:
-            TeX.write(r'''
-  \shade [bottom color=negative, top color=white]
-    ({radius}, -{GK}) rectangle ({x_ticks}, {y_zero});'''.format(**X))
-
-        if upper > 0:
-            TeX.write(r'''
-  \shade [bottom color=white, top color=positive]
-    ({radius}, {y_zero}) rectangle ({x_ticks}, {GK});'''.format(**X))
+        TeX.write(r'''
+  \node [inner sep=0, outer sep=0] at ({x_unit}, 0)
+     {{\includegraphics[width={width_C}\unit, height={KK}\unit]
+     {{{colorbarfile}}}}};'''.format(**X))
 
         TeX.write(r'''
   \draw [gray]
@@ -331,20 +372,20 @@ def label_pie_with_TeX(filename,
 ''')
 
 def plot_pie_with_TeX(filename, data, points=1000,
-        positive=color1, negative=color2, **kwargs):
+        color1=color1, color2=color2, **kwargs):
     """Create 'pie diagram' of different data on Brillouin zone."""
 
     data = np.array(data)
 
-    image = toBZ(data, points=points)
+    image = toBZ(data, points=points, outside=np.nan)
 
     if comm.rank == 0:
         imagename = filename.rsplit('.', 1)[0] + '.png'
-        save(imagename, color(image, positive=positive, negative=negative))
+        save(imagename, color(image, color1, color2))
 
         label_pie_with_TeX(filename, imagename,
-            positive=positive, lower=data.min(),
-            negative=negative, upper=data.max(), **kwargs)
+            color1=color1, lower=data.min(),
+            color2=color2, upper=data.max(), **kwargs)
 
 def compline(x, y, composition):
     """Plot composition along line."""
