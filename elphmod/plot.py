@@ -6,8 +6,8 @@ from scipy.misc import toimage
 from . import bravais, MPI
 comm = MPI.comm
 
-color1 = 255, 0, 0
-color2 = 0, 0, 255
+color1 = 0, 0, 255
+color2 = 255, 0, 0
 
 def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
         interpolation=bravais.linear_interpolation, angle=60):
@@ -131,7 +131,7 @@ def color(data, color1, color2):
     else:
         return rainbow(data, color1, color2)
 
-def sign_color(data, positive=color1, negative=color2):
+def sign_color(data, negative=color1, positive=color2):
     """Transform gray-scale image to RGB, where zero is displayed as white."""
 
     lt0 = np.where(data < 0)
