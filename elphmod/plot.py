@@ -358,7 +358,7 @@ def label_pie_with_TeX(filename,
 
         if nCDW:
             for k, scale, a in zip(KCDW, kCDW / kCDW.max(), A):
-                positions = sep.join('%g/%g' % tuple(xy) for xy in k)
+                positions = sep.join('%.3f/%.3f' % tuple(xy) for xy in k)
                 TeX.write(r'''
   \foreach \x/\y in {{
     {positions}}}
