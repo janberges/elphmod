@@ -4,6 +4,9 @@ from __future__ import division
 
 import numpy as np
 
+from . import MPI
+comm = MPI.comm
+
 deg = np.pi / 180
 
 def rotate(vector, angle):
@@ -203,18 +206,23 @@ def resize(data, shape=None, angle=60, axes=(0, 1)):
     if shape is None:
         shape = data.shape[:2]
 
+    size = np.prod(shape)
+    sizes, bounds = MPI.distribute(size, bounds=True)
+
+    my_new_data = np.empty((size,) + data.shape[2:], dtype=data.dtype)
+
+    scale_x = data.shape[0] / shape[0]
+    scale_y = data.shape[1] / shape[1]
+
+    for n, m in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
+        x = m // shape[1]
+        y = m %  shape[1]
+
+        my_new_data[n] = interpolant(x * scale_x, y * scale_y)
+
     new_data = np.empty(tuple(shape) + data.shape[2:], dtype=data.dtype)
 
-    scale_x = data.shape[0] / new_data.shape[0]
-    scale_y = data.shape[1] / new_data.shape[1]
-
-    for new_x in range(new_data.shape[0]):
-        x = new_x * scale_x
-
-        for new_y in range(new_data.shape[1]):
-            y = new_y * scale_y
-
-            new_data[new_x, new_y] = interpolant(x, y)
+    comm.Allgatherv(my_new_data, (new_data, sizes * np.prod(data.shape[2:])))
 
     new_data = np.transpose(new_data, axes=np.argsort(order)) # restore order
 
