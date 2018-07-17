@@ -130,8 +130,12 @@ def complete(data):
         if not np.isnan(data).any():
             return
 
-def linear_interpolation(data, angle=60):
+def linear_interpolation(data, angle=60, axes=(0, 1)):
     """Perform linear interpolation on triangular or rectangular lattice."""
+
+    order = tuple(axes) + tuple(n for n in range(data.ndim) if n not in axes)
+
+    data = np.transpose(data, axes=order)
 
     N, M = data.shape[:2]
 
