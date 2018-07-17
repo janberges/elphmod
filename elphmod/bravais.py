@@ -131,7 +131,7 @@ def complete(data):
             return
 
 def linear_interpolation(data, angle=60):
-    """Perform linear interpolation on triangular lattice."""
+    """Perform linear interpolation on triangular or rectangular lattice."""
 
     N, M = data.shape[:2]
 
