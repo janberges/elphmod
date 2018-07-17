@@ -1,5 +1,7 @@
 #/usr/bin/env python
 
+from __future__ import division
+
 import numpy as np
 
 deg = np.pi / 180
@@ -188,6 +190,35 @@ def linear_interpolation(data, angle=60, axes=(0, 1)):
                 return (1 - dm) * A + dn * B + (dm - dn) * C
 
     return np.vectorize(interpolant)
+
+def resize(data, shape=None, angle=60, axes=(0, 1)):
+    """Resize array via linear interpolation along two periodic axes."""
+
+    order = tuple(axes) + tuple(n for n in range(data.ndim) if n not in axes)
+
+    data = np.transpose(data, axes=order)
+
+    interpolant = linear_interpolation(data, angle, axes=(0, 1))
+
+    if shape is None:
+        shape = data.shape[:2]
+
+    new_data = np.empty(tuple(shape) + data.shape[2:], dtype=data.dtype)
+
+    scale_x = data.shape[0] / new_data.shape[0]
+    scale_y = data.shape[1] / new_data.shape[1]
+
+    for new_x in range(new_data.shape[0]):
+        x = new_x * scale_x
+
+        for new_y in range(new_data.shape[1]):
+            y = new_y * scale_y
+
+            new_data[new_x, new_y] = interpolant(x, y)
+
+    new_data = np.transpose(new_data, axes=np.argsort(order)) # restore order
+
+    return new_data
 
 def MPM2IBZ(k1, k2, nk, angle=60):
     """Map from positive Monkhorst-Pack mesh to first Brillouin zone."""
