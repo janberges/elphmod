@@ -209,7 +209,8 @@ def resize(data, shape=None, angle=60, axes=(0, 1)):
     size = np.prod(shape)
     sizes, bounds = MPI.distribute(size, bounds=True)
 
-    my_new_data = np.empty((size,) + data.shape[2:], dtype=data.dtype)
+    my_new_data = np.empty((sizes[comm.rank],) + data.shape[2:],
+        dtype=data.dtype)
 
     scale_x = data.shape[0] / shape[0]
     scale_y = data.shape[1] / shape[1]
