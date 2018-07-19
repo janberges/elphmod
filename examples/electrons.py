@@ -59,10 +59,14 @@ if comm.rank == 0:
 
     plt.show()
 
+info("Interpolate dispersion onto very dense k mesh..")
+
+eps_dense = elphmod.bravais.resize(eps_full[:, :, 0], shape=(1200, 1200))
+
 info("Calculate electron susceptibility..")
 
 if comm.rank == 0:
-    chi = elphmod.electrons.susceptibility(eps_full[:, :, 0])
+    chi = elphmod.electrons.susceptibility(eps_dense)
 
     plt.plot(x, [chi(q1, q2) for q1, q2 in q])
     plt.show()
