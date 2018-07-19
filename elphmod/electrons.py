@@ -191,7 +191,7 @@ def read_Fermi_level(pw_scf_out):
 
     return eF
 
-def susceptibility(e, T=1.0, eta=1e-3):
+def susceptibility(e, T=1.0, eta=1e-10):
     """Calculate real part of static electronic susceptibility
 
         chi(q) = 2/N sum[k] [f(k+q) - f(k)] / [e(k+q) - e(k) + i eta].
