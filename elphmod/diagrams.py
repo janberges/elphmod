@@ -21,13 +21,17 @@ def susceptibility(e, T=1.0, eta=1e-10):
     e = np.tile(e, (2, 2))
     f = np.tile(f, (2, 2))
 
+    scale = nk / (2 * np.pi)
+    eta2 = eta ** 2
+    prefactor = 2.0 / nk ** 2
+
     def calculate_susceptibility(q1=0, q2=0):
-        q1 = int(round(q1 / (2 * np.pi) * nk)) % nk
-        q2 = int(round(q2 / (2 * np.pi) * nk)) % nk
+        q1 = int(round(q1 * scale)) % nk
+        q2 = int(round(q2 * scale)) % nk
 
-        de = e[q1:q1 + nk, q2:q2 + nk] - e[:nk, :nk]
         df = f[q1:q1 + nk, q2:q2 + nk] - f[:nk, :nk]
+        de = e[q1:q1 + nk, q2:q2 + nk] - e[:nk, :nk]
 
-        return 2 * np.sum(df * de / (de * de + eta * eta)) / nk ** 2
+        return prefactor * np.sum(df * de / (de * de + eta2))
 
     return calculate_susceptibility
