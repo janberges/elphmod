@@ -40,8 +40,13 @@ def dispersion(matrix, k, angle=60,
         u1, u2 = bravais.reciprocals(t1, t2)
 
     for point, (k1, k2) in enumerate(my_k):
+        matrix_k = matrix(k1, k2)
+
         if order or vectors:
-            my_v[point], my_V[point] = np.linalg.eigh(matrix(k1, k2))
+            if bands == 1:
+                my_v[point], my_V[point] = matrix_k, 1
+            else:
+                my_v[point], my_V[point] = np.linalg.eigh(matrix_k)
 
             if gauge:
                 for band in range(bands):
@@ -63,7 +68,10 @@ def dispersion(matrix, k, angle=60,
                         xy = point, [atom, atom + atoms], band
                         my_V[xy] = bravais.rotate(my_V[xy], -phi)
         else:
-            my_v[point] = np.linalg.eigvalsh(matrix(k1, k2))
+            if bands == 1:
+                my_v[point] = matrix_k
+            else:
+                my_v[point] = np.linalg.eigvalsh(matrix_k)
 
     # gather calculated eigenvectors on first processor:
 

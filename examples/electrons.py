@@ -65,13 +65,15 @@ eps_dense = elphmod.bravais.resize(eps_full[:, :, 0], shape=(2400, 2400))
 
 info("Calculate electron susceptibility..")
 
-if comm.rank == 0:
-    chi = elphmod.diagrams.susceptibility(eps_dense)
+chi = elphmod.diagrams.susceptibility(eps_dense)
 
+chi_q = elphmod.dispersion.dispersion(chi, q[1:-1], broadcast=False)
+
+if comm.rank == 0:
     plt.xlabel('wave vector')
     plt.ylabel('susceptibility (1/eV)')
     plt.xticks(x[GMKG], 'GMKG')
 
-    plt.plot(x[1:-1], [chi(q1, q2) for q1, q2 in q[1:-1]])
+    plt.plot(x[1:-1], chi_q)
     plt.ylim(ymax=0)
     plt.show()

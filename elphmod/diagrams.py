@@ -34,4 +34,6 @@ def susceptibility(e, T=1.0, eta=1e-10):
 
         return prefactor * np.sum(df * de / (de * de + eta2))
 
+    calculate_susceptibility.size = 1
+
     return calculate_susceptibility
