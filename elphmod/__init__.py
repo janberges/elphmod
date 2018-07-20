@@ -1,5 +1,6 @@
 from . import electrons
 from . import phonons
+from . import diagrams
 from . import dispersion
 from . import coupling
 from . import elel

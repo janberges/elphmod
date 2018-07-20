@@ -66,7 +66,7 @@ eps_dense = elphmod.bravais.resize(eps_full[:, :, 0], shape=(2400, 2400))
 info("Calculate electron susceptibility..")
 
 if comm.rank == 0:
-    chi = elphmod.electrons.susceptibility(eps_dense)
+    chi = elphmod.diagrams.susceptibility(eps_dense)
 
     plt.xlabel('wave vector')
     plt.ylabel('susceptibility (1/eV)')
