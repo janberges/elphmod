@@ -63,7 +63,7 @@ info("Interpolate dispersion onto very dense k mesh..")
 
 eps_dense = elphmod.bravais.resize(eps_full[:, :, 0], shape=(2400, 2400))
 
-info("Calculate electron susceptibility..")
+info("Calculate electron susceptibility along G-M-K-G..")
 
 chi = elphmod.diagrams.susceptibility(eps_dense)
 
