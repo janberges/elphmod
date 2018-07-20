@@ -6,7 +6,7 @@ from . import MPI
 comm = MPI.comm
 
 def hexDOS(energies):
-    """Calculate DOS from energies on triangular mesh (2D tetrahedron).
+    """Calculate DOS from energies on triangular mesh (2D tetrahedron method).
 
     Integration over all energies yields unity.
 
@@ -20,19 +20,19 @@ def hexDOS(energies):
     In the following, consider a two dimensional reciprocal unit cell which can
     be divided into 2 x N x N equilateral triangles of reciprocal side length a,
     on each of which the energy is interpolated linearly. On a triangle with the
-    energies A, B, C at its corners, the squared gradient of the energy plane is
+    energies A, B, C at its corners, the gradient of the energy plane is
 
-        |grad W|^2 = 4/3a^2 (A^2 + B^2 + C^2 - AB - AC - BC).
+        |grad W| = 2/[sqrt(3) a] sqrt(A^2 + B^2 + C^2 - AB - AC - BC).
 
-    For the special case A < B < E < C, the square of the reciprocal length of
-    the E isoline within the triangle reads
+    For the special case A < B < E < C, the reciprocal length of the E isoline
+    within the triangle reads
 
-        dk^2 = a^2 (A^2 + B^2 + C^2 - AB - AC - BC) (E-A)^2 / [(A-C) (B-C)]^2.
+        dk = a sqrt(A^2 + B^2 + C^2 - AB - AC - BC) (C - E) / [(C - A) (C - B)].
 
     Taking into account that V = N^2 a^2 sqrt(3)/2, one finds the contribution
     of this triangle to the density of states:
 
-        1/N^2 (E - C) / [(A - C) (B - C)."""
+        1/N^2 (C - E) / [(C - A) (C - B)]."""
 
     N, N = energies.shape
 
