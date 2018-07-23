@@ -25,9 +25,6 @@ def hamiltonian(hr):
         num_wann = int(cols()[0])
         nrpts = int(cols()[0])
 
-        size = num_wann ** 2
-        parameters = size * nrpts
-
         # read degeneracies of Wigner-Seitz grid points:
 
         degeneracy = []
@@ -35,23 +32,27 @@ def hamiltonian(hr):
         while len(degeneracy) < nrpts:
             degeneracy.extend(map(float, cols()))
     else:
-        num_wann = parameters = None
+        num_wann = nrpts = None
 
     num_wann = comm.bcast(num_wann)
-    parameters = comm.bcast(parameters)
+    nrpts = comm.bcast(nrpts)
 
-    cells = np.empty((parameters, 3), dtype=int)
-    const = np.empty((parameters, num_wann, num_wann), dtype=complex)
+    cells = np.empty((nrpts, 3), dtype=int)
+    const = np.empty((nrpts, num_wann, num_wann), dtype=complex)
 
     if comm.rank == 0:
         # read lattice vectors and hopping constants:
 
-        for n in range(parameters):
-            tmp = cols()
+        size = num_wann ** 2
+
+        for n in range(nrpts):
+            for _ in range(size):
+                tmp = cols()
+
+                const[n, int(tmp[3]) - 1, int(tmp[4]) - 1] = (
+                    float(tmp[5]) + 1j * float(tmp[6])) / degeneracy[n]
 
             cells[n] = list(map(int, tmp[:3]))
-            const[n, int(tmp[3]) - 1, int(tmp[4]) - 1] = (
-                float(tmp[5]) + 1j * float(tmp[6])) / degeneracy[n // size]
 
         data.close()
 
@@ -62,9 +63,9 @@ def hamiltonian(hr):
 
     def calculate_hamiltonian(k1=0, k2=0, k3=0):
         k = np.array([k1, k2, k3])
-        H = np.empty((parameters, num_wann, num_wann), dtype=complex)
+        H = np.empty((nrpts, num_wann, num_wann), dtype=complex)
 
-        for n in range(parameters):
+        for n in range(nrpts):
             H[n] = const[n] * np.exp(1j * np.dot(cells[n], k))
 
         return H.sum(axis=0)
