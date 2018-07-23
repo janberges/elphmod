@@ -136,9 +136,8 @@ def dynamical_matrix(phid, amass, at, tau, eps=1e-7):
 
     maxdim = nat ** 2 * nr1 * nr2 * nr3 * len(supercells) ** 3 // comm.size
 
-    atoms = np.empty((maxdim, 2), dtype=np.int8) # atom indices
     cells = np.empty((maxdim, 3), dtype=np.int8) # cell indices
-    const = np.empty((maxdim, 3, 3)) # force constants divided by masses
+    const = np.empty((maxdim, 3 * nat, 3 * nat)) # force constants divided by masses
 
     n = 0 # 'spring' counter (per process)
     N = 0 # 'spring' counter (overall)
@@ -185,9 +184,8 @@ def dynamical_matrix(phid, amass, at, tau, eps=1e-7):
                         # save data for dynamical matrix calculation:
 
                         for R in selected:
-                            atoms[n] = [na1, na2]
                             cells[n] = R
-                            const[n] = C
+                            const[n, na1::nat, na2::nat] = C
 
                             n += 1
 
@@ -196,13 +194,11 @@ def dynamical_matrix(phid, amass, at, tau, eps=1e-7):
     dims = np.array(comm.allgather(n))
     dim = dims.sum()
 
-    allatoms = np.empty((dim, 2), dtype=np.int8)
     allcells = np.empty((dim, 3), dtype=np.int8)
-    allconst = np.empty((dim, 3, 3))
+    allconst = np.empty((dim, 3 * nat, 3 * nat))
 
-    comm.Allgatherv(atoms[:n], (allatoms, dims * 2))
     comm.Allgatherv(cells[:n], (allcells, dims * 3))
-    comm.Allgatherv(const[:n], (allconst, dims * 9))
+    comm.Allgatherv(const[:n], (allconst, dims * (3 * nat) ** 2))
 
     # (see cdef _p_message message_vector in mpi4py/src/mpi4py/MPI/msgbuffer.pxi
     # for possible formats of second argument 'recvbuf')
@@ -211,12 +207,12 @@ def dynamical_matrix(phid, amass, at, tau, eps=1e-7):
 
     def calculate_dynamical_matrix(q1=0, q2=0, q3=0):
         q = np.array([q1, q2, q3])
-        D = np.zeros((3 * nat, 3 * nat), dtype=complex)
+        D = np.empty((dim, 3 * nat, 3 * nat), dtype=complex)
 
-        for (na1, na2), R, C in zip(allatoms, allcells, allconst):
-            D[na1::nat, na2::nat] += C * np.exp(1j * np.dot(R, q))
+        for n in range(dim):
+            D[n] = allconst[n] * np.exp(1j * np.dot(allcells[n], q))
 
-        return D
+        return D.sum(axis=0)
 
     calculate_dynamical_matrix.size = 3 * nat
 

@@ -62,12 +62,12 @@ def hamiltonian(hr):
 
     def calculate_hamiltonian(k1=0, k2=0, k3=0):
         k = np.array([k1, k2, k3])
-        H = np.zeros((num_wann, num_wann), dtype=complex)
+        H = np.empty((parameters, num_wann, num_wann), dtype=complex)
 
-        for R, C in zip(cells, const):
-            H += C * np.exp(1j * np.dot(R, k))
+        for n in range(parameters):
+            H[n] = const[n] * np.exp(1j * np.dot(cells[n], k))
 
-        return H
+        return H.sum(axis=0)
 
     calculate_hamiltonian.size = num_wann
 
