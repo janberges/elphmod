@@ -6,6 +6,16 @@ from . import MPI
 comm = MPI.comm
 info = MPI.info
 
+kB = 8.61733e-5 # eV/K
+
+def fermi(e, T):
+    kT = kB * T
+    return 1 / (np.exp(e / kT) + 1)
+
+def delta(e, T): # -df/de
+    kT = kB * T
+    return 1 / (2 * kT * (np.cosh(e / kT) + 1))
+
 def susceptibility(e, T=1.0, eta=1e-10):
     """Calculate real part of static electronic susceptibility
 
@@ -15,12 +25,8 @@ def susceptibility(e, T=1.0, eta=1e-10):
 
     nk, nk = e.shape
 
-    T *= 8.61733e-5 # K to eV
-
-    f = 1 / (np.exp(e / T) + 1)
-    d = 1 / (2 * T * (np.cosh(e / T) + 1))
-
-    DOS = d.sum()
+    f = fermi(e, T)
+    d = delta(e, T).sum()
 
     e = np.tile(e, (2, 2))
     f = np.tile(f, (2, 2))
@@ -34,7 +40,7 @@ def susceptibility(e, T=1.0, eta=1e-10):
         q2 = int(round(q2 * scale)) % nk
 
         if q1 == q2 == 0:
-            return -prefactor * DOS
+            return -prefactor * d
 
         df = f[q1:q1 + nk, q2:q2 + nk] - f[:nk, :nk]
         de = e[q1:q1 + nk, q2:q2 + nk] - e[:nk, :nk]
@@ -54,9 +60,7 @@ def phonon_self_energy(q, e, g2, T=100.0, eta=1e-10):
     nk, nk = e.shape
     nQ, nb, nk, nk = g2.shape
 
-    T *= 8.61733e-5 # K to eV
-
-    f = 1 / (np.exp(e / T) + 1)
+    f = fermi(e, T)
 
     e = np.tile(e, (2, 2))
     f = np.tile(f, (2, 2))
