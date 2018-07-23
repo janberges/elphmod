@@ -44,7 +44,7 @@ def dispersion(matrix, k, angle=60,
 
         if order or vectors:
             if bands == 1:
-                my_v[point], my_V[point] = matrix_k, 1
+                my_v[point], my_V[point] = matrix_k.real, 1
             else:
                 my_v[point], my_V[point] = np.linalg.eigh(matrix_k)
 
@@ -69,7 +69,7 @@ def dispersion(matrix, k, angle=60,
                         my_V[xy] = bravais.rotate(my_V[xy], -phi)
         else:
             if bands == 1:
-                my_v[point] = matrix_k
+                my_v[point] = matrix_k.real
             else:
                 my_v[point] = np.linalg.eigvalsh(matrix_k)
 
