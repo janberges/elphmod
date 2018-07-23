@@ -48,26 +48,29 @@ def hexDOS(energies):
         if comm.rank == ((i * N + j) * 2 + k) % comm.size
         ]
 
-    def DOS(E):
-        D = 0.0
+    D = np.empty(len(triangles))
 
-        for A, B, C in triangles:
+    def DOS(E):
+        for n, (A, B, C) in enumerate(triangles):
             if A < E <= B:
                 if E == B == C:
-                    D += 0.5 / (E - A)
+                    D[n] = 0.5 / (E - A)
                 else:
-                    D += (E - A) / (B - A) / (C - A)
+                    D[n] = (E - A) / (B - A) / (C - A)
 
             elif B <= E < C:
                 if E == A == B:
-                    D += 0.5 / (C - E)
+                    D[n] = 0.5 / (C - E)
                 else:
-                    D += (C - E) / (C - A) / (C - B)
+                    D[n] = (C - E) / (C - A) / (C - B)
 
             elif E == A == B == C:
-                return float('inf')
+                D[n] = float('inf')
 
-        return comm.allreduce(D) / N ** 2
+            else:
+                D[n] = 0.0
+
+        return comm.allreduce(D.sum()) / N ** 2
 
     return np.vectorize(DOS)
 
@@ -99,30 +102,33 @@ def hexa2F(energies, couplings):
 
     triangles = [(energies[v], couplings[v]) for v in triangles]
 
-    def a2F(E):
-        D = 0.0
+    D = np.empty(len(triangles))
 
-        for (A, B, C), (a, b, c) in triangles:
+    def a2F(E):
+        for n, ((A, B, C), (a, b, c)) in enumerate(triangles):
             if A < E <= B:
                 if E == B == C:
-                    D += 0.5 / (E - A) * 0.5 * (b + c)
+                    D[n] = 0.5 / (E - A) * 0.5 * (b + c)
                 else:
-                    D += (E - A) / (B - A) / (C - A) * 0.5 * (
+                    D[n] = (E - A) / (B - A) / (C - A) * 0.5 * (
                         ((E - A) * b + (B - E) * a) / (B - A) +
                         ((E - A) * c + (C - E) * a) / (C - A))
 
             elif B <= E < C:
                 if E == A == B:
-                    D += 0.5 / (C - E) * 0.5 * (a + b)
+                    D[n] = 0.5 / (C - E) * 0.5 * (a + b)
                 else:
-                    D += (C - E) / (C - A) / (C - B) * 0.5 * (
+                    D[n] = (C - E) / (C - A) / (C - B) * 0.5 * (
                         ((C - E) * a + (E - A) * c) / (C - A) +
                         ((C - E) * b + (E - B) * c) / (C - B))
 
             elif E == A == B == C:
-                return float('inf')
+                D[n] = float('inf')
 
-        return comm.allreduce(D) / N ** 2
+            else:
+                D[n] = 0.0
+
+        return comm.allreduce(D.sum()) / N ** 2
 
     return np.vectorize(a2F)
 
