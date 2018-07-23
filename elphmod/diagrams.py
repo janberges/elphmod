@@ -17,6 +17,9 @@ def susceptibility(e, T=1.0, eta=1e-10):
     T *= 8.61733e-5 # K to eV
 
     f = 1 / (np.exp(e / T) + 1)
+    d = 1 / (2 * T * (np.cosh(e / T) + 1))
+
+    DOS = d.sum()
 
     e = np.tile(e, (2, 2))
     f = np.tile(f, (2, 2))
@@ -28,6 +31,9 @@ def susceptibility(e, T=1.0, eta=1e-10):
     def calculate_susceptibility(q1=0, q2=0):
         q1 = int(round(q1 * scale)) % nk
         q2 = int(round(q2 * scale)) % nk
+
+        if q1 == q2 == 0:
+            return -prefactor * DOS
 
         df = f[q1:q1 + nk, q2:q2 + nk] - f[:nk, :nk]
         de = e[q1:q1 + nk, q2:q2 + nk] - e[:nk, :nk]
