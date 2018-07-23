@@ -4,6 +4,7 @@ import numpy as np
 
 from . import MPI
 comm = MPI.comm
+info = MPI.info
 
 def susceptibility(e, T=1.0, eta=1e-10):
     """Calculate real part of static electronic susceptibility
@@ -44,16 +45,14 @@ def susceptibility(e, T=1.0, eta=1e-10):
 
     return calculate_susceptibility
 
-def phonon_self_energy(e, g2, T=1.0, eta=1e-10):
+def phonon_self_energy(q, e, g2, T=100.0, eta=1e-10):
     """Calculate real part of the phonon self-energy
 
         Pi(q, nu) = 2/N sum[k] |g(q, nu, k)|^2
-            [f(k+q) - f(k)] / [e(k+q) - e(k) + i eta].
-
-    The resolution in q is limited by the resolution in k and q of the input."""
+            [f(k+q) - f(k)] / [e(k+q) - e(k) + i eta]."""
 
     nk, nk = e.shape
-    nq, nq, nk, nk = g2.shape
+    nQ, nb, nk, nk = g2.shape
 
     T *= 8.61733e-5 # K to eV
 
@@ -62,24 +61,33 @@ def phonon_self_energy(e, g2, T=1.0, eta=1e-10):
     e = np.tile(e, (2, 2))
     f = np.tile(f, (2, 2))
 
-    scale_k = nk / (2 * np.pi)
-    scale_q = nq / (2 * np.pi)
-
+    scale = nk / (2 * np.pi)
     eta2 = eta ** 2
     prefactor = 2.0 / nk ** 2
 
-    def calculate_phonon_self_energy(q1=0, q2=0):
-        Q1 = int(round(q1 * scale_q)) % nq
-        Q2 = int(round(q2 * scale_q)) % nq
+    sizes, bounds = MPI.distribute(nQ * nb, bounds=True)
 
-        q1 = int(round(q1 * scale_k)) % nk
-        q2 = int(round(q2 * scale_k)) % nk
+    my_Pi = np.empty((sizes[comm.rank]))
+
+    info('Pi(%3s, %3s, %3s) = ...' % ('q1', 'q2', 'nu'))
+
+    for my_n, n in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
+        iq = n // nb
+        nu = n % nb
+
+        q1 = int(round(q[iq, 0] * scale)) % nk
+        q2 = int(round(q[iq, 1] * scale)) % nk
 
         df = f[q1:q1 + nk, q2:q2 + nk] - f[:nk, :nk]
         de = e[q1:q1 + nk, q2:q2 + nk] - e[:nk, :nk]
 
-        return prefactor * np.sum(g2[Q1, Q2] * df * de / (de * de + eta2))
+        my_Pi[my_n] = prefactor * np.sum(
+            g2[iq, nu] * df * de / (de * de + eta2))
 
-    calculate_phonon_self_energy.size = 1
+        print('Pi(%3d, %3d, %3d) = %7.2f meV' % (q1, q2, nu, 1e3 * my_Pi[my_n]))
 
-    return calculate_phonon_self_energy
+    Pi = np.empty((nQ, nb))
+
+    comm.Allgatherv(my_Pi, (Pi, sizes))
+
+    return Pi
