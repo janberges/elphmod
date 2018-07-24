@@ -334,8 +334,8 @@ def GMKG(N=30, corner_indices=False, mesh=False, angle=60):
         K1 = 2.0
 
     G = 2 * np.pi * np.array([0.0, 0.0])
-    M = 2 * np.pi * np.array([1.0, 0.0]) / 2
-    K = 2 * np.pi * np.array([K1,  1.0]) / 3
+    M = 2 * np.pi * np.array([0.0, 1.0]) / 2
+    K = 2 * np.pi * np.array([1.0, K1 ]) / 3
 
     L1 = np.sqrt(3)
     L2 = 1.0
