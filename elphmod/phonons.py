@@ -137,7 +137,7 @@ def dynamical_matrix(phid, amass, at, tau, eps=1e-7):
     maxdim = nat ** 2 * nr1 * nr2 * nr3 * len(supercells) ** 3 // comm.size
 
     cells = np.empty((maxdim, 3), dtype=np.int8) # cell indices
-    const = np.empty((maxdim, 3 * nat, 3 * nat)) # force constants divided by masses
+    const = np.zeros((maxdim, 3 * nat, 3 * nat)) # force constants over masses
 
     n = 0 # 'spring' counter (per process)
     N = 0 # 'spring' counter (overall)
