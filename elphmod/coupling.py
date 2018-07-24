@@ -9,7 +9,8 @@ def get_q(filename):
     """Get list of irreducible q points."""
 
     with open(filename) as data:
-        return [list(map(float, line.split()[:2])) for line in data]
+        return [list(map(float, line.split()[:2]))
+            for line in data if '.' in line]
 
 def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
         completion=True, complete_k=False, squeeze=False, status=False):
