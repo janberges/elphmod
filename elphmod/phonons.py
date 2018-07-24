@@ -134,13 +134,9 @@ def dynamical_matrix(phid, amass, at, tau, eps=1e-7):
 
     supercells = [-1, 0, 1] # indices of central and neighboring supercells
 
-    maxdim = nat ** 2 * nr1 * nr2 * nr3 * len(supercells) ** 3 // comm.size
+    const = dict()
 
-    cells = np.empty((maxdim, 3), dtype=np.int8) # cell indices
-    const = np.zeros((maxdim, 3 * nat, 3 * nat)) # force constants over masses
-
-    n = 0 # 'spring' counter (per process)
-    N = 0 # 'spring' counter (overall)
+    N = 0 # counter for parallelization
 
     for m1 in range(nr1):
         for m2 in range(nr2):
@@ -184,10 +180,19 @@ def dynamical_matrix(phid, amass, at, tau, eps=1e-7):
                         # save data for dynamical matrix calculation:
 
                         for R in selected:
-                            cells[n] = R
-                            const[n, na1::nat, na2::nat] = C
+                            R = tuple(R)
 
-                            n += 1
+                            if R not in const:
+                                const[R] = np.zeros((3 * nat, 3 * nat))
+
+                            const[R][na1::nat, na2::nat] += C
+
+    # convert dictionary into arrays:
+
+    n = len(const)
+
+    cells = np.array(const.keys(), dtype=np.int8)
+    const = np.array(const.values())
 
     # gather data of all processes:
 
