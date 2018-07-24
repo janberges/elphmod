@@ -120,18 +120,19 @@ def toBZ(data, points=1000, outside=0.0):
 
     return image
 
-def color(data, color1, color2):
+def color(data, color1, color2, minimum=None, maximum=None):
     """Choose color scheme depending on type of color arguments."""
 
     if hasattr(color1, '__len__'):
         data = data.copy()
         data[np.where(np.isnan(data))] = 0
 
-        return sign_color(data, color1, color2)
+        return sign_color(data, color1, color2, minimum, maximum)
     else:
-        return rainbow(data, color1, color2)
+        return rainbow(data, color1, color2, minimum, maximum)
 
-def sign_color(data, negative=color1, positive=color2):
+def sign_color(data, negative=color1, positive=color2,
+        minimum=None, maximum=None):
     """Transform gray-scale image to RGB, where zero is displayed as white."""
 
     lt0 = np.where(data < 0)
@@ -139,8 +140,8 @@ def sign_color(data, negative=color1, positive=color2):
 
     image = data.copy()
 
-    image[lt0] /= data.min()
-    image[gt0] /= data.max()
+    image[lt0] /= data.min() if minimum is None else minimum
+    image[gt0] /= data.max() if maximum is None else maximum
 
     image = np.repeat(image[:, :, np.newaxis], 3, axis=-1)
 
@@ -169,13 +170,13 @@ def HSV2RGB(H, S=1, V=1):
     if h == 4: return t, p, V
     if h == 5: return V, p, q
 
-def rainbow(data, angle1=240, angle2=0):
+def rainbow(data, angle1=240, angle2=0, minimum=None, maximum=None):
     """Transform gray scale to rainbow scale."""
 
     image = data.copy()
 
-    image -= np.nanmin(image)
-    image /= np.nanmax(image)
+    image -= np.nanmin(image) if minimum is None else minimum
+    image /= np.nanmax(image) if maximum is None else maximum
 
     image_RGB = np.empty(image.shape + (3,))
 
