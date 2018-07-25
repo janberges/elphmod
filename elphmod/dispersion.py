@@ -267,9 +267,13 @@ def band_order(v, V, by_mean=True):
     o[n0] = range(bands)
 
     for n in range(1, points):
+        available = set(range(bands))
+
         for i in range(bands):
-            o[n, i] = max(range(bands), key=lambda j:
+            o[n, i] = max(available, key=lambda j:
                 np.absolute(np.dot(V[n0, :, o[n0, i]], V[n, :, j].conj())))
+
+            available.remove(o[n, i])
 
             #o[n, i] = max(range(bands), key=lambda j:
             #       abs(np.dot(V[n0, :, o[n0, i]],  V[n, :, j].conj()))
