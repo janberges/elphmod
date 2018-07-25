@@ -191,8 +191,8 @@ def dynamical_matrix(phid, amass, at, tau, eps=1e-7):
 
     n = len(const)
 
-    cells = np.array(const.keys(), dtype=np.int8)
-    const = np.array(const.values())
+    cells = np.array(list(const.keys()), dtype=np.int8)
+    const = np.array(list(const.values()))
 
     # gather data of all processes:
 
