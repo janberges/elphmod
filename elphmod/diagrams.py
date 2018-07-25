@@ -56,7 +56,7 @@ def phonon_self_energy(q, e, g2, T=100.0, eta=1e-10,
     nk, nk = e.shape
     nQ, nb, nk, nk = g2.shape
 
-    f = occupations(e / (kB * T), N=1)
+    f = occupations(e / (kB * T))
 
     e = np.tile(e, (2, 2))
     f = np.tile(f, (2, 2))
