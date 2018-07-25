@@ -2,19 +2,11 @@
 
 import numpy as np
 
-from . import MPI
+from . import MPI, occupations
 comm = MPI.comm
 info = MPI.info
 
-kB = 8.61733e-5 # eV/K
-
-def fermi(e, T):
-    kT = kB * T
-    return 1 / (np.exp(e / kT) + 1)
-
-def delta(e, T): # -df/de
-    kT = kB * T
-    return 1 / (2 * kT * (np.cosh(e / kT) + 1))
+kB = 8.61733e-5 # Boltzmann constant (eV/K)
 
 def susceptibility(e, T=1.0, eta=1e-10):
     """Calculate real part of static electronic susceptibility
@@ -25,8 +17,11 @@ def susceptibility(e, T=1.0, eta=1e-10):
 
     nk, nk = e.shape
 
-    f = fermi(e, T)
-    d = delta(e, T).sum()
+    kT = kB * T
+    x = e / kT
+
+    f = occupations.fermi_dirac(x)
+    d = occupations.fermi_dirac_delta(x).sum() / kT
 
     e = np.tile(e, (2, 2))
     f = np.tile(f, (2, 2))
@@ -51,7 +46,8 @@ def susceptibility(e, T=1.0, eta=1e-10):
 
     return calculate_susceptibility
 
-def phonon_self_energy(q, e, g2, T=100.0, eta=1e-10):
+def phonon_self_energy(q, e, g2, T=100.0, eta=1e-10,
+        occupations=occupations.fermi_dirac):
     """Calculate real part of the phonon self-energy
 
         Pi(q, nu) = 2/N sum[k] |g(q, nu, k)|^2
@@ -60,7 +56,7 @@ def phonon_self_energy(q, e, g2, T=100.0, eta=1e-10):
     nk, nk = e.shape
     nQ, nb, nk, nk = g2.shape
 
-    f = fermi(e, T)
+    f = occupations(e / (kB * T), N=1)
 
     e = np.tile(e, (2, 2))
     f = np.tile(f, (2, 2))

@@ -6,4 +6,5 @@ from . import coupling
 from . import elel
 from . import bravais
 from . import dos
+from . import occupations
 from . import plot
