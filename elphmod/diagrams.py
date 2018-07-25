@@ -67,7 +67,7 @@ def phonon_self_energy(q, e, g2, T=100.0, eta=1e-10,
 
     sizes, bounds = MPI.distribute(nQ * nb, bounds=True)
 
-    my_Pi = np.empty((sizes[comm.rank]))
+    my_Pi = np.empty((sizes[comm.rank]), dtype=g2.dtype)
 
     info('Pi(%3s, %3s, %3s) = ...' % ('q1', 'q2', 'nu'))
 
@@ -86,7 +86,7 @@ def phonon_self_energy(q, e, g2, T=100.0, eta=1e-10,
 
         print('Pi(%3d, %3d, %3d) = %7.2f meV' % (q1, q2, nu, 1e3 * my_Pi[my_n]))
 
-    Pi = np.empty((nQ, nb))
+    Pi = np.empty((nQ, nb), dtype=g2.dtype)
 
     comm.Allgatherv(my_Pi, (Pi, sizes))
 
