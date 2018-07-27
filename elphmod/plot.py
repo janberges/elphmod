@@ -50,6 +50,69 @@ def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
 
     return image
 
+def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
+        resolution=500, interpolation=bravais.linear_interpolation, angle=60,
+        outside=0.0):
+    """Show f(q1, q2, k1, k2) on "Brillouin zone made of Brillouin zones"."""
+
+    nQ, nk, nk = mesh.shape
+
+    fun = dict()
+
+    for iq, (Q1, Q2) in enumerate(q):
+        fun[Q1, Q2] = interpolation(mesh[iq])
+
+    nqx = int(round(resolution * (qxmax - qxmin)))
+    nqy = int(round(resolution * (qymax - qymin)))
+
+    qx, dqx = np.linspace(qxmin, qxmax, nqx, endpoint=False, retstep=True)
+    qy, dqy = np.linspace(qymin, qymax, nqy, endpoint=False, retstep=True)
+
+    qy = qy[::-1]
+
+    qx += dqx / 2
+    qy += dqy / 2
+
+    t1 = np.array([1.0, 0.0])
+    t2 = bravais.rotate(t1, (180 - angle) * bravais.deg)
+
+    sgn = { 60: 1, 90: 0, 120: -1 }[angle]
+
+    def r2(q1, q2):
+        return q1 * q1 + q1 * q2 + sgn * q2 * q2
+
+    sizes, bounds = MPI.distribute(nqy * nqx, bounds=True)
+
+    my_image = np.empty(sizes[comm.rank])
+
+    for n, m in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
+        i = m // nqx
+        j = m % nqx
+
+        q1 = qx[j] * t1[0] + qy[i] * t1[1]
+        q2 = qx[j] * t2[0] + qy[i] * t2[1]
+
+        q1 *= nq
+        q2 *= nq
+
+        Q1, _ = divmod(q1, 1)
+        Q2, _ = divmod(q2, 1)
+
+        neighbors = [(Q1, Q2), (Q1, Q2 + 1), (Q1 + 1, Q2), (Q1 + 1, Q2 + 1)]
+
+        nearest = min(neighbors, key=lambda q: r2(q[0] - q1, q[1] - q2))
+
+        if nearest in fun:
+            my_image[n] = fun[nearest](q1 * nk, q2 * nk)
+        else:
+            my_image[n] = outside
+
+    image = np.empty((nqy, nqx))
+
+    comm.Gatherv(my_image, (image, sizes))
+
+    return image
+
 def arrange(images, columns=None):
     if columns is None:
         columns = int(np.sqrt(len(images)))
