@@ -183,17 +183,6 @@ def toBZ(data, points=1000, outside=0.0):
 
     return image
 
-def color(data, color1, color2, minimum=None, maximum=None):
-    """Choose color scheme depending on type of color arguments."""
-
-    if hasattr(color1, '__len__'):
-        data = data.copy()
-        data[np.where(np.isnan(data))] = 0
-
-        return sign_color(data, color1, color2, minimum, maximum)
-    else:
-        return rainbow(data, color1, color2, minimum, maximum)
-
 def sign_color(data, negative=color1, positive=color2,
         minimum=None, maximum=None):
     """Transform gray-scale image to RGB, where zero is displayed as white."""
@@ -233,25 +222,34 @@ def HSV2RGB(H, S=1, V=1):
     if h == 4: return t, p, V
     if h == 5: return V, p, q
 
-def rainbow(data, angle1=240, angle2=0, minimum=None, maximum=None):
-    """Transform gray scale to rainbow scale."""
+def color(data, color1=(240, 1, 255), color2=(0, 1, 255), nancolor=(0, 0, 255),
+        model='HSV', minimum=None, maximum=None):
+    """Transform gray-scale image to RGB."""
+
+    color1   = np.array(color1)
+    color2   = np.array(color2)
+    nancolor = np.array(nancolor)
 
     image = data.copy()
 
     image -= np.nanmin(image) if minimum is None else minimum
     image /= np.nanmax(image) if maximum is None else maximum
 
-    image_RGB = np.empty(image.shape + (3,))
+    new_image = np.empty(image.shape + (3,))
 
     for i in range(image.shape[0]):
         for j in range(image.shape[1]):
-            if np.isnan(image[i, j]):
-                image_RGB[i, j] = (255, 255, 255)
-            else:
-                H = (1 - image[i, j]) * angle1 + image[i, j] * angle2
-                image_RGB[i, j] = HSV2RGB(H, S=1, V=255)
+            x = image[i, j]
 
-    return image_RGB
+            if np.isnan(x):
+                new_image[i, j] = nancolor
+            else:
+                new_image[i, j] = (1 - x) * color1 + x * color2
+
+            if model == 'HSV':
+                new_image[i, j] = HSV2RGB(*new_image[i, j])
+
+    return new_image
 
 def save(filename, data):
     """Save image as 8-bit bitmap."""
