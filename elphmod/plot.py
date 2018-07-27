@@ -60,7 +60,7 @@ def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
     fun = dict()
 
     for iq, (Q1, Q2) in enumerate(q):
-        fun[Q1, Q2] = interpolation(mesh[iq])
+        fun[Q1, Q2] = interpolation(mesh[iq], angle=angle)
 
     nqx = int(round(resolution * (qxmax - qxmin)))
     nqy = int(round(resolution * (qymax - qymin)))
@@ -79,7 +79,7 @@ def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
     sgn = { 60: 1, 90: 0, 120: -1 }[angle]
 
     def r2(q1, q2):
-        return q1 * q1 + q1 * q2 + sgn * q2 * q2
+        return q1 * q1 + q2 * q2 + sgn * q1 * q2
 
     sizes, bounds = MPI.distribute(nqy * nqx, bounds=True)
 
