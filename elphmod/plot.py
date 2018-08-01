@@ -113,6 +113,28 @@ def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
 
     return image
 
+def colorbar(image, left=0.02, bottom=0.02, width=0.03, height=0.30,
+        minimum=None, maximum=None):
+    """Add colorbar to image."""
+
+    image_height, image_width = image.shape
+
+    x1 = int(round(image_width * left))
+    x2 = int(round(image_width * (left + width)))
+    y1 = int(round(image_height * (1 - bottom)))
+    y2 = int(round(image_height * (1 - bottom - height)))
+
+    if minimum is None:
+        minimum = np.nanmin(image)
+
+    if maximum is None:
+        maximum = np.nanmax(image)
+
+    for y in range(min(y1, y2), max(y1, y2) + 1):
+        image[y, x1:x2 + 1] = (
+            minimum * (y2 - y) -
+            maximum * (y1 - y)) / (y2 - y1)
+
 def arrange(images, columns=None):
     if columns is None:
         columns = int(np.sqrt(len(images)))
