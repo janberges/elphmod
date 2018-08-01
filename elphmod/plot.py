@@ -244,6 +244,11 @@ def HSV2RGB(H, S=1, V=1):
     if h == 4: return t, p, V
     if h == 5: return V, p, q
 
+def PHI2RGB(alpha, beta, gamma):
+    """Set color via phases of RGB channels (0 -> 0, pi -> 255, 2 pi -> 0)."""
+
+    return 255 * (0.5 - 0.5 * np.cos(np.array([alpha, beta, gamma])))
+
 def color(data, color1=(240, 1, 255), color2=(0, 1, 255), nancolor=(0, 0, 255),
         model='HSV', minimum=None, maximum=None):
     """Transform gray-scale image to RGB."""
@@ -270,6 +275,9 @@ def color(data, color1=(240, 1, 255), color2=(0, 1, 255), nancolor=(0, 0, 255),
 
             if model == 'HSV':
                 new_image[i, j] = HSV2RGB(*new_image[i, j])
+
+            elif model == 'PHI':
+                new_image[i, j] = PHI2RGB(*new_image[i, j])
 
     return new_image
 
