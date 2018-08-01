@@ -46,9 +46,9 @@ def susceptibility(e, T=1.0, eta=1e-10):
 
     return calculate_susceptibility
 
-def phonon_self_energy(q, e, g2, T=100.0, eta=1e-10,
+def phonon_self_energy(q, e, g2, T=100.0, i0=1e-10j,
         occupations=occupations.fermi_dirac):
-    """Calculate real part of the phonon self-energy
+    """Calculate phonon self-energy
 
         Pi(q, nu) = 2/N sum[k] |g(q, nu, k)|^2
             [f(k+q) - f(k)] / [e(k+q) - e(k) + i eta]."""
@@ -62,12 +62,11 @@ def phonon_self_energy(q, e, g2, T=100.0, eta=1e-10,
     f = np.tile(f, (2, 2))
 
     scale = nk / (2 * np.pi)
-    eta2 = eta ** 2
     prefactor = 2.0 / nk ** 2
 
     sizes, bounds = MPI.distribute(nQ * nb, bounds=True)
 
-    my_Pi = np.empty((sizes[comm.rank]), dtype=g2.dtype)
+    my_Pi = np.empty((sizes[comm.rank]), dtype=complex)
 
     info('Pi(%3s, %3s, %3s) = ...' % ('q1', 'q2', 'nu'))
 
@@ -81,12 +80,12 @@ def phonon_self_energy(q, e, g2, T=100.0, eta=1e-10,
         df = f[q1:q1 + nk, q2:q2 + nk] - f[:nk, :nk]
         de = e[q1:q1 + nk, q2:q2 + nk] - e[:nk, :nk]
 
-        my_Pi[my_n] = prefactor * np.sum(
-            g2[iq, nu] * df * de / (de * de + eta2))
+        my_Pi[my_n] = prefactor * np.sum(g2[iq, nu] * df / (de + i0))
 
-        print('Pi(%3d, %3d, %3d) = %7.2f meV' % (q1, q2, nu, 1e3 * my_Pi[my_n]))
+        print('Pi(%3d, %3d, %3d) = %9.2e%+9.2ei'
+            % (q1, q2, nu, my_Pi[my_n].real, my_Pi[my_n].imag))
 
-    Pi = np.empty((nQ, nb), dtype=g2.dtype)
+    Pi = np.empty((nQ, nb), dtype=complex)
 
     comm.Allgatherv(my_Pi, (Pi, sizes))
 
