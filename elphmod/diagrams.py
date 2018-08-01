@@ -64,29 +64,29 @@ def phonon_self_energy(q, e, g2, T=100.0, i0=1e-10j,
     scale = nk / (2 * np.pi)
     prefactor = 2.0 / nk ** 2
 
-    sizes, bounds = MPI.distribute(nQ * nb, bounds=True)
+    sizes, bounds = MPI.distribute(nQ, bounds=True)
 
-    my_Pi = np.empty((sizes[comm.rank]), dtype=complex)
+    my_Pi = np.empty((sizes[comm.rank], nb), dtype=complex)
 
     info('Pi(%3s, %3s, %3s) = ...' % ('q1', 'q2', 'nu'))
 
-    for my_n, n in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
-        iq = n // nb
-        nu = n % nb
-
+    for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         q1 = int(round(q[iq, 0] * scale)) % nk
         q2 = int(round(q[iq, 1] * scale)) % nk
 
         df = f[q1:q1 + nk, q2:q2 + nk] - f[:nk, :nk]
         de = e[q1:q1 + nk, q2:q2 + nk] - e[:nk, :nk]
 
-        my_Pi[my_n] = prefactor * np.sum(g2[iq, nu] * df / (de + i0))
+        chi = df / (de + i0)
 
-        print('Pi(%3d, %3d, %3d) = %9.2e%+9.2ei'
-            % (q1, q2, nu, my_Pi[my_n].real, my_Pi[my_n].imag))
+        for nu in range(nb):
+            my_Pi[my_iq, nu] = prefactor * np.sum(g2[iq, nu] * chi)
+
+            print('Pi(%3d, %3d, %3d) = %9.2e%+9.2ei'
+                % (q1, q2, nu, my_Pi[my_iq, nu].real, my_Pi[my_iq, nu].imag))
 
     Pi = np.empty((nQ, nb), dtype=complex)
 
-    comm.Allgatherv(my_Pi, (Pi, sizes))
+    comm.Allgatherv(my_Pi, (Pi, sizes * nb))
 
     return Pi
