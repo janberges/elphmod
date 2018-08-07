@@ -6,10 +6,13 @@ import numpy as np
 from . import bravais, dispersion, MPI
 comm = MPI.comm
 
-def read_orbital_Coulomb_interaction(filename, nq, no):
+def read_orbital_Coulomb_interaction(filename, nq, no, dd=False):
     """Read Coulomb interaction in orbital basis.."""
 
-    U = np.empty((nq, nq, no, no, no, no), dtype=complex)
+    if dd:
+        U = np.empty((nq, nq, no, no), dtype=complex)
+    else:
+        U = np.empty((nq, nq, no, no, no, no), dtype=complex)
 
     if comm.rank == 0:
         with open(filename) as data:
@@ -23,8 +26,12 @@ def read_orbital_Coulomb_interaction(filename, nq, no):
 
                 i, j, k, l = [int(n) - 1 for n in columns[3:7]]
 
-                U[q1, q2, j, i, l, k] \
-                    = float(columns[7]) + 1j * float(columns[8])
+                if not dd:
+                    U[q1, q2, j, i, l, k] \
+                        = float(columns[7]) + 1j * float(columns[8])
+                elif i == j and k == l:
+                    U[q1, q2, i, k] \
+                        = float(columns[7]) + 1j * float(columns[8])
 
     comm.Bcast(U)
 
