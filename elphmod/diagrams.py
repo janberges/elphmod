@@ -49,22 +49,29 @@ def susceptibility(e, T=1.0, eta=1e-10):
 def polarization(e, c, T=1.0, i0=1e-10j):
     """Calculate RPA polarization in orbital basis (density-denstiy):
 
-        Pi(q, a, b) = 1/N sum[k] <k+q|a><a|k><k|b><b|k+q>
-            [f(k+q) - f(k)] / [e(k+q) - e(k) + i0].
+        Pi(q, a, b) = 1/N sum[k, n, m]
+            <k+q m|k+q a> <k a|k n> <k n|k b> <k+q b|k+q m>
+            [f(k+q, m) - f(k, n)] / [e(k+q, m) - e(k, n) + i0]
 
     The resolution in q is limited by the resolution in k."""
 
-    nk, nk = e.shape
-    nk, nk, nb = c.shape # c[k1, k2, a] = <a|k>
+    if e.ndim == 2:
+        e = e[:, :, np.newaxis]
+
+    if c.ndim == 3:
+        c = c[:, :, :, np.newaxis]
+
+    nk, nk, nb = e.shape
+    nk, nk, no, nb = c.shape # c[k1, k2, a, n] = <k a|k n>
 
     kT = kB * T
     x = e / kT
 
     f = occupations.fermi_dirac(x)
 
-    e = np.tile(e, (2, 2))
-    f = np.tile(f, (2, 2))
-    c = np.tile(c, (2, 2, 1))
+    e = np.tile(e, (2, 2, 1))
+    f = np.tile(f, (2, 2, 1))
+    c = np.tile(c, (2, 2, 1, 1))
 
     scale = nk / (2 * np.pi)
     prefactor = 1.0 / nk ** 2
@@ -73,20 +80,22 @@ def polarization(e, c, T=1.0, i0=1e-10j):
         q1 = int(round(q1 * scale)) % nk
         q2 = int(round(q2 * scale)) % nk
 
-        df = f[q1:q1 + nk, q2:q2 + nk] - f[:nk, :nk]
-        de = e[q1:q1 + nk, q2:q2 + nk] - e[:nk, :nk]
+        Pi = np.zeros((no, no), dtype=complex)
 
-        cc = c[:nk, :nk] * c[q1:q1 + nk, q2:q2 + nk].conj()
+        for n in range(nb):
+            for m in range(nb):
+                df = f[q1:q1 + nk, q2:q2 + nk, m] - f[:nk, :nk, n]
+                de = e[q1:q1 + nk, q2:q2 + nk, m] - e[:nk, :nk, n]
 
-        Pi = np.empty((nb, nb), dtype=complex)
+                cc = c[:nk, :nk, :, n] * c[q1:q1 + nk, q2:q2 + nk, :, m].conj()
 
-        for a in range(nb):
-            cca = cc[:, :, a]
+                for a in range(no):
+                    cca = cc[:, :, a]
 
-            for b in range(nb):
-                ccb = cc[:, :, b].conj()
+                    for b in range(no):
+                        ccb = cc[:, :, b].conj()
 
-                Pi[a, b] = np.sum(cca * ccb * df / (de + i0))
+                        Pi[a, b] += np.sum(cca * ccb * df / (de + i0))
 
         return prefactor * Pi
 
