@@ -34,9 +34,7 @@ def dispersion(matrix, k, angle=60,
     # diagonalize matrix for local lists of k points:
 
     if rotate:
-        t1 = np.array([1.0, 0.0])
-        t2 = bravais.rotate(t1, (180 - angle) * bravais.deg)
-
+        t1, t2 = bravais.translations(180 - angle)
         u1, u2 = bravais.reciprocals(t1, t2)
 
     for point, (k1, k2) in enumerate(my_k):

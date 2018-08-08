@@ -241,9 +241,7 @@ def polarization(e, path, angle=60):
     y = slice(nat, 2 * nat)
     z = slice(2 * nat, 3 * nat)
 
-    t1 = np.array([1.0, 0.0])
-    t2 = bravais.rotate(t1, (180 - angle) * bravais.deg)
-
+    t1, t2 = bravais.translations(180 - angle)
     u1, u2 = bravais.reciprocals(t1, t2)
 
     for n, q in enumerate(path):

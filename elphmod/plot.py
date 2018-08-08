@@ -28,8 +28,7 @@ def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
 
     fun = interpolation(mesh, angle=angle)
 
-    t1 = np.array([1.0, 0.0])
-    t2 = bravais.rotate(t1, (180 - angle) * bravais.deg)
+    t1, t2 = bravais.translations(180 - angle)
 
     sizes, bounds = MPI.distribute(nky * nkx, bounds=True)
 
@@ -73,8 +72,7 @@ def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
     qx += dqx / 2
     qy += dqy / 2
 
-    t1 = np.array([1.0, 0.0])
-    t2 = bravais.rotate(t1, (180 - angle) * bravais.deg)
+    t1, t2 = bravais.translations(180 - angle)
 
     sgn = { 60: 1, 90: 0, 120: -1 }[angle]
 
@@ -161,8 +159,11 @@ def toBZ(data, points=1000, outside=0.0):
 
     fun = list(map(bravais.linear_interpolation, data))
 
-    M =     bravais.U1[0] / 2
-    K = 2 * bravais.U2[1] / 3
+    t1, t2 = bravais.translations(120, angle0=-30)
+    u1, u2 = bravais.reciprocals(t1, t2)
+
+    M =     u2[0]
+    K = 2 * u2[1] / 3
 
     nkx = int(round(points * M))
     nky = int(round(points * K))
@@ -175,9 +176,9 @@ def toBZ(data, points=1000, outside=0.0):
     my_image = np.empty(sizes[comm.rank])
     my_image[:] = outside
 
-    U1 = bravais.U1 / np.sqrt(np.dot(bravais.U1, bravais.U1))
-    U2 = bravais.U2 / np.sqrt(np.dot(bravais.U2, bravais.U2))
-    U3 = U2 - U1
+    u1 = u1 / np.sqrt(np.dot(u1, u1))
+    u2 = u2 / np.sqrt(np.dot(u2, u2))
+    u3 = u2 - u1
 
     shift = 13.0 / 12.0
 
@@ -187,12 +188,12 @@ def toBZ(data, points=1000, outside=0.0):
 
         k = np.array([kx[j], ky[i]])
 
-        k1 = np.dot(k, bravais.T1)
-        k2 = np.dot(k, bravais.T2)
+        k1 = np.dot(k, t1)
+        k2 = np.dot(k, t2)
 
-        if abs(np.dot(k, U1)) > M: continue
-        if abs(np.dot(k, U2)) > M: continue
-        if abs(np.dot(k, U3)) > M: continue
+        if abs(np.dot(k, u1)) > M: continue
+        if abs(np.dot(k, u2)) > M: continue
+        if abs(np.dot(k, u3)) > M: continue
 
         idata = int((np.arctan2(ky[i], kx[j]) / (2 * np.pi) + shift)
             * ndata) % ndata
@@ -358,6 +359,9 @@ def label_pie_with_TeX(filename,
     save('%s_colorbar.png' % stem, colorbar)
 
     if nCDW:
+        t1, t2 = bravais.translations(120, angle0=-30)
+        u1, u2 = bravais.reciprocals(t1, t2)
+
         A = sorted(set(n * n + n * m + m * m
           for n in range(13)
           for m in range(13)))[2:2 + nCDW]
@@ -368,11 +372,11 @@ def label_pie_with_TeX(filename,
 
         indices = range(-12, 13)
         t = [(i, j) for i in indices for j in indices if i or j]
-        T = [i * bravais.T1 + j * bravais.T2 for i, j in t]
+        T = [i * t1 + j * t2 for i, j in t]
         K = [bravais.rotate(t / t.dot(t), 90 * bravais.deg)
             / height_over_side for t in T]
 
-        scaleCDW = GM / (0.5 * np.sqrt(np.dot(bravais.U1, bravais.U1)))
+        scaleCDW = GM / (0.5 * np.sqrt(np.dot(u1, u1)))
 
         KCDW = []
 

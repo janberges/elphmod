@@ -17,8 +17,18 @@ def rotate(vector, angle):
         [np.sin(angle),  np.cos(angle)],
         ]), vector)
 
+def translations(angle=120, angle0=0):
+    """Get translation vectors of Bravais lattice."""
+
+    t1 = np.array([1.0, 0.0])
+
+    t1 = rotate(t1, angle0 * deg)
+    t2 = rotate(t1, angle  * deg)
+
+    return t1, t2
+
 def reciprocals(t1, t2):
-    """Get translation vectors of reciprocal lattice."""
+    """Get translation vectors of reciprocal lattice (w/o 2 pi)."""
 
     u1 = rotate(t2, -90 * deg)
     u2 = rotate(t1, +90 * deg)
@@ -27,22 +37,6 @@ def reciprocals(t1, t2):
     u2 /= np.dot(t2, u2)
 
     return u1, u2
-
-# define real and reciprocal (without 2 pi) translation vectors:
-
-#1 Quantum ESPRESSO:
-
-t1 = np.array([1.0, 0.0])
-t2 = rotate(t1, 120 * deg)
-
-u1, u2 = reciprocals(t1, t2)
-
-#2 Brillouin-zone plots:
-
-T1 = rotate(t1, -30 * deg)
-T2 = rotate(t2, -30 * deg)
-
-U1, U2 = reciprocals(T1, T2)
 
 def images(k1, k2, nk, angle=60):
     """Get equivalents k points."""
@@ -87,8 +81,12 @@ def irreducibles(nk, angle=60):
 
     return irreducible
 
-def symmetries(data, epsilon=0.0, unity=True):
+def symmetries(data, epsilon=0.0, unity=True, angle=60):
     """Find symmetries of data on Monkhorst-Pack mesh."""
+
+    t1, t2, u1, u2 = vectors(angle, angle0=0)
+    # t1 and u2 must point in x and y direction, respectively,
+    # to make below reflection work properly.
 
     nk = len(data)
 
@@ -120,7 +118,7 @@ def symmetries(data, epsilon=0.0, unity=True):
                 if image is not None:
                     yield (reflect, angle), image
 
-def complete(data):
+def complete(data, angle=60):
     """Complete data on Monkhorst-Pack mesh."""
 
     irreducible = list(zip(*np.where(np.logical_not(np.isnan(data)))))
@@ -128,7 +126,7 @@ def complete(data):
     if len(irreducible) == data.size:
         return
 
-    for symmetry, image in symmetries(data, unity=False):
+    for symmetry, image in symmetries(data, unity=False, angle=angle):
         for k in irreducible:
             data[tuple(image[k])] = data[k]
 
