@@ -3,13 +3,19 @@
 import math
 import numpy as np
 
+xmax = 709.0 # approx. log([max. double] / 2 - 1)
+
 def fermi_dirac(x):
     """Calculate Fermi function."""
+
+    x = np.minimum(x, xmax)
 
     return 1 / (np.exp(x) + 1)
 
 def fermi_dirac_delta(x):
     """Calculate negative derivative of Fermi function."""
+
+    x = np.minimum(np.absolute(x), xmax)
 
     return 1 / (2 * (np.cosh(x) + 1))
 
