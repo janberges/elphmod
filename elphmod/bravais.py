@@ -227,8 +227,10 @@ def resize(data, shape=None, angle=60, axes=(0, 1)):
 
     return new_data
 
-def MPM2IBZ(k1, k2, nk, angle=60):
-    """Map from positive Monkhorst-Pack mesh to first Brillouin zone."""
+def to_Voronoi(k1, k2, nk, angle=60):
+    """Map any lattice point to the Voronoi cell* around the origin.
+
+    (*) Wigner-Seitz cell/Brillouin zone for Bravais/reciprocal lattice"""
 
     # squared distance from origin:
 
@@ -241,6 +243,9 @@ def MPM2IBZ(k1, k2, nk, angle=60):
     # For 60 or 120 deg. (triangular lattice) this yields the Loeschian numbers.
     # Non-equivalent lattice sites may have the same distance from the origin!
     # (E.g., there are non-equivalent 20th neighbors in a triangular lattice)
+
+    k1 %= nk
+    k2 %= nk
 
     images = [(k1, k2), (k1 - nk, k2), (k1, k2 - nk), (k1 - nk, k2 - nk)]
     distances = [measure[angle](*image) for image in images]
@@ -272,7 +277,7 @@ def Fourier_interpolation(data, angle=60, hr_file=None, function=True):
     count = 0
     for n in range(N):
         for m in range(N):
-            images = MPM2IBZ(n, m, N, angle=180 - angle)
+            images = to_Voronoi(n, m, N, angle=180 - angle)
 
             # angle transform: from real to reciprocal lattice or vice versa
 

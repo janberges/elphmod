@@ -54,7 +54,7 @@ def dispersion(matrix, k, angle=60,
             # rotate phonon eigenvectors by negative angle of k point:
 
             if rotate:
-                K1, K2 = bravais.MPM2IBZ(k1, k2, 2 * np.pi, angle=angle)[0]
+                K1, K2 = bravais.to_Voronoi(k1, k2, 2 * np.pi, angle=angle)[0]
 
                 x, y = K1 * u1 + K2 * u2
                 phi = np.arctan2(y, x)
