@@ -149,7 +149,7 @@ def arrange(images, columns=None):
         axis=1) for row in range(rows)],
         axis=0)
 
-def toBZ(data, points=1000, outside=0.0):
+def toBZ(data, points=1000, outside=0.0, angle=60):
     """Map data on uniform grid onto (wedge of) Brillouin zone."""
 
     if data.ndim == 2:
@@ -159,10 +159,10 @@ def toBZ(data, points=1000, outside=0.0):
 
     fun = list(map(bravais.linear_interpolation, data))
 
-    t1, t2 = bravais.translations(120, angle0=-30)
+    t1, t2 = bravais.translations(180 - angle, angle0=angle - 90)
     u1, u2 = bravais.reciprocals(t1, t2)
 
-    M =     u2[0]
+    M = abs(u2[0])
     K = 2 * u2[1] / 3
 
     nkx = int(round(points * M))
@@ -178,7 +178,11 @@ def toBZ(data, points=1000, outside=0.0):
 
     u1 = u1 / np.sqrt(np.dot(u1, u1))
     u2 = u2 / np.sqrt(np.dot(u2, u2))
-    u3 = u2 - u1
+
+    if angle == 60:
+        u3 = u1 - u2
+    elif angle == 120:
+        u3 = u1 + u2
 
     shift = 13.0 / 12.0
 
@@ -468,12 +472,12 @@ def label_pie_with_TeX(filename,
 ''')
 
 def plot_pie_with_TeX(filename, data, points=1000,
-        color1=color1, color2=color2, **kwargs):
+        color1=color1, color2=color2, angle=60, **kwargs):
     """Create 'pie diagram' of different data on Brillouin zone."""
 
     data = np.array(data)
 
-    image = toBZ(data, points=points, outside=np.nan)
+    image = toBZ(data, points=points, outside=np.nan, angle=angle)
 
     if comm.rank == 0:
         imagename = filename.rsplit('.', 1)[0] + '.png'
