@@ -49,7 +49,7 @@ def susceptibility(e, T=1.0, eta=1e-10):
 def polarization(e, c, T=1.0, i0=1e-10j):
     """Calculate RPA polarization in orbital basis (density-denstiy):
 
-        Pi(q, a, b) = 1/N sum[k, n, m]
+        Pi(q, a, b) = 2/N sum[k, n, m]
             <k+q m|k+q a> <k a|k n> <k n|k b> <k+q b|k+q m>
             [f(k+q, m) - f(k, n)] / [e(k+q, m) - e(k, n) + i0]
 
@@ -74,7 +74,7 @@ def polarization(e, c, T=1.0, i0=1e-10j):
     c = np.tile(c, (2, 2, 1, 1))
 
     scale = nk / (2 * np.pi)
-    prefactor = 1.0 / nk ** 2
+    prefactor = 2.0 / nk ** 2
 
     def calculate_polarization(q1=0, q2=0):
         q1 = int(round(q1 * scale)) % nk
