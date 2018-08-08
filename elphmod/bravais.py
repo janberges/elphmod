@@ -227,28 +227,28 @@ def resize(data, shape=None, angle=60, axes=(0, 1)):
 
     return new_data
 
+def squared_distance(k1, k2, angle=60):
+    """Calculate squared distance of lattice point from origin.
+
+    If the coordinates are given as integers, the result is numerically exact.
+    For 60 or 120 deg. (triangular lattice) this yields the Loeschian numbers.
+    Non-equivalent lattice sites may have the same distance from the origin!
+    (E.g., there are non-equivalent 20th neighbors in a triangular lattice.)"""
+
+    sgn = { 60: 1, 90: 0, 120: -1 }[angle]
+
+    return k1 * k1 + k2 * k2 + sgn * k1 * k2
+
 def to_Voronoi(k1, k2, nk, angle=60):
     """Map any lattice point to the Voronoi cell* around the origin.
 
     (*) Wigner-Seitz cell/Brillouin zone for Bravais/reciprocal lattice"""
 
-    # squared distance from origin:
-
-    measure = {
-         60: lambda n, m: n * n + m * m + n * m,
-         90: lambda n, m: n * n + m * m,
-        120: lambda n, m: n * n + m * m - n * m,
-        }
-
-    # For 60 or 120 deg. (triangular lattice) this yields the Loeschian numbers.
-    # Non-equivalent lattice sites may have the same distance from the origin!
-    # (E.g., there are non-equivalent 20th neighbors in a triangular lattice)
-
     k1 %= nk
     k2 %= nk
 
     images = [(k1, k2), (k1 - nk, k2), (k1, k2 - nk), (k1 - nk, k2 - nk)]
-    distances = [measure[angle](*image) for image in images]
+    distances = [squared_distance(*image, angle=angle) for image in images]
     minimum = min(distances)
     images = [image for image, distance in zip(images, distances)
         if distance == minimum]

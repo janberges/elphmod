@@ -74,11 +74,6 @@ def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
 
     t1, t2 = bravais.translations(180 - angle)
 
-    sgn = { 60: 1, 90: 0, 120: -1 }[angle]
-
-    def r2(q1, q2):
-        return q1 * q1 + q2 * q2 + sgn * q1 * q2
-
     sizes, bounds = MPI.distribute(nqy * nqx, bounds=True)
 
     my_image = np.empty(sizes[comm.rank])
@@ -98,7 +93,8 @@ def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
 
         neighbors = [(Q1, Q2), (Q1, Q2 + 1), (Q1 + 1, Q2), (Q1 + 1, Q2 + 1)]
 
-        nearest = min(neighbors, key=lambda q: r2(q[0] - q1, q[1] - q2))
+        nearest = min(neighbors, key=lambda q:
+            bravais.squared_distance(q[0] - q1, q[1] - q2, angle))
 
         if nearest in fun:
             my_image[n] = fun[nearest](q1 * nk, q2 * nk)
