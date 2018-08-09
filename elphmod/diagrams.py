@@ -88,23 +88,30 @@ def polarization(e, c, T=1.0, i0=1e-10j, subspace=None):
     scale = nk / (2 * np.pi)
     prefactor = 2.0 / nk ** 2
 
+    k1 = slice(0, nk)
+    k2 = k1
+
     def calculate_polarization(q1=0, q2=0):
         q1 = int(round(q1 * scale)) % nk
         q2 = int(round(q2 * scale)) % nk
+
+        kq1 = slice(q1, q1 + nk)
+        kq2 = slice(q2, q2 + nk)
 
         Pi = np.empty((nb, nb, no, no), dtype=complex)
 
         for n in range(nb):
             for m in range(nb):
-                df = f[q1:q1 + nk, q2:q2 + nk, m] - f[:nk, :nk, n]
-                de = e[q1:q1 + nk, q2:q2 + nk, m] - e[:nk, :nk, n]
+                df = f[kq1, kq2, m] - f[k1, k2, n]
+                de = e[kq1, kq2, m] - e[k1, k2, n]
 
                 if cRPA:
-                    exclude = np.where(subspace[q1:q1 + nk, q2:q2 + nk, m]
-                        & subspace[:nk, :nk, n])
+                    exclude = np.where(
+                        subspace[kq1, kq2, m] & subspace[k1, k2, n])
+
                     df[exclude] = 0.0
 
-                cc = c[:nk, :nk, :, n] * c[q1:q1 + nk, q2:q2 + nk, :, m].conj()
+                cc = c[kq1, kq2, :, m].conj() * c[k1, k2, :, n]
 
                 for a in range(no):
                     cca = cc[:, :, a]
