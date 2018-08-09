@@ -117,7 +117,7 @@ def polarization(e, c, T=1.0, i0=1e-10j, subspace=None):
                     exclude = np.where(
                         subspace[kq1, kq2, m] & subspace[k1, k2, n])
 
-                    df[exclude] = 0.0
+                    dfde[exclude] = 0.0
 
                 cc = c[kq1, kq2, :, m].conj() * c[k1, k2, :, n]
 
