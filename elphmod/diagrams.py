@@ -46,20 +46,29 @@ def susceptibility(e, T=1.0, eta=1e-10):
 
     return calculate_susceptibility
 
-def polarization(e, c, T=1.0, i0=1e-10j):
-    """Calculate RPA polarization in orbital basis (density-denstiy):
+def polarization(e, c, T=1.0, i0=1e-10j, subspace=None):
+    """Calculate RPA polarization in orbital basis (density-density):
 
         Pi(q, a, b) = 2/N sum[k, n, m]
             <k+q m|k+q a> <k a|k n> <k n|k b> <k+q b|k+q m>
             [f(k+q, m) - f(k, n)] / [e(k+q, m) - e(k, n) + i0]
 
-    The resolution in q is limited by the resolution in k."""
+    The resolution in q is limited by the resolution in k.
+
+    If 'subspace' is given, a cRPA calculation is performed. 'subspace' must be
+    a boolean array with the same shape as 'e', where 'True' marks states of the
+    target subspace, interactions between which are excluded."""
+
+    cRPA = subspace is not None
 
     if e.ndim == 2:
         e = e[:, :, np.newaxis]
 
     if c.ndim == 3:
         c = c[:, :, :, np.newaxis]
+
+    if cRPA and subspace.shape != e.shape:
+        subspace = np.reshape(subspace, e.shape)
 
     nk, nk, nb = e.shape
     nk, nk, no, nb = c.shape # c[k1, k2, a, n] = <k a|k n>
@@ -72,6 +81,9 @@ def polarization(e, c, T=1.0, i0=1e-10j):
     e = np.tile(e, (2, 2, 1))
     f = np.tile(f, (2, 2, 1))
     c = np.tile(c, (2, 2, 1, 1))
+
+    if cRPA:
+        subspace = np.tile(subspace, (2, 2, 1))
 
     scale = nk / (2 * np.pi)
     prefactor = 2.0 / nk ** 2
@@ -86,6 +98,11 @@ def polarization(e, c, T=1.0, i0=1e-10j):
             for m in range(nb):
                 df = f[q1:q1 + nk, q2:q2 + nk, m] - f[:nk, :nk, n]
                 de = e[q1:q1 + nk, q2:q2 + nk, m] - e[:nk, :nk, n]
+
+                if cRPA:
+                    exclude = np.where(subspace[q1:q1 + nk, q2:q2 + nk, m]
+                        & subspace[:nk, :nk, n])
+                    df[exclude] = 0.0
 
                 cc = c[:nk, :nk, :, n] * c[q1:q1 + nk, q2:q2 + nk, :, m].conj()
 
