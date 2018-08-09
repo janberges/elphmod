@@ -80,7 +80,7 @@ def polarization(e, c, T=1.0, i0=1e-10j):
         q1 = int(round(q1 * scale)) % nk
         q2 = int(round(q2 * scale)) % nk
 
-        Pi = np.zeros((no, no), dtype=complex)
+        Pi = np.empty((nb, nb, no, no), dtype=complex)
 
         for n in range(nb):
             for m in range(nb):
@@ -95,9 +95,9 @@ def polarization(e, c, T=1.0, i0=1e-10j):
                     for b in range(no):
                         ccb = cc[:, :, b].conj()
 
-                        Pi[a, b] += np.sum(cca * ccb * df / (de + i0))
+                        Pi[n, m, a, b] = np.sum(cca * ccb * df / (de + i0))
 
-        return prefactor * Pi
+        return prefactor * Pi.sum(axis=(0, 1))
 
     calculate_polarization.size = nb
 
