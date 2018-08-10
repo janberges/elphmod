@@ -84,7 +84,9 @@ def irreducibles(nk, angle=60):
 def symmetries(data, epsilon=0.0, unity=True, angle=60):
     """Find symmetries of data on Monkhorst-Pack mesh."""
 
-    t1, t2, u1, u2 = vectors(angle, angle0=0)
+    t1, t2 = translations(180 - angle, angle0=0)
+    u1, u2 = reciprocals(t1, t2)
+
     # t1 and u2 must point in x and y direction, respectively,
     # to make below reflection work properly.
 
