@@ -53,7 +53,7 @@ def read_fildyn(fildyn):
                 for j in range(nat):
                     next(data)
                     for n in range(3):
-                        cols = map(float, next(data).split())
+                        cols = list(map(float, next(data).split()))
                         for m in range(3):
                             dynmats[-1][group(i), group(j)][n, m] = complex(
                                 *cols[group(m, 2)])
