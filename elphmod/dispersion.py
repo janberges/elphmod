@@ -133,7 +133,7 @@ def dispersion_full(matrix, size, angle=60,
     def on_main_path(n):
         return not k[n, 0]
 
-    if angle == 60:
+    if angle == 60 or angle == 90:
         def on_side_path(n, m):
             return k[m, 1] == k[n, 1]
     elif angle == 120:
@@ -149,15 +149,32 @@ def dispersion_full(matrix, size, angle=60,
 
         # order bands along spider-web-like paths:
         #
-        # irreducible wedge       K      G = (0 0)
-        # of 12 x 12 mesh:       /       M = (0 6)
-        #                   o   o        K = (4 4) [= (4 8) for angle = 120]
-        #                  /   /
+        # example: irreducible wedge of 12 x 12 mesh
+        # ------------------------------------------
+        #
+        # hexagonal lattice       K      G = (0 0)
+        # -----------------      /       M = (0 6)
+        #                   o   o        K = (4 4) for angle =  60
+        #                  /   /           = (4 8) for angle = 120
         #             o   o   o   o
-        #            /   /   /   /   (side paths to K)
+        #            /   /   /   /    <- side paths to K
         #       o   o   o   o   o
         #      /   /   /   /   /
-        # G---o---o---o---o---o---M  (main path from G to M)
+        # G---o---o---o---o---o---M   <- main path from G to M
+        #
+        # square lattice          M
+        # --------------          |
+        #                     o   o
+        #                     |   |
+        #                 o   o   o      G = (0 0)
+        #                 |   |   |      X = (0 6)
+        #             o   o   o   o      M = (6 6)
+        #             |   |   |   |
+        #         o   o   o   o   o
+        #         |   |   |   |   |   <- side paths to M
+        #     o   o   o   o   o   o
+        #     |   |   |   |   |   |
+        # G---o---o---o---o---o---X   <- main path from G to X
 
         if order and comm.rank == 0:
             o = np.empty((points, bands), dtype=int)
