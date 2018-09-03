@@ -12,10 +12,15 @@ deg = np.pi / 180
 def rotate(vector, angle):
     """Rotate vector anti-clockwise by given angle (rad)."""
 
-    return np.dot(np.array([
-        [np.cos(angle), -np.sin(angle)],
-        [np.sin(angle),  np.cos(angle)],
-        ]), vector)
+    cos = np.cos(angle)
+    sin = np.sin(angle)
+
+    rotation = np.array([
+        [cos, -sin],
+        [sin,  cos],
+        ])
+
+    return np.dot(rotation, vector)
 
 def translations(angle=120, angle0=0):
     """Get translation vectors of Bravais lattice.
