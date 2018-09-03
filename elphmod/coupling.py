@@ -13,7 +13,8 @@ def get_q(filename):
             for line in data if '.' in line]
 
 def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
-        completion=True, complete_k=False, squeeze=False, status=False):
+        completion=True, complete_k=False, squeeze=False, status=False,
+        phase=False):
     """Read and complete electron-phonon matrix elements."""
 
     if Q is not None:
@@ -23,9 +24,13 @@ def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
 
     sizes = MPI.distribute(nQ)
 
-    elph = np.empty((nQ, nb, bands, bands, nk, nk))
+    dtype = complex if phase else float
 
-    my_elph = np.empty((sizes[comm.rank], nb, bands, bands, nk, nk))
+    elph = np.empty((nQ, nb, bands, bands, nk, nk), dtype=dtype)
+
+    my_elph = np.empty((sizes[comm.rank], nb, bands, bands, nk, nk),
+        dtype=dtype)
+
     my_elph[:] = np.nan
 
     my_Q = np.empty(sizes[comm.rank], dtype=int)
@@ -45,8 +50,12 @@ def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
                 k1, k2, k3, wk, ibnd, jbnd, nu \
                     = [int(i) - 1 for i in columns[:7]]
 
-                my_elph[n, nu, ibnd - offset, jbnd - offset, k1, k2] = float(
-                    columns[7])
+                indices = n, nu, ibnd - offset, jbnd - offset, k1, k2
+
+                my_elph[indices] = float(columns[7])
+
+                if phase:
+                    my_elph[indices] += 1j * float(columns[8])
 
     if completion:
         for n, iq in enumerate(my_Q):
@@ -61,7 +70,8 @@ def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
     if complete_k and nq: # to be improved considerably
         comm.Gatherv(my_elph, (elph, sizes * nb * bands * bands * nk * nk))
 
-        elph_complete = np.empty((nq, nq, nb, bands, bands, nk, nk))
+        elph_complete = np.empty((nq, nq, nb, bands, bands, nk, nk),
+            dtype=dtype)
 
         if comm.rank == 0:
             symmetries_q = [image for name, image in bravais.symmetries(
