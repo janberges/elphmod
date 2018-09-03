@@ -43,12 +43,14 @@ def images(k1, k2, nk, angle=60):
 
     points = set()
 
-    for _ in range(6):
-        # rotation by 60 degree:
+    while True:
+        # rotation:
 
-        if angle == 60:
+        if angle == 60: # by 60 deg
             k1, k2 = -k2, k1 + k2
-        elif angle == 120:
+        elif angle == 90: # by 90 deg
+            k1, k2 = -k2, k1
+        elif angle == 120: # by 60 deg
             k1, k2 = k1 - k2, k1
 
         # mapping to [0, nk):
@@ -56,10 +58,16 @@ def images(k1, k2, nk, angle=60):
         k1 %= nk
         k2 %= nk
 
-        # add point and its reflection:
+        # add point or break loop after full rotation
 
-        points.add((k1, k2))
-        points.add((k2, k1))
+        if (k1, k2) in points:
+            break
+        else:
+            points.add((k1, k2))
+
+    # reflection:
+
+    points |= set((k2, k1) for k1, k2 in points)
 
     return points
 
