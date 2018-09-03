@@ -10,7 +10,7 @@ comm = MPI.comm
 deg = np.pi / 180
 
 def rotate(vector, angle):
-    """Rotate vector."""
+    """Rotate vector anti-clockwise by given angle (rad)."""
 
     return np.dot(np.array([
         [np.cos(angle), -np.sin(angle)],
@@ -18,7 +18,16 @@ def rotate(vector, angle):
         ]), vector)
 
 def translations(angle=120, angle0=0):
-    """Get translation vectors of Bravais lattice."""
+    """Get translation vectors of Bravais lattice.
+
+    angle: angle between first and second vector (deg)
+
+        VALUE  LATTICE
+           60  hexagonal
+           90  square
+          120  hexagonal (ibrav = 4 in Quantum ESPRESSO)
+
+    angle0: angle between x axis and first vector (deg)"""
 
     t1 = np.array([1.0, 0.0])
 
@@ -28,7 +37,9 @@ def translations(angle=120, angle0=0):
     return t1, t2
 
 def reciprocals(t1, t2):
-    """Get translation vectors of reciprocal lattice (w/o 2 pi)."""
+    """Get translation vectors of reciprocal lattice (w/o 2 pi).
+
+    t1, t2: translation vectors of Bravais lattice"""
 
     u1 = rotate(t2, -90 * deg)
     u2 = rotate(t1, +90 * deg)
@@ -39,7 +50,11 @@ def reciprocals(t1, t2):
     return u1, u2
 
 def images(k1, k2, nk, angle=60):
-    """Get equivalents k points."""
+    """Get symmetry-equivalent k points.
+
+    k1, k2 : indices of point in uniform mesh
+    nk     : number of mesh points per dimension
+    angle  : angle between mesh axes (deg)"""
 
     points = set()
 
@@ -72,7 +87,10 @@ def images(k1, k2, nk, angle=60):
     return points
 
 def irreducibles(nk, angle=60):
-    """Get irreducible k points."""
+    """Get irreducible k points.
+
+    nk    : number of mesh points per dimension
+    angle : angle between mesh axes (deg)"""
 
     points = [
         (k1, k2)
