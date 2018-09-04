@@ -40,6 +40,9 @@ def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
         if status:
             print("Read data for q point %d.." % iq)
 
+        # TypeError: 'test' % 1
+        # permitted: 'test' % np.array(1)
+
         with open(filename % iq) as data:
             for line in data:
                 columns = line.split()
