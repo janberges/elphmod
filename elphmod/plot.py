@@ -145,7 +145,8 @@ def arrange(images, columns=None):
         axis=1) for row in range(rows)],
         axis=0)
 
-def toBZ(data, points=1000, outside=0.0, angle=60):
+def toBZ(data, points=1000, interpolation=bravais.linear_interpolation,
+        angle=60, outside=0.0):
     """Map data on uniform grid onto (wedge of) Brillouin zone."""
 
     if data.ndim == 2:
@@ -153,7 +154,7 @@ def toBZ(data, points=1000, outside=0.0, angle=60):
 
     ndata, nk, nk = data.shape
 
-    fun = list(map(bravais.linear_interpolation, data))
+    fun = list(map(interpolation, data))
 
     t1, t2 = bravais.translations(180 - angle, angle0=angle - 90)
     u1, u2 = bravais.reciprocals(t1, t2)
