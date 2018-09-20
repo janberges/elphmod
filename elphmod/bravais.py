@@ -166,7 +166,34 @@ def complete(data, angle=60):
         if not np.isnan(data).any():
             return
 
-def linear_interpolation(data, angle=60, axes=(0, 1)):
+def stack(*points, period=2 * np.pi):
+    """Minimize distance of points on periodic axis via full-period shifts.
+
+    Example:
+
+     In: stack(3, 5, 9, 12, period=10)
+    Out: [13, 15, 9, 12]
+
+     In: ... | ox x   x| xo o   o| oo o   o| ...
+    Out: ... | oo o   x| xx x   o| oo o   o| ...
+    """
+    points = np.array(points) % period
+
+    order = np.argsort(points)
+
+    stackings = np.empty((points.size, points.size), dtype=points.dtype)
+
+    stackings[0] = points
+
+    for n in range(points.size - 1):
+        stackings[n + 1] = stackings[n]
+        stackings[n + 1, order[n]] += period
+
+    return min(stackings, key=np.std)
+
+stack = np.vectorize(stack)
+
+def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
     """Perform linear interpolation on triangular or rectangular lattice."""
 
     order = tuple(axes) + tuple(n for n in range(data.ndim) if n not in axes)
@@ -184,20 +211,42 @@ def linear_interpolation(data, angle=60, axes=(0, 1)):
         return (n0, dn), (m0, dm)
 
     if angle == 60:
+        #
+        #     B______C'
+        #     /\    /
+        # t2 /  \  /
+        #   /____\/
+        #  C  t1  A
+        #
         def interpolant(n, m):
             (n0, dn), (m0, dm) = split(n, m)
 
             A = data[(n0 + 1) % N, m0]
             B = data[n0, (m0 + 1) % M]
 
-            if dn + dm > 1:
+            prime = dn + dm > 1 # use C' rather than C
+
+            if prime:
                 C = data[(n0 + 1) % N, (m0 + 1) % M]
-                return (1 - dm) * A + (1 - dn) * B + (dn + dm - 1) * C
             else:
                 C = data[n0, m0]
+
+            if period:
+                A, B, C = stack(A, B, C, period=period)
+
+            if prime:
+                return (1 - dm) * A + (1 - dn) * B + (dn + dm - 1) * C
+            else:
                 return dn * A + dm * B + (1 - dn - dm) * C
 
     elif angle == 90:
+        #
+        #   D ____ C
+        #    |    |
+        # t2 |    |
+        #    |____|
+        #   A  t1  B
+        #
         def interpolant(n, m):
             (n0, dn), (m0, dm) = split(n, m)
 
@@ -206,21 +255,39 @@ def linear_interpolation(data, angle=60, axes=(0, 1)):
             C = data[(n0 + 1) % N, (m0 + 1) % M]
             D = data[n0, (m0 + 1) % M]
 
+            if period:
+                A, B, C, D = stack(A, B, C, D, period=period)
+
             return ((1 - dn) * (1 - dm) * A +      dn  * (1 - dm) * B
                 +        dn  *      dm  * C + (1 - dn)      * dm  * D)
 
     elif angle == 120:
+        #
+        #  C______B
+        #   \    /\
+        # t2 \  /  \
+        #     \/____\
+        #     A  t1  C'
+        #
         def interpolant(n, m):
             (n0, dn), (m0, dm) = split(n, m)
 
             A = data[n0, m0]
             B = data[(n0 + 1) % N, (m0 + 1) % M]
 
-            if dn > dm:
+            prime = dn > dm # use C' rather than C
+
+            if prime:
                 C = data[(n0 + 1) % N, m0]
-                return (1 - dn) * A + dm * B + (dn - dm) * C
             else:
                 C = data[n0, (m0 + 1) % M]
+
+            if period:
+                A, B, C = stack(A, B, C, period=period)
+
+            if prime:
+                return (1 - dn) * A + dm * B + (dn - dm) * C
+            else:
                 return (1 - dm) * A + dn * B + (dm - dn) * C
 
     return np.vectorize(interpolant)
