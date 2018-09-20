@@ -292,14 +292,14 @@ def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
 
     return np.vectorize(interpolant)
 
-def resize(data, shape=None, angle=60, axes=(0, 1)):
+def resize(data, shape=None, angle=60, axes=(0, 1), period=None):
     """Resize array via linear interpolation along two periodic axes."""
 
     order = tuple(axes) + tuple(n for n in range(data.ndim) if n not in axes)
 
     data = np.transpose(data, axes=order)
 
-    interpolant = linear_interpolation(data, angle, axes=(0, 1))
+    interpolant = linear_interpolation(data, angle, axes=(0, 1), period=period)
 
     if shape is None:
         shape = data.shape[:2]
