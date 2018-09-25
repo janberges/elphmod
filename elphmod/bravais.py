@@ -166,7 +166,7 @@ def complete(data, angle=60):
         if not np.isnan(data).any():
             return
 
-def stack(*points, period=2 * np.pi):
+def stack(*points, **kwargs):
     """Minimize distance of points on periodic axis via full-period shifts.
 
     Example:
@@ -177,6 +177,8 @@ def stack(*points, period=2 * np.pi):
      In: ... | ox x   x| xo o   o| oo o   o| ...
     Out: ... | oo o   x| xx x   o| oo o   o| ...
     """
+    period = kwargs.get('period', 2 * np.pi)
+
     points = np.array(points) % period
 
     order = np.argsort(points)
