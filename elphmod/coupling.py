@@ -196,6 +196,79 @@ def read_EPW_output(epw_out, q, nq, nb, nk, bands=1,
 
     return elph[:, :, 0, 0, :, :] if bands == 1 and squeeze else elph
 
+def read_xml_files(filename, q, rep, bands, nb, nk, status=True, squeeze=True,
+        angle=120, angle0=0):
+    """Read XML files with coupling in displacement basis from QE (nosym)."""
+
+    if not hasattr(q, '__len__'):
+        q = range(q)
+
+    if not hasattr(rep, '__len__'):
+        rep = range(rep)
+
+    if not hasattr(bands, '__len__'):
+        bands = [bands]
+
+    t1, t2 = bravais.translations(angle, angle0)
+
+    sizes = MPI.distribute(len(q))
+
+    elph = np.empty((len(q), len(rep), len(bands), len(bands), nk, nk),
+        dtype=complex)
+
+    my_elph = np.empty((sizes[comm.rank],
+        len(rep), len(bands), len(bands), nk, nk), dtype=complex)
+
+    band_select = np.empty(nb, dtype=int)
+    band_select[:] = -1
+
+    for n, m in enumerate(bands):
+        band_select[m] = n
+
+    my_q = np.empty(sizes[comm.rank], dtype=int)
+    comm.Scatterv((np.array(q), sizes), my_q)
+
+    for my_iq, iq in enumerate(my_q):
+        if status:
+            print("Read data for q point %d.." % (iq + 1))
+
+        for my_irep, irep in enumerate(rep):
+            with open(filename % (iq + 1, irep + 1)) as data:
+                def goto(pattern):
+                    for line in data:
+                        if pattern in line:
+                            return line
+
+                goto("<NUMBER_OF_K ")
+                if nk != int(np.sqrt(int(next(data)))):
+                    print("Wrong number of k points!")
+
+                goto("<NUMBER_OF_BANDS ")
+                if nb != int(next(data)):
+                    print("Wrong number of bands!")
+
+                for ik in range(nk * nk):
+                    goto("<COORDINATES_XK ")
+                    k = list(map(float, next(data).split()))[:2]
+
+                    k1 = int(round(np.dot(k, t1) * nk)) % nk
+                    k2 = int(round(np.dot(k, t2) * nk)) % nk
+
+                    goto("<PARTIAL_ELPH ")
+
+                    for n in band_select:
+                        for m in band_select:
+                            if n < 0 or m < 0:
+                                next(data)
+                            else:
+                                my_elph[my_iq, my_irep, n, m, k1, k2] = complex(
+                                    *list(map(float, next(data).split(","))))
+
+    comm.Allgatherv(my_elph, (elph,
+        sizes * len(rep) * len(bands) * len(bands) * nk * nk))
+
+    return elph[..., 0, 0, :, :] if bands == 1 and squeeze else elph
+
 def read(filename, nq, bands):
     """Read and complete Fermi-surface averaged electron-phonon coupling."""
 
