@@ -196,7 +196,7 @@ def read_EPW_output(epw_out, q, nq, nb, nk, bands=1,
 
     return elph[:, :, 0, 0, :, :] if bands == 1 and squeeze else elph
 
-def read_xml_files(filename, q, rep, bands, nb, nk, status=True, squeeze=True,
+def read_xml_files(filename, q, rep, bands, nbands, nk, squeeze=True, status=True,
         angle=120, angle0=0):
     """Read XML files with coupling in displacement basis from QE (nosym)."""
 
@@ -219,7 +219,7 @@ def read_xml_files(filename, q, rep, bands, nb, nk, status=True, squeeze=True,
     my_elph = np.empty((sizes[comm.rank],
         len(rep), len(bands), len(bands), nk, nk), dtype=complex)
 
-    band_select = np.empty(nb, dtype=int)
+    band_select = np.empty(nbands, dtype=int)
     band_select[:] = -1
 
     for n, m in enumerate(bands):
@@ -244,7 +244,7 @@ def read_xml_files(filename, q, rep, bands, nb, nk, status=True, squeeze=True,
                     print("Wrong number of k points!")
 
                 goto("<NUMBER_OF_BANDS ")
-                if nb != int(next(data)):
+                if nbands != int(next(data)):
                     print("Wrong number of bands!")
 
                 for ik in range(nk * nk):
@@ -267,7 +267,7 @@ def read_xml_files(filename, q, rep, bands, nb, nk, status=True, squeeze=True,
     comm.Allgatherv(my_elph, (elph,
         sizes * len(rep) * len(bands) * len(bands) * nk * nk))
 
-    return elph[..., 0, 0, :, :] if bands == 1 and squeeze else elph
+    return elph[..., 0, 0, :, :] if len(bands) == 1 and squeeze else elph
 
 def read(filename, nq, bands):
     """Read and complete Fermi-surface averaged electron-phonon coupling."""
