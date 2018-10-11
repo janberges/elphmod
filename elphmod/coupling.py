@@ -269,6 +269,73 @@ def read_xml_files(filename, q, rep, bands, nbands, nk, squeeze=True, status=Tru
 
     return elph[..., 0, 0, :, :] if len(bands) == 1 and squeeze else elph
 
+def write_xml_files(filename, data, angle=120, angle0=0):
+    """Write XML files with coupling in displacement basis."""
+
+    if comm.rank != 0:
+        return
+
+    if data.ndim == 4:
+        data = data[:, :, np.newaxis, np.newaxis, :, :]
+
+    nQ, nb, nbands, nbands, nk, nk = data.shape
+
+    t1, t2 = bravais.translations(angle, angle0)
+    u1, u2 = bravais.reciprocals(t1, t2)
+
+    for iq in range(nQ):
+        for irep in range(nb):
+            with open(filename % (iq + 1, irep + 1), 'w') as xml:
+                xml.write("""<?xml version="1.0"?>
+<?iotk version="1.2.0"?>
+<?iotk file_version="1.0"?>
+<?iotk binary="F"?>
+<?iotk qe_syntax="F"?>
+<Root>
+  <EL_PHON_HEADER>
+    <DONE_ELPH type="logical" size="1">
+      T
+    </DONE_ELPH>
+  </EL_PHON_HEADER>
+  <PARTIAL_EL_PHON>
+    <NUMBER_OF_K type="integer" size="1">
+      %d
+    </NUMBER_OF_K>
+    <NUMBER_OF_BANDS type="integer" size="1">
+      %d
+    </NUMBER_OF_BANDS>""" % (nk * nk, nbands))
+
+                ik = 0
+                for k1 in range(nk):
+                    for k2 in range(nk):
+                        ik += 1
+
+                        k = (k1 * u1 + k2 * u2) / nk
+
+                        xml.write("""
+    <K_POINT.%d>
+      <COORDINATES_XK type="real" size="3" columns="3">
+%23.15E %23.15E %23.15E
+      </COORDINATES_XK>
+      <PARTIAL_ELPH type="complex" size="%d">"""
+                            % (ik, k[0], k[1], 0.0, nbands * nbands))
+
+                        for i in range(nbands):
+                            for j in range(nbands):
+                                g = data[iq, irep, i, j, k1, k2]
+
+                                xml.write("""
+%23.15E,%23.15E""" % (g.real, g.imag))
+
+                        xml.write("""
+      </PARTIAL_ELPH>
+    </K_POINT.%d>""" % ik)
+
+                xml.write("""
+  </PARTIAL_EL_PHON>
+</Root>
+""")
+
 def read(filename, nq, bands):
     """Read and complete Fermi-surface averaged electron-phonon coupling."""
 
