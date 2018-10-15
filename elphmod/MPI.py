@@ -33,7 +33,7 @@ def distribute(size, bounds=False):
     return sizes
 
 def shared_array(shape, dtype):
-    "Create array whose memory is shared among all processes on same node.
+    """Create array whose memory is shared among all processes on same node.
 
     Example:
 
