@@ -12,7 +12,7 @@ def group(n, size=3):
 
     return slice(n * size, (n + 1) * size)
 
-def read_fildyn(fildyn):
+def read_fildyn(fildyn, divide_mass=True):
     """Read file 'fildyn' as created by Quantum ESPRESSO's 'ph.x'."""
 
     header = [] # header information as lines of plain text
@@ -63,22 +63,25 @@ def read_fildyn(fildyn):
         for line in data:
             footer += line
 
-    for p in range(len(dynmats)):
-        for i in range(nat):
-            dynmats[p][group(i), :] /= np.sqrt(amass[i])
-            dynmats[p][:, group(i)] /= np.sqrt(amass[i])
+    if divide_mass:
+        for p in range(len(dynmats)):
+            for i in range(nat):
+                dynmats[p][group(i), :] /= np.sqrt(amass[i])
+                dynmats[p][:, group(i)] /= np.sqrt(amass[i])
 
     return ''.join(header), qpoints, dynmats, footer, amass
 
-def write_fildyn(fildyn, header, qpoints, dynmats, footer, amass):
+def write_fildyn(fildyn, header, qpoints, dynmats, footer, amass,
+        divide_mass=True):
     """Write file 'fildyn' as created by Quantum ESPRESSO's 'ph.x'."""
 
     nat = len(amass)
 
-    for p in range(len(dynmats)):
-        for i in range(nat):
-            dynmats[p][group(i), :] *= np.sqrt(amass[i])
-            dynmats[p][:, group(i)] *= np.sqrt(amass[i])
+    if divide_mass:
+        for p in range(len(dynmats)):
+            for i in range(nat):
+                dynmats[p][group(i), :] *= np.sqrt(amass[i])
+                dynmats[p][:, group(i)] *= np.sqrt(amass[i])
 
     with open(fildyn, 'w') as data:
         data.write(header)
