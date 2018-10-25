@@ -123,12 +123,17 @@ def read_flfrc(flfrc):
 
         if ibrav == 0:
             at = table(3)
+
+        elif ibrav == 1:
+            at = np.diag(celldim[:1] * 3)
+
         elif ibrav == 4:
             at = np.empty((3, 3))
 
             at[0] = np.array([ 1.0,        0.0, 0.0]) * celldim[0]
             at[1] = np.array([-1.0, np.sqrt(3), 0.0]) * celldim[0] / 2
             at[2] = np.array([ 0.0,        0.0, 1.0]) * celldim[0] * celldim[2]
+
         else:
             print('Bravais lattice unknown')
             return
