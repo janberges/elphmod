@@ -32,7 +32,7 @@ def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
 
     sizes, bounds = MPI.distribute(nky * nkx, bounds=True)
 
-    my_image = np.empty(sizes[comm.rank])
+    my_image = np.empty(sizes[comm.rank], dtype=mesh.dtype)
 
     for n, m in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         i = m // nkx
@@ -43,7 +43,7 @@ def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
 
         my_image[n] = fun(k1 * nk, k2 * nk)
 
-    image = np.empty((nky, nkx))
+    image = np.empty((nky, nkx), dtype=mesh.dtype)
 
     comm.Gatherv(my_image, (image, sizes))
 
@@ -76,7 +76,7 @@ def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
 
     sizes, bounds = MPI.distribute(nqy * nqx, bounds=True)
 
-    my_image = np.empty(sizes[comm.rank])
+    my_image = np.empty(sizes[comm.rank], dtype=mesh.dtype)
 
     for n, m in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         i = m // nqx
@@ -101,7 +101,7 @@ def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
         else:
             my_image[n] = outside
 
-    image = np.empty((nqy, nqx))
+    image = np.empty((nqy, nqx), dtype=mesh.dtype)
 
     comm.Gatherv(my_image, (image, sizes))
 
@@ -170,7 +170,7 @@ def toBZ(data, points=1000, interpolation=bravais.linear_interpolation,
 
     sizes, bounds = MPI.distribute(nky * nkx, bounds=True)
 
-    my_image = np.empty(sizes[comm.rank])
+    my_image = np.empty(sizes[comm.rank], dtype=mesh.dtype)
     my_image[:] = outside
 
     u1 = u1 / np.sqrt(np.dot(u1, u1))
@@ -201,7 +201,7 @@ def toBZ(data, points=1000, interpolation=bravais.linear_interpolation,
 
         my_image[n] = fun[idata](k1 * nk, k2 * nk)
 
-    image = np.empty((nky, nkx))
+    image = np.empty((nky, nkx), dtype=mesh.dtype)
 
     comm.Gatherv(my_image, (image, sizes))
 
