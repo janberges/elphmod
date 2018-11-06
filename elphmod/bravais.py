@@ -10,8 +10,20 @@ comm = MPI.comm
 deg = np.pi / 180
 
 def rotate(vector, angle):
-    """Rotate vector anti-clockwise by given angle (rad)."""
+    """Rotate vector anti-clockwise.
 
+    Parameters
+    ----------
+    vector : array_like
+        Two-dimensional vector.
+    angle : float
+        Rotation angle in radians.
+
+    Returns
+    -------
+    ndarray
+        Rotated vector.
+    """
     cos = np.cos(angle)
     sin = np.sin(angle)
 
@@ -23,17 +35,26 @@ def rotate(vector, angle):
     return np.dot(rotation, vector)
 
 def translations(angle=120, angle0=0):
-    """Get translation vectors of Bravais lattice.
+    """Generate translation vectors of Bravais lattice.
 
-    angle: angle between first and second vector (deg)
+    Parameters
+    ----------
+    angle : float
+        Angle between first and second vector in degrees.
 
         VALUE  LATTICE
            60  hexagonal
            90  square
           120  hexagonal (ibrav = 4 in Quantum ESPRESSO)
 
-    angle0: angle between x axis and first vector (deg)"""
+    angle0 : float
+        Angle between x axis and first vector in degrees.
 
+    Returns
+    -------
+    ndarray, ndarray
+        Translation vectors of Bravais lattice.
+    """
     t1 = np.array([1.0, 0.0])
 
     t1 = rotate(t1, angle0 * deg)
@@ -42,10 +63,18 @@ def translations(angle=120, angle0=0):
     return t1, t2
 
 def reciprocals(t1, t2):
-    """Get translation vectors of reciprocal lattice (w/o 2 pi).
+    """Generate translation vectors of reciprocal lattice.
 
-    t1, t2: translation vectors of Bravais lattice"""
+    Parameters
+    ----------
+    t1, t2 : ndarray
+        Translation vectors of Bravais lattice.
 
+    Returns
+    -------
+    ndarray, ndarray
+        Translation vectors of reciprocal lattice (without 2 pi).
+    """
     u1 = rotate(t2, -90 * deg)
     u2 = rotate(t1, +90 * deg)
 
@@ -55,12 +84,22 @@ def reciprocals(t1, t2):
     return u1, u2
 
 def images(k1, k2, nk, angle=60):
-    """Get symmetry-equivalent k points.
+    """Generate symmetry-equivalent k points.
 
-    k1, k2 : indices of point in uniform mesh
-    nk     : number of mesh points per dimension
-    angle  : angle between mesh axes (deg)"""
+    Parameters
+    ----------
+    k1, k2 : int
+        Indices of point in uniform mesh.
+    nk : int
+        Number of mesh points per dimension.
+    angle : float
+        Angle between mesh axes in degrees.
 
+    Returns
+    -------
+    set
+        Mesh-point indices of all equivalent k points.
+    """
     points = set()
 
     while True:
@@ -78,7 +117,7 @@ def images(k1, k2, nk, angle=60):
         k1 %= nk
         k2 %= nk
 
-        # add point or break loop after full rotation
+        # add point or break loop after full rotation:
 
         if (k1, k2) in points:
             break
@@ -92,10 +131,28 @@ def images(k1, k2, nk, angle=60):
     return points
 
 def irreducibles(nk, angle=60):
-    """Get irreducible k points.
+    """Generate set of irreducible k points.
 
-    nk    : number of mesh points per dimension
-    angle : angle between mesh axes (deg)"""
+    Parameters
+    ----------
+    nk : int
+        Number of mesh points per dimension.
+    angle : float
+        Angle between mesh axes in degrees.
+
+    Returns
+    -------
+    set
+        Mesh-point indices of irreducible k points.
+
+        Of all equivalent points, the first occurrence in the sequence
+
+            (0, 0), (0, 1), ..., (0, nk - 1), (1, 0), (1, 1), ...
+
+        is chosen. sorted(...) should yield the same irreducible q points as
+        used by Quantum ESPRESSO's PHonon code and found in the file 'fildyn0'.
+    """
+    # set up sequence as described above:
 
     points = [
         (k1, k2)
@@ -103,6 +160,8 @@ def irreducibles(nk, angle=60):
         for k2 in range(nk)]
 
     irreducible = set(points)
+
+    # remove as many equivalent points as possible:
 
     for k in points:
         if k in irreducible:
@@ -113,8 +172,28 @@ def irreducibles(nk, angle=60):
     return irreducible
 
 def symmetries(data, epsilon=0.0, unity=True, angle=60):
-    """Find symmetries of data on Monkhorst-Pack mesh."""
+    """Find symmetries of data on Monkhorst-Pack mesh.
 
+    Parameters
+    ----------
+    data : ndarray
+        Data on uniform k mesh.
+    epsilon : float
+        Maxmium absolute difference of "equal" floats.
+    unity : bool
+        Return identity as first symmetry?
+    angle : float
+        Angle between mesh axes in degrees.
+
+    Returns
+    -------
+    iterator
+        All symmetries found are returned one after the other.
+
+        Each symmetry is described by a Boolean ("reflection?") and a rotation
+        angle in degrees, followed by a mapping between the k-point indices of
+        the original and the transformed mesh.
+    """
     t1, t2 = translations(180 - angle, angle0=0)
     u1, u2 = reciprocals(t1, t2)
 
@@ -152,12 +231,28 @@ def symmetries(data, epsilon=0.0, unity=True, angle=60):
                     yield (reflect, angle), image
 
 def complete(data, angle=60):
-    """Complete data on Monkhorst-Pack mesh."""
+    """Complete data on Monkhorst-Pack mesh.
 
+    Parameters
+    ----------
+    data : ndarray
+        Incomplete data on uniform mesh. Missing values are represented by NaN.
+    angle : float
+        Angle between mesh axes in degrees.
+
+    Returns
+    -------
+    ndarray
+        Input data with missing values determined via the symmetries found.
+    """
     irreducible = list(zip(*np.where(np.logical_not(np.isnan(data)))))
+
+    # return if the data is already complete:
 
     if len(irreducible) == data.size:
         return
+
+    # test which expected lattice symmetries are fulfilled and fill the gaps:
 
     for symmetry, image in symmetries(data, unity=False, angle=angle):
         for k in irreducible:
@@ -169,10 +264,22 @@ def complete(data, angle=60):
 def stack(*points, **kwargs):
     """Minimize distance of points on periodic axis via full-period shifts.
 
-    Example:
+    Parameters
+    ----------
+    *points
+        Points on periodic axis.
+    period : float
+        Period of axis. Specified via **kwargs for Python-2 compatibility.
 
-     In: stack(3, 5, 9, 12, period=10)
-    Out: [13, 15, 9, 12]
+    Returns
+    -------
+    ndarray
+        Points equivalent to input, with minimal distance on non-periodic axis.
+
+    Example
+    -------
+    >>> stack(3, 5, 9, 12, period=10)
+    [13, 15, 9, 12]
 
      In: ... | ox x   x| xo o   o| oo o   o| ...
     Out: ... | oo o   x| xx x   o| oo o   o| ...

@@ -1,3 +1,5 @@
+"""Load all modules at package import."""
+
 from . import bravais
 from . import diagrams
 from . import dispersion
