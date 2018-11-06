@@ -12,7 +12,7 @@ eF = -0.1665
 
 info("Set up Wannier Hamiltonian..")
 
-H = elphmod.electrons.hamiltonian('data/NbSe2_hr.dat')
+H = elphmod.el.hamiltonian('data/NbSe2_hr.dat')
 
 info("Diagonalize Hamiltonian along G-M-K-G..")
 

@@ -11,9 +11,9 @@ Ry2eV = 13.605693009
 
 info("Read and fix force constants and set up dynamical matrix..")
 
-model = elphmod.phonons.model('data/NbSe2-DFPT-LR.ifc', apply_asr=True)
+model = elphmod.ph.model('data/NbSe2-DFPT-LR.ifc', apply_asr=True)
 
-D = elphmod.phonons.dynamical_matrix(*model)
+D = elphmod.ph.dynamical_matrix(*model)
 
 info("Calculate dispersion on whole Brillouin zone..")
 
@@ -23,7 +23,7 @@ w2 = elphmod.dispersion.dispersion_full(D, nq, order=False, broadcast=True)
 
 info("Plot dispersion on Brillouin zone..")
 
-w = elphmod.phonons.sgnsqrt(w2) * Ry2eV * 1e3
+w = elphmod.ph.sgnsqrt(w2) * Ry2eV * 1e3
 
 elphmod.plot.plot_pie_with_TeX(
     'plotBZ.tex', [w[:, :, nu] for nu in range(6)],

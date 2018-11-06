@@ -15,9 +15,9 @@ data = 'NbSe2-cDFPT-LR'
 
 info("Read and fix force constants and set up dynamical matrix..")
 
-model = elphmod.phonons.model('data/%s.ifc' % data, apply_asr=True)
+model = elphmod.ph.model('data/%s.ifc' % data, apply_asr=True)
 
-D = elphmod.phonons.dynamical_matrix(*model)
+D = elphmod.ph.dynamical_matrix(*model)
 
 info("Check module against Quantum ESPRESSO's 'matdyn.x'..")
 
@@ -26,10 +26,10 @@ q, x = elphmod.bravais.GMKG()
 w2, e, order = elphmod.dispersion.dispersion(D, q,
     vectors=True, order=True, broadcast=False)
 
-w = elphmod.phonons.sgnsqrt(w2) * Ry2eV * eV2cmm1
+w = elphmod.ph.sgnsqrt(w2) * Ry2eV * eV2cmm1
 
 if comm.rank == 0:
-    pol = elphmod.phonons.polarization(e, q)
+    pol = elphmod.ph.polarization(e, q)
 
     colors = ['skyblue', 'dodgerblue', 'orange']
 
@@ -54,7 +54,7 @@ nq = 48
 
 w2, order = elphmod.dispersion.dispersion_full(D, nq, order=True)
 
-w = elphmod.phonons.sgnsqrt(w2) * Ry2eV * eV2cmm1
+w = elphmod.ph.sgnsqrt(w2) * Ry2eV * eV2cmm1
 
 if comm.rank == 0:
     plt.plot(range(nq * nq), np.reshape(w, (nq * nq, D.size)))
@@ -67,7 +67,7 @@ nqelph = 12
 elph = np.empty((nqelph, nqelph, D.size))
 
 if comm.rank == 0:
-    elph[:] = elphmod.coupling.read('data/%s.elph' % data, nqelph, D.size)
+    elph[:] = elphmod.elph.read('data/%s.elph' % data, nqelph, D.size)
 
     step = nq // nqelph
     orderelph = order[::step, ::step]

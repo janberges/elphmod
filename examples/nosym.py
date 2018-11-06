@@ -29,7 +29,7 @@ nk = 3
 
 info("Set up Wannier Hamiltonian..")
 
-H = elphmod.electrons.hamiltonian('data/NbSe2_hr.dat')
+H = elphmod.el.hamiltonian('data/NbSe2_hr.dat')
 
 info("Diagonalize Hamiltonian on uniform mesh..")
 
