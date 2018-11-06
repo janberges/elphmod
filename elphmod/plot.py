@@ -170,7 +170,7 @@ def toBZ(data, points=1000, interpolation=bravais.linear_interpolation,
 
     sizes, bounds = MPI.distribute(nky * nkx, bounds=True)
 
-    my_image = np.empty(sizes[comm.rank], dtype=mesh.dtype)
+    my_image = np.empty(sizes[comm.rank], dtype=data.dtype)
     my_image[:] = outside
 
     u1 = u1 / np.sqrt(np.dot(u1, u1))
@@ -201,7 +201,7 @@ def toBZ(data, points=1000, interpolation=bravais.linear_interpolation,
 
         my_image[n] = fun[idata](k1 * nk, k2 * nk)
 
-    image = np.empty((nky, nkx), dtype=mesh.dtype)
+    image = np.empty((nky, nkx), dtype=data.dtype)
 
     comm.Gatherv(my_image, (image, sizes))
 
