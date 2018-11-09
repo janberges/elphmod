@@ -207,20 +207,32 @@ def symmetries(data, epsilon=0.0, unity=True, angle=60):
 
         for k1 in range(nk):
             for k2 in range(nk):
+                # rotation in cartesian coordinates:
+
                 K = rotate(k1 * u1 + k2 * u2, angle * deg)
+
+                # reflection across the ky axis:
 
                 if reflect:
                     K[0] *= -1
 
+                # transform to mesh-point indices in [0, nk):
+
                 K1 = int(round(np.dot(K, t1))) % nk
                 K2 = int(round(np.dot(K, t2))) % nk
+
+                # discard this symmetry if it is not fulfilled by data:
 
                 if abs(data[k1, k2] - data[K1, K2]) > epsilon:
                     return None
 
+                # otherwise set another element of the k-point mapping:
+
                 image[k1, k2] = (K1, K2)
 
         return image
+
+    # generate iterator through symmetries:
 
     for reflect in False, True:
         for angle in range(0, 360, 60):
@@ -286,9 +298,15 @@ def stack(*points, **kwargs):
     """
     period = kwargs.get('period', 2 * np.pi)
 
+    # map points onto interval [0, period]:
+
     points = np.array(points) % period
 
+    # generate list of indices that would sort points:
+
     order = np.argsort(points)
+
+    # save "stacking", shift lowest point up by one period, and repeat:
 
     stackings = np.empty((points.size, points.size), dtype=points.dtype)
 
@@ -298,16 +316,51 @@ def stack(*points, **kwargs):
         stackings[n + 1] = stackings[n]
         stackings[n + 1, order[n]] += period
 
+    # return most localized stacking:
+
     return min(stackings, key=np.std)
 
 stack = np.vectorize(stack)
 
 def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
-    """Perform linear interpolation on triangular or rectangular lattice."""
+    """Perform linear interpolation on triangular or rectangular lattice.
+
+    The edges are interpolated using periodic boundary conditions.
+
+    Parameters
+    ----------
+    data : ndarray
+        Data on uniform triangular or rectangular lattice.
+    angle : number
+        Angle between lattice vectors in degrees.
+    axes : 2-tuple of ints
+        Axes of `data` along which to interpolate (lattice vectors).
+    period : number
+        If the values of `data` are defined on a periodic axis (i.e., only with
+        respect to the modulo operation), the period of this axis. This is used
+        in combination with `stack` to always interpolate across the shortest
+        distance of two neighbording points.
+
+    Returns
+    -------
+    function
+        Interpolant for `data`. `linear_interpolation(data)(i, j)` yields the
+        same value as `data[i, j]`. Thus the data array is "generalized" with
+        respect to fractional indices.
+
+    See also
+    --------
+    stack : Condese point cloud on periodic axis.
+    resize : Compress or strech data via linear interpolation.
+    Fourier_interpolation : Alternative interpolation routine.
+    """
+    # move lattice axes to the front:
 
     order = tuple(axes) + tuple(n for n in range(data.ndim) if n not in axes)
 
     data = np.transpose(data, axes=order)
+
+    # interpret "fractional indices":
 
     N, M = data.shape[:2]
 
@@ -318,6 +371,8 @@ def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
         m0 = int(m0) % M
 
         return (n0, dn), (m0, dm)
+
+    # define interpolation routines for different lattices:
 
     if angle == 60:
         #
@@ -399,16 +454,36 @@ def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
             else:
                 return (1 - dm) * A + dn * B + (dm - dn) * C
 
+    # make interpolant function applicable to arrays and return:
+
     return np.vectorize(interpolant)
 
 def resize(data, shape=None, angle=60, axes=(0, 1), period=None):
-    """Resize array via linear interpolation along two periodic axes."""
+    """Resize array via linear interpolation along two periodic axes.
+
+    Parameters
+    ----------
+    shape : 2-tuple of ints
+        New lattice shape. Defaults to the original shape.
+
+    For the other parameters see `linear_interpolation`.
+
+    Returns
+    -------
+    ndarray
+        Resized data array.
+    """
+    # move lattice axes to the front:
 
     order = tuple(axes) + tuple(n for n in range(data.ndim) if n not in axes)
 
     data = np.transpose(data, axes=order)
 
+    # set up interpolation function:
+
     interpolant = linear_interpolation(data, angle, axes=(0, 1), period=period)
+
+    # apply interpolation function at new lattice points in parallel:
 
     if shape is None:
         shape = data.shape[:2]
@@ -432,7 +507,9 @@ def resize(data, shape=None, angle=60, axes=(0, 1), period=None):
 
     comm.Allgatherv(my_new_data, (new_data, sizes * np.prod(data.shape[2:])))
 
-    new_data = np.transpose(new_data, axes=np.argsort(order)) # restore order
+    # restore original order of axes and return:
+
+    new_data = np.transpose(new_data, axes=np.argsort(order))
 
     return new_data
 
@@ -442,8 +519,20 @@ def squared_distance(k1, k2, angle=60):
     If the coordinates are given as integers, the result is numerically exact.
     For 60 or 120 deg. (triangular lattice) this yields the Loeschian numbers.
     Non-equivalent lattice sites may have the same distance from the origin!
-    (E.g., there are non-equivalent 20th neighbors in a triangular lattice.)"""
+    (E.g., there are non-equivalent 20th neighbors in a triangular lattice.)
 
+    Parameters
+    ----------
+    k1, k2 : integer
+        Point in lattice coordinates (crystal coordinates, mesh-indices, ...).
+    angle : number
+        Angle between lattice axes.
+
+    Returns
+    -------
+    number
+        Squared distance of point from origin.
+    """
     sgn = { 60: 1, 90: 0, 120: -1 }[angle]
 
     return k1 * k1 + k2 * k2 + sgn * k1 * k2
@@ -451,22 +540,58 @@ def squared_distance(k1, k2, angle=60):
 def to_Voronoi(k1, k2, nk, angle=60):
     """Map any lattice point to the Voronoi cell* around the origin.
 
-    (*) Wigner-Seitz cell/Brillouin zone for Bravais/reciprocal lattice"""
+    (*) Wigner-Seitz cell/Brillouin zone for Bravais/reciprocal lattice.
 
+    Parameters
+    ----------
+    k1, k2 : integer
+        Mesh-point indices.
+    nk : int
+        Number of points per dimension.
+    angle : number
+        Angle between lattice vectors.
+
+    Returns
+    -------
+    set
+        All equivalent point within or on the edge of the Voronoi cell.
+    """
     k1 %= nk
     k2 %= nk
 
     images = [(k1, k2), (k1 - nk, k2), (k1, k2 - nk), (k1 - nk, k2 - nk)]
     distances = [squared_distance(*image, angle=angle) for image in images]
     minimum = min(distances)
-    images = [image for image, distance in zip(images, distances)
-        if distance == minimum]
+    images = {image for image, distance in zip(images, distances)
+        if distance == minimum}
 
     return images
 
 def Fourier_interpolation(data, angle=60, hr_file=None, function=True):
-    """Perform Fourier interpolation on triangular or rectangular lattice."""
+    """Perform Fourier interpolation on triangular or rectangular lattice.
 
+    Parameters
+    ----------
+    data : ndarray
+        Data on uniform triangular or rectangular lattice.
+    angle : number
+        Angle between lattice vectors in degrees.
+    hr_file : str
+        Filename. If given, save "_hr.dat" file as produced by Wannier90.
+    function : bool
+        Return interpolation function or parameter dictionary?
+
+    Returns
+    -------
+    function
+        Interpolant for `data`. `Fourier_interpolation(data)(i, j)` yields the
+        same value as `data[i, j]`. Thus the data array is "generalized" with
+        respect to fractional indices.
+
+    See also
+    --------
+    linear_interpolation : Alternative interpolation routine.
+    """
     N, N = data.shape
 
     # do first Fourier transform to obtain coefficients:
@@ -500,6 +625,8 @@ def Fourier_interpolation(data, angle=60, hr_file=None, function=True):
     points = points[:count]
     counts = counts[:count]
 
+    # write "tight-binding model" to disk:
+
     if hr_file is not None:
         import time
 
@@ -525,7 +652,11 @@ def Fourier_interpolation(data, angle=60, hr_file=None, function=True):
                 hr.write(form % (points[i, 0], points[i, 1], 0, 1, 1,
                     values[i].real, values[i].imag))
 
+    # fix weights of interpolation coefficients:
+
     values /= counts
+
+    # define interpolation function and generalize is with respect to arrays:
 
     idphi = -2j * np.pi / N
 
@@ -535,11 +666,39 @@ def Fourier_interpolation(data, angle=60, hr_file=None, function=True):
     if function:
         return np.vectorize(interpolant)
 
+    # return either interpolation function or parameter dictionary:
+
     return dict((tuple(point), value) for point, value in zip(points, values))
 
 def GMKG(N=30, corner_indices=False, mesh=False, angle=60):
-    """Generate path Gamma-M-K-Gamma through Brillouin zone."""
+    """Generate path Gamma-M-K-Gamma through Brillouin zone.
 
+    (This function should be replaced by a more general one to produce arbitrary
+    paths through both triangular and rectangular Brillouin zones, where special
+    points can be defined using labels such as "G", "M", or "K".)
+
+    Parameters
+    ----------
+    N : integer
+        Number of mesh points per dimension if 'mesh' is True and `N` is a
+        multiple of 6. Otherwise the number of points between M (inclusively)
+        and K (exclusively).
+    corner_indices : bool
+        Return indices of corner/high-symmetry points?
+    mesh : bool
+        Return points of uniform mesh that exactly lie on the path?
+    angle : number
+        Angle between lattice vectors.
+
+    Returns
+    -------
+    ndarray
+        Points in crystal coordinates with period 2 pi.
+    ndarray
+        Cumulative path distance.
+    list, optional
+        Indices of corner/high-symmetry points.
+    """
     if angle == 60:
         K1 = 1.0
     elif angle == 120:
