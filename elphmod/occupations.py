@@ -20,10 +20,13 @@ def fermi_dirac_delta(x):
     return 1 / (2 * (np.cosh(x) + 1))
 
 def methfessel_paxton_general(x, N=0):
-    """Calculate Methfessel-Paxton step function [Phys. Rev. B 40, 3616 (1989)].
+    """Calculate Methfessel-Paxton step function and its negative derivative.
+
+    From Phys. Rev. B 40, 3616 (1989):
 
         S(0, x) = 1/2 [1 - erf(x)]
         S(n, x) = S(0, x) + sum[n = 1, N] A(n) H(2 n - 1, x) exp(-x^2)
+        D(N, x) = -S'(N, x) = sum[n = 0, N] A(n) H(2 n, x) exp(-x^2)
         A(n) = (-1)^n / [sqrt(pi) n! 4^n]
 
     Hermite polynomials:
@@ -33,9 +36,14 @@ def methfessel_paxton_general(x, N=0):
         H(n + 1, x) = 2 x H(n, x) - 2 n H(n - 1, x)
 
     For N = 0, the Gaussian step function is returned.
-    This routine has been adapted from Quantum ESPRESSO (Modules/wgauss.f90)."""
 
+    This routine has been adapted from Quantum ESPRESSO:
+
+         Step function: Modules/wgauss.f90
+        Delta function: Modules/w0gauss.f90
+    """
     S = 0.5 * (1 - math.erf(x))
+    D = np.exp(-x * x) / np.sqrt(np.pi)
 
     if N > 0:
         H = 0              # H(-1, x)
@@ -54,16 +62,18 @@ def methfessel_paxton_general(x, N=0):
             h = 2 * x * H - 2 * m * h # H(2, x), H(4, x), ...
             m += 1
 
-    return S
+            D += a * h
+
+    return S, D
 
 methfessel_paxton_general = np.vectorize(methfessel_paxton_general)
 
 def gauss(x):
     """Calculate Gaussian step function."""
 
-    return methfessel_paxton_general(x, N=0)
+    return methfessel_paxton_general(x, N=0)[0]
 
 def methfessel_paxton(x):
     """Calculate first-order Methfessel-Paxton step function."""
 
-    return methfessel_paxton_general(x, N=1)
+    return methfessel_paxton_general(x, N=1)[0]
