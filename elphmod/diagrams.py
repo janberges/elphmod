@@ -8,7 +8,7 @@ info = MPI.info
 
 kB = 8.61733e-5 # Boltzmann constant (eV/K)
 
-def susceptibility(e, T=1.0, eta=1e-10):
+def susceptibility(e, T=1.0, eta=1e-10, occupations=occupations.fermi_dirac):
     """Calculate real part of static electronic susceptibility
 
         chi(q) = 2/N sum[k] [f(k+q) - f(k)] / [e(k+q) - e(k) + i eta].
@@ -20,8 +20,8 @@ def susceptibility(e, T=1.0, eta=1e-10):
     kT = kB * T
     x = e / kT
 
-    f = occupations.fermi_dirac(x)
-    d = occupations.fermi_dirac_delta(x).sum() / kT
+    f = occupations(x)
+    d = occupations.delta(x).sum() / kT
 
     e = np.tile(e, (2, 2))
     f = np.tile(f, (2, 2))
@@ -46,7 +46,8 @@ def susceptibility(e, T=1.0, eta=1e-10):
 
     return calculate_susceptibility
 
-def polarization(e, c, T=1.0, i0=1e-10j, subspace=None):
+def polarization(e, c, T=1.0, i0=1e-10j, subspace=None,
+        occupations=occupations.fermi_dirac):
     """Calculate RPA polarization in orbital basis (density-density):
 
         Pi(q, a, b) = 2/N sum[k, n, m]
@@ -76,8 +77,8 @@ def polarization(e, c, T=1.0, i0=1e-10j, subspace=None):
     kT = kB * T
     x = e / kT
 
-    f = occupations.fermi_dirac(x)
-    d = occupations.fermi_dirac_delta(x) / (-kT)
+    f = occupations(x)
+    d = occupations.delta(x) / (-kT)
 
     e = np.tile(e, (2, 2, 1))
     f = np.tile(f, (2, 2, 1))
@@ -145,7 +146,11 @@ def phonon_self_energy(q, e, g2, T=100.0, i0=1e-10j,
     nk, nk = e.shape
     nQ, nb, nk, nk = g2.shape
 
-    f = occupations(e / (kB * T))
+    kT = kB * T
+    x = e / kT
+
+    f = occupations(x)
+    d = occupations.delta(x) / (-kT)
 
     e = np.tile(e, (2, 2))
     f = np.tile(f, (2, 2))
@@ -163,10 +168,13 @@ def phonon_self_energy(q, e, g2, T=100.0, i0=1e-10j,
         q1 = int(round(q[iq, 0] * scale)) % nk
         q2 = int(round(q[iq, 1] * scale)) % nk
 
-        df = f[q1:q1 + nk, q2:q2 + nk] - f[:nk, :nk]
-        de = e[q1:q1 + nk, q2:q2 + nk] - e[:nk, :nk]
+        if q1 == q2 == 0:
+            chi = d
+        else:
+            df = f[q1:q1 + nk, q2:q2 + nk] - f[:nk, :nk]
+            de = e[q1:q1 + nk, q2:q2 + nk] - e[:nk, :nk]
 
-        chi = df / (de + i0)
+            chi = df / (de + i0)
 
         for nu in range(nb):
             my_Pi[my_iq, nu] = prefactor * np.sum(g2[iq, nu] * chi)

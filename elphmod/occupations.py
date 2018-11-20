@@ -19,6 +19,8 @@ def fermi_dirac_delta(x):
 
     return 1 / (2 * (np.cosh(x) + 1))
 
+fermi_dirac.delta = fermi_dirac_delta
+
 def methfessel_paxton_general(x, N=0):
     """Calculate Methfessel-Paxton step function and its negative derivative.
 
@@ -81,6 +83,8 @@ def gauss_delta(x):
 
     return np.exp(-x * x) / np.sqrt(np.pi)
 
+gauss.delta = gauss_delta
+
 def methfessel_paxton(x):
     """Calculate first-order Methfessel-Paxton step function."""
 
@@ -90,6 +94,8 @@ def methfessel_paxton_delta(x):
     """Calculate negative derivative of first-order MP step function."""
 
     return methfessel_paxton_general(x, N=1)[1]
+
+methfessel_paxton.delta = methfessel_paxton_delta
 
 if __name__ == '__main__':
     # check if int[a, b] df = f(b) - f(a):
