@@ -25,7 +25,7 @@ def methfessel_paxton_general(x, N=0):
     From Phys. Rev. B 40, 3616 (1989):
 
         S(0, x) = 1/2 [1 - erf(x)]
-        S(n, x) = S(0, x) + sum[n = 1, N] A(n) H(2 n - 1, x) exp(-x^2)
+        S(N, x) = S(0, x) + sum[n = 1, N] A(n) H(2 n - 1, x) exp(-x^2)
         D(N, x) = -S'(N, x) = sum[n = 0, N] A(n) H(2 n, x) exp(-x^2)
         A(n) = (-1)^n / [sqrt(pi) n! 4^n]
 
