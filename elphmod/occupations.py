@@ -73,10 +73,20 @@ def gauss(x):
 
     return methfessel_paxton_general(x, N=0)[0]
 
+def gauss_delta(x):
+    """Calculate negative derivative of Gaussian step function."""
+
+    return methfessel_paxton_general(x, N=0)[1]
+
 def methfessel_paxton(x):
     """Calculate first-order Methfessel-Paxton step function."""
 
     return methfessel_paxton_general(x, N=1)[0]
+
+def methfessel_paxton_delta(x):
+    """Calculate negative derivative of first-order MP step function."""
+
+    return methfessel_paxton_general(x, N=1)[1]
 
 if __name__ == '__main__':
     # check if int[a, b] df = f(b) - f(a):
