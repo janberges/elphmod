@@ -42,26 +42,30 @@ def methfessel_paxton_general(x, N=0):
          Step function: Modules/wgauss.f90
         Delta function: Modules/w0gauss.f90
     """
-    S = 0.5 * (1 - math.erf(x))
-    D = np.exp(-x * x) / np.sqrt(np.pi)
+    S = gauss(x)
+    D = gauss_delta(x)
+
+    # In the following, our Hermite polynomials (`H` and `h`) are defined such
+    # that they contain the factor exp(-x^2) / sqrt(pi) = D(0, x). On the other
+    # hand, our coefficient A(n) (`a`) does not contain the factor 1 / sqrt(pi).
 
     if N > 0:
-        H = 0              # H(-1, x)
-        h = np.exp(-x * x) # H( 0, x) [actually 1, but our H contains exp(-x^2)]
+        H = 0 # H(-1, x)
+        h = D # H( 0, x)
 
-        a = 1 / np.sqrt(np.pi)
+        a = 1.0
 
         m = 0
         for n in range(1, N + 1):
             H = 2 * x * h - 2 * m * H # H(1, x), H(3, x), ...
             m += 1
 
-            a /= -4 * n
-            S += a * H
-
             h = 2 * x * H - 2 * m * h # H(2, x), H(4, x), ...
             m += 1
 
+            a /= -4 * n
+
+            S += a * H
             D += a * h
 
     return S, D
@@ -71,12 +75,12 @@ methfessel_paxton_general = np.vectorize(methfessel_paxton_general)
 def gauss(x):
     """Calculate Gaussian step function."""
 
-    return methfessel_paxton_general(x, N=0)[0]
+    return 0.5 * (1 - math.erf(x))
 
 def gauss_delta(x):
     """Calculate negative derivative of Gaussian step function."""
 
-    return methfessel_paxton_general(x, N=0)[1]
+    return np.exp(-x * x) / np.sqrt(np.pi)
 
 def methfessel_paxton(x):
     """Calculate first-order Methfessel-Paxton step function."""
