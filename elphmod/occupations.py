@@ -61,7 +61,7 @@ methfessel_paxton_general = np.vectorize(methfessel_paxton_general)
 def gauss(x):
     """Calculate Gaussian step function."""
 
-    return methfessel_paxton_general(x, N=1)
+    return methfessel_paxton_general(x, N=0)
 
 def methfessel_paxton(x):
     """Calculate first-order Methfessel-Paxton step function."""
