@@ -49,24 +49,23 @@ def methfessel_paxton_general(x, N=0):
     # that they contain the factor exp(-x^2) / sqrt(pi) = D(0, x). On the other
     # hand, our coefficient A(n) (`a`) does not contain the factor 1 / sqrt(pi).
 
-    if N > 0:
-        H = 0 # H(-1, x)
-        h = D # H( 0, x)
+    H = 0 # H(-1, x)
+    h = D # H( 0, x)
 
-        a = 1.0
+    a = 1.0
+    m = 0
 
-        m = 0
-        for n in range(1, N + 1):
-            H = 2 * x * h - 2 * m * H # H(1, x), H(3, x), ...
-            m += 1
+    for n in range(1, N + 1):
+        H = 2 * x * h - 2 * m * H # H(1, x), H(3, x), ...
+        m += 1
 
-            h = 2 * x * H - 2 * m * h # H(2, x), H(4, x), ...
-            m += 1
+        h = 2 * x * H - 2 * m * h # H(2, x), H(4, x), ...
+        m += 1
 
-            a /= -4 * n
+        a /= -4 * n
 
-            S += a * H
-            D += a * h
+        S += a * H
+        D += a * h
 
     return S, D
 
