@@ -9,12 +9,28 @@ info = MPI.info
 kB = 8.61733e-5 # Boltzmann constant (eV/K)
 
 def susceptibility(e, T=1.0, eta=1e-10, occupations=occupations.fermi_dirac):
-    """Calculate real part of static electronic susceptibility
+    """Calculate real part of static electronic susceptibility.
 
-        chi(q) = 2/N sum[k] [f(k+q) - f(k)] / [e(k+q) - e(k) + i eta].
+        chi(q) = 2/N sum[k] [f(k+q) - f(k)] / [e(k+q) - e(k) + i eta]
 
-    The resolution in q is limited by the resolution in k."""
+    The resolution in q is limited by the resolution in k.
 
+    Parameters
+    ----------
+    e : ndarray
+        Electron dispersion on uniform mesh. The Fermi level must be at zero.
+    T : float
+        Smearing temperature in K.
+    eta : float
+        Absolute value of "infinitesimal" i0+ in denominator.
+    occupations : function
+        Particle distribution as a function of energy divided by kT.
+
+    Returns
+    -------
+    function
+        Static electronic susceptibility as a function of q1, q2 in [0, 2pi).
+    """
     nk, nk = e.shape
 
     kT = kB * T
@@ -48,7 +64,7 @@ def susceptibility(e, T=1.0, eta=1e-10, occupations=occupations.fermi_dirac):
 
 def polarization(e, c, T=1.0, i0=1e-10j, subspace=None,
         occupations=occupations.fermi_dirac):
-    """Calculate RPA polarization in orbital basis (density-density):
+    """Calculate RPA polarization in orbital basis (density-density).
 
         Pi(q, a, b) = 2/N sum[k, n, m]
             <k+q m|k+q a> <k a|k n> <k n|k b> <k+q b|k+q m>
@@ -58,8 +74,29 @@ def polarization(e, c, T=1.0, i0=1e-10j, subspace=None,
 
     If 'subspace' is given, a cRPA calculation is performed. 'subspace' must be
     a boolean array with the same shape as 'e', where 'True' marks states of the
-    target subspace, interactions between which are excluded."""
+    target subspace, interactions between which are excluded.
 
+    Parameters
+    ----------
+    e : ndarray
+        Electron dispersion on uniform mesh. The Fermi level must be at zero.
+    c : ndarray
+        Coefficients for transform to orbital basis. These are given by the
+        eigenvectors of the Wannier Hamiltonian.
+    T : float
+        Smearing temperature in K.
+    i0 : imaginary number
+        "Infinitesimal" i0+ in denominator.
+    subspace : ndarray or None
+        Boolean array to select k points and/or bands in cRPA target subspace.
+    occupations : function
+        Particle distribution as a function of energy divided by kT.
+
+    Returns
+    -------
+    function
+        RPA polarization in orbital basis as a function of q1, q2 in [0, 2pi).
+    """
     cRPA = subspace is not None
 
     if e.ndim == 2:
@@ -138,11 +175,31 @@ def polarization(e, c, T=1.0, i0=1e-10j, subspace=None,
 
 def phonon_self_energy(q, e, g2, T=100.0, i0=1e-10j,
         occupations=occupations.fermi_dirac):
-    """Calculate phonon self-energy
+    """Calculate phonon self-energy.
 
         Pi(q, nu) = 2/N sum[k] |g(q, nu, k)|^2
-            [f(k+q) - f(k)] / [e(k+q) - e(k) + i0]."""
+            [f(k+q) - f(k)] / [e(k+q) - e(k) + i0]
 
+    Parameters
+    ----------
+    q : list of 2-tuples
+        Considered q points defined via crystal coordinates q1, q2 in [0, 2pi).
+    e : ndarray
+        Electron dispersion on uniform mesh. The Fermi level must be at zero.
+    g2 : ndarray
+        Squared electron-phonon coupling.
+    T : float
+        Smearing temperature in K.
+    i0 : imaginary number
+        "Infinitesimal" i0+ in denominator.
+    occupations : function
+        Particle distribution as a function of energy divided by kT.
+
+    Returns
+    -------
+    ndarray
+        Phonon self-energy.
+    """
     nk, nk = e.shape
     nQ, nb, nk, nk = g2.shape
 
