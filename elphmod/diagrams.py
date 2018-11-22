@@ -62,6 +62,87 @@ def susceptibility(e, T=1.0, eta=1e-10, occupations=occupations.fermi_dirac):
 
     return calculate_susceptibility
 
+def susceptibility2(e, T=1.0, eta=1e-10, occupations=occupations.fermi_dirac,nmats=1000,hyb_width=1.,hyb_height=0.):
+    """Calculate real part of static electronic susceptibility.
+
+        chi(q) = 2/N sum[k] [f(k+q) - f(k)] / [e(k+q) - e(k) + i eta]
+
+    The resolution in q is limited by the resolution in k.
+
+    Parameters
+    ----------
+    e : ndarray
+        Electron dispersion on uniform mesh. The Fermi level must be at zero.
+    T : float
+        Smearing temperature in K.
+    eta : float
+        Absolute value of "infinitesimal" i0+ in denominator.
+    occupations : function
+        Particle distribution as a function of energy divided by kT.
+
+    Returns
+    -------
+    function
+        Static electronic susceptibility as a function of q1, q2 in [0, 2pi).
+    """
+    nk, nk = e.shape
+
+    kT = kB * T
+    x = e / kT
+
+    f = occupations(x)
+    d = occupations.delta(x).sum() / kT
+
+    e = np.tile(e, (2, 2))
+    f = np.tile(f, (2, 2))
+
+    scale = nk / (2 * np.pi)
+    eta2 = eta ** 2
+    prefactor = kT*4.0 / nk**2 
+    # factor 2 for the negative mats
+    # factor 2 for spin
+    
+    tail_contribution = -2./(4*kT) # See Thesis Hartmut Hafermann, App B.
+    # Factor 2 for spin
+    
+    def Delta(inu):
+        return -2j *hyb_height*np.arctan(2*hyb_width/inu.imag)
+
+    def G(inu,hmlt):
+        return 1./(inu - hmlt+eta-Delta(inu))
+
+    def matsgen():
+        """Generate the positive fermionic Matsubara frequencies"""
+        for n in range(nmats):
+            yield 1j*(2*n+1)*np.pi*kT
+    
+    # Calculate the Lindhardt bubble using the Green's functions explicitly
+    # Only w=0 calculations is performed
+    #
+    # For the treatment of the 1/inu tail, see:
+    # Appendix B of the thesis of Hartmut Hafermann
+    #
+    # chi = beta/4 - 1/beta sum (GG - 1/(inu^2) )
+    #
+    # Multiply by 2 for spin
+    
+
+    def calculate_susceptibility(q1=0, q2=0):
+        
+        q1 = int(round(q1 * scale)) % nk
+        q2 = int(round(q2 * scale)) % nk
+        
+        # These are still numpy arrays
+        e1 = e[q1:q1 + nk, q2:q2 + nk] 
+        e0 = e[:nk, :nk]
+            
+        return tail_contribution+\
+          prefactor*np.sum(sum(G(inu,e1)*G(inu,e0)- 1./(inu*inu) for inu in matsgen()))
+
+    calculate_susceptibility.size = 1
+
+    return calculate_susceptibility
+
 def polarization(e, c, T=1.0, i0=1e-10j, subspace=None,
         occupations=occupations.fermi_dirac):
     """Calculate RPA polarization in orbital basis (density-density).
