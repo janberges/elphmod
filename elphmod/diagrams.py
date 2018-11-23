@@ -255,7 +255,7 @@ def polarization(e, c, T=1.0, i0=1e-10j, subspace=None,
     return calculate_polarization
 
 def phonon_self_energy(q, e, g2, T=100.0, i0=1e-10j,
-        occupations=occupations.fermi_dirac):
+        occupations=occupations.fermi_dirac, status=True):
     """Calculate phonon self-energy.
 
         Pi(q, nu) = 2/N sum[k] |g(q, nu, k)|^2
@@ -300,7 +300,8 @@ def phonon_self_energy(q, e, g2, T=100.0, i0=1e-10j,
 
     my_Pi = np.empty((sizes[comm.rank], nb), dtype=complex)
 
-    info('Pi(%3s, %3s, %3s) = ...' % ('q1', 'q2', 'nu'))
+    if status:
+        info('Pi(%3s, %3s, %3s) = ...' % ('q1', 'q2', 'nu'))
 
     for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         q1 = int(round(q[iq, 0] * scale)) % nk
@@ -317,8 +318,9 @@ def phonon_self_energy(q, e, g2, T=100.0, i0=1e-10j,
         for nu in range(nb):
             my_Pi[my_iq, nu] = prefactor * np.sum(g2[iq, nu] * chi)
 
-            print('Pi(%3d, %3d, %3d) = %9.2e%+9.2ei'
-                % (q1, q2, nu, my_Pi[my_iq, nu].real, my_Pi[my_iq, nu].imag))
+            if status:
+                print('Pi(%3d, %3d, %3d) = %9.2e%+9.2ei'
+                    % (q1, q2, nu, my_Pi[my_iq, nu].real, my_Pi[my_iq, nu].imag))
 
     Pi = np.empty((nQ, nb), dtype=complex)
 
