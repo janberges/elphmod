@@ -22,7 +22,7 @@ def susceptibility(e, T=1.0, eta=1e-10, occupations=occupations.fermi_dirac):
     T : float
         Smearing temperature in K.
     eta : float
-        Absolute value of "infinitesimal" i0+ in denominator.
+        Absolute value of "infinitesimal" imaginary number in denominator.
     occupations : function
         Particle distribution as a function of energy divided by kT.
 
@@ -76,7 +76,7 @@ def susceptibility2(e, T=1.0, eta=1e-10, occupations=occupations.fermi_dirac,nma
     T : float
         Smearing temperature in K.
     eta : float
-        Absolute value of "infinitesimal" i0+ in denominator.
+        Absolute value of "infinitesimal" imaginary number in denominator.
     occupations : function
         Particle distribution as a function of energy divided by kT.
 
@@ -167,7 +167,7 @@ def polarization(e, c, T=1.0, i0=1e-10j, subspace=None,
     T : float
         Smearing temperature in K.
     i0 : imaginary number
-        "Infinitesimal" i0+ in denominator.
+        "Infinitesimal" imaginary number in denominator.
     subspace : ndarray or None
         Boolean array to select k points and/or bands in cRPA target subspace.
     occupations : function
@@ -272,9 +272,11 @@ def phonon_self_energy(q, e, g2, T=100.0, i0=1e-10j,
     T : float
         Smearing temperature in K.
     i0 : imaginary number
-        "Infinitesimal" i0+ in denominator.
+        "Infinitesimal" imaginary number in denominator.
     occupations : function
         Particle distribution as a function of energy divided by kT.
+    status : bool
+        Print status messages during the calculation?
 
     Returns
     -------
@@ -351,7 +353,7 @@ def renormalize_coupling(q, e, g, W, U, T=100.0, i0=1e-10j,
     T : float
         Smearing temperature in K.
     i0 : imaginary number
-        "Infinitesimal" i0+ in denominator.
+        "Infinitesimal" imaginary number in denominator.
     occupations : function
         Particle distribution as a function of energy divided by kT.
     dd : bool
