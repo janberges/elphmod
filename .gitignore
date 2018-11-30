@@ -26,3 +26,6 @@ work
 *_band.kpt
 *_hr.dat
 *_wsvec.dat
+
+dyn*
+ifc

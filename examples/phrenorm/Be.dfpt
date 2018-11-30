@@ -1,0 +1,16 @@
+Be
+&INPUTPH
+outdir = 'work'
+prefix = 'Be'
+
+fildyn = 'dyn'
+fildvscf = 'dvscf'
+
+ldisp = .true.
+nq1 = 6
+nq2 = 6
+nq3 = 1
+
+alpha_mix = 0.3
+tr2_ph = 1e-13
+/

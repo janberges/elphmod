@@ -14,3 +14,5 @@ mpirun -np 2 pw2wannier90.x < Be.pw2w90
 wannier90.x Be
 
 echo "p 'bands.dat.gnu' u (\$1*2*pi/2.07):2, 'Be_band.dat' w l" | gnuplot -p
+
+mpirun -np 2 ph.x -nk 2 < Be.dfpt
