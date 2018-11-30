@@ -20,6 +20,7 @@ work
 *.mmn
 *.nnkp
 *.pw2w90
+*.werr
 *.wout
 *_band.dat
 *_band.gnu
