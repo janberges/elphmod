@@ -1,0 +1,39 @@
+&CONTROL
+outdir = 'work'
+prefix = 'Be'
+
+calculation = 'bands'
+
+pseudo_dir = '.'
+/
+&SYSTEM
+ibrav = 4
+ntyp = 1
+nat = 1
+
+a = 2.07
+c = 10.0
+
+ecutwfc = 50.0
+
+nbnd = 10
+
+occupations = 'smearing'
+degauss = 0.01
+/
+&ELECTRONS
+conv_thr = 1e-7
+/
+
+ATOMIC_SPECIES
+Be 9.012 Be.pz-hgh.UPF
+
+ATOMIC_POSITIONS crystal
+Be 0.0 0.0 0.0 0 0 0
+
+K_POINTS crystal_b
+4
+0.000000000 0.000000000 0.000000000 17
+0.500000000 0.000000000 0.000000000 10
+0.333333333 0.333333333 0.000000000 20
+0.000000000 0.000000000 0.000000000  0

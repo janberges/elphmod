@@ -9,3 +9,7 @@
 *.pyc
 *.tex
 *.tikz
+*.UPF
+
+bands.dat*
+work
