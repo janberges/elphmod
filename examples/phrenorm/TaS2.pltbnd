@@ -1,0 +1,8 @@
+&BANDS
+outdir = 'work'
+prefix = 'TaS2'
+
+filband = 'bands.dat'
+
+lsym = .false.
+/

@@ -1,0 +1,34 @@
+&CONTROL
+outdir = 'work'
+prefix = 'TaS2'
+pseudo_dir = '.'
+/
+&SYSTEM
+ibrav = 4
+ntyp = 2
+nat = 3
+
+a = 3.39
+c = 15.0
+
+ecutwfc = 50.0
+
+occupations = 'smearing'
+smearing = 'fermi-dirac'
+degauss = 0.005
+/
+&ELECTRONS
+conv_thr = 1e-7
+/
+
+ATOMIC_SPECIES
+Ta 180.95 Ta.pbe-hgh.UPF
+S   32.06  S.pbe-hgh.UPF
+
+ATOMIC_POSITIONS crystal
+S   0.333333333  0.666666667  0.105825996  0 0 1
+Ta  0.000000000  0.000000000  0.000000000  0 0 0
+S   0.333333333  0.666666667 -0.105825996  0 0 1
+
+K_POINTS automatic
+6 6 1 0 0 0

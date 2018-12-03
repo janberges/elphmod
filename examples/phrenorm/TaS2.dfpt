@@ -1,0 +1,16 @@
+TaS2
+&INPUTPH
+outdir = 'work'
+prefix = 'TaS2'
+
+fildyn = 'dyn'
+fildvscf = 'dvscf'
+
+ldisp = .true.
+nq1 = 2
+nq2 = 2
+nq3 = 1
+
+alpha_mix = 0.3
+tr2_ph = 1e-13
+/
