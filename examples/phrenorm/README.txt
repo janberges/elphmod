@@ -11,7 +11,7 @@ the paramters chosen for the ab-initio calculations are far from convergence.
 This enables us to run everything on a computer with only two processors.
 
 
-1  c D F P T   m o d i f i c a t i o n
+1   c D F P T   m o d i f i c a t i o n
 
 We use Quantum ESPRESSO for all ab-inito calculations involved. Since cDFPT is
 not implemented, the following modifications of the code have to be made:
@@ -54,7 +54,8 @@ The actual cDFPT modification is very simple:
 | 94                theta = wgauss (deltae / degauss, 0)                       |
 |______________________________________________________________________________|
 
-Finally, the only thing left to do is to make 'cdfpt' an input parameter:
+Finally, the only thing left to do is to make 'cdfpt' an input parameter which
+is read on the I/O processor and then broadcast to the other processors.
  __________________________
 | PHonon/PH/phq_readin.f90 |___________________________________________________
 |                                                                              |
