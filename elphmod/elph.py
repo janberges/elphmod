@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from . import bravais, MPI
+from . import bravais, dispersion, el, MPI
 comm = MPI.comm
 
 def get_q(filename):
@@ -353,3 +353,236 @@ def read(filename, nq, bands):
                     elph[Q1, Q2, band] = float(columns[2 + band])
 
     return elph
+
+def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0):
+    """Simulate second part of EPW: coarse Wannier to fine Bloch basis.
+
+    Only the transformation from the displacement to the mode basis is omitted.
+    The purpose of this routine is full control of the coupling's complex phase.
+
+    Parameters
+    ----------
+    epmatwp : string
+        File with electron-phonon coupling in Wannier basis produced by EPW.
+    wigner : string
+        File with lattice vectors in Wigner-Seitz cell belonging to 'epmatwp'.
+
+        This file is not produced by EPW by default. It contains the variables
+
+            'nrr_k', 'irvec_k', 'ndegen_k', 'wslen_k',
+            'nrr_q', 'irvec_q', 'ndegen_q', 'wslen_q',
+            'nrr_g', 'irvec_g', 'ndegen_g', 'wslen_g',
+
+        which are allocated and calculated in the EPW source file 'wigner.f90',
+        in the given order and in binary representation without any separators.
+
+    wannier : File with Wannier Hamiltonian.
+    outdir : string
+        Directory where the following output files are stored:
+
+            FILENAME             CONTENT                    TO BE READ BY
+            el-ph-(q point).dat  electron-phonon coupling   bravais.coupling
+            eigenvectors.dat     "orbital band characters"  -
+            eigenvalues.dat      electron energies          -
+
+    nbndsub : int
+        Number of electron bands or Wannier functions.
+    nmodes : int
+        Number of phonon modes (three times the number of atoms).
+    nk : int
+        Number of k points per dimension.
+    nq : int
+        Number of q points per dimension.
+    n : int
+        Index of electron band for which to calculate results.
+    mu : float, optional
+        Fermi level to be subtracted from electron energies before saving.
+    """
+    nat = nmodes // 3
+
+    # generate same list of irreducible q points as Quantum ESPRESSO:
+
+    q_int = sorted(bravais.irreducibles(nq))
+    q = np.array(q_int, dtype=float) / nq * 2 * np.pi
+
+    # read lattice vectors within Wigner-Seitz cell:
+
+    with open(wigner, 'rb') as data:
+        integer = np.int32
+        double  = np.float64
+
+        nrr_k    = np.fromfile(data, integer, 1)[0]
+        irvec_k  = np.fromfile(data, integer, nrr_k * 3)
+        irvec_k  = irvec_k.reshape((nrr_k, 3))[:, :2]
+        ndegen_k = np.fromfile(data, integer, nrr_k)
+        wslen_k  = np.fromfile(data, double, nrr_k)
+
+        nrr_q    = np.fromfile(data, integer, 1)[0]
+        irvec_q  = np.fromfile(data, integer, nrr_q * 3)
+        irvec_q  = irvec_q.reshape((nrr_q, 3))[:, :2]
+        ndegen_q = np.fromfile(data, integer, nat * nat * nrr_q)
+        ndegen_q = ndegen_q.reshape((nat, nat, nrr_q))
+        wslen_q  = np.fromfile(data, double, nrr_q)
+
+        nrr_g    = np.fromfile(data, integer, 1)[0]
+        irvec_g  = np.fromfile(data, integer, nrr_g * 3)
+        irvec_g  = irvec_g.reshape((nrr_g, 3))[:, :2]
+        ndegen_g = np.fromfile(data, integer, nat * nrr_g)
+        ndegen_g = ndegen_g.reshape((nat, nrr_g))
+        wslen_g  = np.fromfile(data, double, nrr_g)
+
+    # read coupling in Wannier basis from EPW output:
+    # ('epmatwp' allocated and printed in 'ephwann_shuffle.f90')
+
+    with open(epmatwp) as data:
+        g = np.fromfile(data, dtype=np.complex128)
+
+    g = np.reshape(g, (nrr_g, nmodes, nrr_k, nbndsub, nbndsub))
+
+    # transfrom from Wannier to Bloch basis:
+    # (see 'wan2bloch.f90' in EPW 5.0)
+
+    # electrons 1: transform from real to k space:
+    #
+    # from g(nrr_g, nmodes, nrr_k,  nbndsub, nbndsub)
+    # to   g(nrr_g, nmodes, nk, nk, nbndsub, nbndsub)
+
+
+    g_new = np.empty((nrr_g, nmodes, nk, nk, nbndsub, nbndsub), dtype=complex)
+
+    tmp = np.empty_like(g)
+
+    for k1 in range(nk):
+        for k2 in range(nk):
+            print('k = (%d, %d)' % (k1, k2))
+
+            k = np.array([k1, k2], dtype=float) / nk * 2 * np.pi
+
+            for irk in range(nrr_k):
+                tmp[:, :, irk] = g[:, :, irk] \
+                    * np.exp(1j * np.dot(k, irvec_k[irk])) / ndegen_k[irk]
+
+            g_new[:, :, k1, k2] = tmp.sum(axis=2)
+
+    g = g_new
+
+    # phonons 1: transform from real to q space:
+    #
+    # from g(nrr_g , nmodes, nk, nk, nbndsub, nbndsub)
+    # to   g(len(q), nmodes, nk, nk, nbndsub, nbndsub)
+
+    g_new = np.empty((len(q), nmodes, nk, nk, nbndsub, nbndsub), dtype=complex)
+
+    tmp = np.empty_like(g)
+    exp = np.empty(nrr_g, dtype=complex)
+
+    block = [slice(3 * na, 3 * (na + 1)) for na in range(nat)]
+
+    for iq in range(len(q)):
+        print('q = %d' % iq)
+
+        for irg in range(nrr_g):
+            exp[irg] = np.exp(1j * np.dot(q[iq], irvec_g[irg]))
+
+            for na in range(nat):
+                if ndegen_g[na, irg]:
+                    tmp[irg, block[na]] = g[irg, block[na]] \
+                        * exp[irg] / ndegen_g[na, irg]
+                else:
+                    tmp[irg, block[na]] = 0
+
+        g_new[iq] = tmp.sum(axis=0)
+
+    g = g_new
+
+    # electrons 2: transform from orbital to band basis:
+    #
+    # from g(len(q), nmodes, nk, nk, nbndsub, nbndsub)
+    # to   g(len(q), nmodes, nk, nk) (only to one band currently)
+
+    print('Orbital to band..')
+
+    g_new = np.empty((len(q), nmodes, nk, nk), dtype=complex)
+
+    H = el.hamiltonian(wannier)
+    e, U = dispersion.dispersion_full_nosym(H, nk, vectors=True)
+
+    for iq in range(len(q)):
+        q1, q2 = q_int[iq]
+
+        q1 *= nk // nq
+        q2 *= nk // nq
+
+        for k1 in range(nk):
+            kq1 = (k1 + q1) % nk
+
+            for k2 in range(nk):
+                kq2 = (k2 + q2) % nk
+
+                for i in range(nmodes):
+                    g_new[iq, i, k1, k2] = U[k1, k2, :, n].dot(
+                        g[iq, i, k1, k2]).dot(U[kq1, kq2, :, n].conj())
+
+    g = g_new
+
+    # Write results to disk:
+
+    for iq in range(len(q)):
+        with open('%s/el-ph-%d.dat' % (outdir, iq + 1), 'w') as data:
+            data.write("""#
+    #  Electron-phonon matrix elements
+    #
+    #    k1,2,3: k-point indices
+    #    w:      k-point weight
+    #    n:      1st electronic band index
+    #    m:      2nd electronic band index
+    #    i:      atomic displacement index
+    #    ElPh:   <k+q m| dV/du(q, i) |k n>
+    #
+    #k1 k2 k3  w  n  m  i        Re[ElPh]        Im[ElPh]
+    #----------------------------------------------------""")
+
+            for k1 in range(nk):
+                for k2 in range(nk):
+                    for i in range(nmodes):
+                        data.write("""
+    %3d%3d%3d%3d%3d%3d%3d%16.8E%16.8E""" % (k1 + 1, k2 + 1, 1, 1, 1, 1, i + 1,
+                            g[iq, i, k1, k2].real, g[iq, i, k1, k2].imag))
+
+    with open('%s/eigenvectors.dat' % outdir, 'w') as data:
+        data.write("""#
+    #  Eigenvectors of Wannier Hamiltonian
+    #
+    #    k1,2,3: k-point indices
+    #    a:      orbital index
+    #    n:      band index
+    #    U:      <k a|k n>
+    #
+    #k1 k2 k3  a  n           Re[U]           Im[U]
+    #----------------------------------------------""")
+
+        for k1 in range(nk):
+            for k2 in range(nk):
+                for a in range(nbndsub):
+                    data.write("""
+    %3d%3d%3d%3d%3d%16.8E%16.8E""" % (k1 + 1, k2 + 1, 1, a + 1, 1,
+                        U[k1, k2, a, n].real, U[k1, k2, a, n].imag))
+
+    eF = -0.1665
+    e -= eF
+
+    with open('%s/eigenvalues.dat' % outdir, 'w') as data:
+        data.write("""#
+    #  Eigenvalues of Wannier Hamiltonian
+    #
+    #    k1,2,3: k-point indices
+    #    n:      band index
+    #    eps:    <k n|H|k n>
+    #
+    #k1 k2 k3  n             eps
+    #---------------------------""")
+
+        for k1 in range(nk):
+            for k2 in range(nk):
+                data.write("""
+    %3d%3d%3d%3d%16.8E""" % (k1 + 1, k2 + 1, 1, 1, e[k1, k2, n]))
