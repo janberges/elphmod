@@ -66,7 +66,7 @@ def susceptibility2(e, T=1.0, eta=1e-10, occupations=occupations.fermi_dirac,
         nmats=1000, hyb_width=1.0, hyb_height=0.0):
     """Calculate the Lindhardt bubble using the Green's functions explicitly.
 
-        chi = beta/4 - 1/beta sum(GG - 1/inu^2)
+        chi = beta/4 - 1/beta sum[GG - 1/(i nu)^2]
 
     Only omega = 0 (static) calculation is performed.
 
@@ -120,32 +120,27 @@ def susceptibility2(e, T=1.0, eta=1e-10, occupations=occupations.fermi_dirac,
     # factor 2 for the negative Matsubara frequencies
     # factor 2 for the spin
 
-    tail_contribution = -2.0 / (4 * kT)
+    nu = (2 * np.arange(nmats) + 1) * np.pi * kT # Matsubara frequencies
+
+    Delta = -2j * hyb_height * np.arctan(2 * hyb_width / nu) # hybridization
+
+    G = np.empty((nmats, 2 * nk, 2 * nk), dtype=complex) # Green's functions
+
+    for i in range(nmats):
+        G[i] = 1.0 / (1j * nu[i] - e + eta - Delta[i])
+
+    tail = -2.0 / (4 * kT) + prefactor * nk ** 2 * np.sum(1.0 / nu ** 2)
     # see Appendix B of the thesis of Hartmut Hafermann
     # factor 2 for spin
-
-    def Delta(inu):
-        return -2j * hyb_height * np.arctan(2 * hyb_width / inu.imag)
-
-    def G(inu, hmlt):
-        return 1.0 / (inu - hmlt + eta - Delta(inu))
-
-    def matsgen():
-        """Generate the positive fermionic Matsubara frequencies."""
-        for n in range(nmats):
-            yield 1j * (2 * n + 1) * np.pi * kT
 
     def calculate_susceptibility(q1=0, q2=0):
         q1 = int(round(q1 * scale)) % nk
         q2 = int(round(q2 * scale)) % nk
 
-        e1 = e[q1:q1 + nk, q2:q2 + nk]
-        e0 = e[:nk, :nk]
-        # these are still numpy arrays
+        Gk  = G[:, :nk, :nk]
+        Gkq = G[:, q1:q1 + nk, q2:q2 + nk]
 
-        return tail_contribution + \
-            prefactor * np.sum(sum(G(inu, e1) * G(inu, e0) - 1.0 / (inu * inu)
-                for inu in matsgen()))
+        return prefactor * np.sum(Gk * Gkq) + tail
 
     calculate_susceptibility.size = 1
 
