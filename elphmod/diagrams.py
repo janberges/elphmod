@@ -326,6 +326,97 @@ def phonon_self_energy(q, e, g2, T=100.0, i0=1e-10j,
 
     return Pi
 
+def phonon_self_energy2(q, e, g2, T=100.0, i0=1e-10j, nmats=1000, hyb_width=1.0,
+        hyb_height=0.0, status=True, GB=4.0):
+    """Calculate phonon self-energy using the Green's functions explicitly.
+
+    Parameters
+    ----------
+    q : list of 2-tuples
+        Considered q points defined via crystal coordinates q1, q2 in [0, 2pi).
+    e : ndarray
+        Electron dispersion on uniform mesh. The Fermi level must be at zero.
+    g2 : ndarray
+        Squared electron-phonon coupling.
+    T : float
+        Smearing temperature in K.
+    i0 : imaginary number
+        "Infinitesimal" imaginary number in denominator.
+    nmats : int
+        Number of fermionic Matsubara frequencies.
+    hyb_width : float
+        Width of box-shaped hybridization function.
+    hyb_height : float
+        Height of box-shaped hybridization function.
+    status : bool
+        Print status messages during the calculation?
+    GB : float
+        Memory limit in gigabytes. Exit if exceeded.
+
+    Returns
+    -------
+    ndarray
+        Phonon self-energy.
+
+    See also
+    --------
+    susceptibility2 : Similar function with `g2` set to one.
+    """
+    nk, nk = e.shape
+    nQ, nb, nk, nk = g2.shape
+
+    if nmats * (2 * nk) ** 2 * np.dtype(complex).itemsize * comm.size > GB * 1e9:
+        info("Error: Memory limit (%g GB) exceeded!" % GB)
+        quit()
+
+    kT = kB * T
+    x = e / kT
+
+    e = np.tile(e, (2, 2))
+
+    scale = nk / (2 * np.pi)
+    prefactor = kT * 4.0 / nk ** 2
+
+    nu = (2 * np.arange(nmats) + 1) * np.pi * kT # Matsubara frequencies
+
+    Delta = -2j * hyb_height * np.arctan(2 * hyb_width / nu) # hybridization
+
+    G = np.empty((nmats, 2 * nk, 2 * nk), dtype=complex) # Green's functions
+
+    for i in range(nmats):
+        G[i] = 1.0 / (1j * nu[i] - e + i0 - Delta[i])
+
+    tail = -2.0 / (4 * kT) / nk ** 2 + prefactor * np.sum(1.0 / nu ** 2)
+
+    sizes, bounds = MPI.distribute(nQ, bounds=True)
+
+    my_Pi = np.empty((sizes[comm.rank], nb), dtype=complex)
+
+    if status:
+        info('Pi(%3s, %3s, %3s) = ...' % ('q1', 'q2', 'nu'))
+
+    for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
+        q1 = int(round(q[iq, 0] * scale)) % nk
+        q2 = int(round(q[iq, 1] * scale)) % nk
+
+        Gk  = G[:, :nk, :nk]
+        Gkq = G[:, q1:q1 + nk, q2:q2 + nk]
+
+        chi = prefactor * np.sum(Gk * Gkq, axis=0) + tail
+
+        for nu in range(nb):
+            my_Pi[my_iq, nu] = np.sum(g2[iq, nu] * chi)
+
+            if status:
+                print('Pi(%3d, %3d, %3d) = %9.2e%+9.2ei'
+                    % (q1, q2, nu, my_Pi[my_iq, nu].real, my_Pi[my_iq, nu].imag))
+
+    Pi = np.empty((nQ, nb), dtype=complex)
+
+    comm.Allgatherv(my_Pi, (Pi, sizes * nb))
+
+    return Pi
+
 def renormalize_coupling(q, e, g, W, U, T=100.0, i0=1e-10j,
         occupations=occupations.fermi_dirac, dd=False, einsum=True,
         status=True):
