@@ -125,6 +125,7 @@ def susceptibility2(e, T=1.0, eta=1e-10, nmats=1000, hyb_width=1.0,
     tail = -2.0 / (4 * kT) + prefactor * nk ** 2 * np.sum(1.0 / nu ** 2)
     # see Appendix B of the thesis of Hartmut Hafermann
     # factor 2 for spin
+    # VERIFY THAT THIS IS CORRECT! (after rewriting function)
 
     def calculate_susceptibility(q1=0, q2=0):
         q1 = int(round(q1 * scale)) % nk
@@ -387,6 +388,7 @@ def phonon_self_energy2(q, e, g2, T=100.0, i0=1e-10j, nmats=1000, hyb_width=1.0,
         G[i] = 1.0 / (1j * nu[i] - e + i0 - Delta[i])
 
     tail = -2.0 / (4 * kT) / nk ** 2 + prefactor * np.sum(1.0 / nu ** 2)
+    # VERIFY THAT THIS IS CORRECT!
 
     sizes, bounds = MPI.distribute(nQ, bounds=True)
 
