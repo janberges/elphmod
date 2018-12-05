@@ -62,8 +62,8 @@ def susceptibility(e, T=1.0, eta=1e-10, occupations=occupations.fermi_dirac):
 
     return calculate_susceptibility
 
-def susceptibility2(e, T=1.0, eta=1e-10, occupations=occupations.fermi_dirac,
-        nmats=1000, hyb_width=1.0, hyb_height=0.0):
+def susceptibility2(e, T=1.0, eta=1e-10, nmats=1000, hyb_width=1.0,
+        hyb_height=0.0):
     """Calculate the Lindhardt bubble using the Green's functions explicitly.
 
         chi = beta/4 - 1/beta sum[GG - 1/(i nu)^2]
@@ -88,8 +88,6 @@ def susceptibility2(e, T=1.0, eta=1e-10, occupations=occupations.fermi_dirac,
         Smearing temperature in K.
     eta : float
         Absolute value of "infinitesimal" imaginary number in denominator.
-    occupations : function
-        Particle distribution as a function of energy divided by kT.
     nmats : int
         Number of fermionic Matsubara frequencies.
     hyb_width : float
@@ -107,14 +105,9 @@ def susceptibility2(e, T=1.0, eta=1e-10, occupations=occupations.fermi_dirac,
     kT = kB * T
     x = e / kT
 
-    f = occupations(x)
-    d = occupations.delta(x).sum() / kT
-
     e = np.tile(e, (2, 2))
-    f = np.tile(f, (2, 2))
 
     scale = nk / (2 * np.pi)
-    eta2 = eta ** 2
 
     prefactor = kT * 4.0 / nk ** 2
     # factor 2 for the negative Matsubara frequencies
