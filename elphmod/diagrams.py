@@ -103,7 +103,6 @@ def susceptibility2(e, T=1.0, eta=1e-10, nmats=1000, hyb_width=1.0,
     nk, nk = e.shape
 
     kT = kB * T
-    x = e / kT
 
     e = np.tile(e, (2, 2))
 
@@ -373,7 +372,6 @@ def phonon_self_energy2(q, e, g2, T=100.0, i0=1e-10j, nmats=1000, hyb_width=1.0,
         quit()
 
     kT = kB * T
-    x = e / kT
 
     e = np.tile(e, (2, 2))
 
