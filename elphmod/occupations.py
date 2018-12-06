@@ -23,6 +23,18 @@ def fermi_dirac_delta(x):
 
 fermi_dirac.delta = fermi_dirac_delta
 
+def gauss(x):
+    """Calculate Gaussian step function."""
+
+    return 0.5 * (1 - math.erf(x))
+
+def gauss_delta(x):
+    """Calculate negative derivative of Gaussian step function."""
+
+    return np.exp(-x * x) / np.sqrt(np.pi)
+
+gauss.delta = gauss_delta
+
 def methfessel_paxton_general(x, N=0):
     """Calculate Methfessel-Paxton step function and its negative derivative.
 
@@ -74,18 +86,6 @@ def methfessel_paxton_general(x, N=0):
     return S, D
 
 methfessel_paxton_general = np.vectorize(methfessel_paxton_general)
-
-def gauss(x):
-    """Calculate Gaussian step function."""
-
-    return 0.5 * (1 - math.erf(x))
-
-def gauss_delta(x):
-    """Calculate negative derivative of Gaussian step function."""
-
-    return np.exp(-x * x) / np.sqrt(np.pi)
-
-gauss.delta = gauss_delta
 
 def methfessel_paxton(x):
     """Calculate first-order Methfessel-Paxton step function."""
