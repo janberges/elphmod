@@ -255,7 +255,7 @@ def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
     """Calculate phonon self-energy.
 
         Pi(q, nu) = 2/N sum[k] |g(q, nu, k)|^2
-            [f(k+q) - f(k)] / [e(k+q) - e(k) + i0]
+            [f(k+q) - f(k)] / [e(k+q) - e(k)]
 
     Parameters
     ----------
@@ -425,7 +425,7 @@ def renormalize_coupling(q, e, g, W, U, T=100.0, eps=1e-15,
     """Calculate renormalized electron-phonon coupling.
 
     g'(k, q, i, x) = g(k, q, i, x) + 2/N sum[k'] g(k', q, i, x)
-        [f(k'+q) - f(k')] / [e(k'+q) - e(k') + i0] W(k, k', q)
+        [f(k'+q) - f(k')] / [e(k'+q) - e(k')] W(k, k', q)
 
     Parameters
     ----------
