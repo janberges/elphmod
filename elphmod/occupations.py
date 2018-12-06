@@ -116,6 +116,25 @@ def lorentz_delta(x):
 
 lorentz.delta = lorentz_delta
 
+def fermi_dirac_matsubara(x, nmats=1000):
+    """Calculate Fermi function as Matsubara sum."""
+
+    inu = 1j * (2 * np.arange(nmats) + 1) * np.pi
+
+    return 0.5 + 2 * np.sum(1.0 / (inu - x)).real
+
+fermi_dirac_matsubara = np.vectorize(fermi_dirac_matsubara)
+
+def fermi_dirac_matsubara_delta(x, nmats=1000):
+    """Calculate negative derivative of Fermi function as Matsubara sum."""
+
+    inu = 1j * (2 * np.arange(nmats) + 1) * np.pi
+
+    return -2 * np.sum(1.0 / (inu - x) ** 2).real
+
+fermi_dirac_matsubara_delta = np.vectorize(fermi_dirac_matsubara_delta)
+fermi_dirac_matsubara.delta = fermi_dirac_matsubara_delta
+
 if __name__ == '__main__':
     # check if int[a, b] df = f(b) - f(a):
 
