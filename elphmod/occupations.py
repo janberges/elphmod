@@ -99,6 +99,23 @@ def methfessel_paxton_delta(x):
 
 methfessel_paxton.delta = methfessel_paxton_delta
 
+def lorentz(x):
+    """Calculate Lorentz step function.
+
+    Used to simulate the influence of a wide box-shaped hybridization function
+    at low temperatures. Formula derived by Tim O. Wehling and Erik G.C.P. van
+    Loon. Here, we have x = epsilon / h with the height h of the hybridization,
+    instead of x = epsilon / (kB T) with the temperature T.
+    """
+    return 0.5 - 1.0 / np.pi * np.arctan(x / np.pi)
+
+def lorentz_delta(x):
+    """Calculate negative derivative of Lorentz step function."""
+
+    return 1.0 / (x ** 2 + np.pi ** 2)
+
+lorentz.delta = lorentz_delta
+
 if __name__ == '__main__':
     # check if int[a, b] df = f(b) - f(a):
 
