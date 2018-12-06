@@ -420,7 +420,7 @@ def phonon_self_energy2(q, e, g2, T=100.0, i0=1e-10j, nmats=1000, hyb_width=1.0,
     return Pi
 
 def renormalize_coupling(q, e, g, W, U, T=100.0, eps=1e-15,
-        occupations=occupations.fermi_dirac, dd=False, einsum=True,
+        occupations=occupations.fermi_dirac, pre=2, dd=False, einsum=True,
         status=True):
     """Calculate renormalized electron-phonon coupling.
 
@@ -445,6 +445,8 @@ def renormalize_coupling(q, e, g, W, U, T=100.0, eps=1e-15,
         Smallest allowed absolute value of divisor.
     occupations : function
         Particle distribution as a function of energy divided by kT.
+    pre : int
+        Spin prefactor 1 or 2? Used for debugging only.
     dd : bool
         Consider only density-density terms of Coulomb interaction. The shape
         of the parameter W depends on this parameter.
@@ -481,7 +483,7 @@ def renormalize_coupling(q, e, g, W, U, T=100.0, eps=1e-15,
 
     scale_k = nk / (2 * np.pi)
     scale_q = nq / (2 * np.pi)
-    prefactor = 2.0 / nk ** 2
+    prefactor = pre / nk ** 2
 
     sizes, bounds = MPI.distribute(nQ, bounds=True)
 
