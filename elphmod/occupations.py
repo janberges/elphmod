@@ -8,6 +8,8 @@ xmax = 709.0 # approx. log([max. double] / 2 - 1)
 def fermi_dirac(x):
     """Calculate Fermi function."""
 
+    # return 1 - 0.5 * np.tanh(0.5 * x)
+
     x = np.minimum(x, xmax)
 
     return 1 / (np.exp(x) + 1)
