@@ -419,7 +419,7 @@ def phonon_self_energy2(q, e, g2, T=100.0, i0=1e-10j, nmats=1000, hyb_width=1.0,
 
     return Pi
 
-def renormalize_coupling(q, e, g, W, U, T=100.0, i0=1e-10j,
+def renormalize_coupling(q, e, g, W, U, T=100.0, eps=1e-15,
         occupations=occupations.fermi_dirac, dd=False, einsum=True,
         status=True):
     """Calculate renormalized electron-phonon coupling.
@@ -441,8 +441,8 @@ def renormalize_coupling(q, e, g, W, U, T=100.0, i0=1e-10j,
         Eigenvectors of Wannier Hamiltonian belonging to considered band.
     T : float
         Smearing temperature in K.
-    i0 : imaginary number
-        "Infinitesimal" imaginary number in denominator.
+    eps : float
+        Smallest allowed absolute value of divisor.
     occupations : function
         Particle distribution as a function of energy divided by kT.
     dd : bool
@@ -473,6 +473,7 @@ def renormalize_coupling(q, e, g, W, U, T=100.0, i0=1e-10j,
     x = e / kT
 
     f = occupations(x)
+    d = occupations.delta(x) / (-kT)
 
     e = np.tile(e, (2, 2))
     f = np.tile(f, (2, 2))
@@ -485,6 +486,8 @@ def renormalize_coupling(q, e, g, W, U, T=100.0, i0=1e-10j,
     sizes, bounds = MPI.distribute(nQ, bounds=True)
 
     my_g_ = np.empty((sizes[comm.rank], nmodes, nk, nk), dtype=complex)
+
+    dfde = np.empty((nk, nk))
 
     for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         if status:
@@ -504,7 +507,10 @@ def renormalize_coupling(q, e, g, W, U, T=100.0, i0=1e-10j,
         df = f[kq1, kq2] - f[k1, k2]
         de = e[kq1, kq2] - e[k1, k2]
 
-        dfde = df / (de + i0)
+        ok = abs(de) > eps
+
+        dfde[ ok] = df[ok] / de[ok]
+        dfde[~ok] = d[~ok]
 
         if einsum:
             if dd:
