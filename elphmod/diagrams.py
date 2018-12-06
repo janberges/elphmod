@@ -251,7 +251,7 @@ def polarization(e, c, T=1.0, i0=1e-10j, subspace=None,
 
     return calculate_polarization
 
-def phonon_self_energy(q, e, g2, T=100.0, i0=1e-10j,
+def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
         occupations=occupations.fermi_dirac, status=True):
     """Calculate phonon self-energy.
 
@@ -268,8 +268,8 @@ def phonon_self_energy(q, e, g2, T=100.0, i0=1e-10j,
         Squared electron-phonon coupling.
     T : float
         Smearing temperature in K.
-    i0 : imaginary number
-        "Infinitesimal" imaginary number in denominator.
+    eps : float
+        Smallest allowed absolute value of divisor.
     occupations : function
         Particle distribution as a function of energy divided by kT.
     status : bool
@@ -302,17 +302,19 @@ def phonon_self_energy(q, e, g2, T=100.0, i0=1e-10j,
     if status:
         info('Pi(%3s, %3s, %3s) = ...' % ('q1', 'q2', 'nu'))
 
+    chi = np.empty((nk, nk))
+
     for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         q1 = int(round(q[iq, 0] * scale)) % nk
         q2 = int(round(q[iq, 1] * scale)) % nk
 
-        if q1 == q2 == 0:
-            chi = d
-        else:
-            df = f[q1:q1 + nk, q2:q2 + nk] - f[:nk, :nk]
-            de = e[q1:q1 + nk, q2:q2 + nk] - e[:nk, :nk]
+        df = f[q1:q1 + nk, q2:q2 + nk] - f[:nk, :nk]
+        de = e[q1:q1 + nk, q2:q2 + nk] - e[:nk, :nk]
 
-            chi = df / (de + i0)
+        ok = abs(de) > eps
+
+        chi[ ok] = df[ok] / de[ok]
+        chi[~ok] = d[~ok]
 
         for nu in range(nb):
             my_Pi[my_iq, nu] = prefactor * np.sum(g2[iq, nu] * chi)
