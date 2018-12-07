@@ -78,11 +78,11 @@ eps_dense = elphmod.bravais.resize(eps_full[:, :, 0], shape=(120, 120))
 
 info("Calculate electron susceptibility along G-M-K-G..")
 
-chi = elphmod.diagrams.susceptibility(eps_dense,T=temperature,eta=10**-9)
+chi = elphmod.diagrams.susceptibility(eps_dense,T=temperature)
 chi_q = elphmod.dispersion.dispersion(chi, q[1:-1], broadcast=False)
 
 if from_diagrams:
-    chi_from_diagrams   = elphmod.diagrams.susceptibility2(eps_dense,T=temperature,eta=10**-9,hyb_height=0.1)
+    chi_from_diagrams   = elphmod.diagrams.susceptibility2(eps_dense,T=temperature,hyb_height=0.1)
     chi_from_diagrams_q = elphmod.dispersion.dispersion(chi_from_diagrams, q[1:-1], broadcast=False)
 
 

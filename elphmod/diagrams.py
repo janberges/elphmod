@@ -62,8 +62,7 @@ def susceptibility(e, T=1.0, eta=1e-10, occupations=occupations.fermi_dirac):
 
     return calculate_susceptibility
 
-def susceptibility2(e, T=1.0, eta=1e-10, nmats=1000, hyb_width=1.0,
-        hyb_height=0.0):
+def susceptibility2(e, T=1.0, nmats=1000, hyb_width=1.0, hyb_height=0.0):
     """Calculate the Lindhardt bubble using the Green's functions explicitly.
 
         chi = beta/4 - 1/beta sum[GG - 1/(i nu)^2]
@@ -86,8 +85,6 @@ def susceptibility2(e, T=1.0, eta=1e-10, nmats=1000, hyb_width=1.0,
         Electron dispersion on uniform mesh. The Fermi level must be at zero.
     T : float
         Smearing temperature in K.
-    eta : float
-        Absolute value of "infinitesimal" imaginary number in denominator.
     nmats : int
         Number of fermionic Matsubara frequencies.
     hyb_width : float
@@ -119,7 +116,7 @@ def susceptibility2(e, T=1.0, eta=1e-10, nmats=1000, hyb_width=1.0,
     G = np.empty((nmats, 2 * nk, 2 * nk), dtype=complex) # Green's functions
 
     for i in range(nmats):
-        G[i] = 1.0 / (1j * nu[i] - e + eta - Delta[i])
+        G[i] = 1.0 / (1j * nu[i] - e - Delta[i])
 
     tail = -2.0 / (4 * kT) + prefactor * nk ** 2 * np.sum(1.0 / nu ** 2)
     # see Appendix B of the thesis of Hartmut Hafermann
