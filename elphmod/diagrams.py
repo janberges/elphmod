@@ -404,7 +404,7 @@ def phonon_self_energy2(q, e, g2, T=100.0, i0=1e-10j, nmats=1000, hyb_width=1.0,
         Gk  = G[:, :nk, :nk]
         Gkq = G[:, q1:q1 + nk, q2:q2 + nk]
 
-        chi = prefactor * np.sum(Gk * Gkq, axis=0) + tail
+        chi = prefactor * np.sum(Gk * Gkq, axis=0).real + tail
 
         for nu in range(nb):
             my_Pi[my_iq, nu] = np.sum(g2[iq, nu] * chi)
