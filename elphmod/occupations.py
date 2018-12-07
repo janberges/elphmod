@@ -28,6 +28,8 @@ def gauss(x):
 
     return 0.5 * (1 - math.erf(x))
 
+gauss = np.vectorize(gauss)
+
 def gauss_delta(x):
     """Calculate negative derivative of Gaussian step function."""
 
