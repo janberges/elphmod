@@ -325,7 +325,7 @@ def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
 
     return Pi
 
-def phonon_self_energy2(q, e, g2, T=100.0, i0=1e-10j, nmats=1000, hyb_width=1.0,
+def phonon_self_energy2(q, e, g2, T=100.0, nmats=1000, hyb_width=1.0,
         hyb_height=0.0, status=True, GB=4.0):
     """Calculate phonon self-energy using the Green's functions explicitly.
 
@@ -339,8 +339,6 @@ def phonon_self_energy2(q, e, g2, T=100.0, i0=1e-10j, nmats=1000, hyb_width=1.0,
         Squared electron-phonon coupling.
     T : float
         Smearing temperature in K.
-    i0 : imaginary number
-        "Infinitesimal" imaginary number in denominator.
     nmats : int
         Number of fermionic Matsubara frequencies.
     hyb_width : float
@@ -382,7 +380,7 @@ def phonon_self_energy2(q, e, g2, T=100.0, i0=1e-10j, nmats=1000, hyb_width=1.0,
     G = np.empty((nmats, 2 * nk, 2 * nk), dtype=complex) # Green's functions
 
     for i in range(nmats):
-        G[i] = 1.0 / (1j * nu[i] - e + i0 - Delta[i])
+        G[i] = 1.0 / (1j * nu[i] - e - Delta[i])
 
     tail = -2.0 / (4 * kT) / nk ** 2 + prefactor * np.sum(1.0 / nu ** 2)
     # VERIFY THAT THIS IS CORRECT!
