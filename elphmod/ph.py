@@ -286,7 +286,8 @@ def dynamical_matrix(phid, amass, at, tau, eps=1e-7):
                             if R not in const:
                                 const[R] = np.zeros((3 * nat, 3 * nat))
 
-                            const[R][na1::nat, na2::nat] += C
+                            const[R][3 * na1:3 * na1 + 3,
+                                     3 * na2:3 * na2 + 3] += C
 
     # convert dictionary into arrays:
 
@@ -316,7 +317,7 @@ def dynamical_matrix(phid, amass, at, tau, eps=1e-7):
         D = np.empty((dim, 3 * nat, 3 * nat), dtype=complex)
 
         for n in range(dim):
-            D[n] = allconst[n] * np.exp(1j * np.dot(allcells[n], q))
+            D[n] = allconst[n] * np.exp(-1j * np.dot(allcells[n], q))
 
         return D.sum(axis=0)
 
@@ -338,9 +339,9 @@ def polarization(e, path, angle=60):
 
     nat = bands // 3
 
-    x = slice(0, nat)
-    y = slice(nat, 2 * nat)
-    z = slice(2 * nat, 3 * nat)
+    x = slice(0, None, nat)
+    y = slice(1, None, nat)
+    z = slice(2, None, nat)
 
     t1, t2 = bravais.translations(180 - angle)
     u1, u2 = bravais.reciprocals(t1, t2)
