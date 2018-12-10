@@ -568,8 +568,7 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0):
     %3d%3d%3d%3d%3d%16.8E%16.8E""" % (k1 + 1, k2 + 1, 1, a + 1, 1,
                         U[k1, k2, a, n].real, U[k1, k2, a, n].imag))
 
-    eF = -0.1665
-    e -= eF
+    e -= mu
 
     with open('%s/eigenvalues.dat' % outdir, 'w') as data:
         data.write("""#
