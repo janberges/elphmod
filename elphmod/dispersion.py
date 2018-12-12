@@ -6,8 +6,8 @@ import numpy.linalg
 from . import bravais, MPI
 comm = MPI.comm
 
-def dispersion(matrix, k, angle=60,
-        vectors=False, gauge=False, rotate=False, order=False, broadcast=True):
+def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
+        order=False, hermitian=True, broadcast=True):
     """Diagonalize Hamiltonian or dynamical matrix for given k points."""
 
     points = len(k) if comm.rank == 0 else None
@@ -43,8 +43,16 @@ def dispersion(matrix, k, angle=60,
         if order or vectors:
             if bands == 1:
                 my_v[point], my_V[point] = matrix_k.real, 1
-            else:
+            elif hermitian:
                 my_v[point], my_V[point] = np.linalg.eigh(matrix_k)
+            else:
+                tmp, my_V[point] = np.linalg.eig(matrix_k)
+                my_v[point] = tmp.real
+
+                tmp = np.argsort(my_v[point])
+
+                my_v[point] = my_v[point][tmp]
+                my_V[point] = my_V[point][:, tmp]
 
             if gauge:
                 for band in range(bands):
@@ -68,8 +76,10 @@ def dispersion(matrix, k, angle=60,
         else:
             if bands == 1:
                 my_v[point] = matrix_k.real
-            else:
+            elif hermitian:
                 my_v[point] = np.linalg.eigvalsh(matrix_k)
+            else:
+                my_v[point] = np.linalg.eigvals(matrix_k).real.sort()
 
     # gather calculated eigenvectors on first processor:
 
@@ -117,8 +127,8 @@ def dispersion(matrix, k, angle=60,
 
     return v
 
-def dispersion_full(matrix, size, angle=60,
-        vectors=False, gauge=False, rotate=False, order=False, broadcast=True):
+def dispersion_full(matrix, size, angle=60, vectors=False, gauge=False,
+        rotate=False, order=False, broadcast=True):
     """Diagonalize Hamiltonian or dynamical matrix on uniform k-point mesh."""
 
     # choose irreducible set of k points:
