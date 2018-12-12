@@ -6,8 +6,6 @@ import numpy as np
 from . import bravais, MPI
 comm = MPI.comm
 
-headline = 'Dynamical  Matrix in cartesian axes'
-
 def group(n, size=3):
     """Create slice of dynamical matrix beloning to n-th atom."""
 
@@ -20,6 +18,8 @@ def read_fildyn(fildyn, divide_mass=True):
 
     qpoints = [] # (equivalent) q points as lines of plain text
     dynmats = [] # corresponding dynamical matrices as complex NumPy arrays
+
+    headline = 'Dynamical  Matrix in cartesian axes'
 
     with open(fildyn) as data:
         def headnext():
@@ -83,6 +83,8 @@ def write_fildyn(fildyn, header, qpoints, dynmats, footer, amass,
             for i in range(nat):
                 dynmats[p][group(i), :] *= np.sqrt(amass[i])
                 dynmats[p][:, group(i)] *= np.sqrt(amass[i])
+
+    headline = 'Dynamical  Matrix in cartesian axes'
 
     with open(fildyn, 'w') as data:
         data.write(header)
