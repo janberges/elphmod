@@ -445,16 +445,16 @@ def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
     # write and complete 'fildyn1', 'fildyn2', ... with dynamical matrices:
 
     for iq in range(len(q)):
-            qpoints = ['     q = ( %14.9f%14.9f%14.9f ) \n' % q_cart[iq]]
+        qpoints = ['     q = ( %14.9f%14.9f%14.9f ) \n' % q_cart[iq]]
 
-            dynmats = [D[iq]]
+        dynmats = [D[iq]]
 
-            fildynq = fildyn + str(iq + 1)
+        fildynq = fildyn + str(iq + 1)
 
-            write_fildyn(fildynq, header, qpoints, dynmats, footer, amass,
-                divide_mass=True)
+        write_fildyn(fildynq, header, qpoints, dynmats, footer, amass,
+            divide_mass=True)
 
-            os.system('q2qstar.x {0} {0} > /dev/null'.format(fildynq))
+        os.system('q2qstar.x {0} {0} > /dev/null'.format(fildynq))
 
     # compute interatomic force constants:
 

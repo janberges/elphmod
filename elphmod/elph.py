@@ -440,7 +440,6 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0):
     # from g(nrr_g, nmodes, nrr_k,  nbndsub, nbndsub)
     # to   g(nrr_g, nmodes, nk, nk, nbndsub, nbndsub)
 
-
     g_new = np.empty((nrr_g, nmodes, nk, nk, nbndsub, nbndsub), dtype=complex)
 
     tmp = np.empty_like(g)
