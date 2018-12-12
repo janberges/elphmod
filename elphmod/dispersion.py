@@ -128,7 +128,7 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
     return v
 
 def dispersion_full(matrix, size, angle=60, vectors=False, gauge=False,
-        rotate=False, order=False, broadcast=True):
+        rotate=False, order=False, hermitian=True, broadcast=True):
     """Diagonalize Hamiltonian or dynamical matrix on uniform k-point mesh."""
 
     # choose irreducible set of k points:
@@ -155,7 +155,7 @@ def dispersion_full(matrix, size, angle=60, vectors=False, gauge=False,
     if order or vectors:
         v, V = dispersion(matrix, 2 * np.pi / size * k, angle=angle,
             vectors=True, gauge=gauge, rotate=rotate, order=False,
-            broadcast=False)
+            hermitian=hermitian, broadcast=False)
 
         # order bands along spider-web-like paths:
         #
@@ -207,7 +207,7 @@ def dispersion_full(matrix, size, angle=60, vectors=False, gauge=False,
     else:
         v = dispersion(matrix, 2 * np.pi / size * k, angle=angle,
             vectors=False, gauge=False, rotate=False, order=False,
-            broadcast=True)
+            hermitian=hermitian, broadcast=True)
 
     # fill uniform mesh with data from irreducible wedge:
 
