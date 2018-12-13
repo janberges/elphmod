@@ -8,8 +8,43 @@ comm = MPI.comm
 
 def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
         order=False, hermitian=True, broadcast=True):
-    """Diagonalize Hamiltonian or dynamical matrix for given k points."""
+    """Diagonalize Hamiltonian or dynamical matrix for given k points.
 
+    Parameters
+    ----------
+    matrix : function
+        Matrix to be diagonalized as a function of k in crystal coordinates with
+        period 2 pi. The order of the returned square matrix must be provided by
+        setting the attribute 'size'.
+    k : list of 2-tuples
+        k points in crystal coordinates with period 2 pi.
+    angle : float
+        Angle between the axes of the reciprocal lattice.
+    vectors : bool
+        Return eigenvectors?
+    gauge : bool
+        Choose largest element of each eigenvector to be real? Not stable!
+    rotate : bool
+        Align (phonon) eigenvectors with wave vector k via in-plane rotation.
+        This is experimental and supposed to support the band-order algorithm.
+    order : bool
+        Order/disentangle bands via their k-local character. Depending on the
+        topology of the band structure, this may not be possible.
+    hermitian : bool
+        Assume `matrix` to be Hermitian? Currently, only the real part of the
+        eigenvalues of non-Hermitian matrices is returned.
+    broadcast : bool
+        Broadcast result from rank 0 to all processes?
+
+    Returns
+    -------
+    ndarray
+        Eigenvalues for the given k points.
+    ndarray, optional
+        Corresponding eigenvectors.
+    ndarray. optional
+        Indices which have been used to order the bands.
+    """
     points = len(k) if comm.rank == 0 else None
     points = comm.bcast(points) # number of k points
 
