@@ -395,6 +395,7 @@ def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
 
     This function still uses Quantum ESPRESSO's tools 'q2qstar.x' and 'q2r.x'.
     These must be available, e.g. by setting the environmental variable $PATH.
+    Important: To run 'elphmod' in parallel, serial QE executables are needed!
 
     Parameters
     ----------
