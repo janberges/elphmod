@@ -655,9 +655,9 @@ def wigner_seitz_x(x, nk, angle=120, at=None, tau=None, epsilon=1e-9):
     elif x == 'q':
         shifts = [tau2 - tau1 for tau1 in tau for tau2 in tau]
 
-    irvec_g  = []
-    ndegen_g = [] # list of dict
-    wslen_g  = dict()
+    irvec_x  = []
+    ndegen_x = [] # list of dict
+    wslen_x  = dict()
 
     for dk in shifts:
         dk1 = np.dot(u1, dk[:2]) / a
@@ -665,19 +665,19 @@ def wigner_seitz_x(x, nk, angle=120, at=None, tau=None, epsilon=1e-9):
 
         irvec, ndegen, wslen = wigner_seitz(nk, angle, -dk1, -dk2, epsilon)
 
-        irvec_g.extend([key for key in irvec if key not in wslen_g])
+        irvec_x.extend([key for key in irvec if key not in wslen_x])
 
-        ndegen_g.append(dict(zip(irvec, ndegen)))
-        wslen_g.update(dict(zip(irvec, wslen)))
+        ndegen_x.append(dict(zip(irvec, ndegen)))
+        wslen_x.update(dict(zip(irvec, wslen)))
 
-    ndegen_g = [[ndegen.get(key, 0) for key in irvec_g] for ndegen in ndegen_g]
-    wslen_g = [wslen_g[key] for key in irvec_g]
+    ndegen_x = [[ndegen.get(key, 0) for key in irvec_x] for ndegen in ndegen_x]
+    wslen_x = [wslen_x[key] for key in irvec_x]
 
     if x == 'q':
-        ndegen_g = np.reshape(ndegen_g, (len(tau), len(tau), len(irvec_g)))
-        ndegen_g = np.transpose(ndegen_g, axes=(1, 0, 2))
+        ndegen_x = np.reshape(ndegen_x, (len(tau), len(tau), len(irvec_x)))
+        ndegen_x = np.transpose(ndegen_x, axes=(1, 0, 2))
 
-    return irvec_g, ndegen_g, wslen_g
+    return irvec_x, ndegen_x, wslen_x
 
 def Fourier_interpolation(data, angle=60, hr_file=None, function=True):
     """Perform Fourier interpolation on triangular or rectangular lattice.
