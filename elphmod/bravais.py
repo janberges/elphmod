@@ -567,6 +567,43 @@ def to_Voronoi(k1, k2, nk, angle=60):
 
     return images
 
+def wigner_seitz_k(nk, angle=120):
+    """Find lattice points in Wigner-Seitz cell (including boundary).
+
+    This function emulates the EPW subroutine 'wigner_seitzk' in 'wigner.f90'.
+
+    Parameters
+    ----------
+    nk : int
+        Number of points per dimension.
+    angle : number
+        Angle between lattice vectors.
+
+    Returns
+    -------
+    list of tuple of int
+        Mesh-point indices ("irvec_kk").
+    list of int
+        Degeneracies ("ndegen_kk").
+    list of float
+        Lattice-vector lengths ("wslen_kk").
+    """
+    points = []
+
+    for k1 in range(nk):
+        for k2 in range(nk):
+            images = to_Voronoi(k1, k2, nk, angle)
+
+            points.extend([(point, len(images)) for point in images])
+
+    points = sorted(points)
+
+    irvec_k, ndegen_k = zip(*points)
+
+    wslen_k = [np.sqrt(squared_distance(k1, k2, angle)) for k1, k2 in irvec_k]
+
+    return irvec_k, ndegen_k, wslen_k
+
 def Fourier_interpolation(data, angle=60, hr_file=None, function=True):
     """Perform Fourier interpolation on triangular or rectangular lattice.
 
