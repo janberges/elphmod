@@ -575,8 +575,6 @@ def to_Voronoi(k1, k2, nk, angle=60, dk1=0, dk2=0, epsilon=0.0):
 def wigner_seitz(nk, dk1=0.0, dk2=0.0, angle=120):
     """Find lattice points in Wigner-Seitz cell (including boundary).
 
-    This function emulates the EPW subroutine 'wigner_seitzk' in 'wigner.f90'.
-
     Parameters
     ----------
     nk : int
@@ -589,11 +587,11 @@ def wigner_seitz(nk, dk1=0.0, dk2=0.0, angle=120):
     Returns
     -------
     list of tuple of int
-        Mesh-point indices ("irvec_kk").
+        Mesh-point indices.
     list of int
-        Degeneracies ("ndegen_kk").
+        Degeneracies.
     list of float
-        Lattice-vector lengths ("wslen_kk").
+        Lattice-vector lengths.
     """
     points = []
 
@@ -605,11 +603,32 @@ def wigner_seitz(nk, dk1=0.0, dk2=0.0, angle=120):
 
     points = sorted(points)
 
-    irvec_k, ndegen_k = zip(*points)
+    irvec, ndegen = zip(*points)
 
-    wslen_k = [np.sqrt(squared_distance(k1, k2, angle)) for k1, k2 in irvec_k]
+    wslen = [np.sqrt(squared_distance(k1, k2, angle)) for k1, k2 in irvec]
 
-    return irvec_k, ndegen_k, wslen_k
+    return irvec, ndegen, wslen
+
+def wigner_seitz_k(nk, angle):
+    """Emulate the EPW subroutine 'wigner_seitzk' in 'wigner.f90'.
+
+    Parameters
+    ----------
+    nk : int
+        Number of points per dimension.
+    angle : number
+        Angle between lattice vectors.
+
+    Returns
+    -------
+    list of tuple of int
+        Mesh-point indices ("irvec_kk").
+    list of int
+        Degeneracies ("ndegen_kk").
+    list of float
+        Lattice-vector lengths ("wslen_kk").
+    """
+    return wigner_seitz(nk, dk1=0, dk2=0, angle=angle)
 
 def Fourier_interpolation(data, angle=60, hr_file=None, function=True):
     """Perform Fourier interpolation on triangular or rectangular lattice.
