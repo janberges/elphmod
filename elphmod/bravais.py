@@ -572,17 +572,17 @@ def to_Voronoi(k1, k2, nk, angle=60, dk1=0, dk2=0, epsilon=0.0):
 
     return images
 
-def wigner_seitz(nk, dk1=0.0, dk2=0.0, angle=120, epsilon=0.0):
+def wigner_seitz(nk, angle=120, dk1=0.0, dk2=0.0, epsilon=0.0):
     """Find lattice points in Wigner-Seitz cell (including boundary).
 
     Parameters
     ----------
     nk : int
         Number of points per dimension.
-    dk1, dk2 : float
-        Shift of Wigner-Seitz cell.
     angle : number
         Angle between lattice vectors.
+    dk1, dk2 : float
+        Shift of Wigner-Seitz cell.
     epsilon : float
         Maxmium absolute difference of "equal" floats.
 
@@ -642,7 +642,7 @@ def wigner_seitz_x(x, nk, angle=120, at=None, tau=None, epsilon=1e-9):
         Lattice-vector lengths.
     """
     if x == 'k':
-        return wigner_seitz(nk, dk1=0.0, dk2=0.0, angle=angle)
+        return wigner_seitz(nk, angle)
 
     t1, t2 = translations(angle)
     u1, u2 = reciprocals(t1, t2)
@@ -663,7 +663,7 @@ def wigner_seitz_x(x, nk, angle=120, at=None, tau=None, epsilon=1e-9):
         dk1 = np.dot(u1, dk[:2]) / a
         dk2 = np.dot(u2, dk[:2]) / a
 
-        irvec, ndegen, wslen = wigner_seitz(nk, -dk1, -dk2, angle, epsilon)
+        irvec, ndegen, wslen = wigner_seitz(nk, angle, -dk1, -dk2, epsilon)
 
         irvec_g.extend([key for key in irvec if key not in wslen_g])
 
