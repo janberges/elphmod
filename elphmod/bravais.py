@@ -630,6 +630,55 @@ def wigner_seitz_k(nk, angle):
     """
     return wigner_seitz(nk, dk1=0, dk2=0, angle=angle)
 
+def wigner_seitz_q(nk, at, tau, angle, epsilon=1e-9):
+    """Emulate the EPW subroutine 'wigner_seitzq' in 'wigner.f90'.
+
+    Parameters
+    ----------
+    nk : int
+        Number of points per dimension.
+    at, tau : ndarray
+        Geometry as returned by `ph.read_flfrc` and `ph.model`.
+    angle : number
+        Angle between lattice vectors.
+
+    Returns
+    -------
+    list of tuple of int
+        Mesh-point indices ("irvec_qq").
+    list of int
+        Degeneracies ("ndegen_qq").
+    list of float
+        Lattice-vector lengths ("wslen_qq").
+    """
+    t1, t2 = translations(angle)
+    u1, u2 = reciprocals(t1, t2)
+
+    a = np.sqrt(np.dot(at[0], at[0]))
+
+    irvec_q  = []
+    ndegen_q = [] # list of dict
+    wslen_q  = dict()
+
+    for dk in tau:
+        for dK in tau:
+            dk1 = np.dot(u1, (dK - dk)[:2]) / a
+            dk2 = np.dot(u2, (dK - dk)[:2]) / a
+
+            irvec, ndegen, wslen = wigner_seitz(nk, -dk1, -dk2, angle, epsilon)
+
+            irvec_q.extend([key for key in irvec if key not in wslen_q])
+
+            ndegen_q.append(dict(zip(irvec, ndegen)))
+            wslen_q.update(dict(zip(irvec, wslen)))
+
+    ndegen_q = [[ndegen.get(key, 0) for key in irvec_q] for ndegen in ndegen_q]
+    ndegen_q = np.reshape(ndegen_q, (len(tau), len(tau), len(irvec_q)))
+    ndegen_q = np.transpose(ndegen_q, axes=(1, 0, 2))
+    wslen_q = [wslen_q[key] for key in irvec_q]
+
+    return irvec_q, ndegen_q, wslen_q
+
 def wigner_seitz_g(nk, at, tau, angle, epsilon=1e-9):
     """Emulate the EPW subroutine 'wigner_seitzg' in 'wigner.f90'.
 
