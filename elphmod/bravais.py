@@ -572,7 +572,7 @@ def to_Voronoi(k1, k2, nk, angle=60, dk1=0, dk2=0, epsilon=0.0):
 
     return images
 
-def wigner_seitz(nk, dk1=0.0, dk2=0.0, angle=120, epsilon=0):
+def wigner_seitz(nk, dk1=0.0, dk2=0.0, angle=120, epsilon=0.0):
     """Find lattice points in Wigner-Seitz cell (including boundary).
 
     Parameters
@@ -583,6 +583,8 @@ def wigner_seitz(nk, dk1=0.0, dk2=0.0, angle=120, epsilon=0):
         Shift of Wigner-Seitz cell.
     angle : number
         Angle between lattice vectors.
+    epsilon : float
+        Maxmium absolute difference of "equal" floats.
 
     Returns
     -------
@@ -609,107 +611,55 @@ def wigner_seitz(nk, dk1=0.0, dk2=0.0, angle=120, epsilon=0):
 
     return irvec, ndegen, wslen
 
-def wigner_seitz_k(nk, angle):
-    """Emulate the EPW subroutine 'wigner_seitzk' in 'wigner.f90'.
+def wigner_seitz_x(x, nk, angle=120, at=None, tau=None, epsilon=1e-9):
+    """Emulate the EPW subroutine 'wigner_seitz{x}' in 'wigner.f90'.
 
     Parameters
     ----------
+    x : str
+        Type of Wigner-Seitz cell:
+
+            'k': cell-centered
+            'q': bond-centered
+            'g': atom-centered
+
     nk : int
         Number of points per dimension.
     angle : number
         Angle between lattice vectors.
-
-    Returns
-    -------
-    list of tuple of int
-        Mesh-point indices ("irvec_kk").
-    list of int
-        Degeneracies ("ndegen_kk").
-    list of float
-        Lattice-vector lengths ("wslen_kk").
-    """
-    return wigner_seitz(nk, dk1=0, dk2=0, angle=angle)
-
-def wigner_seitz_q(nk, at, tau, angle, epsilon=1e-9):
-    """Emulate the EPW subroutine 'wigner_seitzq' in 'wigner.f90'.
-
-    Parameters
-    ----------
-    nk : int
-        Number of points per dimension.
     at, tau : ndarray
         Geometry as returned by `ph.read_flfrc` and `ph.model`.
-    angle : number
-        Angle between lattice vectors.
+    epsilon : float
+        Maxmium absolute difference of "equal" floats.
 
     Returns
     -------
     list of tuple of int
-        Mesh-point indices ("irvec_qq").
+        Mesh-point indices.
     list of int
-        Degeneracies ("ndegen_qq").
+        Degeneracies.
     list of float
-        Lattice-vector lengths ("wslen_qq").
+        Lattice-vector lengths.
     """
+    if x == 'k':
+        return wigner_seitz(nk, dk1=0.0, dk2=0.0, angle=angle)
+
     t1, t2 = translations(angle)
     u1, u2 = reciprocals(t1, t2)
 
     a = np.sqrt(np.dot(at[0], at[0]))
 
-    irvec_q  = []
-    ndegen_q = [] # list of dict
-    wslen_q  = dict()
+    if x == 'g':
+        shifts = tau
 
-    for dk in tau:
-        for dK in tau:
-            dk1 = np.dot(u1, (dK - dk)[:2]) / a
-            dk2 = np.dot(u2, (dK - dk)[:2]) / a
-
-            irvec, ndegen, wslen = wigner_seitz(nk, -dk1, -dk2, angle, epsilon)
-
-            irvec_q.extend([key for key in irvec if key not in wslen_q])
-
-            ndegen_q.append(dict(zip(irvec, ndegen)))
-            wslen_q.update(dict(zip(irvec, wslen)))
-
-    ndegen_q = [[ndegen.get(key, 0) for key in irvec_q] for ndegen in ndegen_q]
-    ndegen_q = np.reshape(ndegen_q, (len(tau), len(tau), len(irvec_q)))
-    ndegen_q = np.transpose(ndegen_q, axes=(1, 0, 2))
-    wslen_q = [wslen_q[key] for key in irvec_q]
-
-    return irvec_q, ndegen_q, wslen_q
-
-def wigner_seitz_g(nk, at, tau, angle, epsilon=1e-9):
-    """Emulate the EPW subroutine 'wigner_seitzg' in 'wigner.f90'.
-
-    Parameters
-    ----------
-    nk : int
-        Number of points per dimension.
-    at, tau : ndarray
-        Geometry as returned by `ph.read_flfrc` and `ph.model`.
-    angle : number
-        Angle between lattice vectors.
-
-    Returns
-    -------
-    list of tuple of int
-        Mesh-point indices ("irvec_gg").
-    list of int
-        Degeneracies ("ndegen_gg").
-    list of float
-        Lattice-vector lengths ("wslen_gg").
-    """
-    t1, t2 = translations(angle)
-    u1, u2 = reciprocals(t1, t2)
-
-    a = np.sqrt(np.dot(at[0], at[0]))
+    elif x == 'q':
+        shifts = [tau2 - tau1 for tau1 in tau for tau2 in tau]
 
     irvec_g  = []
     ndegen_g = [] # list of dict
     wslen_g  = dict()
 
-    for dk in tau:
+    for dk in shifts:
         dk1 = np.dot(u1, dk[:2]) / a
         dk2 = np.dot(u2, dk[:2]) / a
 
@@ -722,6 +672,10 @@ def wigner_seitz_g(nk, at, tau, angle, epsilon=1e-9):
 
     ndegen_g = [[ndegen.get(key, 0) for key in irvec_g] for ndegen in ndegen_g]
     wslen_g = [wslen_g[key] for key in irvec_g]
+
+    if x == 'q':
+        ndegen_g = np.reshape(ndegen_g, (len(tau), len(tau), len(irvec_g)))
+        ndegen_g = np.transpose(ndegen_g, axes=(1, 0, 2))
 
     return irvec_g, ndegen_g, wslen_g
 
