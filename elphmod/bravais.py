@@ -537,7 +537,7 @@ def squared_distance(k1, k2, angle=60):
 
     return k1 * k1 + k2 * k2 + sgn * k1 * k2
 
-def to_Voronoi(k1, k2, nk, angle=60):
+def to_Voronoi(k1, k2, nk, angle=60, dk1=0, dk2=0, epsilon=0.0):
     """Map any lattice point to the Voronoi cell* around the origin.
 
     (*) Wigner-Seitz cell/Brillouin zone for Bravais/reciprocal lattice.
@@ -550,6 +550,10 @@ def to_Voronoi(k1, k2, nk, angle=60):
         Number of points per dimension.
     angle : number
         Angle between lattice vectors.
+    dk1, dk2 : number
+        Shift of Voronoi cell.
+    epsilon : float
+        Maxmium absolute difference of "equal" floats.
 
     Returns
     -------
@@ -560,14 +564,15 @@ def to_Voronoi(k1, k2, nk, angle=60):
     k2 %= nk
 
     images = [(k1, k2), (k1 - nk, k2), (k1, k2 - nk), (k1 - nk, k2 - nk)]
-    distances = [squared_distance(*image, angle=angle) for image in images]
+    distances = [squared_distance(k1 - dk1, k2 - dk2, angle=angle)
+        for k1, k2 in images]
     minimum = min(distances)
     images = {image for image, distance in zip(images, distances)
-        if distance == minimum}
+        if abs(distance - minimum) <= epsilon}
 
     return images
 
-def wigner_seitz_k(nk, angle=120):
+def wigner_seitz(nk, dk1=0.0, dk2=0.0, angle=120):
     """Find lattice points in Wigner-Seitz cell (including boundary).
 
     This function emulates the EPW subroutine 'wigner_seitzk' in 'wigner.f90'.
@@ -576,6 +581,8 @@ def wigner_seitz_k(nk, angle=120):
     ----------
     nk : int
         Number of points per dimension.
+    dk1, dk2 : float
+        Shift of Wigner-Seitz cell.
     angle : number
         Angle between lattice vectors.
 
@@ -592,7 +599,7 @@ def wigner_seitz_k(nk, angle=120):
 
     for k1 in range(nk):
         for k2 in range(nk):
-            images = to_Voronoi(k1, k2, nk, angle)
+            images = to_Voronoi(k1 - dk1, k2 - dk2, nk, angle)
 
             points.extend([(point, len(images)) for point in images])
 
