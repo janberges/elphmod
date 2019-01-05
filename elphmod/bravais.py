@@ -572,7 +572,7 @@ def to_Voronoi(k1, k2, nk, angle=60, dk1=0, dk2=0, epsilon=0.0):
 
     return images
 
-def wigner_seitz(nk, dk1=0.0, dk2=0.0, angle=120):
+def wigner_seitz(nk, dk1=0.0, dk2=0.0, angle=120, epsilon=0):
     """Find lattice points in Wigner-Seitz cell (including boundary).
 
     Parameters
@@ -597,7 +597,7 @@ def wigner_seitz(nk, dk1=0.0, dk2=0.0, angle=120):
 
     for k1 in range(nk):
         for k2 in range(nk):
-            images = to_Voronoi(k1 - dk1, k2 - dk2, nk, angle)
+            images = to_Voronoi(k1, k2, nk, angle, dk1, dk2, epsilon)
 
             points.extend([(point, len(images)) for point in images])
 
@@ -629,6 +629,52 @@ def wigner_seitz_k(nk, angle):
         Lattice-vector lengths ("wslen_kk").
     """
     return wigner_seitz(nk, dk1=0, dk2=0, angle=angle)
+
+def wigner_seitz_g(nk, at, tau, angle, epsilon=1e-9):
+    """Emulate the EPW subroutine 'wigner_seitzg' in 'wigner.f90'.
+
+    Parameters
+    ----------
+    nk : int
+        Number of points per dimension.
+    at, tau : ndarray
+        Geometry as returned by `ph.read_flfrc` and `ph.model`.
+    angle : number
+        Angle between lattice vectors.
+
+    Returns
+    -------
+    list of tuple of int
+        Mesh-point indices ("irvec_gg").
+    list of int
+        Degeneracies ("ndegen_gg").
+    list of float
+        Lattice-vector lengths ("wslen_gg").
+    """
+    t1, t2 = translations(angle)
+    u1, u2 = reciprocals(t1, t2)
+
+    a = np.sqrt(np.dot(at[0], at[0]))
+
+    irvec_g  = []
+    ndegen_g = [] # list of dict
+    wslen_g  = dict()
+
+    for dk in tau:
+        dk1 = np.dot(u1, dk[:2]) / a
+        dk2 = np.dot(u2, dk[:2]) / a
+
+        irvec, ndegen, wslen = wigner_seitz(nk, -dk1, -dk2, angle, epsilon)
+
+        irvec_g.extend([key for key in irvec if key not in wslen_g])
+
+        ndegen_g.append(dict(zip(irvec, ndegen)))
+        wslen_g.update(dict(zip(irvec, wslen)))
+
+    ndegen_g = [[ndegen.get(key, 0) for key in irvec_g] for ndegen in ndegen_g]
+    wslen_g = [wslen_g[key] for key in irvec_g]
+
+    return irvec_g, ndegen_g, wslen_g
 
 def Fourier_interpolation(data, angle=60, hr_file=None, function=True):
     """Perform Fourier interpolation on triangular or rectangular lattice.
