@@ -48,12 +48,12 @@ if comm.rank == 0:
     ax1.set_xticks(x[GMKG])
     ax1.set_xticklabels('GMKG')
 
-    for i in range(H.size):
-        X, Y = elphmod.plot.compline(x, eps[:, i],
-            0.05 * (psi[:, :, i] * psi[:, :, i].conj()).real)
+    for n in range(H.size):
+        X, Y = elphmod.plot.compline(x, eps[:, n],
+            0.05 * (psi[:, :, n] * psi[:, :, n].conj()).real)
 
-        for j in range(H.size):
-            ax1.fill(X, Y[j], color='RCB'[j])
+        for i in range(3):
+            ax1.fill(X, Y[i], color='RCB'[i])
 
     ax2.fill(DOS, e, color='C')
 
