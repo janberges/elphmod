@@ -347,7 +347,8 @@ def read(filename, nq, bands):
 
     return elph
 
-def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0):
+def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0,
+        displacement_basis=True, ifc=None):
     """Simulate second part of EPW: coarse Wannier to fine Bloch basis.
 
     Only the transformation from the displacement to the mode basis is omitted.
@@ -355,9 +356,9 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0):
 
     Parameters
     ----------
-    epmatwp : string
+    epmatwp : str
         File with electron-phonon coupling in Wannier basis produced by EPW.
-    wigner : string
+    wigner : str
         File with lattice vectors in Wigner-Seitz cell belonging to 'epmatwp'.
 
         This file is not produced by EPW by default. It contains the variables
@@ -369,8 +370,9 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0):
         which are allocated and calculated in the EPW source file 'wigner.f90',
         in the given order and in binary representation without any separators.
 
-    wannier : File with Wannier Hamiltonian.
-    outdir : string
+    wannier : str
+        File with Wannier Hamiltonian.
+    outdir : str
         Directory where the following output files are stored:
 
             FILENAME             CONTENT                    TO BE READ BY
@@ -390,6 +392,10 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0):
         Index of electron band for which to calculate results.
     mu : float, optional
         Fermi level to be subtracted from electron energies before saving.
+    displacement_basis : bool, optional
+        Stay in the displacement basis or transform to mode basis?
+    ifc : str, optional
+        File with interatomic force constants.
     """
     nat = nmodes // 3
 
@@ -517,6 +523,22 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0):
 
     g = g_new
 
+    if not displacement_basis:
+        # phonons 2: transform from displacement to mode basis:
+        #
+        # from g(len(q), nmodes, nk, nk)
+        # to   g(len(q), nmodes, nk, nk) (different meaning of 2nd index)
+
+        phid, amass, at, tau = elphmod.ph.model(ifc, apply_asr=True)
+        D = elphmod.ph.dynamical_matrix(phid, amass, at, tau)
+
+        w2, u = elphmod.dispersion.dispersion(D, q, vectors=True)
+
+        for na in range(nat):
+            uq[:, 3 * na:3 * na + 3] /= np.sqrt(amass[na])
+
+        g = np.einsum('qikl,qin->qnkl', g, u)
+
     # Write results to disk:
 
     for iq in range(len(q)):
@@ -528,11 +550,12 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0):
     #    w:      k-point weight
     #    n:      1st electronic band index
     #    m:      2nd electronic band index
-    #    i:      atomic displacement index
+    #    i:      %s index
     #    ElPh:   <k+q m| dV/du(q, i) |k n>
     #
     #k1 k2 k3  w  n  m  i        Re[ElPh]        Im[ElPh]
-    #----------------------------------------------------""")
+    #----------------------------------------------------"""
+        % ('atomic displacement' if displacement_basis else 'phonon mode'))
 
             for k1 in range(nk):
                 for k2 in range(nk):
