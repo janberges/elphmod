@@ -679,6 +679,28 @@ def wigner_seitz_x(x, nk, angle=120, at=None, tau=None, epsilon=1e-9):
 
     return irvec_x, ndegen_x, wslen_x
 
+def write_wigner_file(name, nk, nq, angle=120, at=None, tau=None, epsilon=1e-9):
+    """Write binary file with Wigner-Seitz data as used by EPW.
+
+    See also
+    --------
+    bravais.wigner_seitz_x, elph.epw
+    """
+    integer = np.int32
+    double  = np.float64
+
+    with open(name, 'wb') as data:
+        for x, nx in zip('kqg', [nk, nq, nq]):
+            irvec, ndegen, wslen = wigner_seitz_x(x, nx,
+                angle, at, tau, epsilon)
+
+            irvec = np.insert(irvec, obj=-1, values=0, axis=1) # 2D to 3D
+
+            np.array(len(irvec), dtype=integer).tofile(data)
+            np.array(    irvec,  dtype=integer).tofile(data)
+            np.array(   ndegen,  dtype=integer).tofile(data)
+            np.array(    wslen,  dtype=double ).tofile(data)
+
 def Fourier_interpolation(data, angle=60, hr_file=None, function=True):
     """Perform Fourier interpolation on triangular or rectangular lattice.
 
