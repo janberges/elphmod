@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from . import bravais, dispersion, el, MPI
+from . import bravais, dispersion, el, MPI, ph
 comm = MPI.comm
 
 def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
@@ -529,13 +529,15 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0,
         # from g(len(q), nmodes, nk, nk)
         # to   g(len(q), nmodes, nk, nk) (different meaning of 2nd index)
 
-        phid, amass, at, tau = elphmod.ph.model(ifc, apply_asr=True)
-        D = elphmod.ph.dynamical_matrix(phid, amass, at, tau)
+        print('Displacement to mode..')
 
-        w2, u = elphmod.dispersion.dispersion(D, q, vectors=True)
+        phid, amass, at, tau = ph.model(ifc, apply_asr=True)
+        D = ph.dynamical_matrix(phid, amass, at, tau)
+
+        w2, u = dispersion.dispersion(D, q, vectors=True)
 
         for na in range(nat):
-            uq[:, 3 * na:3 * na + 3] /= np.sqrt(amass[na])
+            u[:, 3 * na:3 * na + 3] /= np.sqrt(amass[na])
 
         g = np.einsum('qikl,qin->qnkl', g, u)
 
