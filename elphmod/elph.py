@@ -548,59 +548,59 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0,
     for iq in range(len(q)):
         with open('%s/el-ph-%d.dat' % (outdir, iq + 1), 'w') as data:
             data.write("""#
-    #  Electron-phonon matrix elements
-    #
-    #    k1,2,3: k-point indices
-    #    w:      k-point weight
-    #    n:      1st electronic band index
-    #    m:      2nd electronic band index
-    #    i:      %s index
-    #    ElPh:   <k+q m| dV/du(q, i) |k n>
-    #
-    #k1 k2 k3  w  n  m  i        Re[ElPh]        Im[ElPh]
-    #----------------------------------------------------"""
+#  Electron-phonon matrix elements
+#
+#    k1,2,3: k-point indices
+#    w:      k-point weight
+#    n:      1st electronic band index
+#    m:      2nd electronic band index
+#    i:      %s index
+#    ElPh:   <k+q m| dV/du(q, i) |k n>
+#
+#k1 k2 k3  w  n  m  i        Re[ElPh]        Im[ElPh]
+#----------------------------------------------------"""
         % ('atomic displacement' if displacement_basis else 'phonon mode'))
 
             for k1 in range(nk):
                 for k2 in range(nk):
                     for i in range(nmodes):
                         data.write("""
-    %3d%3d%3d%3d%3d%3d%3d%16.8E%16.8E""" % (k1 + 1, k2 + 1, 1, 1, 1, 1, i + 1,
+%3d%3d%3d%3d%3d%3d%3d%16.8E%16.8E""" % (k1 + 1, k2 + 1, 1, 1, 1, 1, i + 1,
                             g[iq, i, k1, k2].real, g[iq, i, k1, k2].imag))
 
     with open('%s/eigenvectors.dat' % outdir, 'w') as data:
         data.write("""#
-    #  Eigenvectors of Wannier Hamiltonian
-    #
-    #    k1,2,3: k-point indices
-    #    a:      orbital index
-    #    n:      band index
-    #    U:      <k a|k n>
-    #
-    #k1 k2 k3  a  n           Re[U]           Im[U]
-    #----------------------------------------------""")
+#  Eigenvectors of Wannier Hamiltonian
+#
+#    k1,2,3: k-point indices
+#    a:      orbital index
+#    n:      band index
+#    U:      <k a|k n>
+#
+#k1 k2 k3  a  n           Re[U]           Im[U]
+#----------------------------------------------""")
 
         for k1 in range(nk):
             for k2 in range(nk):
                 for a in range(nbndsub):
                     data.write("""
-    %3d%3d%3d%3d%3d%16.8E%16.8E""" % (k1 + 1, k2 + 1, 1, a + 1, 1,
+%3d%3d%3d%3d%3d%16.8E%16.8E""" % (k1 + 1, k2 + 1, 1, a + 1, 1,
                         U[k1, k2, a, n].real, U[k1, k2, a, n].imag))
 
     e -= mu
 
     with open('%s/eigenvalues.dat' % outdir, 'w') as data:
         data.write("""#
-    #  Eigenvalues of Wannier Hamiltonian
-    #
-    #    k1,2,3: k-point indices
-    #    n:      band index
-    #    eps:    <k n|H|k n>
-    #
-    #k1 k2 k3  n             eps
-    #---------------------------""")
+#  Eigenvalues of Wannier Hamiltonian
+#
+#    k1,2,3: k-point indices
+#    n:      band index
+#    eps:    <k n|H|k n>
+#
+#k1 k2 k3  n             eps
+#---------------------------""")
 
         for k1 in range(nk):
             for k2 in range(nk):
                 data.write("""
-    %3d%3d%3d%3d%16.8E""" % (k1 + 1, k2 + 1, 1, 1, e[k1, k2, n]))
+%3d%3d%3d%3d%16.8E""" % (k1 + 1, k2 + 1, 1, 1, e[k1, k2, n]))
