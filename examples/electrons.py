@@ -16,9 +16,9 @@ H = elphmod.el.hamiltonian('data/NbSe2_hr.dat')
 
 info("Diagonalize Hamiltonian along G-M-K-G..")
 
-q, x, GMKG = elphmod.bravais.GMKG(120, corner_indices=True)
+k, x, GMKG = elphmod.bravais.GMKG(120, corner_indices=True)
 
-eps, psi, order = elphmod.dispersion.dispersion(H, q, vectors=True, order=True)
+eps, psi, order = elphmod.dispersion.dispersion(H, k, vectors=True, order=True)
 
 eps -= eF
 
@@ -67,7 +67,7 @@ info("Calculate electron susceptibility along G-M-K-G..")
 
 chi = elphmod.diagrams.susceptibility(eps_dense)
 
-chi_q = elphmod.dispersion.dispersion(chi, q[1:-1], broadcast=False)
+chi_q = elphmod.dispersion.dispersion(chi, k[1:-1], broadcast=False)
 
 if comm.rank == 0:
     plt.xlabel('wave vector')
