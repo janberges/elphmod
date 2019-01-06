@@ -354,6 +354,8 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0,
     Only the transformation from the displacement to the mode basis is omitted.
     The purpose of this routine is full control of the coupling's complex phase.
 
+    TO DO: This function must be properly parallelized!
+
     Parameters
     ----------
     epmatwp : str
