@@ -348,7 +348,7 @@ def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
         same value as `data[i, j]`. Thus the data array is "generalized" with
         respect to fractional indices.
 
-    See also
+    See Also
     --------
     stack : Condese point cloud on periodic axis.
     resize : Compress or strech data via linear interpolation.
@@ -682,7 +682,7 @@ def wigner_seitz_x(x, nk, angle=120, at=None, tau=None, epsilon=1e-9):
 def write_wigner_file(name, nk, nq, angle=120, at=None, tau=None, epsilon=1e-9):
     """Write binary file with Wigner-Seitz data as used by EPW.
 
-    See also
+    See Also
     --------
     bravais.wigner_seitz_x, elph.epw
     """
@@ -722,7 +722,7 @@ def Fourier_interpolation(data, angle=60, hr_file=None, function=True):
         same value as `data[i, j]`. Thus the data array is "generalized" with
         respect to fractional indices.
 
-    See also
+    See Also
     --------
     linear_interpolation : Alternative interpolation routine.
     """

@@ -355,7 +355,7 @@ def phonon_self_energy2(q, e, g2, T=100.0, nmats=1000, hyb_width=1.0,
     ndarray
         Phonon self-energy.
 
-    See also
+    See Also
     --------
     susceptibility2 : Similar function with `g2` set to one.
     """
