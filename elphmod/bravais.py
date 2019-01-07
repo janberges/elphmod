@@ -611,7 +611,7 @@ def wigner_seitz(nk, angle=120, dk1=0.0, dk2=0.0, epsilon=0.0):
 
     return irvec, ndegen, wslen
 
-def wigner_seitz_x(x, nk, angle=120, at=None, tau=None, epsilon=1e-9):
+def wigner_seitz_x(x, nk, angle=120, at=None, tau=None, epsilon=1e-8):
     """Emulate the EPW subroutine 'wigner_seitz{x}' in 'wigner.f90'.
 
     Parameters
@@ -679,7 +679,7 @@ def wigner_seitz_x(x, nk, angle=120, at=None, tau=None, epsilon=1e-9):
 
     return irvec_x, ndegen_x, wslen_x
 
-def write_wigner_file(name, nk, nq, angle=120, at=None, tau=None, epsilon=1e-9):
+def write_wigner_file(name, nk, nq, angle=120, at=None, tau=None, epsilon=1e-8):
     """Write binary file with Wigner-Seitz data as used by EPW.
 
     See Also
@@ -694,7 +694,7 @@ def write_wigner_file(name, nk, nq, angle=120, at=None, tau=None, epsilon=1e-9):
             irvec, ndegen, wslen = wigner_seitz_x(x, nx,
                 angle, at, tau, epsilon)
 
-            irvec = np.insert(irvec, obj=-1, values=0, axis=1) # 2D to 3D
+            irvec = np.insert(irvec, obj=2, values=0, axis=1) # 2D to 3D
 
             np.array(len(irvec), dtype=integer).tofile(data)
             np.array(    irvec,  dtype=integer).tofile(data)
