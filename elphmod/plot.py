@@ -1,7 +1,11 @@
 #/usr/bin/env python
 
 import numpy as np
-from scipy.misc import toimage
+
+try:
+    from scipy.misc import toimage
+except:
+    pass
 
 from . import bravais, MPI
 comm = MPI.comm
