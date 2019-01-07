@@ -564,6 +564,10 @@ def to_Voronoi(k1, k2, nk, angle=60, dk1=0, dk2=0, epsilon=0.0):
     k2 %= nk
 
     images = [(k1, k2), (k1 - nk, k2), (k1, k2 - nk), (k1 - nk, k2 - nk)]
+
+    if nk < 3:
+        images.extend([(k1 + nk, k2), (k1, k2 + nk), (k1 + nk, k2 + nk)])
+
     distances = [squared_distance(k1 - dk1, k2 - dk2, angle=angle)
         for k1, k2 in images]
     minimum = min(distances)
