@@ -109,6 +109,8 @@ def read_EPW_output(epw_out, q, nq, nb, nk, bands=1,
     elph = np.empty((len(q), nb, bands, bands, nk, nk),
         dtype=complex if epf else float)
 
+    q = [(q1, q2) for q1, q2 in q]
+
     if comm.rank == 0:
         q_set = set(q)
 
