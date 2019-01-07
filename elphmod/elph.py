@@ -408,29 +408,9 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0,
 
     # read lattice vectors within Wigner-Seitz cell:
 
-    with open(wigner, 'rb') as data:
-        integer = np.int32
-        double  = np.float64
-
-        nrr_k    = np.fromfile(data, integer, 1)[0]
-        irvec_k  = np.fromfile(data, integer, nrr_k * 3)
-        irvec_k  = irvec_k.reshape((nrr_k, 3))[:, :2]
-        ndegen_k = np.fromfile(data, integer, nrr_k)
-        wslen_k  = np.fromfile(data, double, nrr_k)
-
-        nrr_q    = np.fromfile(data, integer, 1)[0]
-        irvec_q  = np.fromfile(data, integer, nrr_q * 3)
-        irvec_q  = irvec_q.reshape((nrr_q, 3))[:, :2]
-        ndegen_q = np.fromfile(data, integer, nat * nat * nrr_q)
-        ndegen_q = ndegen_q.reshape((nat, nat, nrr_q))
-        wslen_q  = np.fromfile(data, double, nrr_q)
-
-        nrr_g    = np.fromfile(data, integer, 1)[0]
-        irvec_g  = np.fromfile(data, integer, nrr_g * 3)
-        irvec_g  = irvec_g.reshape((nrr_g, 3))[:, :2]
-        ndegen_g = np.fromfile(data, integer, nat * nrr_g)
-        ndegen_g = ndegen_g.reshape((nat, nrr_g))
-        wslen_g  = np.fromfile(data, double, nrr_g)
+    (nrr_k, irvec_k, ndegen_k, wslen_k,
+     nrr_q, irvec_q, ndegen_q, wslen_q,
+     nrr_g, irvec_g, ndegen_g, wslen_g) = bravais.read_wigner_file(wigner, nat)
 
     # read coupling in Wannier basis from EPW output:
     # ('epmatwp' allocated and printed in 'ephwann_shuffle.f90')

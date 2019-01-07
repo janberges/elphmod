@@ -684,7 +684,7 @@ def write_wigner_file(name, nk, nq, angle=120, at=None, tau=None, epsilon=1e-9):
 
     See Also
     --------
-    bravais.wigner_seitz_x, elph.epw
+    read_wigner_file, wigner_seitz_x, elph.epw
     """
     integer = np.int32
     double  = np.float64
@@ -700,6 +700,49 @@ def write_wigner_file(name, nk, nq, angle=120, at=None, tau=None, epsilon=1e-9):
             np.array(    irvec,  dtype=integer).tofile(data)
             np.array(   ndegen,  dtype=integer).tofile(data)
             np.array(    wslen,  dtype=double ).tofile(data)
+
+def read_wigner_file(name, nat):
+    """Read binary file with Wigner-Seitz data as used by EPW.
+
+    Parameters
+    ----------
+    name : str
+        Name of file with Wigner-Seitz data.
+    nat : int
+        Number of atoms per unit cell.
+
+    See Also
+    --------
+    write_wigner_file, wigner_seitz_x, elph.epw
+    """
+    with open(name, 'rb') as data:
+        integer = np.int32
+        double  = np.float64
+
+        nrr_k    = np.fromfile(data, integer, 1)[0]
+        irvec_k  = np.fromfile(data, integer, nrr_k * 3)
+        irvec_k  = irvec_k.reshape((nrr_k, 3))[:, :2]
+        ndegen_k = np.fromfile(data, integer, nrr_k)
+        wslen_k  = np.fromfile(data, double, nrr_k)
+
+        nrr_q    = np.fromfile(data, integer, 1)[0]
+        irvec_q  = np.fromfile(data, integer, nrr_q * 3)
+        irvec_q  = irvec_q.reshape((nrr_q, 3))[:, :2]
+        ndegen_q = np.fromfile(data, integer, nat * nat * nrr_q)
+        ndegen_q = ndegen_q.reshape((nat, nat, nrr_q))
+        wslen_q  = np.fromfile(data, double, nrr_q)
+
+        nrr_g    = np.fromfile(data, integer, 1)[0]
+        irvec_g  = np.fromfile(data, integer, nrr_g * 3)
+        irvec_g  = irvec_g.reshape((nrr_g, 3))[:, :2]
+        ndegen_g = np.fromfile(data, integer, nat * nrr_g)
+        ndegen_g = ndegen_g.reshape((nat, nrr_g))
+        wslen_g  = np.fromfile(data, double, nrr_g)
+
+    return (
+        nrr_k, irvec_k, ndegen_k, wslen_k,
+        nrr_q, irvec_q, ndegen_q, wslen_q,
+        nrr_g, irvec_g, ndegen_g, wslen_g )
 
 def Fourier_interpolation(data, angle=60, hr_file=None, function=True):
     """Perform Fourier interpolation on triangular or rectangular lattice.
