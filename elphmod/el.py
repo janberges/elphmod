@@ -109,6 +109,32 @@ def read_bands(filband):
 
     return k, bands
 
+def read_bands_plot(filbandgnu, bands):
+    """Read bands from 'filband.gnu' produced by Quantum ESPRESSO's 'bands.x'.
+
+    Parameters
+    ----------
+    filbandgnu : str
+        Name of file with plotted bands.
+    bands : int
+        Number of bands.
+
+    Returns
+    -------
+    ndarray
+        Cumulative reciprocal distance.
+    ndarray
+        Band energies.
+    """
+    k, e = np.loadtxt(filbandgnu).T
+
+    points = k.size // bands
+
+    k = k[:points]
+    e = np.reshape(e, (bands, points)).T
+
+    return k, e
+
 def read_atomic_projections(atomic_proj_xml):
     """Read projected bands from 'outdir/prefix.save/atomic_proj.xml'."""
 
