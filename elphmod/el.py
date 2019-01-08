@@ -83,8 +83,9 @@ def read_bands(filband):
         header = next(data)
 
         # &plot nbnd=  13, nks=  1296 /
-        nbnd = int(header[12:16])
-        nks  = int(header[22:28])
+        _, nbnd, nks = header.split('=')
+        nbnd = int(nbnd[:nbnd.index(',')])
+        nks  = int( nks[: nks.index('/')])
     else:
         nbnd = nks = None
 
@@ -98,9 +99,12 @@ def read_bands(filband):
         for ik in range(nks):
             k[ik] = list(map(float, next(data).split()))
 
-            for lower in range(0, nbnd, 10):
-                bands[lower:lower + 10, ik] \
-                    = list(map(float, next(data).split()))
+            energies = []
+
+            while len(energies) < nbnd:
+                energies.extend(list(map(float, next(data).split())))
+
+            bands[:, ik] = energies
 
         data.close()
 
