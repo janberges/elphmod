@@ -135,6 +135,28 @@ def read_bands_plot(filbandgnu, bands):
 
     return k, e
 
+def read_symmetry_points(bandsout):
+    """Read positions of symmetry points along path.
+
+    Parameters
+    ----------
+    bandsout : str
+        File with standard output from Quantum ESPRESSO's 'bands.x'.
+
+    Returns
+    -------
+    list
+        Positions of symmetry points.
+    """
+    points = []
+
+    with open(bandsout) as data:
+        for line in data:
+            if 'x coordinate' in line:
+                points.append(float(line.split()[-1]))
+
+    return points
+
 def read_atomic_projections(atomic_proj_xml):
     """Read projected bands from 'outdir/prefix.save/atomic_proj.xml'."""
 
