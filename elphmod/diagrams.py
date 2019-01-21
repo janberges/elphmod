@@ -136,13 +136,13 @@ def susceptibility2(e, T=1.0, nmats=1000, hyb_width=1.0, hyb_height=0.0):
 
     return calculate_susceptibility
 
-def polarization(e, c, T=1.0, i0=1e-10j, subspace=None,
+def polarization(e, c, T=1.0, eps=1e-15, subspace=None,
         occupations=occupations.fermi_dirac):
     """Calculate RPA polarization in orbital basis (density-density).
 
         Pi(q, a, b) = 2/N sum[k, n, m]
             <k+q m|k+q a> <k a|k n> <k n|k b> <k+q b|k+q m>
-            [f(k+q, m) - f(k, n)] / [e(k+q, m) - e(k, n) + i0]
+            [f(k+q, m) - f(k, n)] / [e(k+q, m) - e(k, n)]
 
     The resolution in q is limited by the resolution in k.
 
@@ -159,8 +159,8 @@ def polarization(e, c, T=1.0, i0=1e-10j, subspace=None,
         eigenvectors of the Wannier Hamiltonian.
     T : float
         Smearing temperature in K.
-    i0 : imaginary number
-        "Infinitesimal" imaginary number in denominator.
+    eps : float
+        Smallest allowed absolute value of divisor.
     subspace : ndarray or None
         Boolean array to select k points and/or bands in cRPA target subspace.
     occupations : function
@@ -204,11 +204,11 @@ def polarization(e, c, T=1.0, i0=1e-10j, subspace=None,
     k1 = slice(0, nk)
     k2 = k1
 
+    dfde = np.empty((nk, nk))
+
     def calculate_polarization(q1=0, q2=0):
         q1 = int(round(q1 * scale)) % nk
         q2 = int(round(q2 * scale)) % nk
-
-        Gamma = q1 == q2 == 0
 
         kq1 = slice(q1, q1 + nk)
         kq2 = slice(q2, q2 + nk)
@@ -217,13 +217,13 @@ def polarization(e, c, T=1.0, i0=1e-10j, subspace=None,
 
         for n in range(nb):
             for m in range(nb):
-                if Gamma and n == m:
-                    dfde = d[k1, k2, n]
-                else:
-                    df = f[kq1, kq2, m] - f[k1, k2, n]
-                    de = e[kq1, kq2, m] - e[k1, k2, n]
+                df = f[kq1, kq2, m] - f[k1, k2, n]
+                de = e[kq1, kq2, m] - e[k1, k2, n]
 
-                    dfde = df / (de + i0)
+                ok = abs(de) > eps
+
+                dfde[ ok] = df[ok] / de[ok]
+                dfde[~ok] = d[:, :, n][~ok]
 
                 if cRPA:
                     exclude = np.where(
