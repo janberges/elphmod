@@ -350,7 +350,7 @@ def read(filename, nq, bands):
 
     return elph
 
-def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq,
+def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q=None,
         orbital_basis=False, wannier=None, displacement_basis=True, ifc=None):
     """Simulate second part of EPW: coarse Wannier to fine Bloch basis.
 
@@ -389,6 +389,9 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq,
         Number of k points per dimension.
     nq : int
         Number of q points per dimension.
+    q : list of 2-tuples, optional
+        Requested q points in crystal coordinates q1, q2 in [0, 2pi).
+        If not given, the irreducible wedge of the `nq` x `nq` mesh is chosen.
     orbital_basis : bool, optional
         Stay in the orbital basis or transform to band basis?
     wannier : str
@@ -400,10 +403,14 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq,
     """
     nat = nmodes // 3
 
-    # generate same list of irreducible q points as Quantum ESPRESSO:
+    if q is None:
+        # generate same list of irreducible q points as Quantum ESPRESSO:
 
-    q_int = sorted(bravais.irreducibles(nq))
-    q = np.array(q_int, dtype=float) / nq * 2 * np.pi
+        q_int = sorted(bravais.irreducibles(nq))
+        q = np.array(q_int, dtype=float) / nq * 2 * np.pi
+    else:
+        q = np.array(q) % (2 * np.pi)
+        q_int = np.round(q * nq / (2 * np.pi)).astype(int)
 
     # read lattice vectors within Wigner-Seitz cell:
 
