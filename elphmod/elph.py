@@ -557,9 +557,9 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, mu=0.0,
             dtype=np.complex128)
 
         for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
-            my_g[my_iq] = np.einsum('iklnm,in->nklnm', g[iq], u[iq])
+            my_g[my_iq] = np.einsum('iklnm,ij->jklnm', g[iq], u[iq])
 
-        comm.Allgatherv(my_g, (g, sizes, nmodes * nk * nk * nbndsub * nbndsub))
+        comm.Allgatherv(my_g, (g, sizes * nmodes * nk * nk * nbndsub * nbndsub))
 
     # Write results to disk:
 
