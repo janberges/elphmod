@@ -690,20 +690,21 @@ def write_wigner_file(name, nk, nq, angle=120, at=None, tau=None, epsilon=1e-8):
     --------
     read_wigner_file, wigner_seitz_x, elph.epw
     """
-    integer = np.int32
-    double  = np.float64
+    if comm.rank == 0:
+        integer = np.int32
+        double  = np.float64
 
-    with open(name, 'wb') as data:
-        for x, nx in zip('kqg', [nk, nq, nq]):
-            irvec, ndegen, wslen = wigner_seitz_x(x, nx,
-                angle, at, tau, epsilon)
+        with open(name, 'wb') as data:
+            for x, nx in zip('kqg', [nk, nq, nq]):
+                irvec, ndegen, wslen = wigner_seitz_x(x, nx,
+                    angle, at, tau, epsilon)
 
-            irvec = np.insert(irvec, obj=2, values=0, axis=1) # 2D to 3D
+                irvec = np.insert(irvec, obj=2, values=0, axis=1) # 2D to 3D
 
-            np.array(len(irvec), dtype=integer).tofile(data)
-            np.array(    irvec,  dtype=integer).tofile(data)
-            np.array(   ndegen,  dtype=integer).tofile(data)
-            np.array(    wslen,  dtype=double ).tofile(data)
+                np.array(len(irvec), dtype=integer).tofile(data)
+                np.array(    irvec,  dtype=integer).tofile(data)
+                np.array(   ndegen,  dtype=integer).tofile(data)
+                np.array(    wslen,  dtype=double ).tofile(data)
 
 def read_wigner_file(name, nat):
     """Read binary file with Wigner-Seitz data as used by EPW.
@@ -719,34 +720,41 @@ def read_wigner_file(name, nat):
     --------
     write_wigner_file, wigner_seitz_x, elph.epw
     """
-    with open(name, 'rb') as data:
-        integer = np.int32
-        double  = np.float64
+    if comm.rank == 0:
+        with open(name, 'rb') as data:
+            integer = np.int32
+            double  = np.float64
 
-        nrr_k    = np.fromfile(data, integer, 1)[0]
-        irvec_k  = np.fromfile(data, integer, nrr_k * 3)
-        irvec_k  = irvec_k.reshape((nrr_k, 3))[:, :2]
-        ndegen_k = np.fromfile(data, integer, nrr_k)
-        wslen_k  = np.fromfile(data, double, nrr_k)
+            nrr_k    = np.fromfile(data, integer, 1)[0]
+            irvec_k  = np.fromfile(data, integer, nrr_k * 3)
+            irvec_k  = irvec_k.reshape((nrr_k, 3))[:, :2]
+            ndegen_k = np.fromfile(data, integer, nrr_k)
+            wslen_k  = np.fromfile(data, double, nrr_k)
 
-        nrr_q    = np.fromfile(data, integer, 1)[0]
-        irvec_q  = np.fromfile(data, integer, nrr_q * 3)
-        irvec_q  = irvec_q.reshape((nrr_q, 3))[:, :2]
-        ndegen_q = np.fromfile(data, integer, nat * nat * nrr_q)
-        ndegen_q = ndegen_q.reshape((nat, nat, nrr_q))
-        wslen_q  = np.fromfile(data, double, nrr_q)
+            nrr_q    = np.fromfile(data, integer, 1)[0]
+            irvec_q  = np.fromfile(data, integer, nrr_q * 3)
+            irvec_q  = irvec_q.reshape((nrr_q, 3))[:, :2]
+            ndegen_q = np.fromfile(data, integer, nat * nat * nrr_q)
+            ndegen_q = ndegen_q.reshape((nat, nat, nrr_q))
+            wslen_q  = np.fromfile(data, double, nrr_q)
 
-        nrr_g    = np.fromfile(data, integer, 1)[0]
-        irvec_g  = np.fromfile(data, integer, nrr_g * 3)
-        irvec_g  = irvec_g.reshape((nrr_g, 3))[:, :2]
-        ndegen_g = np.fromfile(data, integer, nat * nrr_g)
-        ndegen_g = ndegen_g.reshape((nat, nrr_g))
-        wslen_g  = np.fromfile(data, double, nrr_g)
+            nrr_g    = np.fromfile(data, integer, 1)[0]
+            irvec_g  = np.fromfile(data, integer, nrr_g * 3)
+            irvec_g  = irvec_g.reshape((nrr_g, 3))[:, :2]
+            ndegen_g = np.fromfile(data, integer, nat * nrr_g)
+            ndegen_g = ndegen_g.reshape((nat, nrr_g))
+            wslen_g  = np.fromfile(data, double, nrr_g)
 
-    return (
-        nrr_k, irvec_k, ndegen_k, wslen_k,
-        nrr_q, irvec_q, ndegen_q, wslen_q,
-        nrr_g, irvec_g, ndegen_g, wslen_g )
+        data = (
+            nrr_k, irvec_k, ndegen_k, wslen_k,
+            nrr_q, irvec_q, ndegen_q, wslen_q,
+            nrr_g, irvec_g, ndegen_g, wslen_g )
+    else:
+        data = None
+
+    data = comm.bcast(data)
+
+    return data
 
 def Fourier_interpolation(data, angle=60, hr_file=None, function=True):
     """Perform Fourier interpolation on triangular or rectangular lattice.

@@ -4,6 +4,7 @@ import numpy as np
 
 from . import bravais, dispersion, el, MPI, ph
 comm = MPI.comm
+info = MPI.info
 
 def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
         completion=True, complete_k=False, squeeze=False, status=False,
@@ -353,10 +354,8 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0,
         displacement_basis=True, ifc=None):
     """Simulate second part of EPW: coarse Wannier to fine Bloch basis.
 
-    Only the transformation from the displacement to the mode basis is omitted.
+    The transformation from the displacement to the mode basis may be omitted.
     The purpose of this routine is full control of the coupling's complex phase.
-
-    TO DO: This function must be properly parallelized!
 
     Parameters
     ----------
@@ -417,10 +416,18 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0,
     # read coupling in Wannier basis from EPW output:
     # ('epmatwp' allocated and printed in 'ephwann_shuffle.f90')
 
-    with open(epmatwp) as data:
-        g = np.fromfile(data, dtype=np.complex128)
+    shape = (nrr_g, nmodes, nrr_k, nbndsub, nbndsub)
 
-    g = np.reshape(g, (nrr_g, nmodes, nrr_k, nbndsub, nbndsub))
+    if comm.rank == 0:
+        with open(epmatwp) as data:
+            g = np.fromfile(data, dtype=np.complex128)
+
+        g = np.reshape(g, shape)
+
+    else:
+        g = np.empty(shape, dtype=np.complex128)
+
+    comm.Bcast(g)
 
     # transfrom from Wannier to Bloch basis:
     # (see 'wan2bloch.f90' in EPW 5.0)
@@ -430,37 +437,53 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0,
     # from g(nrr_g, nmodes, nrr_k,  nbndsub, nbndsub)
     # to   g(nrr_g, nmodes, nk, nk, nbndsub, nbndsub)
 
-    g_new = np.empty((nrr_g, nmodes, nk, nk, nbndsub, nbndsub), dtype=complex)
+    info("Real space to k..")
+
+    sizes, bounds = MPI.distribute(nk * nk, bounds=True)
+
+    my_g = np.empty((sizes[comm.rank], nrr_g, nmodes, nbndsub, nbndsub),
+        dtype=np.complex128)
 
     tmp = np.empty_like(g)
 
-    for k1 in range(nk):
-        for k2 in range(nk):
-            print('k = (%d, %d)' % (k1, k2))
+    for my_ik, ik in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
+        k1 = ik // nk
+        k2 = ik % nk
 
-            k = np.array([k1, k2], dtype=float) / nk * 2 * np.pi
+        print('k = (%d, %d)' % (k1, k2))
 
-            for irk in range(nrr_k):
-                tmp[:, :, irk] = g[:, :, irk] \
-                    * np.exp(1j * np.dot(k, irvec_k[irk])) / ndegen_k[irk]
+        k = np.array([k1, k2], dtype=float) / nk * 2 * np.pi
 
-            g_new[:, :, k1, k2] = tmp.sum(axis=2)
+        for irk in range(nrr_k):
+            tmp[:, :, irk] = g[:, :, irk] \
+                * np.exp(1j * np.dot(k, irvec_k[irk])) / ndegen_k[irk]
 
-    g = g_new
+        my_g[my_ik] = tmp.sum(axis=2)
+
+    g = np.empty((nk, nk, nrr_g, nmodes, nbndsub, nbndsub), dtype=np.complex128)
+
+    comm.Allgatherv(my_g, (g, sizes * nrr_g * nmodes * nbndsub * nbndsub))
+
+    g = np.transpose(g, axes=(2, 3, 0, 1, 4, 5))
 
     # phonons 1: transform from real to q space:
     #
     # from g(nrr_g , nmodes, nk, nk, nbndsub, nbndsub)
     # to   g(len(q), nmodes, nk, nk, nbndsub, nbndsub)
 
-    g_new = np.empty((len(q), nmodes, nk, nk, nbndsub, nbndsub), dtype=complex)
+    info("Real space to q..")
+
+    sizes, bounds = MPI.distribute(len(q), bounds=True)
+
+    my_g = np.empty((sizes[comm.rank], nmodes, nk, nk, nbndsub, nbndsub),
+        dtype=np.complex128)
 
     tmp = np.empty_like(g)
     exp = np.empty(nrr_g, dtype=complex)
 
     block = [slice(3 * na, 3 * (na + 1)) for na in range(nat)]
 
-    for iq in range(len(q)):
+    for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         print('q = %d' % iq)
 
         for irg in range(nrr_g):
@@ -473,23 +496,26 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0,
                 else:
                     tmp[irg, block[na]] = 0
 
-        g_new[iq] = tmp.sum(axis=0)
+        my_g[my_iq] = tmp.sum(axis=0)
 
-    g = g_new
+    g = np.empty((len(q), nmodes, nk, nk, nbndsub, nbndsub),
+        dtype=np.complex128)
+
+    comm.Allgatherv(my_g, (g, sizes * nmodes * nk * nk * nbndsub * nbndsub))
 
     # electrons 2: transform from orbital to band basis:
     #
     # from g(len(q), nmodes, nk, nk, nbndsub, nbndsub)
     # to   g(len(q), nmodes, nk, nk) (only to one band currently)
 
-    print('Orbital to band..')
+    info('Orbital to band..')
 
-    g_new = np.empty((len(q), nmodes, nk, nk), dtype=complex)
+    my_g = np.empty((sizes[comm.rank], nmodes, nk, nk), dtype=np.complex128)
 
     H = el.hamiltonian(wannier)
     e, U = dispersion.dispersion_full_nosym(H, nk, vectors=True)
 
-    for iq in range(len(q)):
+    for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         q1, q2 = q_int[iq]
 
         q1 *= nk // nq
@@ -502,10 +528,12 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0,
                 kq2 = (k2 + q2) % nk
 
                 for i in range(nmodes):
-                    g_new[iq, i, k1, k2] = U[k1, k2, :, n].dot(
-                        g[iq, i, k1, k2]).dot(U[kq1, kq2, :, n].conj())
+                    my_g[my_iq, i, k1, k2] = U[k1, k2, :, n].dot(
+                       g[   iq, i, k1, k2]).dot(U[kq1, kq2, :, n].conj())
 
-    g = g_new
+    g = np.empty((len(q), nmodes, nk, nk), dtype=np.complex128)
+
+    comm.Allgatherv(my_g, (g, sizes * nmodes * nk * nk))
 
     if not displacement_basis:
         # phonons 2: transform from displacement to mode basis:
@@ -513,7 +541,7 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0,
         # from g(len(q), nmodes, nk, nk)
         # to   g(len(q), nmodes, nk, nk) (different meaning of 2nd index)
 
-        print('Displacement to mode..')
+        info('Displacement to mode..')
 
         phid, amass, at, tau = ph.model(ifc, apply_asr=True)
         D = ph.dynamical_matrix(phid, amass, at, tau)
@@ -523,9 +551,17 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0,
         for na in range(nat):
             u[:, 3 * na:3 * na + 3] /= np.sqrt(amass[na])
 
-        g = np.einsum('qikl,qin->qnkl', g, u)
+        my_g = np.empty((sizes[comm.rank], nmodes, nk, nk), dtype=np.complex128)
+
+        for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
+            my_g[my_iq] = np.einsum('ikl,in->nkl', g[iq], u[iq])
+
+        comm.Allgatherv(my_g, (g, sizes, nmodes * nk * nk))
 
     # Write results to disk:
+
+    if comm.rank != 0:
+        return
 
     for iq in range(len(q)):
         with open('%s/el-ph-%d.dat' % (outdir, iq + 1), 'w') as data:
