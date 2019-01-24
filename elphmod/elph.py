@@ -354,7 +354,6 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, mu=0.0,
         orbital_basis=False, displacement_basis=True, ifc=None):
     """Simulate second part of EPW: coarse Wannier to fine Bloch basis.
 
-    The transformation from the displacement to the mode basis may be omitted.
     The purpose of this routine is full control of the coupling's complex phase.
 
     Parameters
@@ -505,10 +504,7 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, mu=0.0,
 
     if not orbital_basis:
         # electrons 2: transform from orbital to band basis:
-        #
-        # from g(len(q), nmodes, nk, nk, nbndsub, nbndsub)
-        # to   g(len(q), nmodes, nk, nk, nbndsub, nbndsub) (different meaning of
-        #                                                   last pair of indices)
+        # (the meaning of the last two indices changes)
 
         info('Orbital to band..')
 
@@ -541,10 +537,7 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, mu=0.0,
 
     if not displacement_basis:
         # phonons 2: transform from displacement to mode basis:
-        #
-        # from g(len(q), nmodes, nk, nk, nbndsub, nbndsub)
-        # to   g(len(q), nmodes, nk, nk, nbndsub, nbndsub) (different meaning of
-        #                                                   second index)
+        # (the meaning of the second index changes)
 
         info('Displacement to mode..')
 
