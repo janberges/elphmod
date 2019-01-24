@@ -350,8 +350,8 @@ def read(filename, nq, bands):
 
     return elph
 
-def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, mu=0.0,
-        orbital_basis=False, displacement_basis=True, ifc=None):
+def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, mu=0.0,
+        orbital_basis=False, wannier=None, displacement_basis=True, ifc=None):
     """Simulate second part of EPW: coarse Wannier to fine Bloch basis.
 
     The purpose of this routine is full control of the coupling's complex phase.
@@ -372,8 +372,6 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, mu=0.0,
         which are allocated and calculated in the EPW source file 'wigner.f90',
         in the given order and in binary representation without any separators.
 
-    wannier : str
-        File with Wannier Hamiltonian.
     outdir : str
         Directory where (some of) the following output files are stored:
 
@@ -395,6 +393,8 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, mu=0.0,
         Fermi level to be subtracted from electron energies before saving.
     orbital_basis : bool, optional
         Stay in the orbital basis or transform to band basis?
+    wannier : str
+        File with Wannier Hamiltonian.
     displacement_basis : bool, optional
         Stay in the displacement basis or transform to mode basis?
     ifc : str, optional
