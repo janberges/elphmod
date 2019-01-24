@@ -351,7 +351,7 @@ def read(filename, nq, bands):
     return elph
 
 def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, mu=0.0,
-        displacement_basis=True, ifc=None):
+        orbital_basis=False, displacement_basis=True, ifc=None):
     """Simulate second part of EPW: coarse Wannier to fine Bloch basis.
 
     The transformation from the displacement to the mode basis may be omitted.
@@ -393,6 +393,8 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, mu=0.0,
         Number of q points per dimension.
     mu : float, optional
         Fermi level to be subtracted from electron energies before saving.
+    orbital_basis : bool, optional
+        Stay in the orbital basis or transform to band basis?
     displacement_basis : bool, optional
         Stay in the displacement basis or transform to mode basis?
     ifc : str, optional
@@ -501,40 +503,41 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, mu=0.0,
 
     comm.Allgatherv(my_g, (g, sizes * nmodes * nk * nk * nbndsub * nbndsub))
 
-    # electrons 2: transform from orbital to band basis:
-    #
-    # from g(len(q), nmodes, nk, nk, nbndsub, nbndsub)
-    # to   g(len(q), nmodes, nk, nk, nbndsub, nbndsub) (different meaning of
-    #                                                   last pair of indices)
+    if not orbital_basis:
+        # electrons 2: transform from orbital to band basis:
+        #
+        # from g(len(q), nmodes, nk, nk, nbndsub, nbndsub)
+        # to   g(len(q), nmodes, nk, nk, nbndsub, nbndsub) (different meaning of
+        #                                                   last pair of indices)
 
-    info('Orbital to band..')
+        info('Orbital to band..')
 
-    my_g = np.empty((sizes[comm.rank], nmodes, nk, nk, nbndsub, nbndsub),
-        dtype=np.complex128)
+        my_g = np.empty((sizes[comm.rank], nmodes, nk, nk, nbndsub, nbndsub),
+            dtype=np.complex128)
 
-    H = el.hamiltonian(wannier)
-    e, U = dispersion.dispersion_full_nosym(H, nk, vectors=True)
+        H = el.hamiltonian(wannier)
+        e, U = dispersion.dispersion_full_nosym(H, nk, vectors=True)
 
-    for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
-        q1, q2 = q_int[iq]
+        for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
+            q1, q2 = q_int[iq]
 
-        q1 *= nk // nq
-        q2 *= nk // nq
+            q1 *= nk // nq
+            q2 *= nk // nq
 
-        for k1 in range(nk):
-            kq1 = (k1 + q1) % nk
+            for k1 in range(nk):
+                kq1 = (k1 + q1) % nk
 
-            for k2 in range(nk):
-                kq2 = (k2 + q2) % nk
+                for k2 in range(nk):
+                    kq2 = (k2 + q2) % nk
 
-                for i in range(nmodes):
-                    my_g[my_iq, i, k1, k2] = U[k1, k2].T.dot(
-                       g[   iq, i, k1, k2]).dot(U[kq1, kq2].conj())
+                    for i in range(nmodes):
+                        my_g[my_iq, i, k1, k2] = U[k1, k2].T.dot(
+                           g[   iq, i, k1, k2]).dot(U[kq1, kq2].conj())
 
-    g = np.empty((len(q), nmodes, nk, nk, nbndsub, nbndsub),
-        dtype=np.complex128)
+        g = np.empty((len(q), nmodes, nk, nk, nbndsub, nbndsub),
+            dtype=np.complex128)
 
-    comm.Allgatherv(my_g, (g, sizes * nmodes * nk * nk * nbndsub * nbndsub))
+        comm.Allgatherv(my_g, (g, sizes * nmodes * nk * nk * nbndsub * nbndsub))
 
     if not displacement_basis:
         # phonons 2: transform from displacement to mode basis:
