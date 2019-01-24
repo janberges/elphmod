@@ -351,7 +351,8 @@ def read(filename, nq, bands):
     return elph
 
 def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q=None,
-        orbital_basis=False, wannier=None, displacement_basis=True, ifc=None):
+        orbital_basis=False, wannier=None, displacement_basis=True, ifc=None,
+        read_eigenvectors=False):
     """Simulate second part of EPW: coarse Wannier to fine Bloch basis.
 
     The purpose of this routine is full control of the coupling's complex phase.
@@ -378,7 +379,7 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q=None,
             el-ph-(q point).dat        (to be read by `bravais.coupling`)
             electron_eigenvectors.dat
             electron_eigenvalues.dat
-            phonon_eigenvectors.dat
+            phonon_eigenvectors.dat    (divided by square roots of masses)
             phonon_eigenvalues.dat     (phonon frequencies  s q u a r e d)
 
     nbndsub : int
@@ -400,6 +401,11 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q=None,
         Stay in the displacement basis or transform to mode basis?
     ifc : str, optional
         File with interatomic force constants.
+    read_eigenvectors : bool, optional
+        Read electron and phonon eigenvectors from previously written files
+        instead of calculating them? This option can be used to guarantee the
+        same gauge in different calculations, especially if the implementation
+        of NumPy's diagonalization routines is not deterministic.
     """
     nat = nmodes // 3
 
@@ -517,8 +523,24 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q=None,
         my_g = np.empty((sizes[comm.rank], nmodes, nk, nk, nbndsub, nbndsub),
             dtype=np.complex128)
 
-        H = el.hamiltonian(wannier)
-        e, U = dispersion.dispersion_full_nosym(H, nk, vectors=True)
+        if read_eigenvectors:
+            U = np.empty((nk, nk, nbndsub, nbndsub), dtype=complex)
+
+            if comm.rank == 0:
+                with open('%s/electron_eigenvectors.dat' % outdir) as data:
+                    for line in data:
+                        if not line.startswith('#'):
+                            columns = line.split()
+
+                            k1, k2, _, a, n = [-1 + int(x) for x in columns[:5]]
+                            Re, Im          = [   float(x) for x in columns[5:]]
+
+                            U[k1, k2, a, n] = Re + 1j * Im
+
+            comm.Bcast(U)
+        else:
+            H = el.hamiltonian(wannier)
+            e, U = dispersion.dispersion_full_nosym(H, nk, vectors=True)
 
         for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
             q1, q2 = q_int[iq]
@@ -547,13 +569,29 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q=None,
 
         info('Displacement to mode..')
 
-        phid, amass, at, tau = ph.model(ifc, apply_asr=True)
-        D = ph.dynamical_matrix(phid, amass, at, tau)
+        if read_eigenvectors:
+            u = np.empty((len(q), nmodes, nmodes), dtype=complex)
 
-        w2, u = dispersion.dispersion(D, q, vectors=True)
+            if comm.rank == 0:
+                with open('%s/phonon_eigenvectors.dat' % outdir) as data:
+                    for line in data:
+                        if not line.startswith('#'):
+                            columns = line.split()
 
-        for na in range(nat):
-            u[:, 3 * na:3 * na + 3] /= np.sqrt(amass[na])
+                            iq, x, nu = [-1 + int(x) for x in columns[:3]]
+                            Re, Im    = [   float(x) for x in columns[3:]]
+
+                            u[iq, x, nu] = Re + 1j * Im
+
+            comm.Bcast(u)
+        else:
+            phid, amass, at, tau = ph.model(ifc, apply_asr=True)
+            D = ph.dynamical_matrix(phid, amass, at, tau)
+
+            w2, u = dispersion.dispersion(D, q, vectors=True)
+
+            for na in range(nat):
+                u[:, 3 * na:3 * na + 3] /= np.sqrt(amass[na])
 
         my_g = np.empty((sizes[comm.rank], nmodes, nk, nk, nbndsub, nbndsub),
             dtype=np.complex128)
@@ -596,7 +634,7 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q=None,
                                         g[iq, i, k1, k2, n, m].real,
                                         g[iq, i, k1, k2, n, m].imag))
 
-    if not orbital_basis:
+    if not orbital_basis and not read_eigenvectors:
         with open('%s/electron_eigenvectors.dat' % outdir, 'w') as data:
             data.write("""#
 #  Eigenvectors of Wannier Hamiltonian
@@ -635,7 +673,7 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q=None,
                         data.write("""
 %3d%3d%3d%3d%16.8E""" % (k1 + 1, k2 + 1, 1, n + 1, e[k1, k2, n]))
 
-    if not displacement_basis:
+    if not displacement_basis and not read_eigenvectors:
         with open('%s/phonon_eigenvectors.dat' % outdir, 'w') as data:
             data.write("""#
 #  Eigenvectors of dynamical matrix
