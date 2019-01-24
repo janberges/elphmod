@@ -375,12 +375,13 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, mu=0.0,
     wannier : str
         File with Wannier Hamiltonian.
     outdir : str
-        Directory where the following output files are stored:
+        Directory where (some of) the following output files are stored:
 
-            FILENAME             CONTENT                    TO BE READ BY
-            el-ph-(q point).dat  electron-phonon coupling   bravais.coupling
-            eigenvectors.dat     "orbital band characters"  -
-            eigenvalues.dat      electron energies          -
+            el-ph-(q point).dat        (to be read by `bravais.coupling`)
+            electron_eigenvectors.dat
+            electron_eigenvalues.dat
+            phonon_eigenvectors.dat
+            phonon_eigenvalues.dat     (phonon frequencies  s q u a r e d)
 
     nbndsub : int
         Number of electron bands or Wannier functions.
@@ -591,7 +592,7 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, mu=0.0,
                                         g[iq, i, k1, k2, n, m].imag))
 
     if not orbital_basis:
-        with open('%s/eigenvectors.dat' % outdir, 'w') as data:
+        with open('%s/electron_eigenvectors.dat' % outdir, 'w') as data:
             data.write("""#
 #  Eigenvectors of Wannier Hamiltonian
 #
@@ -614,7 +615,7 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, mu=0.0,
 
         e -= mu
 
-        with open('%s/eigenvalues.dat' % outdir, 'w') as data:
+        with open('%s/electron_eigenvalues.dat' % outdir, 'w') as data:
             data.write("""#
 #  Eigenvalues of Wannier Hamiltonian
 #
@@ -630,3 +631,40 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, mu=0.0,
                     for n in range(nbndsub):
                         data.write("""
 %3d%3d%3d%3d%16.8E""" % (k1 + 1, k2 + 1, 1, n + 1, e[k1, k2, n]))
+
+    if not displacement_basis:
+        with open('%s/phonon_eigenvectors.dat' % outdir, 'w') as data:
+            data.write("""#
+#  Eigenvectors of dynamical matrix
+#
+#    q:  q-point index
+#    x:  atomic displacement index
+#    nu: phonon mode index
+#    u:  <q x|k nu>
+#
+# q  x nu           Re[u]           Im[u]
+#----------------------------------------""")
+
+            for iq in range(len(q)):
+                for x in range(nmodes):
+                    for nu in range(nmodes):
+                        data.write("""
+%3d%3d%3d%16.8E%16.8E""" % (iq + 1, x + 1, nu + 1,
+                            u[iq, x, nu].real,
+                            u[iq, x, nu].imag))
+
+        with open('%s/phonon_eigenvalues.dat' % outdir, 'w') as data:
+            data.write("""#
+#  Eigenvalues of dynamical matrix
+#
+#    q:  q-point index
+#    nu: phonon mode index
+#    w2: <q nu|D|q nu>
+#
+# q nu              w2
+#---------------------""")
+
+            for iq in range(len(q)):
+                for nu in range(nmodes):
+                    data.write("""
+%3d%3d%16.8E""" % (iq + 1, nu + 1, w2[iq, nu]))
