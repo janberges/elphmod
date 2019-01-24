@@ -350,7 +350,7 @@ def read(filename, nq, bands):
 
     return elph
 
-def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, mu=0.0,
+def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq,
         orbital_basis=False, wannier=None, displacement_basis=True, ifc=None):
     """Simulate second part of EPW: coarse Wannier to fine Bloch basis.
 
@@ -389,8 +389,6 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, mu=0.0,
         Number of k points per dimension.
     nq : int
         Number of q points per dimension.
-    mu : float, optional
-        Fermi level to be subtracted from electron energies before saving.
     orbital_basis : bool, optional
         Stay in the orbital basis or transform to band basis?
     wannier : str
@@ -612,8 +610,6 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, mu=0.0,
 %3d%3d%3d%3d%3d%16.8E%16.8E""" % (k1 + 1, k2 + 1, 1, a + 1, n + 1,
                                       U[k1, k2, a, n].real,
                                       U[k1, k2, a, n].imag))
-
-        e -= mu
 
         with open('%s/electron_eigenvalues.dat' % outdir, 'w') as data:
             data.write("""#
