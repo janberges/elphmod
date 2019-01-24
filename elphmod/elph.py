@@ -350,7 +350,7 @@ def read(filename, nq, bands):
 
     return elph
 
-def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0,
+def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, mu=0.0,
         displacement_basis=True, ifc=None):
     """Simulate second part of EPW: coarse Wannier to fine Bloch basis.
 
@@ -391,8 +391,6 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0,
         Number of k points per dimension.
     nq : int
         Number of q points per dimension.
-    n : int
-        Index of electron band for which to calculate results.
     mu : float, optional
         Fermi level to be subtracted from electron energies before saving.
     displacement_basis : bool, optional
@@ -506,11 +504,13 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0,
     # electrons 2: transform from orbital to band basis:
     #
     # from g(len(q), nmodes, nk, nk, nbndsub, nbndsub)
-    # to   g(len(q), nmodes, nk, nk) (only to one band currently)
+    # to   g(len(q), nmodes, nk, nk, nbndsub, nbndsub) (different meaning of
+    #                                                   last pair of indices)
 
     info('Orbital to band..')
 
-    my_g = np.empty((sizes[comm.rank], nmodes, nk, nk), dtype=np.complex128)
+    my_g = np.empty((sizes[comm.rank], nmodes, nk, nk, nbndsub, nbndsub),
+        dtype=np.complex128)
 
     H = el.hamiltonian(wannier)
     e, U = dispersion.dispersion_full_nosym(H, nk, vectors=True)
@@ -528,18 +528,20 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0,
                 kq2 = (k2 + q2) % nk
 
                 for i in range(nmodes):
-                    my_g[my_iq, i, k1, k2] = U[k1, k2, :, n].dot(
-                       g[   iq, i, k1, k2]).dot(U[kq1, kq2, :, n].conj())
+                    my_g[my_iq, i, k1, k2] = U[k1, k2].T.dot(
+                       g[   iq, i, k1, k2]).dot(U[kq1, kq2].conj())
 
-    g = np.empty((len(q), nmodes, nk, nk), dtype=np.complex128)
+    g = np.empty((len(q), nmodes, nk, nk, nbndsub, nbndsub),
+        dtype=np.complex128)
 
-    comm.Allgatherv(my_g, (g, sizes * nmodes * nk * nk))
+    comm.Allgatherv(my_g, (g, sizes * nmodes * nk * nk * nbndsub * nbndsub))
 
     if not displacement_basis:
         # phonons 2: transform from displacement to mode basis:
         #
-        # from g(len(q), nmodes, nk, nk)
-        # to   g(len(q), nmodes, nk, nk) (different meaning of 2nd index)
+        # from g(len(q), nmodes, nk, nk, nbndsub, nbndsub)
+        # to   g(len(q), nmodes, nk, nk, nbndsub, nbndsub) (different meaning of
+        #                                                   second index)
 
         info('Displacement to mode..')
 
@@ -551,12 +553,13 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0,
         for na in range(nat):
             u[:, 3 * na:3 * na + 3] /= np.sqrt(amass[na])
 
-        my_g = np.empty((sizes[comm.rank], nmodes, nk, nk), dtype=np.complex128)
+        my_g = np.empty((sizes[comm.rank], nmodes, nk, nk, nbndsub, nbndsub),
+            dtype=np.complex128)
 
         for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
-            my_g[my_iq] = np.einsum('ikl,in->nkl', g[iq], u[iq])
+            my_g[my_iq] = np.einsum('iklnm,in->nklnm', g[iq], u[iq])
 
-        comm.Allgatherv(my_g, (g, sizes, nmodes * nk * nk))
+        comm.Allgatherv(my_g, (g, sizes, nmodes * nk * nk * nbndsub * nbndsub))
 
     # Write results to disk:
 
@@ -581,10 +584,14 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0,
 
             for k1 in range(nk):
                 for k2 in range(nk):
-                    for i in range(nmodes):
-                        data.write("""
-%3d%3d%3d%3d%3d%3d%3d%16.8E%16.8E""" % (k1 + 1, k2 + 1, 1, 1, 1, 1, i + 1,
-                            g[iq, i, k1, k2].real, g[iq, i, k1, k2].imag))
+                    for n in range(nbndsub):
+                        for m in range(nbndsub):
+                            for i in range(nmodes):
+                                data.write("""
+%3d%3d%3d%3d%3d%3d%3d%16.8E%16.8E""" % (k1 + 1, k2 + 1, 1, 1,
+                                        n + 1, m + 1, i + 1,
+                                        g[iq, i, k1, k2, n, m].real,
+                                        g[iq, i, k1, k2, n, m].imag))
 
     with open('%s/eigenvectors.dat' % outdir, 'w') as data:
         data.write("""#
@@ -601,9 +608,11 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0,
         for k1 in range(nk):
             for k2 in range(nk):
                 for a in range(nbndsub):
-                    data.write("""
-%3d%3d%3d%3d%3d%16.8E%16.8E""" % (k1 + 1, k2 + 1, 1, a + 1, 1,
-                        U[k1, k2, a, n].real, U[k1, k2, a, n].imag))
+                    for n in range(nbndsub):
+                        data.write("""
+%3d%3d%3d%3d%3d%16.8E%16.8E""" % (k1 + 1, k2 + 1, 1, a + 1, n + 1,
+                                  U[k1, k2, a, n].real,
+                                  U[k1, k2, a, n].imag))
 
     e -= mu
 
@@ -620,5 +629,6 @@ def epw(epmatwp, wigner, wannier, outdir, nbndsub, nmodes, nk, nq, n, mu=0.0,
 
         for k1 in range(nk):
             for k2 in range(nk):
-                data.write("""
-%3d%3d%3d%3d%16.8E""" % (k1 + 1, k2 + 1, 1, 1, e[k1, k2, n]))
+                for n in range(nbndsub):
+                    data.write("""
+%3d%3d%3d%3d%16.8E""" % (k1 + 1, k2 + 1, 1, n + 1, e[k1, k2, n]))
