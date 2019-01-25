@@ -539,15 +539,8 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge',
             U = np.empty((nk, nk, nbndsub, nbndsub), dtype=complex)
 
             if comm.rank == 0:
-                with open('%s/electron_eigenvectors.dat' % outdir) as data:
-                    for line in data:
-                        if not line.startswith('#'):
-                            columns = line.split()
-
-                            k1, k2, _, a, n = [-1 + int(x) for x in columns[:5]]
-                            Re, Im          = [   float(x) for x in columns[5:]]
-
-                            U[k1, k2, a, n] = Re + 1j * Im
+                read_electron_eigenvectors(
+                    '%s/electron_eigenvectors.dat' % outdir, U)
 
             comm.Bcast(U)
         else:
@@ -585,15 +578,8 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge',
             u = np.empty((len(q), nmodes, nmodes), dtype=complex)
 
             if comm.rank == 0:
-                with open('%s/phonon_eigenvectors.dat' % outdir) as data:
-                    for line in data:
-                        if not line.startswith('#'):
-                            columns = line.split()
-
-                            iq, x, nu = [-1 + int(x) for x in columns[:3]]
-                            Re, Im    = [   float(x) for x in columns[3:]]
-
-                            u[iq, x, nu] = Re + 1j * Im
+                read_phonon_eigenvectors(
+                    '%s/phonon_eigenvectors.dat' % outdir, u)
 
             comm.Bcast(u)
         else:
@@ -618,8 +604,39 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge',
     if comm.rank != 0:
         return
 
-    for iq in range(len(q)):
-        with open('%s/el-ph-%d.dat' % (outdir, iq + 1), 'w') as data:
+    write_coupling('%s/el-ph-%%d.dat' % outdir, g,
+        orbital_basis, displacement_basis)
+
+    if not orbital_basis and not read_eigenvectors:
+        write_electron_eigenvectors('%s/electron_eigenvectors.dat' % outdir, U)
+        write_electron_eigenvalues('%s/electron_eigenvalues.dat' % outdir, e)
+
+    if not displacement_basis and not read_eigenvectors:
+        write_phonon_eigenvectors('%s/phonon_eigenvectors.dat' % outdir, u)
+        write_phonon_eigenvalues('%s/phonon_eigenvalues.dat' % outdir, w2)
+
+def write_coupling(filename, g, orbital_basis=False, displacement_basis=False):
+    """Write electron-phonon coupling to text file.
+
+    Parameters
+    ----------
+    filename : str
+        Filename with placeholder "%d" for q-point index.
+    g : ndarray
+        Electron-phonon coupling.
+    orbital_basis : bool, optional
+        Coupling given in orbital instead of electron band basis?
+    displacement_basis : bool, optional
+        Coupling given in displacement instead of phonon band basis?
+
+    See Also
+    --------
+    coupling
+    """
+    nQ, nmodes, nk, nk, nbndsub, nbndsub = g.shape
+
+    for iq in range(nQ):
+        with open(filename % (iq + 1), 'w') as data:
             data.write("""#
 #  Electron-phonon matrix elements
 #
@@ -646,9 +663,20 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge',
                                         g[iq, i, k1, k2, n, m].real,
                                         g[iq, i, k1, k2, n, m].imag))
 
-    if not orbital_basis and not read_eigenvectors:
-        with open('%s/electron_eigenvectors.dat' % outdir, 'w') as data:
-            data.write("""#
+def write_electron_eigenvectors(filename, U):
+    """Write eigenvectors of Wannier Hamiltonian to text file.
+
+    Parameters
+    ----------
+    filename : str
+        Name of text file.
+    U : ndarray
+        Eigenvectors on uniform k mesh.
+    """
+    nk, nk, nbndsub, nbnsub = U.shape
+
+    with open(filename, 'w') as data:
+        data.write("""#
 #  Eigenvectors of Wannier Hamiltonian
 #
 #    k1,2,3: k-point indices
@@ -659,17 +687,46 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge',
 #k1 k2 k3  a  n           Re[U]           Im[U]
 #----------------------------------------------""")
 
-            for k1 in range(nk):
-                for k2 in range(nk):
-                    for a in range(nbndsub):
-                        for n in range(nbndsub):
-                            data.write("""
+        for k1 in range(nk):
+            for k2 in range(nk):
+                for a in range(nbndsub):
+                    for n in range(nbndsub):
+                        data.write("""
 %3d%3d%3d%3d%3d%16.8E%16.8E""" % (k1 + 1, k2 + 1, 1, a + 1, n + 1,
-                                      U[k1, k2, a, n].real,
-                                      U[k1, k2, a, n].imag))
+                                  U[k1, k2, a, n].real,
+                                  U[k1, k2, a, n].imag))
 
-        with open('%s/electron_eigenvalues.dat' % outdir, 'w') as data:
-            data.write("""#
+def read_electron_eigenvectors(filename, U):
+    """Read eigenvectors of Wannier Hamiltonian from text file.
+
+    See Also
+    --------
+    write_electron_eigenvectors
+    """
+    with open(filename) as data:
+        for line in data:
+            if not line.startswith('#'):
+                columns = line.split()
+
+                k1, k2, _, a, n = [-1 + int(x) for x in columns[:5]]
+                Re, Im          = [   float(x) for x in columns[5:]]
+
+                U[k1, k2, a, n] = Re + 1j * Im
+
+def write_electron_eigenvalues(filename, e):
+    """Write eigenvalues of Wannier Hamiltonian to text file.
+
+    Parameters
+    ----------
+    filename : str
+        Name of text file.
+    e : ndarray
+        Eigenvalues on uniform k mesh.
+    """
+    nk, nk, nbndsub = e.shape
+
+    with open('%s/electron_eigenvalues.dat' % outdir, 'w') as data:
+        data.write("""#
 #  Eigenvalues of Wannier Hamiltonian
 #
 #    k1,2,3: k-point indices
@@ -679,15 +736,26 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge',
 #k1 k2 k3  n             eps
 #---------------------------""")
 
-            for k1 in range(nk):
-                for k2 in range(nk):
-                    for n in range(nbndsub):
-                        data.write("""
+        for k1 in range(nk):
+            for k2 in range(nk):
+                for n in range(nbndsub):
+                    data.write("""
 %3d%3d%3d%3d%16.8E""" % (k1 + 1, k2 + 1, 1, n + 1, e[k1, k2, n]))
 
-    if not displacement_basis and not read_eigenvectors:
-        with open('%s/phonon_eigenvectors.dat' % outdir, 'w') as data:
-            data.write("""#
+def write_phonon_eigenvectors(filename, u):
+    """Write eigenvectors of dynamical matrix to text file.
+
+    Parameters
+    ----------
+    filename : str
+        Name of text file.
+    u : ndarray
+        Eigenvectors for selected q points.
+    """
+    nQ, nmodes, nmodes = u.shape
+
+    with open('%s/phonon_eigenvectors.dat' % outdir, 'w') as data:
+        data.write("""#
 #  Eigenvectors of dynamical matrix
 #
 #    q:  q-point index
@@ -698,16 +766,45 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge',
 # q  x nu           Re[u]           Im[u]
 #----------------------------------------""")
 
-            for iq in range(len(q)):
-                for x in range(nmodes):
-                    for nu in range(nmodes):
-                        data.write("""
+        for iq in range(nQ):
+            for x in range(nmodes):
+                for nu in range(nmodes):
+                    data.write("""
 %3d%3d%3d%16.8E%16.8E""" % (iq + 1, x + 1, nu + 1,
                             u[iq, x, nu].real,
                             u[iq, x, nu].imag))
 
-        with open('%s/phonon_eigenvalues.dat' % outdir, 'w') as data:
-            data.write("""#
+def read_phonon_eigevectors(filename, u):
+    """Read eigenvectors of dynamical matrix from text file.
+
+    See Also
+    --------
+    write_phonon_eigenvectors
+    """
+    with open('%s/phonon_eigenvectors.dat' % outdir) as data:
+        for line in data:
+            if not line.startswith('#'):
+                columns = line.split()
+
+                iq, x, nu = [-1 + int(x) for x in columns[:3]]
+                Re, Im    = [   float(x) for x in columns[3:]]
+
+                u[iq, x, nu] = Re + 1j * Im
+
+def write_phonon_eigenvalues(filename, w2):
+    """Write eigenvalues of dynamical matrix to text file.
+
+    Parameters
+    ----------
+    filename : str
+        Name of text file.
+    w2 : ndarray
+        Eigenvalues for selected q points.
+    """
+    nQ, nmodes = w2.shape
+
+    with open('%s/phonon_eigenvalues.dat' % outdir, 'w') as data:
+        data.write("""#
 #  Eigenvalues of dynamical matrix
 #
 #    q:  q-point index
@@ -717,7 +814,7 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge',
 # q nu              w2
 #---------------------""")
 
-            for iq in range(len(q)):
-                for nu in range(nmodes):
-                    data.write("""
+        for iq in range(nQ):
+            for nu in range(nmodes):
+                data.write("""
 %3d%3d%16.8E""" % (iq + 1, nu + 1, w2[iq, nu]))
