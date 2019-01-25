@@ -425,13 +425,16 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge',
         # generate same list of irreducible q points as Quantum ESPRESSO:
 
         q_int = sorted(bravais.irreducibles(nq))
+        q_type = q
         q = np.array(q_int, dtype=float) / nq * 2 * np.pi
 
     elif q == 'mesh':
         q_int = [(q1, q2) for q1 in range(nq) for q2 in range(nq)]
+        q_type = q
         q = np.array(q_int, dtype=float) / nq * 2 * np.pi
 
     else:
+        q_type = 'points'
         q = np.array(q) % (2 * np.pi)
         q_int = np.round(q * nq / (2 * np.pi)).astype(int)
 
@@ -602,12 +605,12 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge',
             D = ph.dynamical_matrix(phid, amass, at, tau)
 
             w2, u = dispersion.dispersion(D, q, vectors=True,
-                order=order_phonon_bands and != 'mesh')[:2]
+                order=order_phonon_bands and q_type != 'mesh')[:2]
 
             for na in range(nat):
                 u[:, 3 * na:3 * na + 3] /= np.sqrt(amass[na])
 
-            if order_phonon_bands and q == 'mesh':
+            if order_phonon_bands and q_type == 'mesh':
                 order = dispersion.dispersion_full(D, nq, order=True)[1]
                 order = np.reshape(order, (len(q), nmodes))
 
@@ -615,7 +618,7 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge',
                     w2[iq] = w2[iq, order[iq]]
 
                     for nu in range(nmodes):
-                        u[iq, n] = u[iq, nu, order[iq]]
+                        u[iq, nu] = u[iq, nu, order[iq]]
 
         my_g = np.empty((sizes[comm.rank], nmodes, nk, nk, nbndsub, nbndsub),
             dtype=np.complex128)
@@ -751,7 +754,7 @@ def write_electron_eigenvalues(filename, e):
     """
     nk, nk, nbndsub = e.shape
 
-    with open('%s/electron_eigenvalues.dat' % outdir, 'w') as data:
+    with open(filename, 'w') as data:
         data.write("""#
 #  Eigenvalues of Wannier Hamiltonian
 #
@@ -780,7 +783,7 @@ def write_phonon_eigenvectors(filename, u):
     """
     nQ, nmodes, nmodes = u.shape
 
-    with open('%s/phonon_eigenvectors.dat' % outdir, 'w') as data:
+    with open(filename, 'w') as data:
         data.write("""#
 #  Eigenvectors of dynamical matrix
 #
@@ -807,7 +810,7 @@ def read_phonon_eigevectors(filename, u):
     --------
     write_phonon_eigenvectors
     """
-    with open('%s/phonon_eigenvectors.dat' % outdir) as data:
+    with open(filename) as data:
         for line in data:
             if not line.startswith('#'):
                 columns = line.split()
@@ -829,7 +832,7 @@ def write_phonon_eigenvalues(filename, w2):
     """
     nQ, nmodes = w2.shape
 
-    with open('%s/phonon_eigenvalues.dat' % outdir, 'w') as data:
+    with open(filename, 'w') as data:
         data.write("""#
 #  Eigenvalues of dynamical matrix
 #
