@@ -351,7 +351,8 @@ def read(filename, nq, bands):
     return elph
 
 def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge',
-        orbital_basis=False, wannier=None, displacement_basis=True, ifc=None,
+        orbital_basis=False, wannier=None, order_electron_bands=False,
+        displacement_basis=True, ifc=None, order_phonon_bands=False,
         read_eigenvectors=False):
     """Simulate second part of EPW: coarse Wannier to fine Bloch basis.
 
@@ -402,12 +403,16 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge',
 
     orbital_basis : bool, optional
         Stay in the orbital basis or transform to band basis?
-    wannier : str
+    wannier : str, optional
         File with Wannier Hamiltonian.
+    order_electron_bands : bool, optional
+        Order electron bands via k-local orbital character?
     displacement_basis : bool, optional
         Stay in the displacement basis or transform to mode basis?
     ifc : str, optional
         File with interatomic force constants.
+    order_phonon_bands : bool, optional
+        Order phonon bands via q-local displacement character?
     read_eigenvectors : bool, optional
         Read electron and phonon eigenvectors from previously written files
         instead of calculating them? This option can be used to guarantee the
@@ -547,6 +552,16 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge',
             H = el.hamiltonian(wannier)
             e, U = dispersion.dispersion_full_nosym(H, nk, vectors=True)
 
+            if order_electron_bands:
+                order = dispersion.dispersion_full(H, nk, order=True)[1]
+
+                for k1 in range(nk):
+                    for k2 in range(nk):
+                        e[k1, k2] = e[k1, k2, order[k1, k2]]
+
+                        for n in range(nbndsub):
+                            U[k1, k2, n] = U[k1, k2, n, order[k1, k2]]
+
         for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
             q1, q2 = q_int[iq]
 
@@ -586,10 +601,21 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge',
             phid, amass, at, tau = ph.model(ifc, apply_asr=True)
             D = ph.dynamical_matrix(phid, amass, at, tau)
 
-            w2, u = dispersion.dispersion(D, q, vectors=True)
+            w2, u = dispersion.dispersion(D, q, vectors=True,
+                order=order_phonon_bands and != 'mesh')[:2]
 
             for na in range(nat):
                 u[:, 3 * na:3 * na + 3] /= np.sqrt(amass[na])
+
+            if order_phonon_bands and q == 'mesh':
+                order = dispersion.dispersion_full(D, nq, order=True)[1]
+                order = np.reshape(order, (len(q), nmodes))
+
+                for iq in range(len(q)):
+                    w2[iq] = w2[iq, order[iq]]
+
+                    for nu in range(nmodes):
+                        u[iq, n] = u[iq, nu, order[iq]]
 
         my_g = np.empty((sizes[comm.rank], nmodes, nk, nk, nbndsub, nbndsub),
             dtype=np.complex128)
