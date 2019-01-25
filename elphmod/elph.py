@@ -350,7 +350,7 @@ def read(filename, nq, bands):
 
     return elph
 
-def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q=None,
+def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge',
         orbital_basis=False, wannier=None, displacement_basis=True, ifc=None,
         read_eigenvectors=False):
     """Simulate second part of EPW: coarse Wannier to fine Bloch basis.
@@ -390,9 +390,16 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q=None,
         Number of k points per dimension.
     nq : int
         Number of q points per dimension.
-    q : list of 2-tuples, optional
-        Requested q points in crystal coordinates q1, q2 in [0, 2pi).
-        If not given, the irreducible wedge of the `nq` x `nq` mesh is chosen.
+    q : str or list of 2-tuples, optional
+        Requested q points. The possible values are:
+
+            'wedge': Irreducible wedge of the uniform `nq` x `nq` mesh.
+                     This should be consistent with Quantum ESPRESSO.
+
+             'mesh': Full `nq` x `nq` mesh.
+
+                 or: Custom q points in crystal coordinates q1, q2 in [0, 2pi).
+
     orbital_basis : bool, optional
         Stay in the orbital basis or transform to band basis?
     wannier : str
@@ -409,11 +416,16 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q=None,
     """
     nat = nmodes // 3
 
-    if q is None:
+    if q == 'wedge':
         # generate same list of irreducible q points as Quantum ESPRESSO:
 
         q_int = sorted(bravais.irreducibles(nq))
         q = np.array(q_int, dtype=float) / nq * 2 * np.pi
+
+    elif q == 'mesh':
+        q_int = [(q1, q2) for q1 in range(nq) for q2 in range(nq)]
+        q = np.array(q_int, dtype=float) / nq * 2 * np.pi
+
     else:
         q = np.array(q) % (2 * np.pi)
         q_int = np.round(q * nq / (2 * np.pi)).astype(int)
