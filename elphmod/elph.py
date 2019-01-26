@@ -350,7 +350,7 @@ def read(filename, nq, bands):
 
     return elph
 
-def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge',
+def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
         orbital_basis=False, wannier=None, order_electron_bands=False,
         displacement_basis=True, ifc=None, order_phonon_bands=False,
         read_eigenvectors=False):
@@ -401,6 +401,8 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge',
 
                  or: Custom q points in crystal coordinates q1, q2 in [0, 2pi).
 
+    angle : float
+        Angle between Bravais-lattice vectors in degrees.
     orbital_basis : bool, optional
         Stay in the orbital basis or transform to band basis?
     wannier : str, optional
@@ -421,10 +423,12 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge',
     """
     nat = nmodes // 3
 
+    angle = 180 - angle
+
     if q == 'wedge':
         # generate same list of irreducible q points as Quantum ESPRESSO:
 
-        q_int = sorted(bravais.irreducibles(nq))
+        q_int = sorted(bravais.irreducibles(nq, angle=angle))
         q_type = q
         q = np.array(q_int, dtype=float) / nq * 2 * np.pi
 
@@ -556,7 +560,8 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge',
             e, U = dispersion.dispersion_full_nosym(H, nk, vectors=True)
 
             if order_electron_bands:
-                order = dispersion.dispersion_full(H, nk, order=True)[1]
+                order = dispersion.dispersion_full(H, nk, order=True,
+                    angle=angle)[1]
 
                 for k1 in range(nk):
                     for k2 in range(nk):
@@ -611,7 +616,9 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge',
                 u[:, 3 * na:3 * na + 3] /= np.sqrt(amass[na])
 
             if order_phonon_bands and q_type == 'mesh':
-                order = dispersion.dispersion_full(D, nq, order=True)[1]
+                order = dispersion.dispersion_full(D, nq, order=True,
+                    angle=angle)[1]
+
                 order = np.reshape(order, (len(q), nmodes))
 
                 for iq in range(len(q)):
