@@ -615,7 +615,7 @@ def wigner_seitz(nk, angle=120, dk1=0.0, dk2=0.0, epsilon=0.0):
 
     return irvec, ndegen, wslen
 
-def wigner_seitz_x(x, nk, angle=120, at=None, tau=None, epsilon=1e-8):
+def wigner_seitz_x(x, nk, at=None, tau=None, epsilon=1e-8):
     """Emulate the EPW subroutine 'wigner_seitz{x}' in 'wigner.f90'.
 
     Parameters
@@ -629,8 +629,6 @@ def wigner_seitz_x(x, nk, angle=120, at=None, tau=None, epsilon=1e-8):
 
     nk : int
         Number of points per dimension.
-    angle : number
-        Angle between lattice vectors.
     at, tau : ndarray
         Geometry as returned by `ph.read_flfrc` and `ph.model`.
     epsilon : float
@@ -645,13 +643,17 @@ def wigner_seitz_x(x, nk, angle=120, at=None, tau=None, epsilon=1e-8):
     list of float
         Lattice-vector lengths.
     """
-    if x == 'k':
-        return wigner_seitz(nk, angle)
+    a = np.sqrt(np.dot(at[0, :2], at[0, :2]))
 
-    t1, t2 = translations(angle)
+    t1 = at[0, :2] / a
+    t2 = at[1, :2] / a
+
+    angle = int(round(np.arccos(np.dot(t1, t2)) * 180 / np.pi))
+
     u1, u2 = reciprocals(t1, t2)
 
-    a = np.sqrt(np.dot(at[0], at[0]))
+    if x == 'k':
+        return wigner_seitz(nk, angle)
 
     if x == 'g':
         shifts = tau
@@ -683,7 +685,7 @@ def wigner_seitz_x(x, nk, angle=120, at=None, tau=None, epsilon=1e-8):
 
     return irvec_x, ndegen_x, wslen_x
 
-def write_wigner_file(name, nk, nq, angle=120, at=None, tau=None, epsilon=1e-8):
+def write_wigner_file(name, nk, nq, at=None, tau=None, epsilon=1e-8):
     """Write binary file with Wigner-Seitz data as used by EPW.
 
     See Also
@@ -696,8 +698,7 @@ def write_wigner_file(name, nk, nq, angle=120, at=None, tau=None, epsilon=1e-8):
 
         with open(name, 'wb') as data:
             for x, nx in zip('kqg', [nk, nq, nq]):
-                irvec, ndegen, wslen = wigner_seitz_x(x, nx,
-                    angle, at, tau, epsilon)
+                irvec, ndegen, wslen = wigner_seitz_x(x, nx, at, tau, epsilon)
 
                 irvec = np.insert(irvec, obj=2, values=0, axis=1) # 2D to 3D
 
