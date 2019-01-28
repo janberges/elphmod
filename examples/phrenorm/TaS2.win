@@ -6,10 +6,10 @@ Ta: dz2; dxy; dx2-y2
 end projections
 
 dis_froz_min -1.0
-dis_froz_max +2.3
+dis_froz_max +2.0
 
 dis_win_min -1.0
-dis_win_max +3.9
+dis_win_max +4.0
 
 dis_num_iter 10000
 num_iter 1
@@ -24,8 +24,8 @@ K 0.333333333 0.333333333 0.0 G 0.000000000 0.000000000 0.0
 end kpoint_path
 
 begin unit_cell_cart
- 3.390000000  0.000000000  0.000000000
--1.695000000  2.935826119  0.000000000
+ 3.387000000  0.000000000  0.000000000
+-1.693500000  2.933228043  0.000000000
  0.000000000  0.000000000 15.000000000
 end unit_cell_cart
 

@@ -14,6 +14,6 @@ wannier90.x -pp TaS2
 mpirun -np 4 pw2wannier90.x < TaS2.pw2w90
 wannier90.x TaS2
 
-echo "p 'bands.dat.gnu' u (\$1*2*pi/3.39):2, 'TaS2_band.dat' w l" | gnuplot -p
+echo "p 'bands.dat.gnu' u (\$1*2*pi/3.387):2, 'TaS2_band.dat' w l" | gnuplot -p
 
 mpirun -np 4 ph.x -nk 2 < TaS2.dfpt
