@@ -1,8 +1,0 @@
-&BANDS
-outdir = 'work'
-prefix = 'Be'
-
-filband = 'bands.dat'
-
-lsym = .false.
-/

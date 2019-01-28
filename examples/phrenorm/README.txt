@@ -1,13 +1,11 @@
 P h o n o n - r e n o r m a l i z a t i o n   s c h e m e
-                                                (applied to beryllium monolayer)
+                                                    (applied to TaS2 monolayer)
 
 This example shows in detail how to perform a constrained density-functional
 perturbation theory (cDFPT) [Nomura, Arita: PRB 92, 245108 (2015)] calculation
 and renormalize the resulting phonons to reproduce the full DFPT.
 
-We consider a triangular lattice of beryllium atoms, which is the most simple
-(hypothetical) two-dimensional system found to be stable in DFPT. Additionally,
-the paramters chosen for the ab-initio calculations are far from convergence.
+The parameters chosen for the ab-initio calculations are far from convergence.
 This enables us to run everything on a computer with only two processors.
 
 
