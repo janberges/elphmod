@@ -514,7 +514,6 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
         dtype=np.complex128)
 
     tmp = np.empty_like(g)
-    exp = np.empty(nrr_g, dtype=complex)
 
     block = [slice(3 * na, 3 * (na + 1)) for na in range(nat)]
 
@@ -522,12 +521,12 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
         print('q = %d' % iq)
 
         for irg in range(nrr_g):
-            exp[irg] = np.exp(1j * np.dot(q[iq], irvec_g[irg]))
+            exp = np.exp(1j * np.dot(q[iq], irvec_g[irg]))
 
             for na in range(nat):
                 if ndegen_g[na, irg]:
                     tmp[irg, block[na]] = g[irg, block[na]] \
-                        * exp[irg] / ndegen_g[na, irg]
+                        * exp / ndegen_g[na, irg]
                 else:
                     tmp[irg, block[na]] = 0
 
