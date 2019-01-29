@@ -11,7 +11,7 @@ nq1 = 2
 nq2 = 2
 nq3 = 1
 
-cdfpt = .false.
+cdfpt = .true.
 subspace = 'sub.dat'
 
 tr2_ph = 1e-12
