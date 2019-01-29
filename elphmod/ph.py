@@ -395,7 +395,6 @@ def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
 
     This function still uses Quantum ESPRESSO's tools 'q2qstar.x' and 'q2r.x'.
     These must be available, e.g. by setting the environmental variable $PATH.
-    Important: To run 'elphmod' in parallel, serial QE executables are needed!
 
     Parameters
     ----------
@@ -458,12 +457,13 @@ def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
             write_fildyn(fildynq, header, qpoints, dynmats, footer, amass,
                 divide_mass=True)
 
-            os.system('q2qstar.x {0} {0} > /dev/null'.format(fildynq))
+            os.system('mpirun -np 1 q2qstar.x {0} {0} '
+                '> /dev/null'.format(fildynq))
 
         # compute interatomic force constants:
 
         os.system("""echo "&INPUT fildyn='{0}' flfrc='{1}' /" """
-            '| q2r.x > /dev/null'.format(fildyn, flfrc))
+            '| mpirun -np 1 q2r.x > /dev/null'.format(fildyn, flfrc))
 
     # return dynamical matrix as q-dependent function:
     # (no MPI barrier needed because of broadcasting in 'model')
