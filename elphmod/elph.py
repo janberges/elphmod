@@ -595,6 +595,11 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
                         for n in range(nbndsub):
                             U[k1, k2, n] = U[k1, k2, n, order[k1, k2]]
 
+            if comm.rank == 0:
+                filename2 = '%s/electron_eigenvalues.dat' % outdir
+                write_electron_eigenvectors(filename, U)
+                write_electron_eigenvalues(filename2, e)
+
         for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
             q1, q2 = q_int[iq]
 
@@ -649,6 +654,11 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
                     for nu in range(nmodes):
                         u[iq, nu] = u[iq, nu, order[iq]]
 
+            if comm.rank == 0:
+                filename2 = '%s/phonon_eigenvalues.dat' % outdir
+                write_phonon_eigenvectors(filename, u)
+                write_phonon_eigenvalues(filename2, w2)
+
         my_g = np.empty((sizes[comm.rank], nmodes, nk, nk, nbndsub, nbndsub),
             dtype=np.complex128)
 
@@ -660,21 +670,11 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
         if node.rank == 0:
             images.Bcast(g)
 
-    # Write results to disk:
+    # Write transformed coupling to disk:
 
-    if comm.rank != 0:
-        return
-
-    write_coupling('%s/%s' % (outdir, elphdat), g,
-        orbital_basis, displacement_basis)
-
-    if not orbital_basis and not read_eigenvectors:
-        write_electron_eigenvectors('%s/electron_eigenvectors.dat' % outdir, U)
-        write_electron_eigenvalues('%s/electron_eigenvalues.dat' % outdir, e)
-
-    if not displacement_basis and not read_eigenvectors:
-        write_phonon_eigenvectors('%s/phonon_eigenvectors.dat' % outdir, u)
-        write_phonon_eigenvalues('%s/phonon_eigenvalues.dat' % outdir, w2)
+    if comm.rank == 0:
+        write_coupling('%s/%s' % (outdir, elphdat), g,
+            orbital_basis, displacement_basis)
 
 def write_coupling(filename, g, orbital_basis=False, displacement_basis=False):
     """Write electron-phonon coupling to text file.
