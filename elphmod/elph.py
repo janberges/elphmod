@@ -422,6 +422,8 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
         same gauge in different calculations, especially if the implementation
         of NumPy's diagonalization routines is not deterministic.
     """
+    os.system('mkdir -p %s' % outdir)
+
     nat = nmodes // 3
 
     angle = 180 - angle
