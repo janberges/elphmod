@@ -529,7 +529,7 @@ def renormalize_coupling(q, e, g, W, U, T=100.0, eps=1e-15,
                 # * U[k1,   k2,   c] * U[kq1, kq2, d].conj()
                 #     b     c     m      b    c    n
 
-            my_g_[iq] = g[iq] + prefactor * np.einsum(indices,
+            my_g_[my_iq] = g[iq] + prefactor * np.einsum(indices,
                 g[iq], dfde, W[q1, q2],
                 U[kq1, kq2], U[k1, k2].conj(),
                 U[k1, k2], U[kq1, kq2].conj())
@@ -563,7 +563,7 @@ def renormalize_coupling(q, e, g, W, U, T=100.0, eps=1e-15,
                 # * U[k1, k2, c] * U[kq1, kq2, d].conj()
                 #     b   c   m      b    c    n
 
-            my_g_[iq]  = g[iq] + prefactor * np.einsum(indices,
+            my_g_[my_iq]  = g[iq] + prefactor * np.einsum(indices,
                 tmp, W[q1, q2], U[k1, k2], U[kq1, kq2].conj())
 
     g_ = np.empty((nQ, nmodes, nk, nk), dtype=complex)
