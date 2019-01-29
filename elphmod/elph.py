@@ -1,5 +1,6 @@
 #/usr/bin/env python
 
+import os
 import numpy as np
 
 from . import bravais, dispersion, el, MPI, ph
@@ -353,7 +354,7 @@ def read(filename, nq, bands):
 def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
         orbital_basis=False, wannier=None, order_electron_bands=False,
         displacement_basis=True, ifc=None, order_phonon_bands=False,
-        read_eigenvectors=False):
+        read_eigenvectors=True):
     """Simulate second part of EPW: coarse Wannier to fine Bloch basis.
 
     The purpose of this routine is full control of the coupling's complex phase.
@@ -546,12 +547,13 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
         my_g = np.empty((sizes[comm.rank], nmodes, nk, nk, nbndsub, nbndsub),
             dtype=np.complex128)
 
-        if read_eigenvectors:
+        filename = '%s/electron_eigenvectors.dat' % outdir
+
+        if read_eigenvectors and os.path.exists(filename):
             U = np.empty((nk, nk, nbndsub, nbndsub), dtype=complex)
 
             if comm.rank == 0:
-                read_electron_eigenvectors(
-                    '%s/electron_eigenvectors.dat' % outdir, U)
+                read_electron_eigenvectors(filename, U)
 
             comm.Bcast(U)
         else:
@@ -596,12 +598,13 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
 
         info('Displacement to mode..')
 
-        if read_eigenvectors:
+        filename = '%s/phonon_eigenvectors.dat' % outdir
+
+        if read_eigenvectors and os.path.exists(filename):
             u = np.empty((len(q), nmodes, nmodes), dtype=complex)
 
             if comm.rank == 0:
-                read_phonon_eigenvectors(
-                    '%s/phonon_eigenvectors.dat' % outdir, u)
+                read_phonon_eigenvectors(filename, u)
 
             comm.Bcast(u)
         else:
