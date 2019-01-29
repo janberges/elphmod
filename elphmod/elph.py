@@ -695,9 +695,9 @@ def write_coupling(filename, g, orbital_basis=False, displacement_basis=False):
 #    n:      1st electron {0} index
 #    m:      2nd electron {0} index
 #    i:      {1} index
-#    ElPh:   <k+q m| dV/du(q, i) |k n>
+#    g:      <k+q m| dV/du(q, i) |k n>
 #
-#k1 k2  n  m  i        Re[ElPh]        Im[ElPh]
+#k1 k2  n  m  i           Re[g]           Im[g]
 #----------------------------------------------""".format(
         'orbital'             if      orbital_basis else 'band',
         'atomic displacement' if displacement_basis else 'phonon mode'))
