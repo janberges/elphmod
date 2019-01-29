@@ -31,6 +31,8 @@ def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
     my_Q = np.empty(sizes[comm.rank], dtype=int)
     comm.Scatterv((Q, sizes), my_Q)
 
+    band_slice = slice(-5, -2) if phase else slice(-4, -1)
+
     for n, iq in enumerate(my_Q):
         if status:
             print("Read data for q point %d.." % iq)
@@ -45,15 +47,16 @@ def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
                 if columns[0].startswith('#'):
                     continue
 
-                k1, k2, k3, wk, ibnd, jbnd, nu \
-                    = [int(i) - 1 for i in columns[:7]]
+                k1, k2         = [int(i) - 1 for i in columns[:2]]
+                ibnd, jbnd, nu = [int(i) - 1 for i in columns[band_slice]]
 
                 indices = n, nu, ibnd - offset, jbnd - offset, k1, k2
 
-                my_elph[indices] = float(columns[7])
-
                 if phase:
-                    my_elph[indices] += 1j * float(columns[8])
+                    my_elph[indices] \
+                        = float(columns[-2]) + 1j * float(columns[-1])
+                else:
+                    my_elph[indices] = float(columns[-1])
 
     if completion:
         for n, iq in enumerate(my_Q):
@@ -688,15 +691,14 @@ def write_coupling(filename, g, orbital_basis=False, displacement_basis=False):
             data.write("""#
 #  Electron-phonon matrix elements
 #
-#    k1,2,3: k-point indices
-#    w:      k-point weight
+#    k1, k2: k-point indices
 #    n:      1st electron {0} index
 #    m:      2nd electron {0} index
 #    i:      {1} index
 #    ElPh:   <k+q m| dV/du(q, i) |k n>
 #
-#k1 k2 k3  w  n  m  i        Re[ElPh]        Im[ElPh]
-#----------------------------------------------------""".format(
+#k1 k2  n  m  i        Re[ElPh]        Im[ElPh]
+#----------------------------------------------""".format(
         'orbital'             if      orbital_basis else 'band',
         'atomic displacement' if displacement_basis else 'phonon mode'))
 
@@ -706,8 +708,7 @@ def write_coupling(filename, g, orbital_basis=False, displacement_basis=False):
                         for m in range(nbndsub):
                             for i in range(nmodes):
                                 data.write("""
-%3d%3d%3d%3d%3d%3d%3d%16.8E%16.8E""" % (k1 + 1, k2 + 1, 1, 1,
-                                        n + 1, m + 1, i + 1,
+%3d%3d%3d%3d%3d%16.8E%16.8E""" % (k1 + 1, k2 + 1, n + 1, m + 1, i + 1,
                                         g[iq, i, k1, k2, n, m].real,
                                         g[iq, i, k1, k2, n, m].imag))
 
@@ -727,20 +728,20 @@ def write_electron_eigenvectors(filename, U):
         data.write("""#
 #  Eigenvectors of Wannier Hamiltonian
 #
-#    k1,2,3: k-point indices
+#    k1, k2: k-point indices
 #    a:      orbital index
 #    n:      band index
 #    U:      <k a|k n>
 #
-#k1 k2 k3  a  n           Re[U]           Im[U]
-#----------------------------------------------""")
+#k1 k2  a  n           Re[U]           Im[U]
+#-------------------------------------------""")
 
         for k1 in range(nk):
             for k2 in range(nk):
                 for a in range(nbndsub):
                     for n in range(nbndsub):
                         data.write("""
-%3d%3d%3d%3d%3d%16.8E%16.8E""" % (k1 + 1, k2 + 1, 1, a + 1, n + 1,
+%3d%3d%3d%3d%16.8E%16.8E""" % (k1 + 1, k2 + 1, a + 1, n + 1,
                                   U[k1, k2, a, n].real,
                                   U[k1, k2, a, n].imag))
 
@@ -756,8 +757,8 @@ def read_electron_eigenvectors(filename, U):
             if not line.startswith('#'):
                 columns = line.split()
 
-                k1, k2, _, a, n = [-1 + int(x) for x in columns[:5]]
-                Re, Im          = [   float(x) for x in columns[5:]]
+                k1, k2, a, n = [-1 + int(x) for x in columns[:5]]
+                Re, Im       = [   float(x) for x in columns[5:]]
 
                 U[k1, k2, a, n] = Re + 1j * Im
 
@@ -777,18 +778,18 @@ def write_electron_eigenvalues(filename, e):
         data.write("""#
 #  Eigenvalues of Wannier Hamiltonian
 #
-#    k1,2,3: k-point indices
+#    k1, k2: k-point indices
 #    n:      band index
 #    eps:    <k n|H|k n>
 #
-#k1 k2 k3  n             eps
-#---------------------------""")
+#k1 k2  n             eps
+#------------------------""")
 
         for k1 in range(nk):
             for k2 in range(nk):
                 for n in range(nbndsub):
                     data.write("""
-%3d%3d%3d%3d%16.8E""" % (k1 + 1, k2 + 1, 1, n + 1, e[k1, k2, n]))
+%3d%3d%3d%16.8E""" % (k1 + 1, k2 + 1, n + 1, e[k1, k2, n]))
 
 def write_phonon_eigenvectors(filename, u):
     """Write eigenvectors of dynamical matrix to text file.
