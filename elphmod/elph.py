@@ -801,6 +801,21 @@ def write_electron_eigenvalues(filename, e):
                     data.write("""
 %3d%3d%3d%16.8E""" % (k1 + 1, k2 + 1, n + 1, e[k1, k2, n]))
 
+def read_electron_eigenvalues(filename, e):
+    """Read eigenvalues of Wannier Hamiltonian from text file.
+
+    See Also
+    --------
+    write_electron_eigenvalues
+    """
+    with open(filename) as data:
+        for line in data:
+            if not line.startswith('#'):
+                columns = line.split()
+
+                k1, k2, n = [-1 + int(x) for x in columns[:3]]
+                e[k1, k2, n] = float(columns[3])
+
 def write_phonon_eigenvectors(filename, u):
     """Write eigenvectors of dynamical matrix to text file.
 
@@ -877,3 +892,18 @@ def write_phonon_eigenvalues(filename, w2):
             for nu in range(nmodes):
                 data.write("""
 %3d%3d%16.8E""" % (iq + 1, nu + 1, w2[iq, nu]))
+
+def read_phonon_eigenvalues(filename, w2):
+    """Read eigenvalues of dynamical matrix from text file.
+
+    See Also
+    --------
+    write_phonon_eigenvalues
+    """
+    with open(filename) as data:
+        for line in data:
+            if not line.startswith('#'):
+                columns = line.split()
+
+                iq, nu = [-1 + int(x) for x in columns[:2]]
+                w2[iq, n] = float(columns[2])
