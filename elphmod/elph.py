@@ -767,8 +767,8 @@ def read_electron_eigenvectors(filename, U):
             if not line.startswith('#'):
                 columns = line.split()
 
-                k1, k2, a, n = [-1 + int(x) for x in columns[:5]]
-                Re, Im       = [   float(x) for x in columns[5:]]
+                k1, k2, a, n = [-1 + int(x) for x in columns[:4]]
+                Re, Im       = [   float(x) for x in columns[4:]]
 
                 U[k1, k2, a, n] = Re + 1j * Im
 
