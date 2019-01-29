@@ -515,9 +515,13 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
 
         my_g[my_ik] = tmp.sum(axis=2)
 
-    g = np.empty((nk, nk, nrr_g, nmodes, nbndsub, nbndsub), dtype=np.complex128)
+    node, images, g = MPI.shared_array(
+        (nk, nk, nrr_g, nmodes, nbndsub, nbndsub), dtype=np.complex128)
 
-    comm.Allgatherv(my_g, (g, sizes * nrr_g * nmodes * nbndsub * nbndsub))
+    comm.Gatherv(my_g, (g, sizes * nrr_g * nmodes * nbndsub * nbndsub))
+
+    if node.rank == 0:
+        images.Bcast(g)
 
     g = np.transpose(g, axes=(2, 3, 0, 1, 4, 5))
 
@@ -550,10 +554,13 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
 
         my_g[my_iq] = tmp.sum(axis=0)
 
-    g = np.empty((len(q), nmodes, nk, nk, nbndsub, nbndsub),
-        dtype=np.complex128)
+    node, images, g = MPI.shared_array(
+        (len(q), nmodes, nk, nk, nbndsub, nbndsub), dtype=np.complex128)
 
-    comm.Allgatherv(my_g, (g, sizes * nmodes * nk * nk * nbndsub * nbndsub))
+    comm.Gatherv(my_g, (g, sizes * nmodes * nk * nk * nbndsub * nbndsub))
+
+    if node.rank == 0:
+        images.Bcast(g)
 
     if not orbital_basis:
         # electrons 2: transform from orbital to band basis:
@@ -604,10 +611,10 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
                         my_g[my_iq, i, k1, k2] = U[k1, k2].T.dot(
                            g[   iq, i, k1, k2]).dot(U[kq1, kq2].conj())
 
-        g = np.empty((len(q), nmodes, nk, nk, nbndsub, nbndsub),
-            dtype=np.complex128)
+        comm.Gatherv(my_g, (g, sizes * nmodes * nk * nk * nbndsub * nbndsub))
 
-        comm.Allgatherv(my_g, (g, sizes * nmodes * nk * nk * nbndsub * nbndsub))
+        if node.rank == 0:
+            images.Bcast(g)
 
     if not displacement_basis:
         # phonons 2: transform from displacement to mode basis:
@@ -648,7 +655,10 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
         for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
             my_g[my_iq] = np.einsum('iklnm,ij->jklnm', g[iq], u[iq])
 
-        comm.Allgatherv(my_g, (g, sizes * nmodes * nk * nk * nbndsub * nbndsub))
+        comm.Gatherv(my_g, (g, sizes * nmodes * nk * nk * nbndsub * nbndsub))
+
+        if node.rank == 0:
+            images.Bcast(g)
 
     # Write results to disk:
 
