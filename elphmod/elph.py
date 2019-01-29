@@ -354,7 +354,7 @@ def read(filename, nq, bands):
 def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
         orbital_basis=False, wannier=None, order_electron_bands=False,
         displacement_basis=True, ifc=None, order_phonon_bands=False,
-        read_eigenvectors=True):
+        read_eigenvectors=True, filename='el-ph-%d.dat'):
     """Simulate second part of EPW: coarse Wannier to fine Bloch basis.
 
     The purpose of this routine is full control of the coupling's complex phase.
@@ -378,7 +378,7 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
     outdir : str
         Directory where (some of) the following output files are stored:
 
-            el-ph-(q point).dat        (to be read by `bravais.coupling`)
+            el-ph-(q point).dat (e.g.) (to be read by `bravais.coupling`)
             electron_eigenvectors.dat
             electron_eigenvalues.dat
             phonon_eigenvectors.dat    (divided by square roots of masses)
@@ -421,6 +421,8 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
         instead of calculating them? This option can be used to guarantee the
         same gauge in different calculations, especially if the implementation
         of NumPy's diagonalization routines is not deterministic.
+    filename : str, optional
+        Custom name for output coupling files with placeholder "%d" for q point.
     """
     os.system('mkdir -p %s' % outdir)
 
@@ -644,7 +646,7 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
     if comm.rank != 0:
         return
 
-    write_coupling('%s/el-ph-%%d.dat' % outdir, g,
+    write_coupling('%s/%s' % (outdir, filename), g,
         orbital_basis, displacement_basis)
 
     if not orbital_basis and not read_eigenvectors:
