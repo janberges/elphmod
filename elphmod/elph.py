@@ -381,7 +381,7 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
             el-ph-(q point).dat (e.g.) (to be read by `bravais.coupling`)
             electron_eigenvectors.dat
             electron_eigenvalues.dat
-            phonon_eigenvectors.dat    (divided by square roots of masses)
+            phonon_eigenvectors.dat
             phonon_eigenvalues.dat     (phonon frequencies  s q u a r e d)
 
     nbndsub : int
@@ -469,6 +469,18 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
 
     comm.Bcast(g)
 
+    # divide by square root of atomic masses:
+
+    block = [slice(3 * na, 3 * (na + 1)) for na in range(nat)]
+
+    if ifc is None:
+        info("Warning: No IFC file given! No factor 1/sqrt(M) in coupling!")
+    else:
+        phid, amass, at, tau = ph.model(ifc, apply_asr=True)
+
+        for na in range(nat):
+            g[:, block[na]] /= np.sqrt(amass[na])
+
     # transfrom from Wannier to Bloch basis:
     # (see 'wan2bloch.f90' in EPW 5.0)
 
@@ -519,8 +531,6 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
         dtype=np.complex128)
 
     tmp = np.empty_like(g)
-
-    block = [slice(3 * na, 3 * (na + 1)) for na in range(nat)]
 
     for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         print('q = %d' % iq)
@@ -612,14 +622,10 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
 
             comm.Bcast(u)
         else:
-            phid, amass, at, tau = ph.model(ifc, apply_asr=True)
             D = ph.dynamical_matrix(phid, amass, at, tau)
 
             w2, u = dispersion.dispersion(D, q, vectors=True,
                 order=order_phonon_bands and q_type != 'mesh')[:2]
-
-            for na in range(nat):
-                u[:, 3 * na:3 * na + 3] /= np.sqrt(amass[na])
 
             if order_phonon_bands and q_type == 'mesh':
                 order = dispersion.dispersion_full(D, nq, order=True,
