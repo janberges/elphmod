@@ -6,7 +6,7 @@ import numpy as np
 from . import bravais, dispersion, MPI
 comm = MPI.comm
 
-def read_orbital_Coulomb_interaction(filename, nq, no, dd=False):
+def read_orbital_Coulomb_interaction(filename, nq, no, dd=False, skip=2):
     """Read Coulomb interaction in orbital basis.."""
 
     if dd:
@@ -16,8 +16,8 @@ def read_orbital_Coulomb_interaction(filename, nq, no, dd=False):
 
     if comm.rank == 0:
         with open(filename) as data:
-            next(data)
-            next(data)
+            for _ in range(skip):
+                next(data)
 
             for line in data:
                 columns = line.split()
