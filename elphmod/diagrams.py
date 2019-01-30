@@ -625,9 +625,9 @@ def renormalize_coupling_orbital(q, e, g, W, U, T=100.0, eps=1e-15,
 
     sizes, bounds = MPI.distribute(nQ, bounds=True)
 
-    my_dg = np.zeros((sizes[comm.rank], nmodes, nbnd, nbnd), dtype=complex)
+    my_dg = np.empty((sizes[comm.rank], nmodes, nbnd, nbnd), dtype=complex)
 
-    dfde = np.empty((nk, nk))
+    dfde = np.empty((nk, nk, nbnd, nbnd))
 
     for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         if status:
@@ -651,22 +651,22 @@ def renormalize_coupling_orbital(q, e, g, W, U, T=100.0, eps=1e-15,
 
                 ok = abs(de) > eps
 
-                dfde[ ok] = df[ok] / de[ok]
-                dfde[~ok] = d[:, :, n][~ok]
+                dfde[:, :, n, m][ ok] = df[ok] / de[ok]
+                dfde[:, :, n, m][~ok] = d[:, :, n][~ok]
 
-                indices = 'xABkl,abcd,kl,kld,klB,klA,klc->xab'
+        indices = 'xABkl,abcd,klnm,kldn,klBm,klAn,klcm->xab'
 
-                # g[iq, x, a', b', k1', k2']  * W[q1, q2, a, b, c, d] * dfde[k1', k2']
-                #       x  A   B   k    l                 a  b  c  d         k    l
-                # * U[k1', k2',  d, n].conj() * U[kq1', kq2', b', m].conj()
-                #     k    l     d                k     l     B
-                # * U[k1', k2', a', n]        * U[kq1', kq2',  c, m]
-                #     k    l    A                 k     l      c
+        # g[iq, x, a', b', k1', k2']  * W[q1, q2, a, b, c, d] * dfde[k1', k2', n, m]
+        #       x  A   B   k    l                 a  b  c  d         k    l    n  m
+        # * U[k1', k2',  d, n].conj() * U[kq1', kq2', b', m].conj()
+        #     k    l     d  n             k     l     B   m
+        # * U[k1', k2', a', n]        * U[kq1', kq2',  c, m]
+        #     k    l    A   n             k     l      c  m
 
-                my_dg[my_iq] += prefactor * np.einsum(indices,
-                    g[iq, :, :, :, :, :], W[q1, q2, :, :, :, :], dfde[:, :],
-                    U[k1, k2, :, n].conj(), U[kq1, kq2, :, m].conj(),
-                    U[k1, k2, :, n],        U[kq1, kq2, :, m])
+        my_dg[my_iq] = prefactor * np.einsum(indices,
+            g[iq, :, :, :, :, :], W[q1, q2, :, :, :, :], dfde[:, :, :, :],
+            U[k1, k2, :, :].conj(), U[kq1, kq2, :, :].conj(),
+            U[k1, k2, :, :],        U[kq1, kq2, :, :])
 
     dg = np.empty((nQ, nmodes, nbnd, nbnd), dtype=complex)
 
