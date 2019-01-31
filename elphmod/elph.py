@@ -357,7 +357,7 @@ def read(filename, nq, bands):
 def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
         orbital_basis=False, wannier=None, order_electron_bands=False,
         displacement_basis=True, ifc=None, order_phonon_bands=False,
-        read_eigenvectors=True, elphdat='el-ph-%d.dat'):
+        read_eigenvectors=True, elphdat='el-ph-%d.dat', shared_memory=False):
     """Simulate second part of EPW: coarse Wannier to fine Bloch basis.
 
     The purpose of this routine is full control of the coupling's complex phase.
@@ -426,6 +426,8 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
         of NumPy's diagonalization routines is not deterministic.
     elphdat : str, optional
         Custom name for output coupling files with placeholder "%d" for q point.
+    shared_memory : bool, optional
+        Store transformed coupling in shared memory?
     """
     os.system('mkdir -p %s' % outdir)
 
@@ -515,13 +517,20 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
 
         my_g[my_ik] = tmp.sum(axis=2)
 
-    node, images, g = MPI.shared_array(
-        (nk, nk, nrr_g, nmodes, nbndsub, nbndsub), dtype=np.complex128)
+    shape = (nk, nk, nrr_g, nmodes, nbndsub, nbndsub)
+    elements = sizes * nrr_g * nmodes * nbndsub * nbndsub
 
-    comm.Gatherv(my_g, (g, sizes * nrr_g * nmodes * nbndsub * nbndsub))
+    if shared_memory:
+        node, images, g = MPI.shared_array(shape, dtype=np.complex128)
 
-    if node.rank == 0:
-        images.Bcast(g)
+        comm.Gatherv(my_g, (g, elements))
+
+        if node.rank == 0:
+            images.Bcast(g)
+    else:
+        g = np.empty(shape, dtype=np.complex)
+
+        comm.Allgatherv(my_g, (g, elements))
 
     g = np.transpose(g, axes=(2, 3, 0, 1, 4, 5))
 
@@ -554,13 +563,20 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
 
         my_g[my_iq] = tmp.sum(axis=0)
 
-    node, images, g = MPI.shared_array(
-        (len(q), nmodes, nk, nk, nbndsub, nbndsub), dtype=np.complex128)
+    shape = (len(q), nmodes, nk, nk, nbndsub, nbndsub)
+    elements = sizes * nmodes * nk * nk * nbndsub * nbndsub
 
-    comm.Gatherv(my_g, (g, sizes * nmodes * nk * nk * nbndsub * nbndsub))
+    if shared_memory:
+        node, images, g = MPI.shared_array(shape, dtype=np.complex128)
 
-    if node.rank == 0:
-        images.Bcast(g)
+        comm.Gatherv(my_g, (g, elements))
+
+        if node.rank == 0:
+            images.Bcast(g)
+    else:
+        g = np.emtpy(shape, dtype=np.complex128)
+
+        comm.Allgatherv(my_g, (g, elements))
 
     if not orbital_basis:
         # electrons 2: transform from orbital to band basis:
