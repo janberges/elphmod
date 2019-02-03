@@ -680,12 +680,12 @@ def renormalize_coupling_simple(q, e, g, W, U, nq, T=100.0, eps=1e-15,
         occupations=occupations.fermi_dirac, pre=2, status=True):
     """Calculate renormalized electron-phonon coupling in orbital basis.
 
-              k+q m                dg(x, q, a) = sum[c] gX(x, q, c) W(c, a)
-             ___\___        ___
+              k+q m                dg(x, q, a) = sum[c] gX(x, q, b) W(b, a)
+           d ___\___ b    a ___
       x q   /   /   \      /       gX(x, q, c) = sum[b, n, m, k]
-    ~~~~~~~o b     c :::::: a          g(x, q, k, b, b)
-            \___/___/      \___        U*(b, m, k+q) U (c, m, k+q)   from: w/o *
-                \                      U (b, n, k)   U*(c, n, k)       to: w/  *
+    ~~~~~~~o         ::::::            g(x, q, k, c, d)
+            \___/___/      \___        U*(d, m, k+q) U (b, m, k+q)
+           c    \    b    a            U (c, n, k)   U*(b, n, k)
                k n                     [f(m, k+q) - f(n, k)] /
                                        [e(m, k+q) - e(n, k)]
     Parameters
@@ -766,16 +766,7 @@ def renormalize_coupling_simple(q, e, g, W, U, nq, T=100.0, eps=1e-15,
                 dfde[:, :, n, m][ ok] = df[ok] / de[ok]
                 dfde[:, :, n, m][~ok] = d[:, :, n][~ok]
 
-        # g[iq, x, b, b, k1, k2]
-        #       x  b  b  k   l
-        # * U[kq1, kq2, b, m].conj() * U[kq1, kq2, c, m]
-        #     k    l    b  m             k    l    c  m
-        # * U[k1, k2, b, n] * U[k1, k2, c, n].conj()
-        #     k   l   b  n      k   l   c  n
-        # * dfdf[k1, k2, n, m]
-        #        k   l   n  m
-
-        gX = prefactor * np.einsum('xbbkl,klbm,klcm,klbn,klcn,klnm->xc', g[iq],
+        gX = prefactor * np.einsum('xcdkl,kldm,klbm,klcn,klbn,klnm->xb', g[iq],
             U[kq1, kq2].conj(), U[kq1, kq2], U[k1, k2], U[k1, k2].conj(), dfde)
 
         my_dg[my_iq] = np.dot(gX, W)
