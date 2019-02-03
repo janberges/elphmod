@@ -605,9 +605,9 @@ def renormalize_coupling_orbital(q, e, g, W, U, T=100.0, eps=1e-15,
         k-independent change (!) of electron-phonon coupling.
     """
     nk, nk, nbnd = e.shape
-    nQ, nmodes, nbnd, nbnd, nk, nk = g.shape
-    nq, nq, nbnd, nbnd, nbnd, nbnd = W.shape
-    nk, nk, nbnd, nbnd = U.shape
+    nQ, nmodes, norb, norb, nk, nk = g.shape
+    nq, nq, norb, norb, norb, norb = W.shape
+    nk, nk, norb, nbnd = U.shape
 
     kT = kB * T
     x = e / kT
@@ -625,7 +625,7 @@ def renormalize_coupling_orbital(q, e, g, W, U, T=100.0, eps=1e-15,
 
     sizes, bounds = MPI.distribute(nQ, bounds=True)
 
-    my_dg = np.empty((sizes[comm.rank], nmodes, nbnd, nbnd), dtype=complex)
+    my_dg = np.empty((sizes[comm.rank], nmodes, norb, norb), dtype=complex)
 
     dfde = np.empty((nk, nk, nbnd, nbnd))
 
@@ -668,8 +668,8 @@ def renormalize_coupling_orbital(q, e, g, W, U, T=100.0, eps=1e-15,
             U[k1, k2, :, :].conj(), U[kq1, kq2, :, :].conj(),
             U[k1, k2, :, :],        U[kq1, kq2, :, :])
 
-    dg = np.empty((nQ, nmodes, nbnd, nbnd), dtype=complex)
+    dg = np.empty((nQ, nmodes, norb, norb), dtype=complex)
 
-    comm.Allgatherv(my_dg, (dg, sizes * nmodes * nbnd * nbnd))
+    comm.Allgatherv(my_dg, (dg, sizes * nmodes * norb * norb))
 
     return dg
