@@ -675,3 +675,113 @@ def renormalize_coupling_orbital(q, e, g, W, U, T=100.0, eps=1e-15,
     comm.Allgatherv(my_dg, (dg, sizes * nmodes * norb * norb))
 
     return dg
+
+def renormalize_coupling_simple(q, e, g, W, U, nq, T=100.0, eps=1e-15,
+        occupations=occupations.fermi_dirac, pre=2, status=True):
+    """Calculate renormalized electron-phonon coupling in orbital basis.
+
+              k+q m                dg(x, q, a) = sum[c] gX(x, q, c) W(c, a)
+             ___\___        ___
+      x q   /   /   \      /       gX(x, q, c) = sum[b, n, m, k]
+    ~~~~~~~o b     c :::::: a          g(x, q, k, b, b)
+            \___/___/      \___        U*(b, m, k+q) U (c, m, k+q)   from: w/o *
+                \                      U (b, n, k)   U*(c, n, k)       to: w/  *
+               k n                     [f(m, k+q) - f(n, k)] /
+                                       [e(m, k+q) - e(n, k)]
+    Parameters
+    ----------
+    q : list of 2-tuples
+        Considered q points defined via crystal coordinates q1, q2 in [0, 2pi).
+    e : ndarray
+        Electron dispersion on uniform mesh. The Fermi level must be at zero.
+    g : ndarray
+        Bare electron-phonon coupling in orbital and displacement basis.
+    W : ndarray
+        Dressed Coulomb interaction in orbital basis.
+    U : ndarray
+        Eigenvectors of Wannier Hamiltonian belonging to considered band.
+    T : float
+        Smearing temperature in K.
+    eps : float
+        Smallest allowed absolute value of divisor.
+    occupations : function
+        Particle distribution as a function of energy divided by kT.
+    pre : int
+        Spin prefactor 1 or 2? Used for debugging only.
+    status : bool
+        Print status messages during the calculation?
+
+    Returns
+    -------
+    ndarray
+        k-independent change (!) of electron-phonon coupling.
+    """
+    nk, nk, nbnd = e.shape
+    nQ, nmodes, norb, norb, nk, nk = g.shape
+    norb, norb = W.shape
+    nk, nk, norb, nbnd = U.shape
+
+    kT = kB * T
+    x = e / kT
+
+    f = occupations(x)
+    d = occupations.delta(x) / (-kT)
+
+    e = np.tile(e, (2, 2, 1))
+    f = np.tile(f, (2, 2, 1))
+    U = np.tile(U, (2, 2, 1, 1))
+
+    scale_k = nk / (2 * np.pi)
+    scale_q = nq / (2 * np.pi)
+    prefactor = pre / nk ** 2
+
+    sizes, bounds = MPI.distribute(nQ, bounds=True)
+
+    my_dg = np.empty((sizes[comm.rank], nmodes, norb), dtype=complex)
+
+    dfde = np.empty((nk, nk, nbnd, nbnd))
+
+    for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
+        if status:
+            print('Renormalize coupling for q point %d..' % (iq + 1))
+
+        q1 = int(round(q[iq, 0] * scale_q)) % nq
+        q2 = int(round(q[iq, 1] * scale_q)) % nq
+        Q1 = int(round(q[iq, 0] * scale_k)) % nk
+        Q2 = int(round(q[iq, 1] * scale_k)) % nk
+
+        k1 = slice(0, nk)
+        k2 = slice(0, nk)
+
+        kq1 = slice(Q1, Q1 + nk)
+        kq2 = slice(Q2, Q2 + nk)
+
+        for n in range(nbnd):
+            for m in range(nbnd):
+                df = f[kq1, kq2, m] - f[k1, k2, n]
+                de = e[kq1, kq2, m] - e[k1, k2, n]
+
+                ok = abs(de) > eps
+
+                dfde[:, :, n, m][ ok] = df[ok] / de[ok]
+                dfde[:, :, n, m][~ok] = d[:, :, n][~ok]
+
+        # g[iq, x, b, b, k1, k2]
+        #       x  b  b  k   l
+        # * U[kq1, kq2, b, m].conj() * U[kq1, kq2, c, m]
+        #     k    l    b  m             k    l    c  m
+        # * U[k1, k2, b, n] * U[k1, k2, c, n].conj()
+        #     k   l   b  n      k   l   c  n
+        # * dfdf[k1, k2, n, m]
+        #        k   l   n  m
+
+        gX = prefactor * np.einsum('xbbkl,klbm,klcm,klbn,klcn,klnm->xc', g[iq],
+            U[kq1, kq2].conj(), U[kq1, kq2], U[k1, k2], U[k1, k2].conj(), dfde)
+
+        my_dg[my_iq] = np.dot(gX, W)
+
+    dg = np.empty((nQ, nmodes, norb), dtype=complex)
+
+    comm.Allgatherv(my_dg, (dg, sizes * nmodes * norb))
+
+    return dg
