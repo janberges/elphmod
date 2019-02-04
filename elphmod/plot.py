@@ -111,6 +111,55 @@ def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
 
     return image
 
+def double_plot_tex(texfile, imgfile, q, nq, angle=60,
+        qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8, scale=10.0):
+    """Draw outlines of mini Brillouin zones.
+
+    See Also
+    --------
+    double_plot
+    """
+    q = np.array(q, dtype=float) / nq
+
+    h = 1.0 / (nq * np.sqrt(3))
+    a = 1.0 / (nq * 3)
+
+    t1, t2 = bravais.translations(180 - angle)
+    u1, u2 = bravais.reciprocals(t1, t2)
+
+    with open(texfile, 'w') as TeX:
+        TeX.write(r'''\documentclass{{article}}
+\usepackage[paperwidth={width}cm, paperheight={height}cm, margin=0cm]{{geometry}}
+\usepackage{{tikz}}
+\setlength\parindent{{0pt}}
+\begin{{document}}
+\begin{{tikzpicture}}[x={scale}cm, y={scale}cm]
+    \node [anchor=south west, inner sep=0, outer sep=0] at ({qxmin}, {qymin})
+        {{\includegraphics[width={width}cm, height={height}cm]{{{imgfile}}}}};
+'''.format(width=scale * (qxmax - qxmin), height=scale * (qymax - qymin),
+            scale=scale, qxmin=qxmin, qymin=qymin, imgfile=imgfile))
+
+        for q1, q2 in q:
+            qx, qy = q1 * u1 + q2 * u2
+
+            points = [
+                (qx + a * 2, qy),
+                (qx + a, qy + h),
+                (qx - a, qy + h),
+                (qx - a * 2, qy),
+                (qx - a, qy - h),
+                (qx + a, qy - h),
+                ]
+
+            points = ' -- '.join('(%.4f, %.4f)' % point for point in points)
+
+            TeX.write(r'''\draw [white, ultra thick] {points} -- cycle;
+'''.format(points=points))
+
+        TeX.write(r'''\end{tikzpicture}%
+\vspace*{-1cm}%
+\end{document}''')
+
 def colorbar(image, left=0.02, bottom=0.02, width=0.03, height=0.30,
         minimum=None, maximum=None):
     """Add colorbar to image."""
