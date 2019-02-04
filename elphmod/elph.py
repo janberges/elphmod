@@ -435,14 +435,14 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
 
     angle = 180 - angle
 
-    if q == 'wedge':
+    if type(q) is str and q == 'wedge':
         # generate same list of irreducible q points as Quantum ESPRESSO:
 
         q_int = sorted(bravais.irreducibles(nq, angle=angle))
         q_type = q
         q = np.array(q_int, dtype=float) / nq * 2 * np.pi
 
-    elif q == 'mesh':
+    elif type(q) is str and q == 'mesh':
         q_int = [(q1, q2) for q1 in range(nq) for q2 in range(nq)]
         q_type = q
         q = np.array(q_int, dtype=float) / nq * 2 * np.pi
