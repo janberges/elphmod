@@ -134,10 +134,12 @@ def double_plot_tex(texfile, imgfile, q, nq, angle=60,
 \setlength\parindent{{0pt}}
 \begin{{document}}
 \begin{{tikzpicture}}[x={scale}cm, y={scale}cm]
+    \useasboundingbox ({qxmin}, {qymin}) rectangle ({qxmax}, {qymax});
     \node [anchor=south west, inner sep=0, outer sep=0] at ({qxmin}, {qymin})
         {{\includegraphics[width={width}cm, height={height}cm]{{{imgfile}}}}};
 '''.format(width=scale * (qxmax - qxmin), height=scale * (qymax - qymin),
-            scale=scale, qxmin=qxmin, qymin=qymin, imgfile=imgfile))
+            scale=scale, qxmin=qxmin, qxmax=qxmax, qymin=qymin, qymax=qymax,
+            imgfile=imgfile))
 
         for q1, q2 in q:
             qx, qy = q1 * u1 + q2 * u2
@@ -153,7 +155,7 @@ def double_plot_tex(texfile, imgfile, q, nq, angle=60,
 
             points = ' -- '.join('(%.4f, %.4f)' % point for point in points)
 
-            TeX.write(r'''\draw [white, ultra thick] {points} -- cycle;
+            TeX.write(r'''\draw [white, line width=4pt] {points} -- cycle;
 '''.format(points=points))
 
         TeX.write(r'''\end{tikzpicture}%
