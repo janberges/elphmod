@@ -574,7 +574,7 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
         if node.rank == 0:
             images.Bcast(g)
     else:
-        g = np.emtpy(shape, dtype=np.complex128)
+        g = np.empty(shape, dtype=np.complex128)
 
         comm.Allgatherv(my_g, (g, elements))
 
@@ -632,10 +632,13 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
                         my_g[my_iq, i, k1, k2] = U[k1, k2].T.dot(
                            g[   iq, i, k1, k2]).dot(U[kq1, kq2].conj())
 
-        comm.Gatherv(my_g, (g, sizes * nmodes * nk * nk * nbndsub * nbndsub))
+        if shared_memory:
+            comm.Gatherv(my_g, (g, elements))
 
-        if node.rank == 0:
-            images.Bcast(g)
+            if node.rank == 0:
+                images.Bcast(g)
+        else:
+            comm.Allgatherv(my_g, (g, elements))
 
     if not displacement_basis:
         # phonons 2: transform from displacement to mode basis:
@@ -681,10 +684,13 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
         for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
             my_g[my_iq] = np.einsum('iklnm,ij->jklnm', g[iq], u[iq])
 
-        comm.Gatherv(my_g, (g, sizes * nmodes * nk * nk * nbndsub * nbndsub))
+        if shared_memory:
+            comm.Gatherv(my_g, (g, elements))
 
-        if node.rank == 0:
-            images.Bcast(g)
+            if node.rank == 0:
+                images.Bcast(g)
+        else:
+            comm.Allgatherv(my_g, (g, elements))
 
     # Write transformed coupling to disk:
 
