@@ -677,7 +677,7 @@ def renormalize_coupling_orbital(q, e, g, W, U, T=100.0, eps=1e-15,
     return dg
 
 def g_Pi(q, e, g, U, nq, T=100.0, eps=1e-15,
-        occupations=occupations.fermi_dirac, pre=2, dd=True, status=True):
+        occupations=occupations.fermi_dirac, dd=True, status=True):
     """Join electron-phonon coupling and Lindhard bubble in orbital basis.
 
     Parameters
@@ -696,8 +696,6 @@ def g_Pi(q, e, g, U, nq, T=100.0, eps=1e-15,
         Smallest allowed absolute value of divisor.
     occupations : function
         Particle distribution as a function of energy divided by kT.
-    pre : int
-        Spin prefactor 1 or 2? Used for debugging only.
     dd : bool
         Consider only density-density terms?
     status : bool
@@ -724,7 +722,7 @@ def g_Pi(q, e, g, U, nq, T=100.0, eps=1e-15,
 
     scale_k = nk / (2 * np.pi)
     scale_q = nq / (2 * np.pi)
-    prefactor = pre / nk ** 2
+    prefactor = 2.0 / nk ** 2
 
     sizes, bounds = MPI.distribute(nQ, bounds=True)
 
