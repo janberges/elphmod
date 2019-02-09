@@ -676,18 +676,10 @@ def renormalize_coupling_orbital(q, e, g, W, U, T=100.0, eps=1e-15,
 
     return dg
 
-def renormalize_coupling_simple(q, e, g, W, U, nq, T=100.0, eps=1e-15,
-        occupations=occupations.fermi_dirac, pre=2, status=True):
-    """Calculate renormalized electron-phonon coupling in orbital basis.
+def g_Pi(q, e, g, U, nq, T=100.0, eps=1e-15,
+        occupations=occupations.fermi_dirac, pre=2, dd=True, status=True):
+    """Join electron-phonon coupling and Lindhard bubble in orbital basis.
 
-              k+q m                dg(x, q, a) = sum[c] gX(x, q, b) W(b, a)
-           d ___\___ b    a ___
-      x q   /   /   \      /       gX(x, q, c) = sum[b, n, m, k]
-    ~~~~~~~o         ::::::            g(x, q, k, c, d)
-            \___/___/      \___        U*(d, m, k+q) U (b, m, k+q)
-           c    \    b    a            U (c, n, k)   U*(b, n, k)
-               k n                     [f(m, k+q) - f(n, k)] /
-                                       [e(m, k+q) - e(n, k)]
     Parameters
     ----------
     q : list of 2-tuples
@@ -696,8 +688,6 @@ def renormalize_coupling_simple(q, e, g, W, U, nq, T=100.0, eps=1e-15,
         Electron dispersion on uniform mesh. The Fermi level must be at zero.
     g : ndarray
         Bare electron-phonon coupling in orbital and displacement basis.
-    W : ndarray
-        Dressed Coulomb interaction in orbital basis.
     U : ndarray
         Eigenvectors of Wannier Hamiltonian belonging to considered band.
     T : float
@@ -708,17 +698,18 @@ def renormalize_coupling_simple(q, e, g, W, U, nq, T=100.0, eps=1e-15,
         Particle distribution as a function of energy divided by kT.
     pre : int
         Spin prefactor 1 or 2? Used for debugging only.
+    dd : bool
+        Consider only density-density terms?
     status : bool
         Print status messages during the calculation?
 
     Returns
     -------
     ndarray
-        k-independent change (!) of electron-phonon coupling.
+        Product of electron-phonon coupling and Lindhard bubble.
     """
     nk, nk, nbnd = e.shape
     nQ, nmodes, norb, norb, nk, nk = g.shape
-    norb, norb = W.shape
     nk, nk, norb, nbnd = U.shape
 
     kT = kB * T
@@ -737,7 +728,10 @@ def renormalize_coupling_simple(q, e, g, W, U, nq, T=100.0, eps=1e-15,
 
     sizes, bounds = MPI.distribute(nQ, bounds=True)
 
-    my_dg = np.empty((sizes[comm.rank], nmodes, norb), dtype=complex)
+    if dd:
+        my_gPi = np.empty((sizes[comm.rank], nmodes, norb), dtype=complex)
+    else:
+        my_gPi = np.empty((sizes[comm.rank], nmodes, norb, norb), dtype=complex)
 
     dfde = np.empty((nk, nk, nbnd, nbnd))
 
@@ -766,13 +760,27 @@ def renormalize_coupling_simple(q, e, g, W, U, nq, T=100.0, eps=1e-15,
                 dfde[:, :, n, m][ ok] = df[ok] / de[ok]
                 dfde[:, :, n, m][~ok] = d[:, :, n][~ok]
 
-        gX = prefactor * np.einsum('xcdkl,kldm,klbm,klcn,klbn,klnm->xb', g[iq],
-            U[kq1, kq2].conj(), U[kq1, kq2], U[k1, k2], U[k1, k2].conj(), dfde)
+        if dd:
+            indices = 'xabkl,klan,klbm,klnm,klcn,klcm->xc'
+        else:
+            indices = 'xabkl,klan,klbm,klnm,klcn,kldm->xcd'
 
-        my_dg[my_iq] = np.dot(gX, W)
+        my_gPi[my_iq] = prefactor * np.einsum(indices, g[iq],
+            U[k1, k2], U[kq1, kq2].conj(), dfde, U[k1, k2].conj(), U[kq1, kq2])
 
-    dg = np.empty((nQ, nmodes, norb), dtype=complex)
+        #            k n
+        #        a ___/___ c
+        #   x q   /   \
+        # ~~~~~~~o
+        #         \___\___
+        #        b    /    d
+        #           k+q m
 
-    comm.Allgatherv(my_dg, (dg, sizes * nmodes * norb))
+    if dd:
+        gPi = np.empty((nQ, nmodes, norb), dtype=complex)
+        comm.Allgatherv(my_gPi, (gPi, sizes * nmodes * norb))
+    else:
+        gPi = np.empty((nQ, nmodes, norb, norb), dtype=complex)
+        comm.Allgatherv(my_gPi, (gPi, sizes * nmodes * norb * norb))
 
-    return dg
+    return gPi
