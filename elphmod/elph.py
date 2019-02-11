@@ -21,9 +21,9 @@ def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
 
     dtype = complex if phase else float
 
-    elph = np.empty((nQ, nb, bands, bands, nk, nk), dtype=dtype)
+    elph = np.empty((nQ, nb, nk, nk, bands, bands), dtype=dtype)
 
-    my_elph = np.empty((sizes[comm.rank], nb, bands, bands, nk, nk),
+    my_elph = np.empty((sizes[comm.rank], nb, nk, nk, bands, bands),
         dtype=dtype)
 
     my_elph[:] = np.nan
@@ -50,7 +50,7 @@ def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
                 k1, k2         = [int(i) - 1 for i in columns[:2]]
                 ibnd, jbnd, nu = [int(i) - 1 for i in columns[band_slice]]
 
-                indices = n, nu, ibnd - offset, jbnd - offset, k1, k2
+                indices = n, nu, k1, k2, ibnd - offset, jbnd - offset
 
                 if phase:
                     my_elph[indices] \
@@ -66,12 +66,12 @@ def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
             for nu in range(nb):
                 for ibnd in range(bands):
                     for jbnd in range(bands):
-                        bravais.complete(my_elph[n, nu, ibnd, jbnd])
+                        bravais.complete(my_elph[n, nu, :, :, ibnd, jbnd])
 
     if complete_k and nq: # to be improved considerably
-        comm.Gatherv(my_elph, (elph, sizes * nb * bands * bands * nk * nk))
+        comm.Gatherv(my_elph, (elph, sizes * nb * nk * nk * bands * bands))
 
-        elph_complete = np.empty((nq, nq, nb, bands, bands, nk, nk),
+        elph_complete = np.empty((nq, nq, nb, nk, nk, bands, bands),
             dtype=dtype)
 
         if comm.rank == 0:
@@ -97,21 +97,21 @@ def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
                         for k2 in range(nk):
                             K1, K2 = sym_k[k1, k2]
 
-                            elph_complete[Q1, Q2, ..., K1, K2] \
-                                = elph[iq, ..., k1, k2]
+                            elph_complete[Q1, Q2, :, K1, K2] \
+                                = elph[iq, :, k1, k2]
 
         comm.Bcast(elph_complete)
         elph = elph_complete
     else:
-        comm.Allgatherv(my_elph, (elph, sizes * nb * bands * bands * nk * nk))
+        comm.Allgatherv(my_elph, (elph, sizes * nb * nk * nk * bands * bands))
 
-    return elph[..., 0, 0, :, :] if bands == 1 and squeeze else elph
+    return elph[..., 0, 0] if bands == 1 and squeeze else elph
 
 def read_EPW_output(epw_out, q, nq, nb, nk, bands=1,
                     eps=1e-4, squeeze=False, status=False, epf=False):
     """Read electron-phonon coupling from EPW output file."""
 
-    elph = np.empty((len(q), nb, bands, bands, nk, nk),
+    elph = np.empty((len(q), nb, nk, nk, bands, bands),
         dtype=complex if epf else float)
 
     q = [(q1, q2) for q1, q2 in q]
@@ -178,10 +178,10 @@ def read_EPW_output(epw_out, q, nq, nb, nk, bands=1,
                         ibnd, jbnd, nu = [int(i) - 1 for i in columns[:3]]
 
                         if epf:
-                            elph[iq, nu, ibnd, jbnd, k1, k2] = complex(
+                            elph[iq, nu, k1, k2, ibnd, jbnd] = complex(
                                 float(columns[-2]), float(columns[-1]))
                         else:
-                            elph[iq, nu, ibnd, jbnd, k1, k2] = float(
+                            elph[iq, nu, k1, k2, ibnd, jbnd] = float(
                                 columns[-1])
 
         if np.isnan(elph).any():
@@ -194,7 +194,7 @@ def read_EPW_output(epw_out, q, nq, nb, nk, bands=1,
 
     comm.Bcast(elph)
 
-    return elph[:, :, 0, 0, :, :] if bands == 1 and squeeze else elph
+    return elph[..., 0, 0] if bands == 1 and squeeze else elph
 
 def read_xml_files(filename, q, rep, bands, nbands, nk, squeeze=True, status=True,
         angle=120, angle0=0):
@@ -213,11 +213,11 @@ def read_xml_files(filename, q, rep, bands, nbands, nk, squeeze=True, status=Tru
 
     sizes = MPI.distribute(len(q))
 
-    elph = np.empty((len(q), len(rep), len(bands), len(bands), nk, nk),
+    elph = np.empty((len(q), len(rep), nk, nk, len(bands), len(bands)),
         dtype=complex)
 
     my_elph = np.empty((sizes[comm.rank],
-        len(rep), len(bands), len(bands), nk, nk), dtype=complex)
+        len(rep), nk, nk, len(bands), len(bands)), dtype=complex)
 
     band_select = np.empty(nbands, dtype=int)
     band_select[:] = -1
@@ -261,13 +261,13 @@ def read_xml_files(filename, q, rep, bands, nbands, nk, squeeze=True, status=Tru
                             if n < 0 or m < 0:
                                 next(data)
                             else:
-                                my_elph[my_iq, my_irep, n, m, k1, k2] = complex(
+                                my_elph[my_iq, my_irep, k1, k2, n, m] = complex(
                                     *list(map(float, next(data).split(","))))
 
     comm.Allgatherv(my_elph, (elph,
-        sizes * len(rep) * len(bands) * len(bands) * nk * nk))
+        sizes * len(rep) * nk * nk * len(bands) * len(bands)))
 
-    return elph[..., 0, 0, :, :] if len(bands) == 1 and squeeze else elph
+    return elph[..., 0, 0] if len(bands) == 1 and squeeze else elph
 
 def write_xml_files(filename, data, angle=120, angle0=0):
     """Write XML files with coupling in displacement basis."""
@@ -278,7 +278,7 @@ def write_xml_files(filename, data, angle=120, angle0=0):
     if data.ndim == 4:
         data = data[:, :, np.newaxis, np.newaxis, :, :]
 
-    nQ, nb, nbands, nbands, nk, nk = data.shape
+    nQ, nb, nk, nk, nbands, nbands = data.shape
 
     t1, t2 = bravais.translations(angle, angle0)
     u1, u2 = bravais.reciprocals(t1, t2)
@@ -322,7 +322,7 @@ def write_xml_files(filename, data, angle=120, angle0=0):
 
                         for i in range(nbands):
                             for j in range(nbands):
-                                g = data[iq, irep, i, j, k1, k2]
+                                g = data[iq, irep, k1, k2, i, j]
 
                                 xml.write("""
 %23.15E,%23.15E""" % (g.real, g.imag))

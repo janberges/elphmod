@@ -607,7 +607,7 @@ def renormalize_coupling_orbital(q, e, g, W, U, T=100.0, eps=1e-15,
         k-independent change (!) of electron-phonon coupling.
     """
     nk, nk, nbnd = e.shape
-    nQ, nmodes, norb, norb, nk, nk = g.shape
+    nQ, nmodes, nk, nk, norb, norb = g.shape
     nq, nq, norb, norb, norb, norb = W.shape
     nk, nk, norb, nbnd = U.shape
 
@@ -656,10 +656,10 @@ def renormalize_coupling_orbital(q, e, g, W, U, T=100.0, eps=1e-15,
                 dfde[:, :, n, m][ ok] = df[ok] / de[ok]
                 dfde[:, :, n, m][~ok] = d[:, :, n][~ok]
 
-        indices = 'xABkl,abcd,klnm,kldn,klBm,klAn,klcm->xab'
+        indices = 'xklAB,abcd,klnm,kldn,klBm,klAn,klcm->xab'
 
-        # g[iq, x, a', b', k1', k2']  * W[q1, q2, a, b, c, d] * dfde[k1', k2', n, m]
-        #       x  A   B   k    l                 a  b  c  d         k    l    n  m
+        # g[iq, x, k1', k2', a', b']  * W[q1, q2, a, b, c, d] * dfde[k1', k2', n, m]
+        #       x  k    l    A   B                a  b  c  d         k    l    n  m
         # * U[k1', k2',  d, n].conj() * U[kq1', kq2', b', m].conj()
         #     k    l     d  n             k     l     B   m
         # * U[k1', k2', a', n]        * U[kq1', kq2',  c, m]
@@ -707,7 +707,7 @@ def g_Pi(q, e, g, U, nq, T=100.0, eps=1e-15,
         Product of electron-phonon coupling and Lindhard bubble.
     """
     nk, nk, nbnd = e.shape
-    nQ, nmodes, norb, norb, nk, nk = g.shape
+    nQ, nmodes, nk, nk, norb, norb = g.shape
     nk, nk, norb, nbnd = U.shape
 
     kT = kB * T
@@ -759,9 +759,9 @@ def g_Pi(q, e, g, U, nq, T=100.0, eps=1e-15,
                 dfde[:, :, n, m][~ok] = d[:, :, n][~ok]
 
         if dd:
-            indices = 'xabkl,klan,klbm,klnm,klcn,klcm->xc'
+            indices = 'xklab,klan,klbm,klnm,klcn,klcm->xc'
         else:
-            indices = 'xabkl,klan,klbm,klnm,klcn,kldm->xcd'
+            indices = 'xklab,klan,klbm,klnm,klcn,kldm->xcd'
 
         my_gPi[my_iq] = prefactor * np.einsum(indices, g[iq],
             U[k1, k2], U[kq1, kq2].conj(), dfde, U[k1, k2].conj(), U[kq1, kq2])
