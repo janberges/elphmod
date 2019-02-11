@@ -870,7 +870,7 @@ def write_phonon_eigenvectors(filename, u):
                             u[iq, x, nu].real,
                             u[iq, x, nu].imag))
 
-def read_phonon_eigevectors(filename, u):
+def read_phonon_eigenvectors(filename, u):
     """Read eigenvectors of dynamical matrix from text file.
 
     See Also
