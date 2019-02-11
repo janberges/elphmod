@@ -188,8 +188,11 @@ def arrange(images, columns=None):
     if columns is None:
         columns = int(np.sqrt(len(images)))
 
-    while len(images) % columns:
-        columns += 1
+    if columns < len(images):
+        while len(images) % columns:
+            columns += 1
+    else:
+        columns = len(images)
 
     rows = len(images) // columns
 
