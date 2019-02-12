@@ -278,8 +278,8 @@ def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
     ndarray
         Phonon self-energy.
     """
-    nk, nk = e.shape
-    nQ, nb, nk, nk = g2.shape
+    nk, nk, nbnd = e.shape
+    nQ, nb, nk, nk, nbnd, nbnd = g2.shape
 
     kT = kB * T
     x = e / kT
@@ -300,22 +300,24 @@ def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
     if status:
         info('Pi(%3s, %3s, %3s) = ...' % ('q1', 'q2', 'nu'))
 
-    chi = np.empty((nk, nk))
+    dfde = np.empty((nk, nk, nbnd, nbnd))
 
     for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         q1 = int(round(q[iq, 0] * scale)) % nk
         q2 = int(round(q[iq, 1] * scale)) % nk
 
-        df = f[q1:q1 + nk, q2:q2 + nk] - f[:nk, :nk]
-        de = e[q1:q1 + nk, q2:q2 + nk] - e[:nk, :nk]
+        for n in range(nbnd):
+            for m in range(nbnd):
+                df = f[q1:q1 + nk, q2:q2 + nk, m] - f[:nk, :nk, n]
+                de = e[q1:q1 + nk, q2:q2 + nk, m] - e[:nk, :nk, n]
 
-        ok = abs(de) > eps
+                ok = abs(de) > eps
 
-        chi[ ok] = df[ok] / de[ok]
-        chi[~ok] = d[~ok]
+                dfde[:, :, n, m][ ok] = df[ok] / de[ok]
+                dfde[:, :, n, m][~ok] = d[:, :, n][~ok]
 
         for nu in range(nb):
-            my_Pi[my_iq, nu] = prefactor * np.sum(g2[iq, nu] * chi)
+            my_Pi[my_iq, nu] = prefactor * np.sum(g2[iq, nu] * dfde)
 
             if status:
                 print('Pi(%3d, %3d, %3d) = %9.2e%+9.2ei'
