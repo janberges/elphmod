@@ -14,7 +14,7 @@ color1 = 0, 0, 255
 color2 = 255, 0, 0
 
 def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
-        interpolation=bravais.linear_interpolation, angle=60):
+        interpolation=bravais.linear_interpolation, angle=60, return_k=False):
     """Plot in cartesian reciprocal coordinates."""
 
     nk, nk = mesh.shape
@@ -51,7 +51,10 @@ def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
 
     comm.Gatherv(my_image, (image, sizes))
 
-    return image
+    if return_k:
+        return kx, ky, image
+    else:
+        return image
 
 def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
         resolution=500, interpolation=bravais.linear_interpolation, angle=60,
