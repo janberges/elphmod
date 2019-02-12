@@ -928,4 +928,4 @@ def read_phonon_eigenvalues(filename, w2):
                 columns = line.split()
 
                 iq, nu = [-1 + int(x) for x in columns[:2]]
-                w2[iq, n] = float(columns[2])
+                w2[iq, nu] = float(columns[2])
