@@ -417,7 +417,7 @@ def phonon_self_energy2(q, e, g2, T=100.0, nmats=1000, hyb_width=1.0,
     return Pi
 
 def renormalize_coupling(q, e, g, W, U, nbnd_sub=None, T=100.0, eps=1e-15,
-        occupations=occupations.fermi_dirac, pre=2, status=True):
+        occupations=occupations.fermi_dirac, status=True):
     """Calculate renormalized electron-phonon coupling.
 
     g'(k, q, i, x) = g(k, q, i, x) + 2/N sum[k'] g(k', q, i, x)
@@ -443,8 +443,6 @@ def renormalize_coupling(q, e, g, W, U, nbnd_sub=None, T=100.0, eps=1e-15,
         Smallest allowed absolute value of divisor.
     occupations : function
         Particle distribution as a function of energy divided by kT.
-    pre : int
-        Spin prefactor 1 or 2? Used for debugging only.
     status : bool
         Print status messages during the calculation?
 
@@ -479,7 +477,7 @@ def renormalize_coupling(q, e, g, W, U, nbnd_sub=None, T=100.0, eps=1e-15,
     U = np.tile(U, (2, 2, 1, 1))
 
     scale = nk / (2 * np.pi)
-    prefactor = pre / nk ** 2
+    prefactor = 2.0 / nk ** 2
 
     sizes, bounds = MPI.distribute(nQ, bounds=True)
 
