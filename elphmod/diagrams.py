@@ -287,8 +287,8 @@ def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
     f = occupations(x)
     d = occupations.delta(x) / (-kT)
 
-    e = np.tile(e, (2, 2))
-    f = np.tile(f, (2, 2))
+    e = np.tile(e, (2, 2, 1))
+    f = np.tile(f, (2, 2, 1))
 
     scale = nk / (2 * np.pi)
     prefactor = 2.0 / nk ** 2
