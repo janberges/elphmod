@@ -359,9 +359,9 @@ def polarization(e, path, angle=60):
 
     nat = bands // 3
 
-    x = slice(0, None, nat)
-    y = slice(1, None, nat)
-    z = slice(2, None, nat)
+    x = slice(0, None, 3)
+    y = slice(1, None, 3)
+    z = slice(2, None, 3)
 
     t1, t2 = bravais.translations(180 - angle)
     u1, u2 = bravais.reciprocals(t1, t2)
