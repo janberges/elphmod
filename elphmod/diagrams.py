@@ -416,9 +416,8 @@ def phonon_self_energy2(q, e, g2, T=100.0, nmats=1000, hyb_width=1.0,
 
     return Pi
 
-def renormalize_coupling(q, e, g, W, U, T=100.0, eps=1e-15,
-        occupations=occupations.fermi_dirac, pre=2, dd=False, einsum=True,
-        status=True):
+def renormalize_coupling(q, e, g, W, U, nq, nbnd_sub=None, T=100.0, eps=1e-15,
+        occupations=occupations.fermi_dirac, pre=2, status=True):
     """Calculate renormalized electron-phonon coupling.
 
     g'(k, q, i, x) = g(k, q, i, x) + 2/N sum[k'] g(k', q, i, x)
@@ -436,6 +435,10 @@ def renormalize_coupling(q, e, g, W, U, T=100.0, eps=1e-15,
         Dressed Coulomb interaction.
     U : ndarray
         Eigenvectors of Wannier Hamiltonian belonging to considered band.
+    nq : int
+        Number of q points per dimension.
+    nbnd_sub : int
+        Number of bands for Lindhard bubble. Defaults to all bands.
     T : float
         Smearing temperature in K.
     eps : float
@@ -444,12 +447,6 @@ def renormalize_coupling(q, e, g, W, U, T=100.0, eps=1e-15,
         Particle distribution as a function of energy divided by kT.
     pre : int
         Spin prefactor 1 or 2? Used for debugging only.
-    dd : bool
-        Consider only density-density terms of Coulomb interaction. The shape
-        of the parameter W depends on this parameter.
-    einsum : bool
-        Use numpy.einsum for k' summations in expression for Feynman diagram?
-        (It seems that its implementations range from very fast to very slow.)
     status : bool
         Print status messages during the calculation?
 
@@ -458,15 +455,20 @@ def renormalize_coupling(q, e, g, W, U, T=100.0, eps=1e-15,
     ndarray
         Dressed electron-phonon coupling.
     """
-    nk, nk = e.shape
-    nQ, nmodes, nk, nk = g.shape
+    nk, nk, nbnd = e.shape
+    nQ, nmodes, nk, nk, nbnd, nbnd = g.shape
+
+    dd = W.ndim == 3
 
     if dd:
-        nq, nq, nbnd, nbnd = W.shape
+        nQ, norb, norb = W.shape
     else:
-        nq, nq, nbnd, nbnd, nbnd, nbnd = W.shape
+        nQ, norb, norb, norb, norb = W.shape
 
-    nk, nk, nbnd = U.shape
+    nk, nk, norb, nbnd = U.shape
+
+    if nbnd_sub is None:
+        nbnd_sub = nbnd
 
     kT = kB * T
     x = e / kT
@@ -474,9 +476,9 @@ def renormalize_coupling(q, e, g, W, U, T=100.0, eps=1e-15,
     f = occupations(x)
     d = occupations.delta(x) / (-kT)
 
-    e = np.tile(e, (2, 2))
-    f = np.tile(f, (2, 2))
-    U = np.tile(U, (2, 2, 1))
+    e = np.tile(e, (2, 2, 1))
+    f = np.tile(f, (2, 2, 1))
+    U = np.tile(U, (2, 2, 1, 1))
 
     scale_k = nk / (2 * np.pi)
     scale_q = nq / (2 * np.pi)
@@ -484,9 +486,10 @@ def renormalize_coupling(q, e, g, W, U, T=100.0, eps=1e-15,
 
     sizes, bounds = MPI.distribute(nQ, bounds=True)
 
-    my_g_ = np.empty((sizes[comm.rank], nmodes, nk, nk), dtype=complex)
+    my_g_ = np.empty((sizes[comm.rank], nmodes, nk, nk, nbnd, nbnd),
+        dtype=complex)
 
-    dfde = np.empty((nk, nk))
+    dfde = np.empty((nk, nk, nbnd_sub, nbnd_sub))
 
     for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         if status:
@@ -503,74 +506,37 @@ def renormalize_coupling(q, e, g, W, U, T=100.0, eps=1e-15,
         kq1 = slice(Q1, Q1 + nk)
         kq2 = slice(Q2, Q2 + nk)
 
-        df = f[kq1, kq2] - f[k1, k2]
-        de = e[kq1, kq2] - e[k1, k2]
+        for n in range(nbnd_sub):
+            for m in range(nbnd_sub):
+                df = f[kq1, kq2, m] - f[k1, k2, n]
+                de = e[kq1, kq2, m] - e[k1, k2, n]
 
-        ok = abs(de) > eps
+                ok = abs(de) > eps
 
-        dfde[ ok] = df[ok] / de[ok]
-        dfde[~ok] = d[~ok]
+                dfde[:, :, n, m][ ok] = df[ok] / de[ok]
+                dfde[:, :, n, m][~ok] = d[:, :, n][~ok]
 
-        if einsum:
-            if dd:
-                indices = 'aij,ik,kl,ijk,ijk,ijk,bcl,bcl->abc'
-
-                # g[iq, i, k1', k2'] * dfde[k1', k2'] * W[q1, q2, a, b]
-                #       a  i    j           i    j                k  l
-                # * U[kq1', kq2', a] * U[k1', k2', a].conj()
-                #     i     j     k      i    j    k
-                # * U[k1,   k2,   b] * U[kq1, kq2, b].conj()
-                #     b     c     l      b    c    l
-            else:
-                indices = 'aij,ij,klmn,ijk,ijl,bcm,bcn->abc'
-
-                # g[iq, i, k1', k2'] * dfde[k1', k2'] * W[q1, q2, a, b, c, d]
-                #       a  i    j           i    j                k  l  m  n
-                # * U[kq1', kq2', a] * U[k1', k2', b].conj()
-                #     i     j     k      i    j    l
-                # * U[k1,   k2,   c] * U[kq1, kq2, d].conj()
-                #     b     c     m      b    c    n
-
-            my_g_[my_iq] = g[iq] + prefactor * np.einsum(indices,
-                g[iq], dfde, W[q1, q2],
-                U[kq1, kq2], U[k1, k2].conj(),
-                U[k1, k2], U[kq1, kq2].conj())
-
+        if dd:
+            indices = 'xKLNM,KLNM,ac,KLaM,KLaN,klcn,klcm->xklnm'
         else:
-            tmp = np.empty((nbnd, nbnd, nmodes), dtype=complex)
+            indices = 'xKLNM,KLNM,abcd,KLaM,KLbN,klcn,kldm->xklnm'
 
-            for a in range(nbnd):
-                for b in range(nbnd):
-                    if dd and a != b:
-                        continue
+        my_g_[my_iq] = g[iq] + prefactor * np.einsum(indices,
+            g[iq, :, :, :, :nbnd_sub, :nbnd_sub], dfde, W[iq],
+            U[kq1, kq2, :, :nbnd_sub], U[k1, k2, :, :nbnd_sub].conj(),
+            U[k1, k2], U[kq1, kq2].conj())
 
-                    dfdeab = dfde * U[kq1, kq2, a] * U[k1, k2, b].conj()
+        #            K N             k n
+        #          ___/___ b     c ___/___
+        #   x q   /   \   \       /   \
+        # ~~~~~~~o         :::::::
+        #         \___\___/       \___\___
+        #             /    a     d    /
+        #           K+q M           k+q m
 
-                    for i in range(nmodes):
-                        tmp[a, b, i] = (g[iq, i] * dfdeab).sum()
+    g_ = np.empty((nQ, nmodes, nk, nk, nbnd, nbnd), dtype=complex)
 
-            if dd:
-                indices = 'kka,kl,bcl,bcl->abc'
-
-                # tmp[a, b, i] * W[q1, q2, a, b]
-                #     k  k  a              k  l
-                # * U[k1, k2, c] * U[kq1, kq2, d].conj()
-                #     b   c   l      b    c    l
-
-            else:
-                indices = 'kla,klmn,bcm,bcn->abc'
-
-                # tmp[a, b, i] * W[q1, q2, a, b, c, d]
-                #     k  l  a              k  l  m  n
-                # * U[k1, k2, c] * U[kq1, kq2, d].conj()
-                #     b   c   m      b    c    n
-
-            my_g_[my_iq]  = g[iq] + prefactor * np.einsum(indices,
-                tmp, W[q1, q2], U[k1, k2], U[kq1, kq2].conj())
-
-    g_ = np.empty((nQ, nmodes, nk, nk), dtype=complex)
-
-    comm.Allgatherv(my_g_, (g_, sizes * nmodes * nk * nk))
+    comm.Allgatherv(my_g_, (g_, sizes * nmodes * nk * nk * nbnd * nbnd))
 
     return g_
 
@@ -593,7 +559,7 @@ def renormalize_coupling_orbital(W, *args, **kwargs):
     --------
     g_Pi
     """
-    dd = W.ndim == 4
+    dd = W.ndim == 3
 
     if dd:
         indices = 'qxa,qab->qxb'
@@ -616,6 +582,8 @@ def g_Pi(q, e, g, U, nq, T=100.0, eps=1e-15,
         Bare electron-phonon coupling in orbital and displacement basis.
     U : ndarray
         Eigenvectors of Wannier Hamiltonian belonging to considered band.
+    nq : int
+        Number of q points per dimension.
     T : float
         Smearing temperature in K.
     eps : float
@@ -661,7 +629,7 @@ def g_Pi(q, e, g, U, nq, T=100.0, eps=1e-15,
 
     for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         if status:
-            print('Renormalize coupling for q point %d..' % (iq + 1))
+            print('Calculate "g Pi" for q point %d..' % (iq + 1))
 
         q1 = int(round(q[iq, 0] * scale_q)) % nq
         q2 = int(round(q[iq, 1] * scale_q)) % nq
