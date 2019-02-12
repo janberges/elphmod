@@ -50,7 +50,13 @@ def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
                 k1, k2         = [int(i) - 1 for i in columns[:2]]
                 ibnd, jbnd, nu = [int(i) - 1 for i in columns[band_slice]]
 
-                indices = n, nu, k1, k2, ibnd - offset, jbnd - offset
+                ibnd -= offset
+                jbnd -= offset
+
+                if ibnd >= bands or jbnd >= bands:
+                    continue
+
+                indices = n, nu, k1, k2, ibnd, jbnd
 
                 if phase:
                     my_elph[indices] \
