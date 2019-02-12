@@ -416,7 +416,7 @@ def phonon_self_energy2(q, e, g2, T=100.0, nmats=1000, hyb_width=1.0,
 
     return Pi
 
-def renormalize_coupling(q, e, g, W, U, nq, nbnd_sub=None, T=100.0, eps=1e-15,
+def renormalize_coupling(q, e, g, W, U, nbnd_sub=None, T=100.0, eps=1e-15,
         occupations=occupations.fermi_dirac, pre=2, status=True):
     """Calculate renormalized electron-phonon coupling.
 
@@ -435,8 +435,6 @@ def renormalize_coupling(q, e, g, W, U, nq, nbnd_sub=None, T=100.0, eps=1e-15,
         Dressed Coulomb interaction.
     U : ndarray
         Eigenvectors of Wannier Hamiltonian belonging to considered band.
-    nq : int
-        Number of q points per dimension.
     nbnd_sub : int
         Number of bands for Lindhard bubble. Defaults to all bands.
     T : float
@@ -480,8 +478,7 @@ def renormalize_coupling(q, e, g, W, U, nq, nbnd_sub=None, T=100.0, eps=1e-15,
     f = np.tile(f, (2, 2, 1))
     U = np.tile(U, (2, 2, 1, 1))
 
-    scale_k = nk / (2 * np.pi)
-    scale_q = nq / (2 * np.pi)
+    scale = nk / (2 * np.pi)
     prefactor = pre / nk ** 2
 
     sizes, bounds = MPI.distribute(nQ, bounds=True)
@@ -495,16 +492,14 @@ def renormalize_coupling(q, e, g, W, U, nq, nbnd_sub=None, T=100.0, eps=1e-15,
         if status:
             print('Renormalize coupling for q point %d..' % (iq + 1))
 
-        q1 = int(round(q[iq, 0] * scale_q)) % nq
-        q2 = int(round(q[iq, 1] * scale_q)) % nq
-        Q1 = int(round(q[iq, 0] * scale_k)) % nk
-        Q2 = int(round(q[iq, 1] * scale_k)) % nk
+        q1 = int(round(q[iq, 0] * scale)) % nk
+        q2 = int(round(q[iq, 1] * scale)) % nk
 
         k1 = slice(0, nk)
         k2 = slice(0, nk)
 
-        kq1 = slice(Q1, Q1 + nk)
-        kq2 = slice(Q2, Q2 + nk)
+        kq1 = slice(q1, q1 + nk)
+        kq2 = slice(q2, q2 + nk)
 
         for n in range(nbnd_sub):
             for m in range(nbnd_sub):
@@ -568,7 +563,7 @@ def renormalize_coupling_orbital(W, *args, **kwargs):
 
     return np.einsum(indices, g_Pi(*args, dd=dd, **kwargs), W)
 
-def g_Pi(q, e, g, U, nq, T=100.0, eps=1e-15,
+def g_Pi(q, e, g, U, T=100.0, eps=1e-15,
         occupations=occupations.fermi_dirac, dd=True, status=True):
     """Join electron-phonon coupling and Lindhard bubble in orbital basis.
 
@@ -582,8 +577,6 @@ def g_Pi(q, e, g, U, nq, T=100.0, eps=1e-15,
         Bare electron-phonon coupling in orbital and displacement basis.
     U : ndarray
         Eigenvectors of Wannier Hamiltonian belonging to considered band.
-    nq : int
-        Number of q points per dimension.
     T : float
         Smearing temperature in K.
     eps : float
@@ -614,8 +607,7 @@ def g_Pi(q, e, g, U, nq, T=100.0, eps=1e-15,
     f = np.tile(f, (2, 2, 1))
     U = np.tile(U, (2, 2, 1, 1))
 
-    scale_k = nk / (2 * np.pi)
-    scale_q = nq / (2 * np.pi)
+    scale = nk / (2 * np.pi)
     prefactor = 2.0 / nk ** 2
 
     sizes, bounds = MPI.distribute(nQ, bounds=True)
@@ -631,16 +623,14 @@ def g_Pi(q, e, g, U, nq, T=100.0, eps=1e-15,
         if status:
             print('Calculate "g Pi" for q point %d..' % (iq + 1))
 
-        q1 = int(round(q[iq, 0] * scale_q)) % nq
-        q2 = int(round(q[iq, 1] * scale_q)) % nq
-        Q1 = int(round(q[iq, 0] * scale_k)) % nk
-        Q2 = int(round(q[iq, 1] * scale_k)) % nk
+        q1 = int(round(q[iq, 0] * scale)) % nk
+        q2 = int(round(q[iq, 1] * scale)) % nk
 
         k1 = slice(0, nk)
         k2 = slice(0, nk)
 
-        kq1 = slice(Q1, Q1 + nk)
-        kq2 = slice(Q2, Q2 + nk)
+        kq1 = slice(q1, q1 + nk)
+        kq2 = slice(q2, q2 + nk)
 
         for n in range(nbnd):
             for m in range(nbnd):
