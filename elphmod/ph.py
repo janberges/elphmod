@@ -390,11 +390,23 @@ def polarization(e, path, angle=60):
     return mode
 
 def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
-        angle=120, write_fildyn0=True, apply_asr=True):
+        angle=120, write_fildyn0=True, apply_asr=True, qe_prefix=''):
     """Interpolate dynamical matrices given for irreducible wedge of q points.
 
     This function still uses Quantum ESPRESSO's tools 'q2qstar.x' and 'q2r.x'.
-    These must be available, e.g. by setting the environmental variable $PATH.
+    They are called in serial by each MPI process which leads to problems if
+    they have been compiled for parallel execution. If you want to run this
+    function in parallel, you have two choices:
+
+        (1) Configure Quantum ESPRESSO for compilation of serial executables
+            via "./configure --disable-parallel" and run "make ph". If you do
+            not want to make them available through the environmental variable
+            $PATH, you can also set `qe-prefix` to "/path/to/serial/q-e/bin/".
+            The trailing "/" is required.
+
+        (2) If your MPI implementation supports nested calls to "mpirun", you
+            may try to set `qe_prefix` to "mpirun -np 1 ". The trailing space
+            is required.
 
     Parameters
     ----------
@@ -416,6 +428,8 @@ def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
         Write 'fildyn0' needed by 'q2r.x'? Otherwise the file must be present.
     apply_asr : bool
         Enforce acoustic sum rule by overwriting self force constants?
+    qe_prefix : str
+        String to prepend to names of Quantum-ESPRESSO executables.
 
     Returns
     -------
@@ -462,16 +476,15 @@ def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
         write_fildyn(fildynq, header, qpoints, dynmats, footer, amass,
             divide_mass=True)
 
-        os.system('mpirun -np 1 q2qstar.x {0} {0} '
-            '> /dev/null'.format(fildynq))
+        os.system('{0}q2qstar.x {1} {1} > /dev/null'.format(qe_prefix, fildynq))
 
     comm.Barrier()
 
     # compute interatomic force constants:
 
     if comm.rank == 0:
-        os.system("""echo "&INPUT fildyn='{0}' flfrc='{1}' /" """
-            '| mpirun -np 1 q2r.x > /dev/null'.format(fildyn, flfrc))
+        os.system("""echo "&INPUT fildyn='{1}' flfrc='{2}' /" """
+            '| {0}q2r.x > /dev/null'.format(qe_prefix, fildyn, flfrc))
 
     # return dynamical matrix as q-dependent function:
     # (no MPI barrier needed because of broadcasting in 'model')
