@@ -323,7 +323,7 @@ def color(data, color1=(240, 1, 255), color2=(0, 1, 255), nancolor=(0, 0, 255),
     image = data.copy()
 
     image -= np.nanmin(image) if minimum is None else minimum
-    image /= np.nanmax(image) if maximum is None else maximum
+    image /= np.nanmax(image) if maximum is None else maximum - minimum
 
     new_image = np.empty(image.shape + (3,))
 
