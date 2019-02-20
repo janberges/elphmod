@@ -347,7 +347,7 @@ def short_range_model(phid, amass, at, tau, eps=1e-7):
     # (see cdef _p_message message_vector in mpi4py/src/mpi4py/MPI/msgbuffer.pxi
     # for possible formats of second argument 'recvbuf')
 
-    return cells, const
+    return allcells, allconst
 
 def sgnsqrt(w2):
     """Calculate signed square root."""
