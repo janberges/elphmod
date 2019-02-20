@@ -29,18 +29,18 @@ nk = 3
 
 info("Set up Wannier Hamiltonian..")
 
-H = elphmod.el.hamiltonian('data/NbSe2_hr.dat')
+el = elphmod.el.Model('data/NbSe2_hr.dat')
 
 info("Diagonalize Hamiltonian on uniform mesh..")
 
-eps1, psi1 = elphmod.dispersion.dispersion_full_nosym(H, nk,
+eps1, psi1 = elphmod.dispersion.dispersion_full_nosym(el.H, nk,
     vectors=True, gauge=True, rotate=False)
 
 print_matrix_of_complex_vectors(psi1[:, :, :, 0])
 
 info("Diagonalize Hamiltonian on uniform mesh using symmetry..")
 
-eps2, psi2 = elphmod.dispersion.dispersion_full(H, nk,
+eps2, psi2 = elphmod.dispersion.dispersion_full(el.H, nk,
     vectors=True, gauge=True, rotate=False)
 
 print_matrix_of_complex_vectors(psi2[:, :, :, 0])

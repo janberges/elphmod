@@ -15,15 +15,13 @@ data = 'NbSe2-cDFPT-LR'
 
 info("Read and fix force constants and set up dynamical matrix..")
 
-model = elphmod.ph.model('data/%s.ifc' % data, apply_asr=True)
-
-D = elphmod.ph.dynamical_matrix(*model)
+ph = elphmod.ph.Model('data/%s.ifc' % data, apply_asr=True)
 
 info("Check module against Quantum ESPRESSO's 'matdyn.x'..")
 
 q, x = elphmod.bravais.GMKG()
 
-w2, e, order = elphmod.dispersion.dispersion(D, q,
+w2, e, order = elphmod.dispersion.dispersion(ph.D, q,
     vectors=True, order=True, broadcast=False)
 
 w = elphmod.ph.sgnsqrt(w2) * Ry2eV * eV2cmm1
@@ -52,22 +50,22 @@ info("Calculate dispersion on whole Brillouin zone and sort bands..")
 
 nq = 48
 
-w2, order = elphmod.dispersion.dispersion_full(D, nq, order=True)
+w2, order = elphmod.dispersion.dispersion_full(ph.D, nq, order=True)
 
 w = elphmod.ph.sgnsqrt(w2) * Ry2eV * eV2cmm1
 
 if comm.rank == 0:
-    plt.plot(range(nq * nq), np.reshape(w, (nq * nq, D.size)))
+    plt.plot(range(nq * nq), np.reshape(w, (nq * nq, ph.size)))
     plt.show()
 
 info("Load and preprocess electron-phonon coupling..")
 
 nqelph = 12
 
-elph = np.empty((nqelph, nqelph, D.size))
+elph = np.empty((nqelph, nqelph, ph.size))
 
 if comm.rank == 0:
-    elph[:] = elphmod.elph.read('data/%s.elph' % data, nqelph, D.size)
+    elph[:] = elphmod.elph.read('data/%s.elph' % data, nqelph, ph.size)
 
     step = nq // nqelph
     orderelph = order[::step, ::step]
@@ -78,7 +76,7 @@ if comm.rank == 0:
 
 comm.Bcast(elph)
 
-plots = [elphmod.plot.plot(elph[:, :, nu]) for nu in range(D.size)]
+plots = [elphmod.plot.plot(elph[:, :, nu]) for nu in range(ph.size)]
 
 if comm.rank == 0:
     plt.imshow(elphmod.plot.arrange(plots))
@@ -89,7 +87,7 @@ g2 = np.empty_like(w)
 if comm.rank == 0:
     scale = 1.0 / step
 
-    for nu in range(D.size):
+    for nu in range(ph.size):
         elphfun = elphmod.bravais.Fourier_interpolation(elph[:, :, nu])
 
         for n in range(nq):
@@ -109,7 +107,7 @@ W = np.linspace(w.min(), w.max(), N)
 DOS = np.zeros(N)
 a2F = np.zeros(N)
 
-for nu in range(D.size):
+for nu in range(ph.size):
     DOS += elphmod.dos.hexDOS(w[:, :, nu])(W)
     a2F += elphmod.dos.hexa2F(w[:, :, nu], g2[:, :, nu])(W)
 

@@ -12,13 +12,14 @@ eF = -0.1665
 
 info("Set up Wannier Hamiltonian..")
 
-H = elphmod.el.hamiltonian('data/NbSe2_hr.dat')
+el = elphmod.el.Model('data/NbSe2_hr.dat')
 
 info("Diagonalize Hamiltonian along G-M-K-G..")
 
 k, x, GMKG = elphmod.bravais.GMKG(120, corner_indices=True)
 
-eps, psi, order = elphmod.dispersion.dispersion(H, k, vectors=True, order=True)
+eps, psi, order = elphmod.dispersion.dispersion(el.H, k,
+    vectors=True, order=True)
 
 eps -= eF
 
@@ -26,7 +27,7 @@ info("Diagonalize Hamiltonian on uniform mesh..")
 
 nk = 120
 
-eps_full = elphmod.dispersion.dispersion_full(H, nk) - eF
+eps_full = elphmod.dispersion.dispersion_full(el.H, nk) - eF
 
 info("Calculate DOS of metallic band..")
 
@@ -48,7 +49,7 @@ if comm.rank == 0:
     ax1.set_xticks(x[GMKG])
     ax1.set_xticklabels('GMKG')
 
-    for n in range(H.size):
+    for n in range(el.size):
         X, Y = elphmod.plot.compline(x, eps[:, n],
             0.05 * (psi[:, :, n] * psi[:, :, n].conj()).real)
 

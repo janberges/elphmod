@@ -11,15 +11,13 @@ Ry2eV = 13.605693009
 
 info("Read and fix force constants and set up dynamical matrix..")
 
-model = elphmod.ph.model('data/NbSe2-DFPT-LR.ifc', apply_asr=True)
-
-D = elphmod.ph.dynamical_matrix(*model)
+ph = elphmod.ph.Model('data/NbSe2-DFPT-LR.ifc', apply_asr=True)
 
 info("Calculate dispersion on whole Brillouin zone..")
 
 nq = 48
 
-w2 = elphmod.dispersion.dispersion_full(D, nq, order=False, broadcast=True)
+w2 = elphmod.dispersion.dispersion_full(ph.D, nq, order=False, broadcast=True)
 
 info("Plot dispersion on Brillouin zone..")
 
