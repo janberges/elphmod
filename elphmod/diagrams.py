@@ -60,8 +60,6 @@ def susceptibility(e, T=1.0, eta=1e-10, occupations=occupations.fermi_dirac):
 
         return prefactor * np.sum(df * de / (de * de + eta2))
 
-    calculate_susceptibility.size = 1
-
     return calculate_susceptibility
 
 def susceptibility2(e, T=1.0, nmats=1000, hyb_width=1.0, hyb_height=0.0):
@@ -133,8 +131,6 @@ def susceptibility2(e, T=1.0, nmats=1000, hyb_width=1.0, hyb_height=0.0):
         Gkq = G[:, q1:q1 + nk, q2:q2 + nk]
 
         return prefactor * np.sum(Gk * Gkq) + tail
-
-    calculate_susceptibility.size = 1
 
     return calculate_susceptibility
 
@@ -244,8 +240,6 @@ def polarization(e, c, T=1.0, eps=1e-15, subspace=None,
                         Pi[n, m, a, b] = np.sum(cca * ccb * dfde)
 
         return prefactor * Pi.sum(axis=(0, 1))
-
-    calculate_polarization.size = nb
 
     return calculate_polarization
 

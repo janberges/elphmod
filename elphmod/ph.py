@@ -6,6 +6,40 @@ import numpy as np
 from . import bravais, MPI
 comm = MPI.comm
 
+class Model():
+    """Mass-spring model for the phonons."""
+
+    def D(self, q1=0, q2=0, q3=0):
+        "Set up dynamical matrix for arbitrary q point."""
+
+        q = np.array([q1, q2, q3])
+        D = np.empty(self.data.shape, dtype=complex)
+
+        for n in range(D.shape[0]):
+            D[n] = self.data[n] * np.exp(-1j * np.dot(self.R[n], q))
+
+        return D.sum(axis=0)
+
+    def __init__(self, flfrc, apply_asr=False):
+        """Prepare interatomic force constants."""
+
+        if comm.rank == 0:
+            model = read_flfrc(flfrc)
+
+            # optionally, apply acoustic sum rule:
+
+            if apply_asr:
+                asr(model[0])
+        else:
+            model = None
+
+        model = comm.bcast(model)
+
+        self.M, self.a, self.r = model[1:]
+        self.R, self.data = short_range_model(*model)
+        self.size = self.data.shape[1]
+        self.nat = self.size // 3
+
 def group(n, size=3):
     """Create slice of dynamical matrix beloning to n-th atom."""
 
@@ -231,25 +265,8 @@ def asr(phid):
             for m3 in range(nr3)
             if na1 != na2 or m1 or m2 or m3)
 
-def model(flfrc, apply_asr=False):
-    """Read, fix and broadcast mass-spring model."""
-
-    if comm.rank == 0:
-        model = read_flfrc(flfrc)
-
-        # optionally, apply acoustic sum rule:
-
-        if apply_asr:
-            asr(model[0])
-    else:
-        model = None
-
-    model = comm.bcast(model)
-
-    return model
-
-def dynamical_matrix(phid, amass, at, tau, eps=1e-7):
-    """Set up dynamical matrix for force constants, masses, and geometry."""
+def short_range_model(phid, amass, at, tau, eps=1e-7):
+    """Map force constants onto Wigner-Seitz cell and divide by masses."""
 
     nat, nr1, nr2, nr3 = phid.shape[1:5]
 
@@ -330,20 +347,7 @@ def dynamical_matrix(phid, amass, at, tau, eps=1e-7):
     # (see cdef _p_message message_vector in mpi4py/src/mpi4py/MPI/msgbuffer.pxi
     # for possible formats of second argument 'recvbuf')
 
-    # return function to calculate dynamical matrix for arbitrary q points:
-
-    def calculate_dynamical_matrix(q1=0, q2=0, q3=0):
-        q = np.array([q1, q2, q3])
-        D = np.empty((dim, 3 * nat, 3 * nat), dtype=complex)
-
-        for n in range(dim):
-            D[n] = allconst[n] * np.exp(-1j * np.dot(allcells[n], q))
-
-        return D.sum(axis=0)
-
-    calculate_dynamical_matrix.size = 3 * nat
-
-    return calculate_dynamical_matrix
+    return cells, const
 
 def sgnsqrt(w2):
     """Calculate signed square root."""
@@ -489,4 +493,4 @@ def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
     # return dynamical matrix as q-dependent function:
     # (no MPI barrier needed because of broadcasting in 'model')
 
-    return dynamical_matrix(*model(flfrc, apply_asr))
+    return Model(flfrc, apply_asr)

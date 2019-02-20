@@ -5,11 +5,31 @@ import numpy as np
 from . import MPI
 comm = MPI.comm
 
-def hamiltonian(hr):
-    """Read '_hr.dat' file from Wannier90 and set up Hamilton operator."""
+class Model():
+    """Tight-binding model for the electrons."""
+
+    def H(self, k1=0, k2=0, k3=0):
+        """Set up Hamilton operator for arbitrary k point."""
+
+        k = np.array([k1, k2, k3])
+        H = np.empty(self.data.shape, dtype=complex)
+
+        for n in range(H.shape[0]):
+            H[n] = self.data[n] * np.exp(1j * np.dot(self.R[n], k))
+
+        return H.sum(axis=0)
+
+    def __init__(self, hrdat):
+        """Prepare hopping parameters."""
+
+        self.R, self.data = read_hrdat(hrdat)
+        self.size = self.data.shape[1]
+
+def read_hrdat(hrdat):
+    """Read '_hr.dat' file from Wannier90."""
 
     if comm.rank == 0:
-        data = open(hr)
+        data = open(hrdat)
 
         # read all words of current line:
 
@@ -59,20 +79,7 @@ def hamiltonian(hr):
     comm.Bcast(cells)
     comm.Bcast(const)
 
-    # return function to calculate hamiltonian for arbitrary k points:
-
-    def calculate_hamiltonian(k1=0, k2=0, k3=0):
-        k = np.array([k1, k2, k3])
-        H = np.empty((nrpts, num_wann, num_wann), dtype=complex)
-
-        for n in range(nrpts):
-            H[n] = const[n] * np.exp(1j * np.dot(cells[n], k))
-
-        return H.sum(axis=0)
-
-    calculate_hamiltonian.size = num_wann
-
-    return calculate_hamiltonian
+    return cells, const
 
 def read_bands(filband):
     """Read bands from 'filband' just like Quantum ESRESSO's 'plotband.x'."""

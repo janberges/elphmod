@@ -48,7 +48,7 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
     points = len(k) if comm.rank == 0 else None
     points = comm.bcast(points) # number of k points
 
-    bands = matrix.size # number of bands
+    bands = matrix().shape[0] # number of bands
 
     # choose number of k points to be processed by each processor:
 
@@ -170,8 +170,9 @@ def dispersion_full(matrix, size, angle=60, vectors=False, gauge=False,
 
     k = np.array(sorted(bravais.irreducibles(size, angle=angle)))
 
-    points = len(k)      # number of k points
-    bands  = matrix.size # number of bands
+    points = len(k) # number of k points
+
+    bands = matrix().shape[0] # number of bands
 
     # define main and side paths for different axes:
 

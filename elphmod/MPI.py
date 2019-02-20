@@ -82,6 +82,25 @@ def shared_array(shape, dtype):
 
     return node, images, np.ndarray(shape, buffer=buf, dtype=dtype)
 
+def collect(my_data, shape, sizes, dtype, shared_memory=True):
+    """Gather data of variable sizes into shared memory."""
+
+    elements = sizes * np.prod(shape) // np.sum(sizes)
+
+    if shared_memory:
+        node, images, data = MPI.shared_array(shape, dtype=dtype)
+
+        comm.Gatherv(my_data, (data, elements))
+
+        if node.rank == 0:
+            images.Bcast(data)
+    else:
+        data = np.empty(shape, dtype=dtype)
+
+        comm.Allgatherv(my_data, (data, elements))
+
+    return data
+
 def info(message, error=False):
     """Print status message from first process."""
 

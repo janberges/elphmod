@@ -7,6 +7,81 @@ from . import bravais, dispersion, el, MPI, ph
 comm = MPI.comm
 info = MPI.info
 
+class Model():
+    """Localized model for electron-phonon coupling."""
+
+    def g(self, q1=0, q2=0, q3=0, k1=0, k2=0, k3=0):
+        q = np.array([q1, q2, q3])
+        k = np.array([k1, k2, k3])
+
+        if self.last_k is None or np.any(k != self.last_k):
+            g = np.empty(self.data.shape, dtype=complex)
+
+            for n in range(g.shape[2]):
+                g[:, :, n] = self.data[:, :, n] * np.exp(1j * np.dot(self.Rk[n],
+                    k))
+
+            self.last_k = k
+            self.last_g = g.sum(axis=2)
+
+        g = np.empty(self.last_g.shape, dtype=complex)
+
+        for n in range(g.shape[0]):
+            g[n] = self.last_g[n] * np.exp(1j * np.dot(self.Rg[n], q))
+
+        return g.sum(axis=0)
+
+    def __init__(self, epmatwp, wigner, el, ph):
+        # read lattice vectors within Wigner-Seitz cell:
+
+        (nrr_k, irvec_k, ndegen_k, wslen_k,
+         nrr_q, irvec_q, ndegen_q, wslen_q,
+         nrr_g, irvec_g, ndegen_g, wslen_g) = bravais.read_wigner_file(wigner,
+            nat=ph.nat)
+
+        self.Rk = irvec_k
+        self.Rg = irvec_g
+
+        # read coupling in Wannier basis from EPW output:
+        # ('epmatwp' allocated and printed in 'ephwann_shuffle.f90')
+
+        shape = (nrr_g, ph.size, nrr_k, el.size, el.size)
+
+        if comm.rank == 0:
+            with open(epmatwp) as data:
+                g = np.fromfile(data, dtype=np.complex128)
+
+            g = np.reshape(g, shape)
+
+            # undo supercell double counting:
+
+            for irk in range(nrr_k):
+                g[:, :, irk] /= ndegen_k[irk]
+
+            block = [slice(3 * na, 3 * (na + 1)) for na in range(ph.nat)]
+
+            for irg in range(nrr_g):
+                for na in range(ph.nat):
+                    if ndegen_g[na, irg]:
+                        g[irg, block[na]] /= ndegen_g[na, irg]
+                    else:
+                        g[irg, block[na]] = 0.0
+
+            # divide by square root of atomic masses:
+
+            for na in range(ph.nat):
+                g[:, block[na]] /= np.sqrt(ph.M[na])
+
+        else:
+            g = np.empty(shape, dtype=np.complex128)
+
+        comm.Bcast(g)
+
+        self.data = g
+
+        self.last_k = None
+        self.last_g = None
+
 def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
         completion=True, complete_k=False, squeeze=False, status=False,
         phase=False):
@@ -458,56 +533,24 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
         q = np.array(q) % (2 * np.pi)
         q_int = np.round(q * nq / (2 * np.pi)).astype(int)
 
-    # read lattice vectors within Wigner-Seitz cell:
-
-    (nrr_k, irvec_k, ndegen_k, wslen_k,
-     nrr_q, irvec_q, ndegen_q, wslen_q,
-     nrr_g, irvec_g, ndegen_g, wslen_g) = bravais.read_wigner_file(wigner, nat)
-
-    # read coupling in Wannier basis from EPW output:
-    # ('epmatwp' allocated and printed in 'ephwann_shuffle.f90')
-
-    shape = (nrr_g, nmodes, nrr_k, nbndsub, nbndsub)
-
-    if comm.rank == 0:
-        with open(epmatwp) as data:
-            g = np.fromfile(data, dtype=np.complex128)
-
-        g = np.reshape(g, shape)
-
-    else:
-        g = np.empty(shape, dtype=np.complex128)
-
-    comm.Bcast(g)
-
-    # divide by square root of atomic masses:
-
-    block = [slice(3 * na, 3 * (na + 1)) for na in range(nat)]
-
-    if ifc is None:
-        info("Warning: No IFC file given! No factor 1/sqrt(M) in coupling!")
-    else:
-        phid, amass, at, tau = ph.model(ifc, apply_asr=True)
-
-        for na in range(nat):
-            g[:, block[na]] /= np.sqrt(amass[na])
+    el_model = el.Model(wannier)
+    ph_model = ph.Model(ifc, apply_asr=True)
+    elph_model = Model(epmatwp, wigner, el_model, ph_model)
 
     # transfrom from Wannier to Bloch basis:
     # (see 'wan2bloch.f90' in EPW 5.0)
 
-    # electrons 1: transform from real to k space:
+    # transform from real to k space:
     #
-    # from g(nrr_g, nmodes, nrr_k,  nbndsub, nbndsub)
-    # to   g(nrr_g, nmodes, nk, nk, nbndsub, nbndsub)
+    # from g(nrr_g,  nmodes, nrr_k,  nbndsub, nbndsub)
+    # to   g(len(q), nmodes, nk, nk, nbndsub, nbndsub)
 
-    info("Real space to k..")
+    info("Real to reciprocal space..")
 
     sizes, bounds = MPI.distribute(nk * nk, bounds=True)
 
-    my_g = np.empty((sizes[comm.rank], nrr_g, nmodes, nbndsub, nbndsub),
+    my_g = np.empty((sizes[comm.rank], len(q), nmodes, nbndsub, nbndsub),
         dtype=np.complex128)
-
-    tmp = np.empty_like(g)
 
     for my_ik, ik in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         k1 = ik // nk
@@ -515,77 +558,21 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
 
         print('k = (%d, %d)' % (k1, k2))
 
-        k = np.array([k1, k2], dtype=float) / nk * 2 * np.pi
+        k1 *= 2 * np.pi / nk
+        k2 *= 2 * np.pi / nk
 
-        for irk in range(nrr_k):
-            tmp[:, :, irk] = g[:, :, irk] \
-                * np.exp(1j * np.dot(k, irvec_k[irk])) / ndegen_k[irk]
+        for iq, (q1, q2) in enumerate(q):
+            my_g[my_ik, iq] = elph_model.g(k1=k1, k2=k2, q1=q1, q2=q2)
 
-        my_g[my_ik] = tmp.sum(axis=2)
-
-    shape = (nk, nk, nrr_g, nmodes, nbndsub, nbndsub)
-    elements = sizes * nrr_g * nmodes * nbndsub * nbndsub
-
-    if shared_memory:
-        node, images, g = MPI.shared_array(shape, dtype=np.complex128)
-
-        comm.Gatherv(my_g, (g, elements))
-
-        if node.rank == 0:
-            images.Bcast(g)
-    else:
-        g = np.empty(shape, dtype=np.complex)
-
-        comm.Allgatherv(my_g, (g, elements))
+    g = MPI.collect(my_g, (nk, nk, len(q), nmodes, nbndsub, nbndsub), sizes,
+        np.complex128, shared_memory)
 
     g = np.transpose(g, axes=(2, 3, 0, 1, 4, 5))
 
-    # phonons 1: transform from real to q space:
-    #
-    # from g(nrr_g , nmodes, nk, nk, nbndsub, nbndsub)
-    # to   g(len(q), nmodes, nk, nk, nbndsub, nbndsub)
-
-    info("Real space to q..")
-
     sizes, bounds = MPI.distribute(len(q), bounds=True)
 
-    my_g = np.empty((sizes[comm.rank], nmodes, nk, nk, nbndsub, nbndsub),
-        dtype=np.complex128)
-
-    tmp = np.empty_like(g)
-
-    for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
-        print('q = %d' % iq)
-
-        for irg in range(nrr_g):
-            exp = np.exp(1j * np.dot(q[iq], irvec_g[irg]))
-
-            for na in range(nat):
-                if ndegen_g[na, irg]:
-                    tmp[irg, block[na]] = g[irg, block[na]] \
-                        * exp / ndegen_g[na, irg]
-                else:
-                    tmp[irg, block[na]] = 0
-
-        my_g[my_iq] = tmp.sum(axis=0)
-
-    shape = (len(q), nmodes, nk, nk, nbndsub, nbndsub)
-    elements = sizes * nmodes * nk * nk * nbndsub * nbndsub
-
-    if shared_memory:
-        node, images, g = MPI.shared_array(shape, dtype=np.complex128)
-
-        comm.Gatherv(my_g, (g, elements))
-
-        if node.rank == 0:
-            images.Bcast(g)
-    else:
-        g = np.empty(shape, dtype=np.complex128)
-
-        comm.Allgatherv(my_g, (g, elements))
-
     if not orbital_basis:
-        # electrons 2: transform from orbital to band basis:
+        # electrons: transform from orbital to band basis:
         # (the meaning of the last two indices changes)
 
         info('Orbital to band..')
@@ -603,12 +590,12 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
 
             comm.Bcast(U)
         else:
-            H = el.hamiltonian(wannier)
-            e, U = dispersion.dispersion_full_nosym(H, nk, vectors=True)
+            e, U = dispersion.dispersion_full_nosym(el_model.H, nk,
+                vectors=True)
 
             if order_electron_bands:
-                order = dispersion.dispersion_full(H, nk, order=True,
-                    angle=angle)[1]
+                order = dispersion.dispersion_full(el.model.H, nk,
+                    order=True, angle=angle)[1]
 
                 for k1 in range(nk):
                     for k2 in range(nk):
@@ -638,16 +625,11 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
                         my_g[my_iq, i, k1, k2] = U[k1, k2].T.dot(
                            g[   iq, i, k1, k2]).dot(U[kq1, kq2].conj())
 
-        if shared_memory:
-            comm.Gatherv(my_g, (g, elements))
-
-            if node.rank == 0:
-                images.Bcast(g)
-        else:
-            comm.Allgatherv(my_g, (g, elements))
+        g = MPI.collect(my_g, (len(q), nmodes, nk, nk, nbndsub, nbndsub), sizes,
+            np.complex128, shared_memory)
 
     if not displacement_basis:
-        # phonons 2: transform from displacement to mode basis:
+        # phonons: transform from displacement to mode basis:
         # (the meaning of the second index changes)
 
         info('Displacement to mode..')
@@ -690,13 +672,8 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
         for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
             my_g[my_iq] = np.einsum('iklnm,ij->jklnm', g[iq], u[iq])
 
-        if shared_memory:
-            comm.Gatherv(my_g, (g, elements))
-
-            if node.rank == 0:
-                images.Bcast(g)
-        else:
-            comm.Allgatherv(my_g, (g, elements))
+        g = MPI.collect(my_g, (len(q), nmodes, nk, nk, nbndsub, nbndsub), sizes,
+            np.complex128, shared_memory)
 
     # Write transformed coupling to disk:
 
