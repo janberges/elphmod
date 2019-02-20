@@ -7,7 +7,7 @@ from . import bravais, dispersion, el, MPI, ph
 comm = MPI.comm
 info = MPI.info
 
-class Model():
+class Model(object):
     """Localized model for electron-phonon coupling."""
 
     def g(self, q1=0, q2=0, q3=0, k1=0, k2=0, k3=0):

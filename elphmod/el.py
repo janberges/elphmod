@@ -5,7 +5,7 @@ import numpy as np
 from . import MPI
 comm = MPI.comm
 
-class Model():
+class Model(object):
     """Tight-binding model for the electrons."""
 
     def H(self, k1=0, k2=0, k3=0):

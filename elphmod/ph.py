@@ -6,7 +6,7 @@ import numpy as np
 from . import bravais, MPI
 comm = MPI.comm
 
-class Model():
+class Model(object):
     """Mass-spring model for the phonons."""
 
     def D(self, q1=0, q2=0, q3=0):
