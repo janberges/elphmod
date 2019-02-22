@@ -14,22 +14,21 @@ class Model(object):
         q = np.array([q1, q2, q3])
         k = np.array([k1, k2, k3])
 
-        if self.last_k is None or np.any(k != self.last_k):
+        if self.q is None or np.any(q != self.q):
             g = np.empty(self.data.shape, dtype=complex)
 
-            for n in range(g.shape[2]):
-                g[:, :, n] = self.data[:, :, n] * np.exp(1j * np.dot(self.Rk[n],
-                    k))
+            for n in range(g.shape[0]):
+                g[n] = self.data[n] * np.exp(1j * np.dot(self.Rg[n], q))
 
-            self.last_k = k
-            self.last_g = g.sum(axis=2)
+            self.q = q
+            self.gq = g.sum(axis=0)
 
-        g = np.empty(self.last_g.shape, dtype=complex)
+        g = np.empty(self.gq.shape, dtype=complex)
 
-        for n in range(g.shape[0]):
-            g[n] = self.last_g[n] * np.exp(1j * np.dot(self.Rg[n], q))
+        for n in range(g.shape[1]):
+            g[:, n] = self.gq[:, n] * np.exp(1j * np.dot(self.Rk[n], k))
 
-        return g.sum(axis=0)
+        return g.sum(axis=1)
 
     def __init__(self, epmatwp, wigner, el, ph):
         # read lattice vectors within Wigner-Seitz cell:
@@ -79,8 +78,8 @@ class Model(object):
 
         self.data = g
 
-        self.last_k = None
-        self.last_g = None
+        self.q = None
+        self.gg = None
 
 def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
         completion=True, complete_k=False, squeeze=False, status=False,
@@ -547,29 +546,29 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
 
     info("Real to reciprocal space..")
 
-    sizes, bounds = MPI.distribute(nk * nk, bounds=True)
+    sizes, bounds = MPI.distribute(len(q), bounds=True)
 
-    my_g = np.empty((sizes[comm.rank], len(q), nmodes, nbndsub, nbndsub),
+    my_g = np.empty((sizes[comm.rank], nmodes, nk, nk, nbndsub, nbndsub),
         dtype=np.complex128)
 
-    for my_ik, ik in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
-        k1 = ik // nk
-        k2 = ik % nk
+    scale = 2 * np.pi / nk
 
-        print('k = (%d, %d)' % (k1, k2))
+    for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
+        Q1, Q2 = q_int[iq]
+        q1, q2 = q[iq]
 
-        k1 *= 2 * np.pi / nk
-        k2 *= 2 * np.pi / nk
+        print('q = (%d, %d)' % (Q1, Q2))
 
-        for iq, (q1, q2) in enumerate(q):
-            my_g[my_ik, iq] = elph_model.g(k1=k1, k2=k2, q1=q1, q2=q2)
+        for K1 in range(nk):
+            k1 = K1 * scale
 
-    g = MPI.collect(my_g, (nk, nk, len(q), nmodes, nbndsub, nbndsub), sizes,
+            for K2 in range(nk):
+                k2 = K2 * scale
+
+                my_g[my_iq, :, K1, K2] = elph_model.g(q1=q1, q2=q2, k1=k1, k2=k2)
+
+    g = MPI.collect(my_g, (len(q), nmodes, nk, nk, nbndsub, nbndsub), sizes,
         np.complex128, shared_memory)
-
-    g = np.transpose(g, axes=(2, 3, 0, 1, 4, 5))
-
-    sizes, bounds = MPI.distribute(len(q), bounds=True)
 
     if not orbital_basis:
         # electrons: transform from orbital to band basis:
