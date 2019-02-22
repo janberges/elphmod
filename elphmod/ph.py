@@ -324,7 +324,7 @@ def short_range_model(phid, amass, at, tau, eps=1e-7):
                                 const[R] = np.zeros((3 * nat, 3 * nat))
 
                             const[R][3 * na1:3 * na1 + 3,
-                                     3 * na2:3 * na2 + 3] += C
+                                     3 * na2:3 * na2 + 3] = C
 
     # convert dictionary into arrays:
 
