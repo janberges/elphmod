@@ -79,7 +79,6 @@ class Model(object):
         self.data = g
 
         self.q = None
-        self.gg = None
 
 def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
         completion=True, complete_k=False, squeeze=False, status=False,
