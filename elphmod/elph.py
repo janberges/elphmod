@@ -910,3 +910,24 @@ def read_phonon_eigenvalues(filename, w2):
 
                 iq, nu = [-1 + int(x) for x in columns[:2]]
                 w2[iq, nu] = float(columns[2])
+
+def write_data(filename, data):
+    """Write array to ASCII file."""
+
+    iterator = np.nditer(data, flags=['multi_index'])
+
+    complex_data = np.iscomplexobj(data)
+
+    integer_format = '%3d' * data.ndim
+
+    float_format = '16.8e' * (2 if complex_data else 1)
+
+    for value in data:
+        data.write(integer_format % iterator.multi_index)
+
+        if complex_data:
+            data.write(float_format % (value.real, value.imag))
+        else:
+            data.write(float_format % value)
+
+        data.write('\n')
