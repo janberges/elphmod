@@ -721,7 +721,7 @@ def write_coupling(filename, g, orbital_basis=False, displacement_basis=False):
                         for m in range(nbndsub):
                             for i in range(nmodes):
                                 data.write("""
-%3d%3d%3d%3d%3d%16.8E%16.8E""" % (k1 + 1, k2 + 1, n + 1, m + 1, i + 1,
+%3d%3d%3d%3d%3d %15.8E %15.8E""" % (k1 + 1, k2 + 1, n + 1, m + 1, i + 1,
                                         g[iq, i, k1, k2, n, m].real,
                                         g[iq, i, k1, k2, n, m].imag))
 
@@ -754,7 +754,7 @@ def write_electron_eigenvectors(filename, U):
                 for a in range(nbndsub):
                     for n in range(nbndsub):
                         data.write("""
-%3d%3d%3d%3d%16.8E%16.8E""" % (k1 + 1, k2 + 1, a + 1, n + 1,
+%3d%3d%3d%3d %15.8E %15.8E""" % (k1 + 1, k2 + 1, a + 1, n + 1,
                                   U[k1, k2, a, n].real,
                                   U[k1, k2, a, n].imag))
 
@@ -802,7 +802,7 @@ def write_electron_eigenvalues(filename, e):
             for k2 in range(nk):
                 for n in range(nbndsub):
                     data.write("""
-%3d%3d%3d%16.8E""" % (k1 + 1, k2 + 1, n + 1, e[k1, k2, n]))
+%3d%3d%3d %15.8E""" % (k1 + 1, k2 + 1, n + 1, e[k1, k2, n]))
 
 def read_electron_eigenvalues(filename, e):
     """Read eigenvalues of Wannier Hamiltonian from text file.
@@ -847,7 +847,7 @@ def write_phonon_eigenvectors(filename, u):
             for x in range(nmodes):
                 for nu in range(nmodes):
                     data.write("""
-%3d%3d%3d%16.8E%16.8E""" % (iq + 1, x + 1, nu + 1,
+%3d%3d%3d %15.8E %15.8E""" % (iq + 1, x + 1, nu + 1,
                             u[iq, x, nu].real,
                             u[iq, x, nu].imag))
 
@@ -894,7 +894,7 @@ def write_phonon_eigenvalues(filename, w2):
         for iq in range(nQ):
             for nu in range(nmodes):
                 data.write("""
-%3d%3d%16.8E""" % (iq + 1, nu + 1, w2[iq, nu]))
+%3d%3d %15.8E""" % (iq + 1, nu + 1, w2[iq, nu]))
 
 def read_phonon_eigenvalues(filename, w2):
     """Read eigenvalues of dynamical matrix from text file.
