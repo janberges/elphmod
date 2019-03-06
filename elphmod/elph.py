@@ -1,6 +1,5 @@
 #/usr/bin/env python
 
-import os
 import numpy as np
 
 from . import bravais, dispersion, el, MPI, ph
@@ -31,6 +30,9 @@ class Model(object):
         return g.sum(axis=1)
 
     def __init__(self, epmatwp, wigner, el, ph):
+        self.el = el
+        self.ph = ph
+
         # read lattice vectors within Wigner-Seitz cell:
 
         (nrr_k, irvec_k, ndegen_k, wslen_k,
@@ -433,130 +435,47 @@ def read(filename, nq, bands):
 
     return elph
 
-def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
-        orbital_basis=False, wannier=None, order_electron_bands=False,
-        displacement_basis=True, ifc=None, order_phonon_bands=False,
-        read_eigenvectors=True, elphdat='el-ph-%d.dat', shared_memory=False):
+def epw(elph, q, nk, U=None, u=None, shared_memory=False):
     """Simulate second part of EPW: coarse Wannier to fine Bloch basis.
+
+    This routine follows 'wan2bloch.f90' of EPW 5.0.
 
     The purpose of this routine is full control of the coupling's complex phase.
 
     Parameters
     ----------
-    epmatwp : str
-        File with electron-phonon coupling in Wannier basis produced by EPW.
-    wigner : str
-        File with lattice vectors in Wigner-Seitz cell belonging to 'epmatwp'.
-
-        This file is not produced by EPW by default. It contains the variables
-
-            'nrr_k', 'irvec_k', 'ndegen_k', 'wslen_k',
-            'nrr_q', 'irvec_q', 'ndegen_q', 'wslen_q',
-            'nrr_g', 'irvec_g', 'ndegen_g', 'wslen_g',
-
-        which are allocated and calculated in the EPW source file 'wigner.f90',
-        in the given order and in binary representation without any separators.
-
-    outdir : str
-        Directory where (some of) the following output files are stored:
-
-            el-ph-(q point).dat (e.g.) (to be read by `bravais.coupling`)
-            electron_eigenvectors.dat
-            electron_eigenvalues.dat
-            phonon_eigenvectors.dat
-            phonon_eigenvalues.dat     (phonon frequencies  s q u a r e d)
-
-    nbndsub : int
-        Number of electron bands or Wannier functions.
-    nmodes : int
-        Number of phonon modes (three times the number of atoms).
+    elph : object
+        Electron-phonon model.
+    q : list of 2-tuples
+        q points in crystal coordinates q1, q2 in [0, 2pi).
     nk : int
         Number of k points per dimension.
-    nq : int
-        Number of q points per dimension.
-    q : str or list of 2-tuples, optional
-        Requested q points. The possible values are:
-
-            'wedge': Irreducible wedge of the uniform `nq` x `nq` mesh.
-                     This should be consistent with Quantum ESPRESSO.
-
-             'mesh': Full `nq` x `nq` mesh.
-
-                 or: Custom q points in crystal coordinates q1, q2 in [0, 2pi).
-
-    angle : float
-        Angle between Bravais-lattice vectors in degrees.
-    orbital_basis : bool, optional
-        Stay in the orbital basis or transform to band basis?
-    wannier : str, optional
-        File with Wannier Hamiltonian.
-    order_electron_bands : bool, optional
-        Order electron bands via k-local orbital character?
-    displacement_basis : bool, optional
-        Stay in the displacement basis or transform to mode basis?
-    ifc : str, optional
-        File with interatomic force constants.
-    order_phonon_bands : bool, optional
-        Order phonon bands via q-local displacement character?
-    read_eigenvectors : bool, optional
-        Read electron and phonon eigenvectors from previously written files
-        instead of calculating them? This option can be used to guarantee the
-        same gauge in different calculations, especially if the implementation
-        of NumPy's diagonalization routines is not deterministic.
-    elphdat : str, optional
-        Custom name for output coupling files with placeholder "%d" for q point.
+    U : ndarray, optional
+        Electron eigenvectors for given k mesh.
+        If present, transform from orbital to band basis.
+    u : ndarray, optional
+        Phonon eigenvectors for given q points.
+        If present, transform from displacement to band basis.
     shared_memory : bool, optional
         Store transformed coupling in shared memory?
     """
-    os.system('mkdir -p %s' % outdir)
-
-    nat = nmodes // 3
-
-    angle = 180 - angle
-
-    if type(q) is str and q == 'wedge':
-        # generate same list of irreducible q points as Quantum ESPRESSO:
-
-        q_int = sorted(bravais.irreducibles(nq, angle=angle))
-        q_type = q
-        q = np.array(q_int, dtype=float) / nq * 2 * np.pi
-
-    elif type(q) is str and q == 'mesh':
-        q_int = [(q1, q2) for q1 in range(nq) for q2 in range(nq)]
-        q_type = q
-        q = np.array(q_int, dtype=float) / nq * 2 * np.pi
-
-    else:
-        q_type = 'points'
-        q = np.array(q) % (2 * np.pi)
-        q_int = np.round(q * nq / (2 * np.pi)).astype(int)
-
-    el_model = el.Model(wannier)
-    ph_model = ph.Model(ifc, apply_asr=True)
-    elph_model = Model(epmatwp, wigner, el_model, ph_model)
-
-    # transfrom from Wannier to Bloch basis:
-    # (see 'wan2bloch.f90' in EPW 5.0)
-
-    # transform from real to k space:
-    #
-    # from g(nrr_g,  nmodes, nrr_k,  nbndsub, nbndsub)
-    # to   g(len(q), nmodes, nk, nk, nbndsub, nbndsub)
-
-    info("Real to reciprocal space..")
-
     sizes, bounds = MPI.distribute(len(q), bounds=True)
-
-    my_g = np.empty((sizes[comm.rank], nmodes, nk, nk, nbndsub, nbndsub),
-        dtype=np.complex128)
 
     scale = 2 * np.pi / nk
 
+    if U is not None:
+        U = np.tile(U, (2, 2, 1, 1))
+
+    my_g = np.empty((sizes[comm.rank],
+        elph.ph.size, nk, nk, elph.el.size, elph.el.size), dtype=np.complex128)
+
     for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
-        Q1, Q2 = q_int[iq]
         q1, q2 = q[iq]
 
-        print('q = (%d, %d)' % (Q1, Q2))
+        Q1 = int(round(q1 / scale))
+        Q2 = int(round(q2 / scale))
+
+        print('q = (%g, %g)' % (Q1, Q2))
 
         for K1 in range(nk):
             k1 = K1 * scale
@@ -564,119 +483,20 @@ def epw(epmatwp, wigner, outdir, nbndsub, nmodes, nk, nq, q='wedge', angle=120,
             for K2 in range(nk):
                 k2 = K2 * scale
 
-                my_g[my_iq, :, K1, K2] = elph_model.g(q1=q1, q2=q2, k1=k1, k2=k2)
+                my_g[my_iq, :, K1, K2] = elph.g(q1=q1, q2=q2, k1=k1, k2=k2)
 
-    g = MPI.collect(my_g, (len(q), nmodes, nk, nk, nbndsub, nbndsub), sizes,
-        np.complex128, shared_memory)
+        if U is not None:
+            my_g[my_iq] = np.einsum('xklab,klan,klbm->xklnm',
+                my_g[my_iq], U[:nk, :nk], U[Q1:Q1 + nk, Q2:Q2 + nk].conj())
 
-    if not orbital_basis:
-        # electrons: transform from orbital to band basis:
-        # (the meaning of the last two indices changes)
+        if u is not None:
+            my_g[my_iq] = np.einsum('xklab,xu->uklab', my_g[my_iq], u[iq])
 
-        info('Orbital to band..')
+    g = MPI.collect(my_g,
+        (len(q), elph.ph.size, nk, nk, elph.el.size, elph.el.size),
+        sizes, np.complex128, shared_memory)
 
-        my_g = np.empty((sizes[comm.rank], nmodes, nk, nk, nbndsub, nbndsub),
-            dtype=np.complex128)
-
-        filename = '%s/electron_eigenvectors.dat' % outdir
-
-        if read_eigenvectors and os.path.exists(filename):
-            if comm.rank == 0:
-                U = read_data(filename)
-            else:
-                U = np.empty((nk, nk, nbndsub, nbndsub), dtype=complex)
-
-            comm.Bcast(U)
-        else:
-            e, U = dispersion.dispersion_full_nosym(el_model.H, nk,
-                vectors=True)
-
-            if order_electron_bands:
-                order = dispersion.dispersion_full(el.model.H, nk,
-                    order=True, angle=angle)[1]
-
-                for k1 in range(nk):
-                    for k2 in range(nk):
-                        e[k1, k2] = e[k1, k2, order[k1, k2]]
-
-                        for n in range(nbndsub):
-                            U[k1, k2, n] = U[k1, k2, n, order[k1, k2]]
-
-            if comm.rank == 0:
-                filename2 = '%s/electron_eigenvalues.dat' % outdir
-                write_data(filename, U)
-                write_data(filename2, e)
-
-        for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
-            q1, q2 = q_int[iq]
-
-            q1 *= nk // nq
-            q2 *= nk // nq
-
-            for k1 in range(nk):
-                kq1 = (k1 + q1) % nk
-
-                for k2 in range(nk):
-                    kq2 = (k2 + q2) % nk
-
-                    for i in range(nmodes):
-                        my_g[my_iq, i, k1, k2] = U[k1, k2].T.dot(
-                           g[   iq, i, k1, k2]).dot(U[kq1, kq2].conj())
-
-        g = MPI.collect(my_g, (len(q), nmodes, nk, nk, nbndsub, nbndsub), sizes,
-            np.complex128, shared_memory)
-
-    if not displacement_basis:
-        # phonons: transform from displacement to mode basis:
-        # (the meaning of the second index changes)
-
-        info('Displacement to mode..')
-
-        filename = '%s/phonon_eigenvectors.dat' % outdir
-
-        if read_eigenvectors and os.path.exists(filename):
-            if comm.rank == 0:
-                u = read_data(filename)
-            else:
-                u = np.empty((len(q), nmodes, nmodes), dtype=complex)
-
-            comm.Bcast(u)
-        else:
-            D = ph.dynamical_matrix(phid, amass, at, tau)
-
-            w2, u = dispersion.dispersion(D, q, vectors=True,
-                order=order_phonon_bands and q_type != 'mesh')[:2]
-
-            if order_phonon_bands and q_type == 'mesh':
-                order = dispersion.dispersion_full(D, nq, order=True,
-                    angle=angle)[1]
-
-                order = np.reshape(order, (len(q), nmodes))
-
-                for iq in range(len(q)):
-                    w2[iq] = w2[iq, order[iq]]
-
-                    for nu in range(nmodes):
-                        u[iq, nu] = u[iq, nu, order[iq]]
-
-            if comm.rank == 0:
-                filename2 = '%s/phonon_eigenvalues.dat' % outdir
-                write_data(filename, u)
-                write_data(filename2, w2)
-
-        my_g = np.empty((sizes[comm.rank], nmodes, nk, nk, nbndsub, nbndsub),
-            dtype=np.complex128)
-
-        for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
-            my_g[my_iq] = np.einsum('iklnm,ij->jklnm', g[iq], u[iq])
-
-        g = MPI.collect(my_g, (len(q), nmodes, nk, nk, nbndsub, nbndsub), sizes,
-            np.complex128, shared_memory)
-
-    # Write transformed coupling to disk:
-
-    for iq in range(*bounds[comm.rank:comm.rank + 2]):
-        write_data(outdir + '/' + elphdat % (iq + 1), g[iq])
+    return g
 
 def write_data(filename, data):
     """Write array to ASCII file."""
