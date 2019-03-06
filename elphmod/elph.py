@@ -918,16 +918,46 @@ def write_data(filename, data):
 
     complex_data = np.iscomplexobj(data)
 
-    integer_format = '%3d' * data.ndim
+    integer_format = ' '.join('%%%dd' % len(str(n)) for n in data.shape)
 
-    float_format = '16.8e' * (2 if complex_data else 1)
+    float_format = ' %16.9e'
 
-    for value in data:
-        data.write(integer_format % iterator.multi_index)
+    with open(filename, 'w') as text:
+        text.write(integer_format % data.shape)
 
-        if complex_data:
-            data.write(float_format % (value.real, value.imag))
-        else:
-            data.write(float_format % value)
+        text.write(' %s\n' % ('C' if complex_data else 'R'))
 
-        data.write('\n')
+        for value in iterator:
+            text.write(integer_format % iterator.multi_index)
+
+            if complex_data:
+                text.write(float_format % value.real)
+                text.write(float_format % value.imag)
+            else:
+                text.write(float_format % value)
+
+            text.write('\n')
+
+def read_data(filename):
+    """Read array to ASCII file."""
+
+    with open(filename) as text:
+        columns = text.next().split()
+        shape = tuple(map(int, columns[:-1]))
+        complex_data = { 'R': False, 'C': True }[columns[-1]]
+
+        data = np.empty(shape, dtype=complex if complex_data else float)
+
+        ndim = len(shape)
+
+        for line in text:
+            columns = line.split()
+            indices = tuple(map(int, columns[:ndim]))
+            values = tuple(map(float, columns[ndim:]))
+
+            if complex_data:
+                data[indices] = complex(*values)
+            else:
+                data[indices] = values[0]
+
+    return data
