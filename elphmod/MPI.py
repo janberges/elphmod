@@ -88,7 +88,7 @@ def collect(my_data, shape, sizes, dtype, shared_memory=True):
     elements = sizes * np.prod(shape) // np.sum(sizes)
 
     if shared_memory:
-        node, images, data = MPI.shared_array(shape, dtype=dtype)
+        node, images, data = shared_array(shape, dtype=dtype)
 
         comm.Gatherv(my_data, (data, elements))
 
