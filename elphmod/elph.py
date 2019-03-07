@@ -7,8 +7,10 @@ comm = MPI.comm
 info = MPI.info
 
 class Model(object):
-    """Localized model for electron-phonon coupling."""
+    """Localized model for electron-phonon coupling.
 
+    The methods of this class follow 'wan2bloch.f90' of EPW 5.0.
+    """
     def g(self, q1=0, q2=0, q3=0, k1=0, k2=0, k3=0):
         q = np.array([q1, q2, q3])
         k = np.array([k1, k2, k3])
@@ -81,6 +83,65 @@ class Model(object):
         self.data = g
 
         self.q = None
+
+    def sample(self, q, nk, U=None, u=None, shared_memory=False):
+        """Sample coupling for given q and k points and transform to band basis.
+
+        One purpose of this routine is full control of the complex phase.
+
+        Parameters
+        ----------
+        q : list of 2-tuples
+            q points in crystal coordinates q1, q2 in [0, 2pi).
+        nk : int
+            Number of k points per dimension.
+        U : ndarray, optional
+            Electron eigenvectors for given k mesh.
+            If present, transform from orbital to band basis.
+        u : ndarray, optional
+            Phonon eigenvectors for given q points.
+            If present, transform from displacement to band basis.
+        shared_memory : bool, optional
+            Store transformed coupling in shared memory?
+        """
+        sizes, bounds = MPI.distribute(len(q), bounds=True)
+
+        scale = 2 * np.pi / nk
+
+        if U is not None:
+            U = np.tile(U, (2, 2, 1, 1))
+
+        my_g = np.empty((sizes[comm.rank],
+            self.ph.size, nk, nk, self.el.size, self.el.size), dtype=np.complex128)
+
+        for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
+            q1, q2 = q[iq]
+
+            Q1 = int(round(q1 / scale))
+            Q2 = int(round(q2 / scale))
+
+            print('q = (%g, %g)' % (Q1, Q2))
+
+            for K1 in range(nk):
+                k1 = K1 * scale
+
+                for K2 in range(nk):
+                    k2 = K2 * scale
+
+                    my_g[my_iq, :, K1, K2] = self.g(q1=q1, q2=q2, k1=k1, k2=k2)
+
+            if U is not None:
+                my_g[my_iq] = np.einsum('xklab,klan,klbm->xklnm',
+                    my_g[my_iq], U[:nk, :nk], U[Q1:Q1 + nk, Q2:Q2 + nk].conj())
+
+            if u is not None:
+                my_g[my_iq] = np.einsum('xklab,xu->uklab', my_g[my_iq], u[iq])
+
+        g = MPI.collect(my_g,
+            (len(q), self.ph.size, nk, nk, self.el.size, self.el.size),
+            sizes, np.complex128, shared_memory)
+
+        return g
 
 def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
         completion=True, complete_k=False, squeeze=False, status=False,
@@ -434,69 +495,6 @@ def read(filename, nq, bands):
                     elph[Q1, Q2, band] = float(columns[2 + band])
 
     return elph
-
-def epw(elph, q, nk, U=None, u=None, shared_memory=False):
-    """Simulate second part of EPW: coarse Wannier to fine Bloch basis.
-
-    This routine follows 'wan2bloch.f90' of EPW 5.0.
-
-    The purpose of this routine is full control of the coupling's complex phase.
-
-    Parameters
-    ----------
-    elph : object
-        Electron-phonon model.
-    q : list of 2-tuples
-        q points in crystal coordinates q1, q2 in [0, 2pi).
-    nk : int
-        Number of k points per dimension.
-    U : ndarray, optional
-        Electron eigenvectors for given k mesh.
-        If present, transform from orbital to band basis.
-    u : ndarray, optional
-        Phonon eigenvectors for given q points.
-        If present, transform from displacement to band basis.
-    shared_memory : bool, optional
-        Store transformed coupling in shared memory?
-    """
-    sizes, bounds = MPI.distribute(len(q), bounds=True)
-
-    scale = 2 * np.pi / nk
-
-    if U is not None:
-        U = np.tile(U, (2, 2, 1, 1))
-
-    my_g = np.empty((sizes[comm.rank],
-        elph.ph.size, nk, nk, elph.el.size, elph.el.size), dtype=np.complex128)
-
-    for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
-        q1, q2 = q[iq]
-
-        Q1 = int(round(q1 / scale))
-        Q2 = int(round(q2 / scale))
-
-        print('q = (%g, %g)' % (Q1, Q2))
-
-        for K1 in range(nk):
-            k1 = K1 * scale
-
-            for K2 in range(nk):
-                k2 = K2 * scale
-
-                my_g[my_iq, :, K1, K2] = elph.g(q1=q1, q2=q2, k1=k1, k2=k2)
-
-        if U is not None:
-            my_g[my_iq] = np.einsum('xklab,klan,klbm->xklnm',
-                my_g[my_iq], U[:nk, :nk], U[Q1:Q1 + nk, Q2:Q2 + nk].conj())
-
-        if u is not None:
-            my_g[my_iq] = np.einsum('xklab,xu->uklab', my_g[my_iq], u[iq])
-
-    g = MPI.collect(my_g,
-        (len(q), elph.ph.size, nk, nk, elph.el.size, elph.el.size),
-        sizes, np.complex128, shared_memory)
-
-    return g
 
 def write_data(filename, data):
     """Write array to ASCII file."""
