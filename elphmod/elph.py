@@ -108,11 +108,10 @@ class Model(object):
 
         scale = 2 * np.pi / nk
 
-        if U is not None:
-            U = np.tile(U, (2, 2, 1, 1))
+        size = self.el.size if U is None else U.shape[-1]
 
         my_g = np.empty((sizes[comm.rank],
-            self.ph.size, nk, nk, self.el.size, self.el.size), dtype=np.complex128)
+            self.ph.size, nk, nk, size, size), dtype=np.complex128)
 
         for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
             q1, q2 = q[iq]
@@ -123,23 +122,26 @@ class Model(object):
             print('q = (%g, %g)' % (Q1, Q2))
 
             for K1 in range(nk):
+                KQ1 = (K1 + Q1) % nk
                 k1 = K1 * scale
 
                 for K2 in range(nk):
+                    KQ2 = (K2 + Q2) % nk
                     k2 = K2 * scale
 
-                    my_g[my_iq, :, K1, K2] = self.g(q1=q1, q2=q2, k1=k1, k2=k2)
+                    gqk = self.g(q1=q1, q2=q2, k1=k1, k2=k2)
 
-            if U is not None:
-                my_g[my_iq] = np.einsum('xklab,klan,klbm->xklnm',
-                    my_g[my_iq], U[:nk, :nk], U[Q1:Q1 + nk, Q2:Q2 + nk].conj())
+                    if U is not None:
+                        gqk = np.einsum('xab,an,bm->xnm',
+                            gqk, U[K1, K2], U[KQ1, KQ2].conj())
 
-            if u is not None:
-                my_g[my_iq] = np.einsum('xklab,xu->uklab', my_g[my_iq], u[iq])
+                    if u is not None:
+                        gqk = np.einsum('xab,xu->uab', gqk, u[iq])
 
-        g = MPI.collect(my_g,
-            (len(q), self.ph.size, nk, nk, self.el.size, self.el.size),
-            sizes, np.complex128, shared_memory)
+                    my_g[my_iq, :, K1, K2, :, :] = gqk
+
+        g = MPI.collect(my_g, (len(q), self.ph.size, nk, nk, size, size), sizes,
+            np.complex128, shared_memory)
 
         return g
 
