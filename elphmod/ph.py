@@ -394,7 +394,8 @@ def polarization(e, path, angle=60):
     return mode
 
 def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
-        angle=120, write_fildyn0=True, apply_asr=True, qe_prefix=''):
+        angle=120, write_fildyn0=True, apply_asr=True, qe_prefix='',
+        clean=False):
     """Interpolate dynamical matrices given for irreducible wedge of q points.
 
     This function still uses Quantum ESPRESSO's tools 'q2qstar.x' and 'q2r.x'.
@@ -434,6 +435,8 @@ def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
         Enforce acoustic sum rule by overwriting self force constants?
     qe_prefix : str
         String to prepend to names of Quantum-ESPRESSO executables.
+    clean : bool
+        Delete all temporary files afterwards?
 
     Returns
     -------
@@ -490,7 +493,16 @@ def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
         os.system("""echo "&INPUT fildyn='{1}' flfrc='{2}' /" """
             '| {0}q2r.x > /dev/null'.format(qe_prefix, fildyn, flfrc))
 
-    # return dynamical matrix as q-dependent function:
+    # clean up and return mass-sping model:
     # (no MPI barrier needed because of broadcasting in 'model')
 
-    return Model(flfrc, apply_asr)
+    ph = Model(flfrc, apply_asr)
+
+    if clean:
+        if comm.rank == 0:
+            os.system('rm %s0 %s' % (fildyn, flfrc))
+
+        for iq in range(*bounds[comm.rank:comm.rank + 2]):
+            os.system('rm %s%d' % (fildyn, iq + 1))
+
+    return ph
