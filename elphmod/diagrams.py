@@ -244,7 +244,7 @@ def polarization(e, c, T=1.0, eps=1e-15, subspace=None,
     return calculate_polarization
 
 def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
-        occupations=occupations.fermi_dirac, status=True):
+        occupations=occupations.fermi_dirac, fluctuations=False, status=True):
     """Calculate phonon self-energy.
 
         Pi(q, nu) = 2/N sum[k] |g(q, nu, k)|^2
@@ -264,6 +264,8 @@ def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
         Smallest allowed absolute value of divisor.
     occupations : function
         Particle distribution as a function of energy divided by kT.
+    fluctuations : bool
+        Return integrand too (for fluctuation analysis)?
     status : bool
         Print status messages during the calculation?
 
@@ -291,6 +293,10 @@ def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
 
     my_Pi = np.empty((sizes[comm.rank], nb), dtype=complex)
 
+    if fluctuations:
+        my_Pi_k = np.empty((sizes[comm.rank], nb, nk, nk, nbnd, nbnd),
+            dtype=complex)
+
     if status:
         info('Pi(%3s, %3s, %3s) = ...' % ('q1', 'q2', 'nu'))
 
@@ -311,7 +317,12 @@ def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
                 dfde[:, :, n, m][~ok] = d[:, :, n][~ok]
 
         for nu in range(nb):
-            my_Pi[my_iq, nu] = prefactor * np.sum(g2[iq, nu] * dfde)
+            Pi_k = g2[iq, nu] * dfde
+
+            my_Pi[my_iq, nu] = prefactor * Pi_k.sum()
+
+            if fluctuations:
+                my_Pi_k[my_iq, nu] = Pi_k
 
             if status:
                 print('Pi(%3d, %3d, %3d) = %9.2e%+9.2ei'
@@ -321,7 +332,15 @@ def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
 
     comm.Allgatherv(my_Pi, (Pi, sizes * nb))
 
-    return Pi
+    if fluctuations:
+        Pi_k = np.empty((nQ, nb, nk, nk, nbnd, nbnd), dtype=complex)
+
+        comm.Allgatherv(my_Pi_k, (Pi_k, sizes * nb * nk * nk * nbnd * nbnd))
+
+        return Pi, Pi_k
+
+    else:
+        return Pi
 
 def phonon_self_energy2(q, e, g2, T=100.0, nmats=1000, hyb_width=1.0,
         hyb_height=0.0, status=True, GB=4.0):
