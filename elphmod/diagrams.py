@@ -244,7 +244,8 @@ def polarization(e, c, T=1.0, eps=1e-15, subspace=None,
     return calculate_polarization
 
 def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
-        occupations=occupations.fermi_dirac, fluctuations=False, status=True):
+        occupations=occupations.fermi_dirac, fluctuations=False, Delta=None,
+        status=True):
     """Calculate phonon self-energy.
 
         Pi(q, nu) = 2/N sum[k] |g(q, nu, k)|^2
@@ -266,6 +267,8 @@ def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
         Particle distribution as a function of energy divided by kT.
     fluctuations : bool
         Return integrand too (for fluctuation analysis)?
+    Delta : float
+        Half the width of energy window around Fermi level to be excluded.
     status : bool
         Print status messages during the calculation?
 
@@ -286,6 +289,10 @@ def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
     e = np.tile(e, (2, 2, 1))
     f = np.tile(f, (2, 2, 1))
 
+    if Delta is not None:
+        x = (np.absolute(e) - Delta) / kT
+        Theta = 1 - occupations(x)
+
     scale = nk / (2 * np.pi)
     prefactor = 2.0 / nk ** 2
 
@@ -302,14 +309,23 @@ def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
 
     dfde = np.empty((nk, nk, nbnd, nbnd))
 
+    k1 = slice(0, nk)
+    k2 = slice(0, nk)
+
     for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         q1 = int(round(q[iq, 0] * scale)) % nk
         q2 = int(round(q[iq, 1] * scale)) % nk
 
+        kq1 = slice(q1, q1 + nk)
+        kq2 = slice(q2, q2 + nk)
+
         for n in range(nbnd):
             for m in range(nbnd):
-                df = f[q1:q1 + nk, q2:q2 + nk, m] - f[:nk, :nk, n]
-                de = e[q1:q1 + nk, q2:q2 + nk, m] - e[:nk, :nk, n]
+                df = f[kq1, kq2, m] - f[k1, k2, n]
+                de = e[kq1, kq2, m] - e[k1, k2, n]
+
+                if Delta is not None:
+                    df *= Theta[kq1, kq2, m] * Theta[k1, k2, n]
 
                 ok = abs(de) > eps
 
