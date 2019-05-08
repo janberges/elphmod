@@ -286,12 +286,15 @@ def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
     f = occupations(x)
     d = occupations.delta(x) / (-kT)
 
+    if Delta is not None:
+        x = (np.absolute(e) - Delta) / kT
+        Theta = 1 - occupations(x)
+
     e = np.tile(e, (2, 2, 1))
     f = np.tile(f, (2, 2, 1))
 
     if Delta is not None:
-        x = (np.absolute(e) - Delta) / kT
-        Theta = 1 - occupations(x)
+        Theta = np.tile(Theta, (2, 2, 1))
 
     scale = nk / (2 * np.pi)
     prefactor = 2.0 / nk ** 2
@@ -324,13 +327,13 @@ def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
                 df = f[kq1, kq2, m] - f[k1, k2, n]
                 de = e[kq1, kq2, m] - e[k1, k2, n]
 
-                if Delta is not None:
-                    df *= Theta[kq1, kq2, m] * Theta[k1, k2, n]
-
                 ok = abs(de) > eps
 
                 dfde[:, :, n, m][ ok] = df[ok] / de[ok]
                 dfde[:, :, n, m][~ok] = d[:, :, n][~ok]
+
+                if Delta is not None:
+                    dfde[:, :, n, m] *= Theta[kq1, kq2, m] * Theta[k1, k2, n]
 
         for nu in range(nb):
             Pi_k = g2[iq, nu] * dfde
