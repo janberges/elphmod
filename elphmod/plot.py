@@ -207,9 +207,16 @@ def arrange(images, columns=None):
         axis=0)
 
 def toBZ(data, points=1000, interpolation=bravais.linear_interpolation,
-        angle=60, outside=0.0):
-    """Map data on uniform grid onto (wedge of) Brillouin zone."""
+        angle=120, angle0=0, outside=0.0):
+    """Map data on uniform grid onto (wedge of) Brillouin zone.
 
+    Parameters
+    ----------
+    angle : integer
+        Angle between first and second Bravais-lattice vector in degrees.
+    angle0 : float
+        Angle between x axis and first Bravais-lattice vector in degrees.
+    """
     if data.ndim == 2:
         data = data[np.newaxis]
 
@@ -217,32 +224,35 @@ def toBZ(data, points=1000, interpolation=bravais.linear_interpolation,
 
     fun = list(map(interpolation, data))
 
-    t1, t2 = bravais.translations(180 - angle, angle0=angle - 90)
+    t1, t2 = bravais.translations(angle, angle0)
     u1, u2 = bravais.reciprocals(t1, t2)
 
-    M = abs(u2[0])
-    K = 2 * u2[1] / 3
+    if angle == 60:
+        t3 = t1 - t2
+        u3 = u1 + u2
 
-    nkx = int(round(points * M))
-    nky = int(round(points * K))
+    elif angle == 120:
+        t3 = t1 + t2
+        u3 = u1 - u2
 
-    kx = np.linspace(-M, M, nkx)
-    ky = np.linspace(K, -K, nky)
+    M = 2.0 / 3.0
+
+    kxmax = max(abs(t1[0]), abs(t2[0]), abs(t3[0])) * M
+    kymax = max(abs(t1[1]), abs(t2[1]), abs(t3[1])) * M
+
+    nkx = int(round(points * kxmax))
+    nky = int(round(points * kymax))
+
+    kx = np.linspace(-kxmax, kxmax, nkx)
+    ky = np.linspace(-kymax, kymax, nky)[::-1]
 
     sizes, bounds = MPI.distribute(nky * nkx, bounds=True)
 
     my_image = np.empty(sizes[comm.rank], dtype=data.dtype)
     my_image[:] = outside
 
-    u1 = u1 / np.sqrt(np.dot(u1, u1))
-    u2 = u2 / np.sqrt(np.dot(u2, u2))
-
-    if angle == 60:
-        u3 = u1 - u2
-    elif angle == 120:
-        u3 = u1 + u2
-
-    shift = 13.0 / 12.0
+    angle0 *= np.pi / 180
+    scale = ndata / (2 * np.pi)
 
     for n, m in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         i = m // nkx
@@ -257,8 +267,7 @@ def toBZ(data, points=1000, interpolation=bravais.linear_interpolation,
         if abs(np.dot(k, u2)) > M: continue
         if abs(np.dot(k, u3)) > M: continue
 
-        idata = int((np.arctan2(ky[i], kx[j]) / (2 * np.pi) + shift)
-            * ndata) % ndata
+        idata = int((np.arctan2(ky[i], kx[j]) - angle0) * scale % ndata)
 
         my_image[n] = fun[idata](k1 * nk, k2 * nk)
 
