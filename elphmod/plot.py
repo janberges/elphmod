@@ -207,7 +207,7 @@ def arrange(images, columns=None):
         axis=0)
 
 def toBZ(data, points=1000, interpolation=bravais.linear_interpolation,
-        angle=120, angle0=0, outside=0.0):
+        angle=120, angle0=0, outside=0.0, return_k=False):
     """Map data on uniform grid onto (wedge of) Brillouin zone.
 
     Parameters
@@ -243,8 +243,13 @@ def toBZ(data, points=1000, interpolation=bravais.linear_interpolation,
     nkx = int(round(points * kxmax))
     nky = int(round(points * kymax))
 
-    kx = np.linspace(-kxmax, kxmax, nkx)
-    ky = np.linspace(-kymax, kymax, nky)[::-1]
+    kx, dkx = np.linspace(-kxmax, kxmax, nkx, endpoint=False, retstep=True)
+    ky, dky = np.linspace(-kymax, kymax, nky, endpoint=False, retstep=True)
+
+    ky = ky[::-1]
+
+    kx += dkx / 2
+    ky += dky / 2
 
     sizes, bounds = MPI.distribute(nky * nkx, bounds=True)
 
@@ -267,7 +272,8 @@ def toBZ(data, points=1000, interpolation=bravais.linear_interpolation,
         if abs(np.dot(k, u2)) > M: continue
         if abs(np.dot(k, u3)) > M: continue
 
-        idata = int((np.arctan2(ky[i], kx[j]) - angle0) * scale % ndata)
+        idata = np.floor((np.arctan2(ky[i], kx[j]) - angle0)
+            * scale).astype(int) % ndata
 
         my_image[n] = fun[idata](k1 * nk, k2 * nk)
 
@@ -275,7 +281,10 @@ def toBZ(data, points=1000, interpolation=bravais.linear_interpolation,
 
     comm.Gatherv(my_image, (image, sizes))
 
-    return image
+    if return_k:
+        return kxmax, kymax, kx, ky, t1 * M, t2 * M, image
+    else:
+        return image
 
 def sign_color(data, negative=color1, positive=color2,
         minimum=None, maximum=None):
