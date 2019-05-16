@@ -367,7 +367,7 @@ def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
             my_Pi[my_iq, nu] = prefactor * Pi_k.sum()
 
             if fluctuations:
-                my_Pi_k[my_iq, nu] = Pi_k
+                my_Pi_k[my_iq, nu] = 2 * Pi_k
 
             if status:
                 print('Pi(%3d, %3d, %3d) = %9.2e%+9.2ei'
