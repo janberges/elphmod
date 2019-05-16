@@ -245,6 +245,7 @@ def polarization(e, c, T=1.0, eps=1e-15, subspace=None,
 
 def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
         occupations=occupations.fermi_dirac, fluctuations=False, Delta=None,
+        Delta_diff=False, Delta_occupations=occupations.gauss, Delta_T=10.0,
         status=True):
     """Calculate phonon self-energy.
 
@@ -269,6 +270,12 @@ def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
         Return integrand too (for fluctuation analysis)?
     Delta : float
         Half the width of energy window around Fermi level to be excluded.
+    Delta_diff : bool
+        Calculate derivative of phonon self-energy w.r.t. `Delta`?
+    Delta_occupations : function
+        Smoothened Heaviside function to realize excluded energy window.
+    Delta_T : float
+        Temperature to smoothen Heaviside function.
     status : bool
         Print status messages during the calculation?
 
@@ -287,14 +294,25 @@ def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
     d = occupations.delta(x) / (-kT)
 
     if Delta is not None:
-        x = (np.absolute(e) - Delta) / kT
-        Theta = 1 - occupations(x)
+        Delta_kT = kB * Delta_T
+
+        x1 = ( e - Delta) / Delta_kT
+        x2 = (-e - Delta) / Delta_kT
+
+        Theta = 2 - Delta_occupations(x1) - Delta_occupations(x2)
+
+        if Delta_diff:
+            delta = Delta_occupations.delta(x1) + Delta_occupations.delta(x2)
+            delta /= -kT
 
     e = np.tile(e, (2, 2, 1))
     f = np.tile(f, (2, 2, 1))
 
     if Delta is not None:
         Theta = np.tile(Theta, (2, 2, 1))
+
+        if Delta_diff:
+            delta = np.tile(delta, (2, 2, 1))
 
     scale = nk / (2 * np.pi)
     prefactor = 2.0 / nk ** 2
@@ -333,7 +351,15 @@ def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
                 dfde[:, :, n, m][~ok] = d[:, :, n][~ok]
 
                 if Delta is not None:
-                    dfde[:, :, n, m] *= Theta[kq1, kq2, m] * Theta[k1, k2, n]
+                    if Delta_diff:
+                        envelope = (
+                              Theta[kq1, kq2, m] * delta[k1, k2, n]
+                            + delta[kq1, kq2, m] * Theta[k1, k2, n]
+                            )
+                    else:
+                        envelope = Theta[kq1, kq2, m] * Theta[k1, k2, n]
+
+                    dfde[:, :, n, m] *= envelope
 
         for nu in range(nb):
             Pi_k = g2[iq, nu] * dfde
