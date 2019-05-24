@@ -246,7 +246,7 @@ def polarization(e, c, T=1.0, eps=1e-15, subspace=None,
 def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
         occupations=occupations.fermi_dirac, fluctuations=False, Delta=None,
         Delta_diff=False, Delta_occupations=occupations.gauss, Delta_T=10.0,
-        status=True):
+        dfde_unity=False, g2_unity=False, status=True):
     """Calculate phonon self-energy.
 
         Pi(q, nu) = 2/N sum[k] |g(q, nu, k)|^2
@@ -276,6 +276,10 @@ def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
         Smoothened Heaviside function to realize excluded energy window.
     Delta_T : float
         Temperature to smoothen Heaviside function.
+    dfde_unity : bool
+        Assume [f(k+q) - f(k)] / [e(k+q) - e(k)] in above formula to be unity?
+    g2_unity : bool
+        Assume |g(q, nu, k)|^2 in above formula to be unity?
     status : bool
         Print status messages during the calculation?
 
@@ -350,6 +354,9 @@ def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
                 dfde[:, :, n, m][ ok] = df[ok] / de[ok]
                 dfde[:, :, n, m][~ok] = d[:, :, n][~ok]
 
+                if dfde_unity:
+                    dfde[:, :, n, m] = 1.0
+
                 if Delta is not None:
                     if Delta_diff:
                         envelope = (
@@ -363,6 +370,9 @@ def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
 
         for nu in range(nb):
             Pi_k = g2[iq, nu] * dfde
+
+            if g2_unity:
+                Pi_k = dfde
 
             my_Pi[my_iq, nu] = prefactor * Pi_k.sum()
 
