@@ -89,7 +89,7 @@ def hexa2F(energies, couplings):
     N, N = energies.shape
 
     triangles = [
-        list(zip(*sorted([
+        tuple(zip(*sorted([
             ((i + k) % N, (j + k) % N),
             ((i + 1) % N,  j,        ),
             ( i,          (j + 1) % N),
