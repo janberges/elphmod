@@ -28,7 +28,7 @@ def apply(A, U):
 a1, a2 = elphmod.bravais.translations()
 b1, b2 = elphmod.bravais.reciprocals(a1, a2)
 
-q0 = 0.4123 * b1 - 0.1542 * b2
+q0 = 0.4123 * b1 - 0.1542 * b2 # prefactors include 2 pi
 r0 = ph.r[:, :2].T / ph.a[0, 0]
 
 D0 = ph.D(np.dot(q0, a1), np.dot(q0, a2))
