@@ -393,6 +393,98 @@ def polarization(e, path, angle=60):
 
     return mode
 
+def interpolate_dynamical_matrices_new(ph, D_irr, q_irr, nq, apply_asr=True):
+    """Interpolate dynamical matrices given for irreducible wedge of q points.
+
+    This function replaces `interpolate_dynamical_matrices`, which depends on
+    Quantum ESPRESSO. Currently, it only works for hexagonal 2D lattices.
+
+    Parameters
+    ----------
+    ph : object
+        Mass-spring model.
+    D_irr : list of square arrays
+        Dynamical matrices for all irreducible q points.
+    q_irr : list of 2-tuples
+        Irreducible q points in crystal coordinates with period 2 pi.
+    nq : int
+        Number of q points per dimension, i.e. size of uniform mesh.
+    apply_asr : bool
+        Enforce acoustic sum rule by overwriting self force constants?
+    """
+    D_full = np.empty((nq, nq, ph.size, ph.size), dtype=complex)
+
+    def rotation(phi, n=1):
+        block = np.array([
+            [np.cos(phi), -np.sin(phi), 0],
+            [np.sin(phi),  np.cos(phi), 0],
+            [0,            0,           1],
+            ])
+
+        return np.kron(np.eye(n), block)
+
+    def reflection(n=1):
+        return np.diag([-1, 1, 1] * n)
+
+    def apply(A, U):
+        return np.einsum('ij,jk,kl->il', U, A, U.T.conj())
+
+    a1, a2 = bravais.translations()
+    b1, b2 = bravais.reciprocals(a1, a2)
+
+    r0 = ph.r[:, :2].T / ph.a[0, 0]
+
+    scale = nq / (2 * np.pi)
+
+    for iq, (q1, q2) in enumerate(q_irr):
+        q0 = q1 * b1 + q2 * b2
+
+        for phi in 0, 2 * np.pi / 3, 4 * np.pi / 3:
+            U = rotation(phi)[:2, :2]
+
+            q = np.dot(U, q0)
+            r = np.dot(U, r0)
+
+            for reflect in False, True:
+                if reflect:
+                    U = reflection()[:2, :2]
+
+                    q = np.dot(U, q)
+                    r = np.dot(U, r)
+
+                D = apply(D_irr[iq], rotation(phi, 3))
+
+                if reflect:
+                    D = apply(D, reflection(3))
+
+                phase = np.exp(1j * np.array(np.dot(q, r - r0)))
+
+                for n in range(len(phase)):
+                    D[3 * n:3 * n + 3, :] *= phase[n].conj()
+                    D[:, 3 * n:3 * n + 3] *= phase[n]
+
+                Q1 = int(round(np.dot(q, a1) * scale))
+                Q2 = int(round(np.dot(q, a2) * scale))
+
+                D_full[ Q1,  Q2] = D
+                D_full[-Q1, -Q2] = D.conj()
+
+    i = np.arange(nq)
+    FT = np.exp(2j * np.pi / nq * np.outer(i, i)) / nq
+
+    phid = np.einsum('rq,qQxy,QR->rRxy', FT, D_full, FT).real
+
+    nat = ph.size // 3
+
+    phid = np.reshape(phid, (nq, nq, 1, nat, 3, nat, 3))
+    phid = np.transpose(phid, (3, 5, 0, 1, 2, 4, 6))
+
+    for na in range(nat):
+        phid[na, :] *= np.sqrt(ph.M[na])
+        phid[:, na] *= np.sqrt(ph.M[na])
+
+    ph.R, ph.data = short_range_model(phid, ph.M, ph.a, ph.r)
+
 def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
         angle=120, write_fildyn0=True, apply_asr=True, qe_prefix='',
         clean=False):
