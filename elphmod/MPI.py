@@ -54,6 +54,16 @@ def shared_array(shape, dtype):
     on machine with 2 nodes   |_3,_3_|_7,_3_|
     with 4 processors each.    node 1 node 2
     """
+    dtype = np.dtype(dtype)
+
+    # workaround if shared memory is not supported:
+
+    if MPI.COMM_TYPE_SHARED == MPI.UNDEFINED:
+        info("Shared memory not implemented")
+
+        core = comm.Split(comm.rank) # same core
+
+        return core, comm, np.empty(shape, dtype=dtype)
 
     # From article from Intel Developer Zone:
     # 'An Introduction to MPI-3 Shared Memory Programming'
@@ -69,7 +79,6 @@ def shared_array(shape, dtype):
     # 'Shared memory for data structures and mpi4py.MPI.Win.Allocate_shared'
 
     size = np.prod(shape)
-    dtype = np.dtype(dtype)
     itemsize = dtype.itemsize
 
     if node.rank == 0:
