@@ -290,10 +290,12 @@ def sign_color(data, negative=color1, positive=color2,
         minimum=None, maximum=None):
     """Transform gray-scale image to RGB, where zero is displayed as white."""
 
-    lt0 = np.where(data < 0)
-    gt0 = np.where(data > 0)
-
     image = data.copy()
+
+    image[np.where(np.isnan(image))] = 0
+
+    lt0 = np.where(image < 0)
+    gt0 = np.where(image > 0)
 
     image[lt0] /= data.min() if minimum is None else minimum
     image[gt0] /= data.max() if maximum is None else maximum
