@@ -1,11 +1,7 @@
 #/usr/bin/env python
 
 import numpy as np
-
-try:
-    from scipy.misc import toimage
-except:
-    pass
+import matplotlib.pyplot as plt
 
 from . import bravais, MPI
 comm = MPI.comm
@@ -367,7 +363,7 @@ def color(data, color1=(240, 1, 255), color2=(0, 1, 255), nancolor=(0, 0, 255),
 def save(filename, data):
     """Save image as 8-bit bitmap."""
 
-    toimage(data, cmin=0, cmax=255).save(filename)
+    plt.imsave(filename, data.astype(np.uint8))
 
 def label_pie_with_TeX(filename,
     imagename = None,
