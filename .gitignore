@@ -29,3 +29,5 @@ work
 
 dyn*
 ifc
+
+__pycache__
