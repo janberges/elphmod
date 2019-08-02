@@ -108,10 +108,11 @@ class Model(object):
 
         scale = 2 * np.pi / nk
 
-        size = self.el.size if U is None else U.shape[-1]
+        nel = self.el.size if U is None else U.shape[-1]
+        nph = self.ph.size if u is None else u.shape[-1]
 
-        my_g = np.empty((sizes[comm.rank],
-            self.ph.size, nk, nk, size, size), dtype=np.complex128)
+        my_g = np.empty((sizes[comm.rank], nph, nk, nk, nel, nel),
+            dtype=np.complex128)
 
         for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
             q1, q2 = q[iq]
@@ -140,7 +141,7 @@ class Model(object):
 
                     my_g[my_iq, :, K1, K2, :, :] = gqk
 
-        g = MPI.collect(my_g, (len(q), self.ph.size, nk, nk, size, size), sizes,
+        g = MPI.collect(my_g, (len(q), nph, nk, nk, nel, nel), sizes,
             np.complex128, shared_memory)
 
         return g
