@@ -19,13 +19,14 @@ def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
     nkx = int(round(resolution * (kxmax - kxmin)))
     nky = int(round(resolution * (kymax - kymin)))
 
+    # (note that endpoint=False is combined with a retstep/2 shift)
     kx, dkx = np.linspace(kxmin, kxmax, nkx, endpoint=False, retstep=True)
     ky, dky = np.linspace(kymin, kymax, nky, endpoint=False, retstep=True)
 
-    ky = ky[::-1]
-
     kx += dkx / 2
     ky += dky / 2
+
+    ky = ky[::-1]
 
     fun = interpolation(mesh, angle=angle)
 
@@ -68,13 +69,14 @@ def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
     nqx = int(round(resolution * (qxmax - qxmin)))
     nqy = int(round(resolution * (qymax - qymin)))
 
+    # (note that endpoint=False is combined with a retstep/2 shift)
     qx, dqx = np.linspace(qxmin, qxmax, nqx, endpoint=False, retstep=True)
     qy, dqy = np.linspace(qymin, qymax, nqy, endpoint=False, retstep=True)
 
-    qy = qy[::-1]
-
     qx += dqx / 2
     qy += dqy / 2
+
+    qy = qy[::-1]
 
     t1, t2 = bravais.translations(180 - angle)
 
@@ -240,13 +242,14 @@ def toBZ(data, points=1000, interpolation=bravais.linear_interpolation,
     nkx = int(round(points * kxmax))
     nky = int(round(points * kymax))
 
-    kx, dkx = np.linspace(-kxmax, kxmax, nkx, retstep=True)
-    ky, dky = np.linspace(-kymax, kymax, nky, retstep=True)
-
-    ky = ky[::-1]
+    # (note that endpoint=False is combined with a retstep/2 shift)
+    kx, dkx = np.linspace(-kxmax, kxmax, nkx, endpoint=False, retstep=True)
+    ky, dky = np.linspace(-kymax, kymax, nky, endpoint=False, retstep=True)
 
     kx += dkx / 2
     ky += dky / 2
+
+    ky = ky[::-1]
 
     sizes, bounds = MPI.distribute(nky * nkx, bounds=True)
 
