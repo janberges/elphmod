@@ -240,8 +240,8 @@ def toBZ(data, points=1000, interpolation=bravais.linear_interpolation,
     nkx = int(round(points * kxmax))
     nky = int(round(points * kymax))
 
-    kx, dkx = np.linspace(-kxmax, kxmax, nkx, endpoint=False, retstep=True)
-    ky, dky = np.linspace(-kymax, kymax, nky, endpoint=False, retstep=True)
+    kx, dkx = np.linspace(-kxmax, kxmax, nkx, retstep=True)
+    ky, dky = np.linspace(-kymax, kymax, nky, retstep=True)
 
     ky = ky[::-1]
 
