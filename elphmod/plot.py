@@ -205,8 +205,8 @@ def arrange(images, columns=None):
         axis=1) for row in range(rows)],
         axis=0)
 
-def toBZ(data, points=1000, interpolation=bravais.linear_interpolation,
-        angle=120, angle0=0, outside=0.0, return_k=False):
+def toBZ(data=None, points=1000, interpolation=bravais.linear_interpolation,
+        angle=120, angle0=0, outside=0.0, return_k=False, return_only_k=False):
     """Map data on uniform grid onto (wedge of) Brillouin zone.
 
     Parameters
@@ -216,13 +216,6 @@ def toBZ(data, points=1000, interpolation=bravais.linear_interpolation,
     angle0 : float
         Angle between x axis and first Bravais-lattice vector in degrees.
     """
-    if data.ndim == 2:
-        data = data[np.newaxis]
-
-    ndata, nk, nk = data.shape
-
-    fun = list(map(interpolation, data))
-
     t1, t2 = bravais.translations(angle, angle0)
     u1, u2 = bravais.reciprocals(t1, t2)
 
@@ -250,6 +243,16 @@ def toBZ(data, points=1000, interpolation=bravais.linear_interpolation,
     ky += dky / 2
 
     ky = ky[::-1]
+
+    if return_only_k:
+        return kxmax, kymax, kx, ky, t1 * M, t2 * M
+
+    if data.ndim == 2:
+        data = data[np.newaxis]
+
+    ndata, nk, nk = data.shape
+
+    fun = list(map(interpolation, data))
 
     sizes, bounds = MPI.distribute(nky * nkx, bounds=True)
 
