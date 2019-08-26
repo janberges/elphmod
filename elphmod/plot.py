@@ -1,7 +1,10 @@
 #/usr/bin/env python
 
 import numpy as np
-import matplotlib; matplotlib.use('agg')
+
+# To avoid problems on some clusters, switch to non-GUI backend of "matplotlib"
+# using the following line (before importing "matplotlib.pyplot" or "elphmod"):
+# import matplotlib; matplotlib.use('agg')
 import matplotlib.pyplot as plt
 
 from . import bravais, MPI
