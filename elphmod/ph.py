@@ -78,7 +78,7 @@ def read_fildyn(fildyn, divide_mass=True):
                 break
 
             next(data)
-            qpoints.append(next(data))
+            qpoints.append(np.array(list(map(float, next(data).split()[3:6]))))
             next(data)
 
             dim = 3 * nat
@@ -124,7 +124,13 @@ def write_fildyn(fildyn, header, qpoints, dynmats, footer, amass,
         data.write(header)
 
         for p in range(len(dynmats)):
-            data.write('     %s\n\n%s\n' % (headline, qpoints[p]))
+            data.write('     %s\n\n' % headline)
+            data.write('     q = ( ')
+
+            for coordinate in qpoints[p]:
+                data.write('%14.9f' % coordinate)
+
+            data.write(' ) \n\n')
 
             for i in range(nat):
                 for j in range(nat):
@@ -566,13 +572,9 @@ def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
     sizes, bounds = MPI.distribute(len(q), bounds=True)
 
     for iq in range(*bounds[comm.rank:comm.rank + 2]):
-        qpoints = ['     q = ( %14.9f%14.9f%14.9f ) \n' % q_cart[iq]]
-
-        dynmats = [D[iq]]
-
         fildynq = fildyn + str(iq + 1)
 
-        write_fildyn(fildynq, header, qpoints, dynmats, footer, amass,
+        write_fildyn(fildynq, header, [q_cart[iq]], [D[iq]], footer, amass,
             divide_mass=True)
 
         os.system('{0}q2qstar.x {1} {1} > /dev/null'.format(qe_prefix, fildynq))
