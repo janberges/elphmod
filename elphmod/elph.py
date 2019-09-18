@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from . import bravais, dispersion, el, MPI, ph
+from . import bravais, dispersion, el, misc, MPI, ph
 comm = MPI.comm
 info = MPI.info
 
@@ -125,13 +125,13 @@ class Model(object):
 
         g = np.empty((len(q), nph, nk, nk, nel, nel), dtype=complex)
 
+        status = misc.StatusBar(len(q) * nk * nk)
+
         for iq in range(len(q)):
             q1, q2 = q[iq]
 
             Q1 = int(round(q1 / scale))
             Q2 = int(round(q2 / scale))
-
-            info('q = (%g, %g)' % (Q1, Q2))
 
             for K1 in range(nk):
                 KQ1 = (K1 + Q1) % nk
@@ -151,6 +151,8 @@ class Model(object):
                         gqk = np.einsum('xab,xu->uab', gqk, u[iq])
 
                     g[iq, :, K1, K2, :, :] = gqk
+
+                    status.update()
 
         return g
 
