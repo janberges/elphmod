@@ -12,24 +12,38 @@ class Model(object):
     The methods of this class follow 'wan2bloch.f90' of EPW 5.0.
     """
     def g(self, q1=0, q2=0, q3=0, k1=0, k2=0, k3=0):
+        nRq, nph, nRk, nel, nel = self.data.shape
+
         q = np.array([q1, q2, q3])
         k = np.array([k1, k2, k3])
 
         if self.q is None or np.any(q != self.q):
-            g = np.empty(self.data.shape, dtype=complex)
-
-            for n in range(g.shape[0]):
-                g[n] = self.data[n] * np.exp(1j * np.dot(self.Rg[n], q))
-
             self.q = q
-            self.gq = g.sum(axis=0)
 
-        g = np.empty(self.gq.shape, dtype=complex)
+            sizes, bounds = MPI.distribute(nRq, bounds=True)
 
-        for n in range(g.shape[1]):
-            g[:, n] = self.gq[:, n] * np.exp(1j * np.dot(self.Rk[n], k))
+            my_g = np.empty((sizes[comm.rank], nph, nRk, nel, nel),
+                dtype=complex)
 
-        return g.sum(axis=1)
+            for my_n, n in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
+                my_g[my_n] = self.data[n] * np.exp(1j * np.dot(self.Rg[n], q))
+
+            self.gq = np.empty((nph, nRk, nel, nel), dtype=complex)
+
+            comm.Allreduce(my_g.sum(axis=0), self.gq)
+
+        sizes, bounds = MPI.distribute(nRk, bounds=True)
+
+        my_g = np.empty((sizes[comm.rank], nph, nel, nel), dtype=complex)
+
+        for my_n, n in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
+            my_g[my_n] = self.gq[:, n] * np.exp(1j * np.dot(self.Rk[n], k))
+
+        g = np.empty((nph, nel, nel), dtype=complex)
+
+        comm.Allreduce(my_g.sum(axis=0), g)
+
+        return g
 
     def __init__(self, epmatwp, wigner, el, ph):
         self.el = el
@@ -104,23 +118,20 @@ class Model(object):
         shared_memory : bool, optional
             Store transformed coupling in shared memory?
         """
-        sizes, bounds = MPI.distribute(len(q), bounds=True)
-
         scale = 2 * np.pi / nk
 
         nel = self.el.size if U is None else U.shape[-1]
         nph = self.ph.size if u is None else u.shape[-1]
 
-        my_g = np.empty((sizes[comm.rank], nph, nk, nk, nel, nel),
-            dtype=np.complex128)
+        g = np.empty((len(q), nph, nk, nk, nel, nel), dtype=complex)
 
-        for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
+        for iq in range(len(q)):
             q1, q2 = q[iq]
 
             Q1 = int(round(q1 / scale))
             Q2 = int(round(q2 / scale))
 
-            print('q = (%g, %g)' % (Q1, Q2))
+            info('q = (%g, %g)' % (Q1, Q2))
 
             for K1 in range(nk):
                 KQ1 = (K1 + Q1) % nk
@@ -139,10 +150,7 @@ class Model(object):
                     if u is not None:
                         gqk = np.einsum('xab,xu->uab', gqk, u[iq])
 
-                    my_g[my_iq, :, K1, K2, :, :] = gqk
-
-        g = MPI.collect(my_g, (len(q), nph, nk, nk, nel, nel), sizes,
-            np.complex128, shared_memory)
+                    g[iq, :, K1, K2, :, :] = gqk
 
         return g
 
