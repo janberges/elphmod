@@ -32,7 +32,7 @@ def distribute(size, bounds=False):
 
     return sizes
 
-def shared_array(shape, dtype):
+def shared_array(shape, dtype=float, shared_memory=True):
     """Create array whose memory is shared among all processes on same node.
 
     Example:
@@ -61,6 +61,11 @@ def shared_array(shape, dtype):
     if MPI.COMM_TYPE_SHARED == MPI.UNDEFINED:
         info("Shared memory not implemented")
 
+        shared_memory = False
+
+    # pretend that each processor is on separate node:
+
+    if not shared_memory:
         core = comm.Split(comm.rank) # same core
 
         return core, comm, np.empty(shape, dtype=dtype)

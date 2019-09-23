@@ -7,7 +7,7 @@ from . import bravais, misc, MPI
 comm = MPI.comm
 
 def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
-        order=False, hermitian=True, broadcast=True):
+        order=False, hermitian=True, broadcast=True, shared_memory=False):
     """Diagonalize Hamiltonian or dynamical matrix for given k points.
 
     Parameters
@@ -35,6 +35,8 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
         eigenvalues of non-Hermitian matrices is returned.
     broadcast : bool
         Broadcast result from rank 0 to all processes?
+    shared_memory : bool
+        Store results in shared memory?
 
     Returns
     -------
@@ -122,17 +124,22 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
 
     # gather calculated eigenvectors on first processor:
 
-    v = np.empty((points, bands))
+    node, images, v = MPI.shared_array((points, bands),
+        shared_memory=shared_memory)
+
     comm.Gatherv(my_v, (v, my_points * bands))
 
     if order or vectors:
-        V = np.empty((points, bands, bands), dtype=complex)
+        node, images, V = MPI.shared_array((points, bands, bands),
+            dtype=complex, shared_memory=shared_memory)
+
         comm.Gatherv(my_V, (V, my_points * bands ** 2))
 
     # order/disentangle bands:
 
     if order:
-        o = np.empty((points, bands), dtype=int)
+        node, images, o = MPI.shared_array((points, bands),
+            dtype=int, shared_memory=shared_memory)
 
         if comm.rank == 0:
             o = band_order(v, V)
@@ -146,14 +153,14 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
 
     # broadcast results:
 
-    if broadcast:
-        comm.Bcast(v)
+    if broadcast and node.rank == 0:
+        images.Bcast(v)
 
         if vectors:
-            comm.Bcast(V)
+            images.Bcast(V)
 
         if order:
-            comm.Bcast(o)
+            images.Bcast(o)
 
     if vectors and order:
         return v, V, o
@@ -167,7 +174,8 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
     return v
 
 def dispersion_full(matrix, size, angle=60, vectors=False, gauge=False,
-        rotate=False, order=False, hermitian=True, broadcast=True):
+        rotate=False, order=False, hermitian=True, broadcast=True,
+        shared_memory=False):
     """Diagonalize Hamiltonian or dynamical matrix on uniform k-point mesh."""
 
     # choose irreducible set of k points:
@@ -251,13 +259,16 @@ def dispersion_full(matrix, size, angle=60, vectors=False, gauge=False,
 
     # fill uniform mesh with data from irreducible wedge:
 
-    v_mesh = np.empty((size, size, bands))
+    node, images, v_mesh = MPI.shared_array((size, size, bands),
+        shared_memory=shared_memory)
 
     if vectors:
-        V_mesh = np.empty((size, size, bands, bands), dtype=complex)
+        node, images, V_mesh = MPI.shared_array((size, size, bands, bands),
+            dtype=complex, shared_memory=shared_memory)
 
     if order:
-        o_mesh = np.empty((size, size, bands), dtype=int)
+        node, images, o_mesh = MPI.shared_array((size, size, bands),
+            dtype=int, shared_memory=shared_memory)
 
     if comm.rank == 0:
         # transfer data points from wedge to mesh:
@@ -274,14 +285,14 @@ def dispersion_full(matrix, size, angle=60, vectors=False, gauge=False,
 
     # broadcast results:
 
-    if broadcast:
-        comm.Bcast(v_mesh)
+    if broadcast and node.rank == 0:
+        images.Bcast(v_mesh)
 
         if vectors:
-            comm.Bcast(V_mesh)
+            images.Bcast(V_mesh)
 
         if order:
-            comm.Bcast(o_mesh)
+            images.Bcast(o_mesh)
 
     if vectors and order:
         return v_mesh, V_mesh, o_mesh
