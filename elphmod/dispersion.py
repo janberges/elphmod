@@ -3,7 +3,7 @@
 import numpy as np
 import numpy.linalg
 
-from . import bravais, MPI
+from . import bravais, misc, MPI
 comm = MPI.comm
 
 def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
@@ -68,6 +68,8 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
 
     # diagonalize matrix for local lists of k points:
 
+    status = misc.StatusBar(my_points[comm.rank], title='calculate dispersion')
+
     if rotate:
         t1, t2 = bravais.translations(180 - angle)
         u1, u2 = bravais.reciprocals(t1, t2)
@@ -115,6 +117,8 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
                 my_v[point] = np.linalg.eigvalsh(matrix_k)
             else:
                 my_v[point] = np.linalg.eigvals(matrix_k).real.sort()
+
+        status.update()
 
     # gather calculated eigenvectors on first processor:
 
