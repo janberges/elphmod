@@ -44,7 +44,7 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
         Eigenvalues for the given k points.
     ndarray, optional
         Corresponding eigenvectors.
-    ndarray. optional
+    ndarray, optional
         Indices which have been used to order the bands.
     """
     points = len(k) if comm.rank == 0 else None
