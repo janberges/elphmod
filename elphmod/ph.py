@@ -588,7 +588,7 @@ def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
             '| {0}q2r.x > /dev/null'.format(qe_prefix, fildyn, flfrc))
 
     # clean up and return mass-sping model:
-    # (no MPI barrier needed because of broadcasting in 'model')
+    # (no MPI barrier needed because of broadcasting in 'Model')
 
     ph = Model(flfrc, apply_asr)
 
