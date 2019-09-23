@@ -32,7 +32,7 @@ def distribute(size, bounds=False):
 
     return sizes
 
-def shared_array(shape, dtype=float, shared_memory=True):
+def shared_array(shape, dtype=float, shared_memory=True, single_memory=False):
     """Create array whose memory is shared among all processes on same node.
 
     Example:
@@ -66,22 +66,34 @@ def shared_array(shape, dtype=float, shared_memory=True):
 
         shared_memory = False
 
-    # pretend that each processor is on separate node:
+    if single_memory:
+        # pretend that all processors are on same node:
 
-    if not shared_memory:
-        core = comm.Split(comm.rank) # same core
+        node = comm # same machine
 
-        return core, comm, np.empty(shape, dtype=dtype)
+    elif shared_memory:
+        # From article from Intel Developer Zone:
+        # 'An Introduction to MPI-3 Shared Memory Programming'
 
-    # From article from Intel Developer Zone:
-    # 'An Introduction to MPI-3 Shared Memory Programming'
+        node = comm.Split_type(MPI.COMM_TYPE_SHARED, key=comm.rank) # same node
 
-    node = comm.Split_type(MPI.COMM_TYPE_SHARED, key=comm.rank) # same node
+    else:
+        # pretend that each processor is on separate node:
+
+        node = comm.Split(comm.rank) # same core
 
     # From Gilles reply to StackOverflow question:
     # 'get Nodes with MPI program in C'
 
     images = comm.Split(node.rank, key=comm.rank) # same node.rank
+
+    # special cases:
+
+    if single_memory and comm.rank == 0 or not shared_memory:
+        return node, images, np.empty(shape, dtype=dtype)
+
+    elif single_memory:
+        return node, images, None
 
     # Shared memory allocation following Lisandro Dalcin on Google Groups:
     # 'Shared memory for data structures and mpi4py.MPI.Win.Allocate_shared'
