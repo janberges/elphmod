@@ -125,7 +125,7 @@ class Model(object):
 
         g = np.empty((len(q), nph, nk, nk, nel, nel), dtype=complex)
 
-        status = misc.StatusBar(len(q) * nk * nk)
+        status = misc.StatusBar(len(q) * nk * nk, title='sample coupling')
 
         for iq in range(len(q)):
             q1, q2 = q[iq]
