@@ -47,6 +47,9 @@ def shared_array(shape, dtype=float, shared_memory=True):
     # Broadcast data to other nodes:
     if node.rank == 0:
         images.Bcast(array)
+
+    # Wait if node.rank != 0:
+    comm.Barrier()
                                ______ ______
                     Figure:   |_0,_0_|_4,_0_|
                               |_1,_1_|_5,_1_|

@@ -153,14 +153,17 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
 
     # broadcast results:
 
-    if broadcast and node.rank == 0:
-        images.Bcast(v)
+    if broadcast:
+        if node.rank == 0:
+            images.Bcast(v)
 
-        if vectors:
-            images.Bcast(V)
+            if vectors:
+                images.Bcast(V)
 
-        if order:
-            images.Bcast(o)
+            if order:
+                images.Bcast(o)
+
+        comm.Barrier()
 
     if vectors and order:
         return v, V, o
@@ -285,14 +288,17 @@ def dispersion_full(matrix, size, angle=60, vectors=False, gauge=False,
 
     # broadcast results:
 
-    if broadcast and node.rank == 0:
-        images.Bcast(v_mesh)
+    if broadcast:
+        if node.rank == 0:
+            images.Bcast(v_mesh)
 
-        if vectors:
-            images.Bcast(V_mesh)
+            if vectors:
+                images.Bcast(V_mesh)
 
-        if order:
-            images.Bcast(o_mesh)
+            if order:
+                images.Bcast(o_mesh)
+
+        comm.Barrier()
 
     if vectors and order:
         return v_mesh, V_mesh, o_mesh
