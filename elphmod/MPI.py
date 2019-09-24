@@ -71,45 +71,46 @@ def shared_array(shape, dtype=float, shared_memory=True, single_memory=False):
 
         node = comm # same machine
 
+        if comm.rank == 0:
+            array = np.empty(shape, dtype=dtype)
+        else:
+            array = None
+
     elif shared_memory:
         # From article from Intel Developer Zone:
         # 'An Introduction to MPI-3 Shared Memory Programming'
 
         node = comm.Split_type(MPI.COMM_TYPE_SHARED, key=comm.rank) # same node
 
+        # Shared memory allocation following Lisandro Dalcin on Google Groups:
+        # 'Shared memory for data structures and mpi4py.MPI.Win.Allocate_shared'
+
+        size = np.prod(shape)
+        itemsize = dtype.itemsize
+
+        if node.rank == 0:
+            bytes = size * itemsize
+        else:
+            bytes = 0
+
+        win = MPI.Win.Allocate_shared(bytes, itemsize, comm=node)
+        buf, itemsize = win.Shared_query(0)
+
+        array = np.ndarray(shape, buffer=buf, dtype=dtype)
+
     else:
         # pretend that each processor is on separate node:
 
         node = comm.Split(comm.rank) # same core
+
+        array = np.empty(shape, dtype=dtype)
 
     # From Gilles reply to StackOverflow question:
     # 'get Nodes with MPI program in C'
 
     images = comm.Split(node.rank, key=comm.rank) # same node.rank
 
-    # special cases:
-
-    if single_memory and comm.rank == 0 or not shared_memory:
-        return node, images, np.empty(shape, dtype=dtype)
-
-    elif single_memory:
-        return node, images, None
-
-    # Shared memory allocation following Lisandro Dalcin on Google Groups:
-    # 'Shared memory for data structures and mpi4py.MPI.Win.Allocate_shared'
-
-    size = np.prod(shape)
-    itemsize = dtype.itemsize
-
-    if node.rank == 0:
-        bytes = size * itemsize
-    else:
-        bytes = 0
-
-    win = MPI.Win.Allocate_shared(bytes, itemsize, comm=node)
-    buf, itemsize = win.Shared_query(0)
-
-    return node, images, np.ndarray(shape, buffer=buf, dtype=dtype)
+    return node, images, array
 
 def collect(my_data, shape, sizes, dtype, shared_memory=True):
     """Gather data of variable sizes into shared memory."""
