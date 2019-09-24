@@ -246,7 +246,7 @@ def polarization(e, c, T=1.0, eps=1e-15, subspace=None,
 def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
         occupations=occupations.fermi_dirac, fluctuations=False, Delta=None,
         Delta_diff=False, Delta_occupations=occupations.gauss, Delta_T=10.0,
-        dfde_unity=False, g2_unity=False, status=True):
+        dfde_unity=False, g2_unity=False, status=True, comm=comm):
     """Calculate phonon self-energy.
 
         Pi(q, nu) = 2/N sum[k] |g(q, nu, k)|^2
@@ -321,7 +321,7 @@ def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
     scale = nk / (2 * np.pi)
     prefactor = 2.0 / nk ** 2
 
-    sizes, bounds = MPI.distribute(nQ, bounds=True)
+    sizes, bounds = MPI.distribute(nQ, bounds=True, comm=comm)
 
     my_Pi = np.empty((sizes[comm.rank], nb), dtype=complex)
 
