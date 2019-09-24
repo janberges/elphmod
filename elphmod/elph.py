@@ -10,7 +10,7 @@ class Model(object):
 
     The methods of this class follow 'wan2bloch.f90' of EPW 5.0.
     """
-    def g(self, q1=0, q2=0, q3=0, k1=0, k2=0, k3=0, comm=comm):
+    def g(self, q1=0, q2=0, q3=0, k1=0, k2=0, k3=0, broadcast=True, comm=comm):
         nRq, nph, nRk, nel, nel = self.data.shape
 
         q = np.array([q1, q2, q3])
@@ -38,9 +38,15 @@ class Model(object):
         for my_n, n in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
             my_g[my_n] = self.gq[:, n] * np.exp(1j * np.dot(self.Rk[n], k))
 
-        g = np.empty((nph, nel, nel), dtype=complex)
+        if broadcast or comm.rank == 0:
+            g = np.empty((nph, nel, nel), dtype=complex)
+        else:
+            g = None
 
-        comm.Allreduce(my_g.sum(axis=0), g)
+        comm.Reduce(my_g.sum(axis=0), g)
+
+        if broadcast:
+            comm.Bcast(g)
 
         return g
 
@@ -97,7 +103,8 @@ class Model(object):
 
         self.q = None
 
-    def sample(self, q, nk, U=None, u=None, shared_memory=False):
+    def sample(self, q, nk, U=None, u=None,
+            broadcast=True, shared_memory=False):
         """Sample coupling for given q and k points and transform to band basis.
 
         One purpose of this routine is full control of the complex phase.
@@ -114,6 +121,8 @@ class Model(object):
         u : ndarray, optional
             Phonon eigenvectors for given q points.
             If present, transform from displacement to band basis.
+        broadcast : bool
+            Broadcast result from rank 0 to all processes?
         shared_memory : bool, optional
             Store transformed coupling in shared memory?
         """
@@ -144,7 +153,8 @@ class Model(object):
                     KQ2 = (K2 + Q2) % nk
                     k2 = K2 * scale
 
-                    gqk = self.g(q1=q1, q2=q2, k1=k1, k2=k2, comm=col)
+                    gqk = self.g(q1=q1, q2=q2, k1=k1, k2=k2,
+                        broadcast=False, comm=col)
 
                     if col.rank == 0:
                         if U is not None:
@@ -159,7 +169,9 @@ class Model(object):
                     status.update()
 
         node, images, g = MPI.shared_array((len(q), nph, nk, nk, nel, nel),
-            dtype=complex, shared_memory=shared_memory)
+            dtype=complex,
+            shared_memory=shared_memory,
+            single_memory=not broadcast)
 
         if col.rank == 0:
             row.Gatherv(my_g, (g, row.gather(my_g.size)))
