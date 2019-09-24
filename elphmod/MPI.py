@@ -110,25 +110,6 @@ def shared_array(shape, dtype=float, shared_memory=True, single_memory=False):
 
     return node, images, array
 
-def collect(my_data, shape, sizes, dtype, shared_memory=True):
-    """Gather data of variable sizes into shared memory."""
-
-    elements = sizes * np.prod(shape) // np.sum(sizes)
-
-    if shared_memory:
-        node, images, data = shared_array(shape, dtype=dtype)
-
-        comm.Gatherv(my_data, (data, elements))
-
-        if node.rank == 0:
-            images.Bcast(data)
-    else:
-        data = np.empty(shape, dtype=dtype)
-
-        comm.Allgatherv(my_data, (data, elements))
-
-    return data
-
 def info(message, error=False):
     """Print status message from first process."""
 
