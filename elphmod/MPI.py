@@ -35,7 +35,7 @@ def distribute(size, bounds=False, comm=comm):
 def matrix(size, comm=comm):
     """Create sub-communicators."""
 
-    sizes, cumsum = distribute(size, bounds=True)
+    sizes, cumsum = distribute(size, bounds=True, comm=comm)
 
     col = comm.Split(comm.rank %  size, key=comm.rank)
     row = comm.Split(comm.rank // size, key=comm.rank) # same col.rank
