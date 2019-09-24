@@ -124,14 +124,15 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
 
     # gather calculated eigenvectors on first processor:
 
-    node, images, v = MPI.shared_array((points, bands),
-        shared_memory=shared_memory)
+    memory = dict(shared_memory=shared_memory, single_memory=not broadcast)
+
+    node, images, v = MPI.shared_array((points, bands), **memory)
 
     comm.Gatherv(my_v, (v, my_points * bands))
 
     if order or vectors:
         node, images, V = MPI.shared_array((points, bands, bands),
-            dtype=complex, shared_memory=shared_memory)
+            dtype=complex, **memory)
 
         comm.Gatherv(my_V, (V, my_points * bands ** 2))
 
@@ -139,7 +140,7 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
 
     if order:
         node, images, o = MPI.shared_array((points, bands),
-            dtype=int, shared_memory=shared_memory)
+            dtype=int, **memory)
 
         if comm.rank == 0:
             o = band_order(v, V)
@@ -262,16 +263,17 @@ def dispersion_full(matrix, size, angle=60, vectors=False, gauge=False,
 
     # fill uniform mesh with data from irreducible wedge:
 
-    node, images, v_mesh = MPI.shared_array((size, size, bands),
-        shared_memory=shared_memory)
+    memory = dict(shared_memory=shared_memory, single_memory=not broadcast)
+
+    node, images, v_mesh = MPI.shared_array((size, size, bands), **memory)
 
     if vectors:
         node, images, V_mesh = MPI.shared_array((size, size, bands, bands),
-            dtype=complex, shared_memory=shared_memory)
+            dtype=complex, **memory)
 
     if order:
         node, images, o_mesh = MPI.shared_array((size, size, bands),
-            dtype=int, shared_memory=shared_memory)
+            dtype=int, **memory)
 
     if comm.rank == 0:
         # transfer data points from wedge to mesh:
