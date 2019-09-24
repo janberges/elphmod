@@ -35,6 +35,10 @@ def distribute(size, bounds=False):
 def shared_array(shape, dtype=float, shared_memory=True, single_memory=False):
     """Create array whose memory is shared among all processes on same node.
 
+    With ``shared_memory=False`` (``single_memory=True``) a conventional array
+    is created on each (only one) processor, which however allows for the same
+    broadcasting syntax as shown below.
+
     Example:
 
     # Set up huge array:
@@ -59,9 +63,9 @@ def shared_array(shape, dtype=float, shared_memory=True, single_memory=False):
     """
     dtype = np.dtype(dtype)
 
-    # workaround if shared memory is not supported:
-
     if MPI.COMM_TYPE_SHARED == MPI.UNDEFINED:
+        # workaround if shared memory is not supported:
+
         info("Shared memory not implemented")
 
         shared_memory = False
@@ -85,18 +89,12 @@ def shared_array(shape, dtype=float, shared_memory=True, single_memory=False):
         # Shared memory allocation following Lisandro Dalcin on Google Groups:
         # 'Shared memory for data structures and mpi4py.MPI.Win.Allocate_shared'
 
-        size = np.prod(shape)
-        itemsize = dtype.itemsize
+        size = np.prod(shape) * dtype.itemsize if node.rank == 0 else 0
 
-        if node.rank == 0:
-            bytes = size * itemsize
-        else:
-            bytes = 0
+        window = MPI.Win.Allocate_shared(size, dtype.itemsize, comm=node)
+        buffer, itemsize = window.Shared_query(0)
 
-        win = MPI.Win.Allocate_shared(bytes, itemsize, comm=node)
-        buf, itemsize = win.Shared_query(0)
-
-        array = np.ndarray(shape, buffer=buf, dtype=dtype)
+        array = np.ndarray(shape, buffer=buffer, dtype=dtype)
 
     else:
         # pretend that each processor is on separate node:
