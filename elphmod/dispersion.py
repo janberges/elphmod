@@ -164,7 +164,7 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
             if order:
                 images.Bcast(o)
 
-        comm.Barrier()
+        node.Barrier()
 
     if vectors and order:
         return v, V, o
@@ -300,7 +300,7 @@ def dispersion_full(matrix, size, angle=60, vectors=False, gauge=False,
             if order:
                 images.Bcast(o_mesh)
 
-        comm.Barrier()
+        node.Barrier()
 
     if vectors and order:
         return v_mesh, V_mesh, o_mesh

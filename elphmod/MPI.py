@@ -6,7 +6,7 @@ import numpy as np
 from mpi4py import MPI
 comm = MPI.COMM_WORLD
 
-def distribute(size, bounds=False):
+def distribute(size, bounds=False, comm=comm):
     """Distribute work among processes."""
 
     sizes = np.empty(comm.size, dtype=int)
@@ -32,7 +32,18 @@ def distribute(size, bounds=False):
 
     return sizes
 
-def shared_array(shape, dtype=float, shared_memory=True, single_memory=False):
+def matrix(size, comm=comm):
+    """Create sub-communicators."""
+
+    sizes, cumsum = distribute(size, bounds=True)
+
+    col = comm.Split(comm.rank %  size, key=comm.rank)
+    row = comm.Split(comm.rank // size, key=comm.rank) # same col.rank
+
+    return col, row
+
+def shared_array(shape, dtype=float, shared_memory=True, single_memory=False,
+        comm=comm):
     """Create array whose memory is shared among all processes on same node.
 
     With ``shared_memory=False`` (``single_memory=True``) a conventional array
@@ -60,6 +71,9 @@ def shared_array(shape, dtype=float, shared_memory=True, single_memory=False):
     comm.rank and node.rank   |_2,_2_|_6,_2_|
     on machine with 2 nodes   |_3,_3_|_7,_3_|
     with 4 processors each.    node 1 node 2
+
+    Because of the sorting ``key=comm.rank`` in the split functions below,
+    ``comm.rank == 0`` is equivalent to ``node.rank == images.rank == 0``.
     """
     dtype = np.dtype(dtype)
 
@@ -110,7 +124,7 @@ def shared_array(shape, dtype=float, shared_memory=True, single_memory=False):
 
     return node, images, array
 
-def info(message, error=False):
+def info(message, error=False, comm=comm):
     """Print status message from first process."""
 
     comm.barrier()

@@ -4,14 +4,13 @@ import numpy as np
 
 from . import bravais, dispersion, el, misc, MPI, ph
 comm = MPI.comm
-info = MPI.info
 
 class Model(object):
     """Localized model for electron-phonon coupling.
 
     The methods of this class follow 'wan2bloch.f90' of EPW 5.0.
     """
-    def g(self, q1=0, q2=0, q3=0, k1=0, k2=0, k3=0):
+    def g(self, q1=0, q2=0, q3=0, k1=0, k2=0, k3=0, comm=comm):
         nRq, nph, nRk, nel, nel = self.data.shape
 
         q = np.array([q1, q2, q3])
@@ -20,7 +19,7 @@ class Model(object):
         if self.q is None or np.any(q != self.q):
             self.q = q
 
-            sizes, bounds = MPI.distribute(nRq, bounds=True)
+            sizes, bounds = MPI.distribute(nRq, bounds=True, comm=comm)
 
             my_g = np.empty((sizes[comm.rank], nph, nRk, nel, nel),
                 dtype=complex)
@@ -32,7 +31,7 @@ class Model(object):
 
             comm.Allreduce(my_g.sum(axis=0), self.gq)
 
-        sizes, bounds = MPI.distribute(nRk, bounds=True)
+        sizes, bounds = MPI.distribute(nRk, bounds=True, comm=comm)
 
         my_g = np.empty((sizes[comm.rank], nph, nel, nel), dtype=complex)
 
@@ -118,16 +117,20 @@ class Model(object):
         shared_memory : bool, optional
             Store transformed coupling in shared memory?
         """
+        sizes, bounds = MPI.distribute(len(q), bounds=True)
+        col, row = MPI.matrix(len(q))
+
         scale = 2 * np.pi / nk
 
         nel = self.el.size if U is None else U.shape[-1]
         nph = self.ph.size if u is None else u.shape[-1]
 
-        g = np.empty((len(q), nph, nk, nk, nel, nel), dtype=complex)
+        my_g = np.empty((sizes[row.rank], nph, nk, nk, nel, nel), dtype=complex)
 
-        status = misc.StatusBar(len(q) * nk * nk, title='sample coupling')
+        status = misc.StatusBar(sizes[comm.rank] * nk * nk,
+            title='sample coupling')
 
-        for iq in range(len(q)):
+        for my_iq, iq in enumerate(range(*bounds[row.rank:row.rank + 2])):
             q1, q2 = q[iq]
 
             Q1 = int(round(q1 / scale))
@@ -141,18 +144,32 @@ class Model(object):
                     KQ2 = (K2 + Q2) % nk
                     k2 = K2 * scale
 
-                    gqk = self.g(q1=q1, q2=q2, k1=k1, k2=k2)
+                    gqk = self.g(q1=q1, q2=q2, k1=k1, k2=k2, comm=col)
 
-                    if U is not None:
-                        gqk = np.einsum('xab,an,bm->xnm',
-                            gqk, U[K1, K2], U[KQ1, KQ2].conj())
+                    if col.rank == 0:
+                        if U is not None:
+                            gqk = np.einsum('xab,an,bm->xnm',
+                                gqk, U[K1, K2], U[KQ1, KQ2].conj())
 
-                    if u is not None:
-                        gqk = np.einsum('xab,xu->uab', gqk, u[iq])
+                        if u is not None:
+                            gqk = np.einsum('xab,xu->uab', gqk, u[iq])
 
-                    g[iq, :, K1, K2, :, :] = gqk
+                        my_g[my_iq, :, K1, K2, :, :] = gqk
 
                     status.update()
+
+        node, images, g = MPI.shared_array((len(q), nph, nk, nk, nel, nel),
+            dtype=complex, shared_memory=shared_memory)
+
+        if col.rank == 0:
+            row.Gatherv(my_g, (g, row.gather(my_g.size)))
+
+        col.Barrier() # should not be necessary
+
+        if node.rank == 0:
+            images.Bcast(g)
+
+        node.Barrier()
 
         return g
 
