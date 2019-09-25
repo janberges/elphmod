@@ -307,7 +307,7 @@ def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
 
         if Delta_diff:
             delta = Delta_occupations.delta(x1) + Delta_occupations.delta(x2)
-            delta /= -kT
+            delta /= -Delta_kT
 
     e = np.tile(e, (2, 2, 1))
     f = np.tile(f, (2, 2, 1))
