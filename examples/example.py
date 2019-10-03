@@ -24,9 +24,9 @@ q, x = elphmod.bravais.GMKG()
 w2, e, order = elphmod.dispersion.dispersion(ph.D, q,
     vectors=True, order=True, broadcast=False)
 
-w = elphmod.ph.sgnsqrt(w2) * Ry2eV * eV2cmm1
-
 if comm.rank == 0:
+    w = elphmod.ph.sgnsqrt(w2) * Ry2eV * eV2cmm1
+
     pol = elphmod.ph.polarization(e, q)
 
     colors = ['skyblue', 'dodgerblue', 'orange']
