@@ -100,6 +100,7 @@ def read_bands(filband):
     nks = comm.bcast(nks)
 
     k = np.empty((nks, 3))
+    x = np.empty((nks))
     bands = np.empty((nbnd, nks))
 
     if comm.rank == 0:
@@ -115,10 +116,17 @@ def read_bands(filband):
 
         data.close()
 
+        x[0] = 0.0
+
+        for ik in range(1, nks):
+            dk = k[ik] - k[ik - 1]
+            x[ik] = x[ik - 1] + np.sqrt(np.dot(dk, dk))
+
     comm.Bcast(k)
+    comm.Bcast(x)
     comm.Bcast(bands)
 
-    return k, bands
+    return k, x, bands
 
 def read_bands_plot(filbandgnu, bands):
     """Read bands from 'filband.gnu' produced by Quantum ESPRESSO's 'bands.x'.
