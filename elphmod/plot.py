@@ -7,7 +7,7 @@ import numpy as np
 # import matplotlib; matplotlib.use('agg')
 import matplotlib.pyplot as plt
 
-from . import bravais, MPI
+from . import bravais, MPI, misc
 comm = MPI.comm
 
 color1 = 0, 0, 255
@@ -39,6 +39,8 @@ def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
 
     my_image = np.empty(sizes[comm.rank], dtype=mesh.dtype)
 
+    status = misc.StatusBar(sizes[comm.rank], title='plot')
+
     for n, m in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         i = m // nkx
         j = m % nkx
@@ -47,6 +49,8 @@ def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
         k2 = kx[j] * t2[0] + ky[i] * t2[1]
 
         my_image[n] = fun(k1 * nk, k2 * nk)
+
+        status.update()
 
     image = np.empty((nky, nkx), dtype=mesh.dtype)
 
@@ -87,6 +91,8 @@ def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
 
     my_image = np.empty(sizes[comm.rank], dtype=mesh.dtype)
 
+    status = misc.StatusBar(sizes[comm.rank], title='double plot')
+
     for n, m in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         i = m // nqx
         j = m % nqx
@@ -109,6 +115,8 @@ def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
             my_image[n] = fun[nearest](q1 * nk, q2 * nk)
         else:
             my_image[n] = outside
+
+        status.update()
 
     image = np.empty((nqy, nqx), dtype=mesh.dtype)
 
@@ -265,6 +273,8 @@ def toBZ(data=None, points=1000, interpolation=bravais.linear_interpolation,
     angle0 *= np.pi / 180
     scale = ndata / (2 * np.pi)
 
+    status = misc.StatusBar(sizes[comm.rank], title='BZ plot')
+
     for n, m in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         i = m // nkx
         j = m % nkx
@@ -273,6 +283,8 @@ def toBZ(data=None, points=1000, interpolation=bravais.linear_interpolation,
 
         k1 = np.dot(k, t1)
         k2 = np.dot(k, t2)
+
+        status.update()
 
         if abs(np.dot(k, u1)) > M: continue
         if abs(np.dot(k, u2)) > M: continue
