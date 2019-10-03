@@ -2,9 +2,14 @@
 
 import numpy as np
 
-# To avoid problems on some clusters, switch to non-GUI backend of "matplotlib"
-# using the following line (before importing "matplotlib.pyplot" or "elphmod"):
-# import matplotlib; matplotlib.use('agg')
+import os
+
+if 'DISPLAY' not in os.environ:
+    # switch to non-GUI backend:
+
+    import matplotlib
+    matplotlib.use('agg')
+
 import matplotlib.pyplot as plt
 
 from . import bravais, MPI, misc
