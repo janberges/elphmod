@@ -3,6 +3,8 @@
 import math
 import numpy as np
 
+kB = 8.61733e-5 # Boltzmann constant (eV/K)
+
 xmax = 709.0 # approx. log([max. double] / 2 - 1)
 
 def fermi_dirac(x):

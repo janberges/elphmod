@@ -8,9 +8,7 @@ from . import MPI, occupations
 comm = MPI.comm
 info = MPI.info
 
-kB = 8.61733e-5 # Boltzmann constant (eV/K)
-
-def susceptibility(e, T=1.0, eta=1e-10, occupations=occupations.fermi_dirac):
+def susceptibility(e, kT=0.025, eta=1e-10, occupations=occupations.fermi_dirac):
     """Calculate real part of static electronic susceptibility.
 
         chi(q) = 2/N sum[k] [f(k+q) - f(k)] / [e(k+q) - e(k) + i eta]
@@ -21,8 +19,8 @@ def susceptibility(e, T=1.0, eta=1e-10, occupations=occupations.fermi_dirac):
     ----------
     e : ndarray
         Electron dispersion on uniform mesh. The Fermi level must be at zero.
-    T : float
-        Smearing temperature in K.
+    kT : float
+        Smearing temperature.
     eta : float
         Absolute value of "infinitesimal" imaginary number in denominator.
     occupations : function
@@ -35,7 +33,6 @@ def susceptibility(e, T=1.0, eta=1e-10, occupations=occupations.fermi_dirac):
     """
     nk, nk = e.shape
 
-    kT = kB * T
     x = e / kT
 
     f = occupations(x)
@@ -62,7 +59,7 @@ def susceptibility(e, T=1.0, eta=1e-10, occupations=occupations.fermi_dirac):
 
     return calculate_susceptibility
 
-def susceptibility2(e, T=1.0, nmats=1000, hyb_width=1.0, hyb_height=0.0):
+def susceptibility2(e, kT=0.025, nmats=1000, hyb_width=1.0, hyb_height=0.0):
     """Calculate the Lindhardt bubble using the Green's functions explicitly.
 
         chi = beta/4 - 1/beta sum[GG - 1/(i nu)^2]
@@ -83,8 +80,8 @@ def susceptibility2(e, T=1.0, nmats=1000, hyb_width=1.0, hyb_height=0.0):
     ----------
     e : ndarray
         Electron dispersion on uniform mesh. The Fermi level must be at zero.
-    T : float
-        Smearing temperature in K.
+    kT : float
+        Smearing temperature.
     nmats : int
         Number of fermionic Matsubara frequencies.
     hyb_width : float
@@ -98,8 +95,6 @@ def susceptibility2(e, T=1.0, nmats=1000, hyb_width=1.0, hyb_height=0.0):
         Static electronic susceptibility as a function of q1, q2 in [0, 2pi).
     """
     nk, nk = e.shape
-
-    kT = kB * T
 
     e = np.tile(e, (2, 2))
 
@@ -134,7 +129,7 @@ def susceptibility2(e, T=1.0, nmats=1000, hyb_width=1.0, hyb_height=0.0):
 
     return calculate_susceptibility
 
-def polarization(e, c, T=1.0, eps=1e-15, subspace=None,
+def polarization(e, c, kT=0.025, eps=1e-15, subspace=None,
         occupations=occupations.fermi_dirac):
     """Calculate RPA polarization in orbital basis (density-density).
 
@@ -155,8 +150,8 @@ def polarization(e, c, T=1.0, eps=1e-15, subspace=None,
     c : ndarray
         Coefficients for transform to orbital basis. These are given by the
         eigenvectors of the Wannier Hamiltonian.
-    T : float
-        Smearing temperature in K.
+    kT : float
+        Smearing temperature.
     eps : float
         Smallest allowed absolute value of divisor.
     subspace : ndarray or None
@@ -183,7 +178,6 @@ def polarization(e, c, T=1.0, eps=1e-15, subspace=None,
     nk, nk, nb = e.shape
     nk, nk, no, nb = c.shape # c[k1, k2, a, n] = <k a|k n>
 
-    kT = kB * T
     x = e / kT
 
     f = occupations(x)
@@ -243,7 +237,7 @@ def polarization(e, c, T=1.0, eps=1e-15, subspace=None,
 
     return calculate_polarization
 
-def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
+def phonon_self_energy(q, e, g2, kT=0.025, eps=1e-15,
         occupations=occupations.fermi_dirac, fluctuations=False, Delta=None,
         Delta_diff=False, Delta_occupations=occupations.gauss, Delta_T=10.0,
         dfde_unity=False, g2_unity=False, status=True, comm=comm):
@@ -260,8 +254,8 @@ def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
         Electron dispersion on uniform mesh. The Fermi level must be at zero.
     g2 : ndarray
         Squared electron-phonon coupling.
-    T : float
-        Smearing temperature in K.
+    kT : float
+        Smearing temperature.
     eps : float
         Smallest allowed absolute value of divisor.
     occupations : function
@@ -291,7 +285,6 @@ def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
     nk, nk, nbnd = e.shape
     nQ, nb, nk, nk, nbnd, nbnd = g2.shape
 
-    kT = kB * T
     x = e / kT
 
     f = occupations(x)
@@ -397,7 +390,7 @@ def phonon_self_energy(q, e, g2, T=100.0, eps=1e-15,
     else:
         return Pi
 
-def phonon_self_energy2(q, e, g2, T=100.0, nmats=1000, hyb_width=1.0,
+def phonon_self_energy2(q, e, g2, kT=0.025, nmats=1000, hyb_width=1.0,
         hyb_height=0.0, status=True, GB=4.0):
     """Calculate phonon self-energy using the Green's functions explicitly.
 
@@ -409,8 +402,8 @@ def phonon_self_energy2(q, e, g2, T=100.0, nmats=1000, hyb_width=1.0,
         Electron dispersion on uniform mesh. The Fermi level must be at zero.
     g2 : ndarray
         Squared electron-phonon coupling.
-    T : float
-        Smearing temperature in K.
+    kT : float
+        Smearing temperature.
     nmats : int
         Number of fermionic Matsubara frequencies.
     hyb_width : float
@@ -437,8 +430,6 @@ def phonon_self_energy2(q, e, g2, T=100.0, nmats=1000, hyb_width=1.0,
     if nmats * (2 * nk) ** 2 * np.dtype(complex).itemsize * comm.size > GB * 1e9:
         info("Error: Memory limit (%g GB) exceeded!" % GB)
         quit()
-
-    kT = kB * T
 
     e = np.tile(e, (2, 2))
 
@@ -486,7 +477,7 @@ def phonon_self_energy2(q, e, g2, T=100.0, nmats=1000, hyb_width=1.0,
 
     return Pi
 
-def renormalize_coupling(q, e, g, W, U, nbnd_sub=None, T=100.0, eps=1e-15,
+def renormalize_coupling(q, e, g, W, U, nbnd_sub=None, kT=0.025, eps=1e-15,
         occupations=occupations.fermi_dirac, status=True):
     """Calculate renormalized electron-phonon coupling.
 
@@ -507,8 +498,8 @@ def renormalize_coupling(q, e, g, W, U, nbnd_sub=None, T=100.0, eps=1e-15,
         Eigenvectors of Wannier Hamiltonian belonging to considered band.
     nbnd_sub : int
         Number of bands for Lindhard bubble. Defaults to all bands.
-    T : float
-        Smearing temperature in K.
+    kT : float
+        Smearing temperature.
     eps : float
         Smallest allowed absolute value of divisor.
     occupations : function
@@ -536,7 +527,6 @@ def renormalize_coupling(q, e, g, W, U, nbnd_sub=None, T=100.0, eps=1e-15,
     if nbnd_sub is None:
         nbnd_sub = nbnd
 
-    kT = kB * T
     x = e / kT
 
     f = occupations(x)
@@ -631,7 +621,7 @@ def renormalize_coupling_orbital(W, *args, **kwargs):
 
     return np.einsum(indices, g_Pi(*args, dd=dd, **kwargs), W)
 
-def g_Pi(q, e, g, U, T=100.0, eps=1e-15,
+def g_Pi(q, e, g, U, kT=0.025, eps=1e-15,
         occupations=occupations.fermi_dirac, dd=True, status=True):
     """Join electron-phonon coupling and Lindhard bubble in orbital basis.
 
@@ -645,8 +635,8 @@ def g_Pi(q, e, g, U, T=100.0, eps=1e-15,
         Bare electron-phonon coupling in orbital and displacement basis.
     U : ndarray
         Eigenvectors of Wannier Hamiltonian belonging to considered band.
-    T : float
-        Smearing temperature in K.
+    kT : float
+        Smearing temperature.
     eps : float
         Smallest allowed absolute value of divisor.
     occupations : function
@@ -665,7 +655,6 @@ def g_Pi(q, e, g, U, T=100.0, eps=1e-15,
     nQ, nmodes, nk, nk, norb, norb = g.shape
     nk, nk, norb, nbnd = U.shape
 
-    kT = kB * T
     x = e / kT
 
     f = occupations(x)
