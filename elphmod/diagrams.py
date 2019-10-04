@@ -240,7 +240,7 @@ def polarization(e, c, kT=0.025, eps=1e-15, subspace=None,
 def phonon_self_energy(q, e, g2, kT=0.025, eps=1e-15,
         occupations=occupations.fermi_dirac, fluctuations=False, Delta=None,
         Delta_diff=False, Delta_occupations=occupations.gauss, Delta_kT=0.025,
-        dfde_unity=False, g2_unity=False, status=True, comm=comm):
+        comm=comm):
     """Calculate phonon self-energy.
 
         Pi(q, nu) = 2/N sum[k] |g(q, nu, k)|^2
@@ -270,12 +270,6 @@ def phonon_self_energy(q, e, g2, kT=0.025, eps=1e-15,
         Smoothened Heaviside function to realize excluded energy window.
     Delta_kT : float
         Temperature to smoothen Heaviside function.
-    dfde_unity : bool
-        Assume [f(k+q) - f(k)] / [e(k+q) - e(k)] in above formula to be unity?
-    g2_unity : bool
-        Assume |g(q, nu, k)|^2 in above formula to be unity?
-    status : bool
-        Print status messages during the calculation?
 
     Returns
     -------
@@ -320,9 +314,6 @@ def phonon_self_energy(q, e, g2, kT=0.025, eps=1e-15,
         my_Pi_k = np.empty((sizes[comm.rank], nb, nk, nk, nbnd, nbnd),
             dtype=complex)
 
-    if status:
-        info('Pi(%3s, %3s, %3s) = ...' % ('q1', 'q2', 'nu'))
-
     dfde = np.empty((nk, nk, nbnd, nbnd))
 
     k1 = slice(0, nk)
@@ -345,9 +336,6 @@ def phonon_self_energy(q, e, g2, kT=0.025, eps=1e-15,
                 dfde[:, :, n, m][ ok] = df[ok] / de[ok]
                 dfde[:, :, n, m][~ok] = d[:, :, n][~ok]
 
-                if dfde_unity:
-                    dfde[:, :, n, m] = 1.0
-
                 if Delta is not None:
                     if Delta_diff:
                         envelope = (
@@ -362,17 +350,10 @@ def phonon_self_energy(q, e, g2, kT=0.025, eps=1e-15,
         for nu in range(nb):
             Pi_k = g2[iq, nu] * dfde
 
-            if g2_unity:
-                Pi_k = dfde
-
             my_Pi[my_iq, nu] = prefactor * Pi_k.sum()
 
             if fluctuations:
                 my_Pi_k[my_iq, nu] = 2 * Pi_k
-
-            if status:
-                print('Pi(%3d, %3d, %3d) = %9.2e%+9.2ei'
-                    % (q1, q2, nu, my_Pi[my_iq, nu].real, my_Pi[my_iq, nu].imag))
 
     Pi = np.empty((nQ, nb), dtype=complex)
 
@@ -389,7 +370,7 @@ def phonon_self_energy(q, e, g2, kT=0.025, eps=1e-15,
         return Pi
 
 def phonon_self_energy2(q, e, g2, kT=0.025, nmats=1000, hyb_width=1.0,
-        hyb_height=0.0, status=True, GB=4.0):
+        hyb_height=0.0, GB=4.0):
     """Calculate phonon self-energy using the Green's functions explicitly.
 
     Parameters
@@ -408,8 +389,6 @@ def phonon_self_energy2(q, e, g2, kT=0.025, nmats=1000, hyb_width=1.0,
         Width of box-shaped hybridization function.
     hyb_height : float
         Height of box-shaped hybridization function.
-    status : bool
-        Print status messages during the calculation?
     GB : float
         Memory limit in gigabytes. Exit if exceeded.
 
@@ -450,9 +429,6 @@ def phonon_self_energy2(q, e, g2, kT=0.025, nmats=1000, hyb_width=1.0,
 
     my_Pi = np.empty((sizes[comm.rank], nb), dtype=complex)
 
-    if status:
-        info('Pi(%3s, %3s, %3s) = ...' % ('q1', 'q2', 'nu'))
-
     for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         q1 = int(round(q[iq, 0] * scale)) % nk
         q2 = int(round(q[iq, 1] * scale)) % nk
@@ -464,10 +440,6 @@ def phonon_self_energy2(q, e, g2, kT=0.025, nmats=1000, hyb_width=1.0,
 
         for nu in range(nb):
             my_Pi[my_iq, nu] = np.sum(g2[iq, nu] * chi)
-
-            if status:
-                print('Pi(%3d, %3d, %3d) = %9.2e%+9.2ei'
-                    % (q1, q2, nu, my_Pi[my_iq, nu].real, my_Pi[my_iq, nu].imag))
 
     Pi = np.empty((nQ, nb), dtype=complex)
 
