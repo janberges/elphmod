@@ -363,10 +363,13 @@ def color(data, color1=(240, 1, 255), color2=(0, 1, 255), nancolor=(0, 0, 255),
     color2   = np.array(color2)
     nancolor = np.array(nancolor)
 
-    image = data.copy()
+    if minimum is None:
+        minimum = np.nanmin(data)
 
-    image -= np.nanmin(image) if minimum is None else minimum
-    image /= np.nanmax(image) if maximum is None else maximum - minimum
+    if maximum is None:
+        maximum = np.nanmax(data)
+
+    image = (data - minimum) / (maximum - minimum)
 
     if exponent != 1:
         image **= exponent
