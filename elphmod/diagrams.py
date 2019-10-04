@@ -283,7 +283,7 @@ def phonon_self_energy(q, e, g2, kT=0.025, eps=1e-15,
         Phonon self-energy.
     """
     nk, nk, nbnd = e.shape
-    nQ, nb, nk, nk, nbnd, nbnd = g2.shape
+    nQ, nb = g2.shape[:2]
 
     x = e / kT
 
