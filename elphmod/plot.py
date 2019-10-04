@@ -300,7 +300,7 @@ def toBZ(data=None, points=1000, interpolation=bravais.linear_interpolation,
 
         my_image[n] = fun[idata](k1 * nk, k2 * nk)
 
-    image = np.empty((nky, nkx) if comm.rank == 0 else (0, 0), dtype=mesh.dtype)
+    image = np.empty((nky, nkx) if comm.rank == 0 else (0, 0), dtype=data.dtype)
 
     comm.Gatherv(my_image, (image, sizes))
 
