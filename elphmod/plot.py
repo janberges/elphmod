@@ -57,7 +57,7 @@ def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
 
         status.update()
 
-    image = np.empty((nky, nkx), dtype=mesh.dtype)
+    image = np.empty((nky, nkx) if comm.rank == 0 else (0, 0), dtype=mesh.dtype)
 
     comm.Gatherv(my_image, (image, sizes))
 
@@ -300,7 +300,7 @@ def toBZ(data=None, points=1000, interpolation=bravais.linear_interpolation,
 
         my_image[n] = fun[idata](k1 * nk, k2 * nk)
 
-    image = np.empty((nky, nkx), dtype=data.dtype)
+    image = np.empty((nky, nkx) if comm.rank == 0 else (0, 0), dtype=mesh.dtype)
 
     comm.Gatherv(my_image, (image, sizes))
 
