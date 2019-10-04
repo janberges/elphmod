@@ -308,11 +308,11 @@ def phonon_self_energy(q, e, g2, kT=0.025, eps=1e-15,
 
     sizes, bounds = MPI.distribute(nQ, bounds=True, comm=comm)
 
-    my_Pi = np.empty((sizes[comm.rank], nb), dtype=complex)
+    my_Pi = np.empty((sizes[comm.rank], nb), dtype=g2.dtype)
 
     if fluctuations:
         my_Pi_k = np.empty((sizes[comm.rank], nb, nk, nk, nbnd, nbnd),
-            dtype=complex)
+            dtype=g2.dtype)
 
     dfde = np.empty((nk, nk, nbnd, nbnd))
 
@@ -355,12 +355,12 @@ def phonon_self_energy(q, e, g2, kT=0.025, eps=1e-15,
             if fluctuations:
                 my_Pi_k[my_iq, nu] = 2 * Pi_k
 
-    Pi = np.empty((nQ, nb), dtype=complex)
+    Pi = np.empty((nQ, nb), dtype=g2.dtype)
 
     comm.Allgatherv(my_Pi, (Pi, sizes * nb))
 
     if fluctuations:
-        Pi_k = np.empty((nQ, nb, nk, nk, nbnd, nbnd), dtype=complex)
+        Pi_k = np.empty((nQ, nb, nk, nk, nbnd, nbnd), dtype=g2.dtype)
 
         comm.Allgatherv(my_Pi_k, (Pi_k, sizes * nb * nk * nk * nbnd * nbnd))
 
