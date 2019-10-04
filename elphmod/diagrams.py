@@ -239,7 +239,7 @@ def polarization(e, c, kT=0.025, eps=1e-15, subspace=None,
 
 def phonon_self_energy(q, e, g2, kT=0.025, eps=1e-15,
         occupations=occupations.fermi_dirac, fluctuations=False, Delta=None,
-        Delta_diff=False, Delta_occupations=occupations.gauss, Delta_T=10.0,
+        Delta_diff=False, Delta_occupations=occupations.gauss, Delta_kT=0.025,
         dfde_unity=False, g2_unity=False, status=True, comm=comm):
     """Calculate phonon self-energy.
 
@@ -268,7 +268,7 @@ def phonon_self_energy(q, e, g2, kT=0.025, eps=1e-15,
         Calculate derivative of phonon self-energy w.r.t. `Delta`?
     Delta_occupations : function
         Smoothened Heaviside function to realize excluded energy window.
-    Delta_T : float
+    Delta_kT : float
         Temperature to smoothen Heaviside function.
     dfde_unity : bool
         Assume [f(k+q) - f(k)] / [e(k+q) - e(k)] in above formula to be unity?
@@ -291,8 +291,6 @@ def phonon_self_energy(q, e, g2, kT=0.025, eps=1e-15,
     d = occupations.delta(x) / (-kT)
 
     if Delta is not None:
-        Delta_kT = kB * Delta_T
-
         x1 = ( e - Delta) / Delta_kT
         x2 = (-e - Delta) / Delta_kT
 
