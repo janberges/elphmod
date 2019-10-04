@@ -261,7 +261,7 @@ def toBZ(data=None, points=1000, interpolation=bravais.linear_interpolation,
     ky = ky[::-1]
 
     if return_only_k:
-        return kxmax, kymax, kx, ky, t1 * M, t2 * M
+        return kxmax, kymax, kx, ky
 
     if data.ndim == 2:
         data = data[np.newaxis]
@@ -305,7 +305,7 @@ def toBZ(data=None, points=1000, interpolation=bravais.linear_interpolation,
     comm.Gatherv(my_image, (image, sizes))
 
     if return_k:
-        return kxmax, kymax, kx, ky, t1 * M, t2 * M, image
+        return kxmax, kymax, kx, ky, image
     else:
         return image
 
