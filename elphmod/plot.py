@@ -38,7 +38,7 @@ def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
 
     fun = interpolation(mesh, angle=angle)
 
-    t1, t2 = bravais.translations(180 - angle)
+    a1, a2 = bravais.translations(180 - angle)
 
     sizes, bounds = MPI.distribute(nky * nkx, bounds=True)
 
@@ -50,8 +50,8 @@ def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
         i = m // nkx
         j = m % nkx
 
-        k1 = kx[j] * t1[0] + ky[i] * t1[1]
-        k2 = kx[j] * t2[0] + ky[i] * t2[1]
+        k1 = kx[j] * a1[0] + ky[i] * a1[1]
+        k2 = kx[j] * a2[0] + ky[i] * a2[1]
 
         my_image[n] = fun(k1 * nk, k2 * nk)
 
@@ -90,7 +90,7 @@ def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
 
     qy = qy[::-1]
 
-    t1, t2 = bravais.translations(180 - angle)
+    a1, a2 = bravais.translations(180 - angle)
 
     sizes, bounds = MPI.distribute(nqy * nqx, bounds=True)
 
@@ -102,8 +102,8 @@ def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
         i = m // nqx
         j = m % nqx
 
-        q1 = qx[j] * t1[0] + qy[i] * t1[1]
-        q2 = qx[j] * t2[0] + qy[i] * t2[1]
+        q1 = qx[j] * a1[0] + qy[i] * a1[1]
+        q2 = qx[j] * a2[0] + qy[i] * a2[1]
 
         q1 *= nq
         q2 *= nq
@@ -142,8 +142,8 @@ def double_plot_tex(texfile, imgfile, q, nq, angle=60,
     h = 1.0 / (nq * np.sqrt(3))
     a = 1.0 / (nq * 3)
 
-    t1, t2 = bravais.translations(180 - angle)
-    u1, u2 = bravais.reciprocals(t1, t2)
+    a1, a2 = bravais.translations(180 - angle)
+    b1, b2 = bravais.reciprocals(a1, a2)
 
     with open(texfile, 'w') as TeX:
         TeX.write(r'''\documentclass{{article}}
@@ -160,7 +160,7 @@ def double_plot_tex(texfile, imgfile, q, nq, angle=60,
             imgfile=imgfile))
 
         for q1, q2 in q:
-            qx, qy = q1 * u1 + q2 * u2
+            qx, qy = q1 * b1 + q2 * b2
 
             points = [
                 (qx + a * 2, qy),
@@ -232,21 +232,21 @@ def toBZ(data=None, points=1000, interpolation=bravais.linear_interpolation,
     angle0 : float
         Angle between x axis and first Bravais-lattice vector in degrees.
     """
-    t1, t2 = bravais.translations(angle, angle0)
-    u1, u2 = bravais.reciprocals(t1, t2)
+    a1, a2 = bravais.translations(angle, angle0)
+    b1, b2 = bravais.reciprocals(a1, a2)
 
     if angle == 60:
-        t3 = t1 - t2
-        u3 = u1 + u2
+        t3 = a1 - a2
+        u3 = b1 + b2
 
     elif angle == 120:
-        t3 = t1 + t2
-        u3 = u1 - u2
+        t3 = a1 + a2
+        u3 = b1 - b2
 
     M = 2.0 / 3.0
 
-    kxmax = max(abs(t1[0]), abs(t2[0]), abs(t3[0])) * M
-    kymax = max(abs(t1[1]), abs(t2[1]), abs(t3[1])) * M
+    kxmax = max(abs(a1[0]), abs(a2[0]), abs(t3[0])) * M
+    kymax = max(abs(a1[1]), abs(a2[1]), abs(t3[1])) * M
 
     nkx = int(round(points * kxmax))
     nky = int(round(points * kymax))
@@ -286,13 +286,13 @@ def toBZ(data=None, points=1000, interpolation=bravais.linear_interpolation,
 
         k = np.array([kx[j], ky[i]])
 
-        k1 = np.dot(k, t1)
-        k2 = np.dot(k, t2)
+        k1 = np.dot(k, a1)
+        k2 = np.dot(k, a2)
 
         status.update()
 
-        if abs(np.dot(k, u1)) > M: continue
-        if abs(np.dot(k, u2)) > M: continue
+        if abs(np.dot(k, b1)) > M: continue
+        if abs(np.dot(k, b2)) > M: continue
         if abs(np.dot(k, u3)) > M: continue
 
         idata = np.floor((np.arctan2(ky[i], kx[j]) - angle0)
@@ -470,8 +470,8 @@ def label_pie_with_TeX(filename,
     save('%s_colorbar.png' % stem, colorbar)
 
     if nCDW:
-        t1, t2 = bravais.translations(120, angle0=-30)
-        u1, u2 = bravais.reciprocals(t1, t2)
+        a1, a2 = bravais.translations(120, angle0=-30)
+        b1, b2 = bravais.reciprocals(a1, a2)
 
         A = sorted(set(n * n + n * m + m * m
           for n in range(13)
@@ -483,11 +483,11 @@ def label_pie_with_TeX(filename,
 
         indices = range(-12, 13)
         t = [(i, j) for i in indices for j in indices if i or j]
-        T = [i * t1 + j * t2 for i, j in t]
+        T = [i * a1 + j * a2 for i, j in t]
         K = [bravais.rotate(t / t.dot(t), 90 * bravais.deg)
             / height_over_side for t in T]
 
-        scaleCDW = GM / (0.5 * np.sqrt(np.dot(u1, u1)))
+        scaleCDW = GM / (0.5 * np.sqrt(np.dot(b1, b1)))
 
         KCDW = []
 

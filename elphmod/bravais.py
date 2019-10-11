@@ -55,19 +55,19 @@ def translations(angle=120, angle0=0):
     ndarray, ndarray
         Translation vectors of Bravais lattice.
     """
-    t1 = np.array([1.0, 0.0])
+    a1 = np.array([1.0, 0.0])
 
-    t1 = rotate(t1, angle0 * deg)
-    t2 = rotate(t1, angle  * deg)
+    a1 = rotate(a1, angle0 * deg)
+    a2 = rotate(a1, angle  * deg)
 
-    return t1, t2
+    return a1, a2
 
-def reciprocals(t1, t2):
+def reciprocals(a1, a2):
     """Generate translation vectors of reciprocal lattice.
 
     Parameters
     ----------
-    t1, t2 : ndarray
+    a1, a2 : ndarray
         Translation vectors of Bravais lattice.
 
     Returns
@@ -75,13 +75,13 @@ def reciprocals(t1, t2):
     ndarray, ndarray
         Translation vectors of reciprocal lattice (without 2 pi).
     """
-    u1 = rotate(t2, -90 * deg)
-    u2 = rotate(t1, +90 * deg)
+    b1 = rotate(a2, -90 * deg)
+    b2 = rotate(a1, +90 * deg)
 
-    u1 /= np.dot(t1, u1)
-    u2 /= np.dot(t2, u2)
+    b1 /= np.dot(a1, b1)
+    b2 /= np.dot(a2, b2)
 
-    return u1, u2
+    return b1, b2
 
 def images(k1, k2, nk, angle=60):
     """Generate symmetry-equivalent k points.
@@ -194,10 +194,10 @@ def symmetries(data, epsilon=0.0, unity=True, angle=60):
         angle in degrees, followed by a mapping between the k-point indices of
         the original and the transformed mesh.
     """
-    t1, t2 = translations(180 - angle, angle0=0)
-    u1, u2 = reciprocals(t1, t2)
+    a1, a2 = translations(180 - angle, angle0=0)
+    b1, b2 = reciprocals(a1, a2)
 
-    # t1 and u2 must point in x and y direction, respectively,
+    # a1 and b2 must point in x and y direction, respectively,
     # to make below reflection work properly.
 
     nk = len(data)
@@ -209,7 +209,7 @@ def symmetries(data, epsilon=0.0, unity=True, angle=60):
             for k2 in range(nk):
                 # rotation in cartesian coordinates:
 
-                K = rotate(k1 * u1 + k2 * u2, angle * deg)
+                K = rotate(k1 * b1 + k2 * b2, angle * deg)
 
                 # reflection across the ky axis:
 
@@ -218,8 +218,8 @@ def symmetries(data, epsilon=0.0, unity=True, angle=60):
 
                 # transform to mesh-point indices in [0, nk):
 
-                K1 = int(round(np.dot(K, t1))) % nk
-                K2 = int(round(np.dot(K, t2))) % nk
+                K1 = int(round(np.dot(K, a1))) % nk
+                K2 = int(round(np.dot(K, a2))) % nk
 
                 # discard this symmetry if it is not fulfilled by data:
 
@@ -378,9 +378,9 @@ def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
         #
         #     B______C'
         #     /\    /
-        # t2 /  \  /
+        # a2 /  \  /
         #   /____\/
-        #  C  t1  A
+        #  C  a1  A
         #
         def interpolant(n, m):
             (n0, dn), (m0, dm) = split(n, m)
@@ -407,9 +407,9 @@ def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
         #
         #   D ____ C
         #    |    |
-        # t2 |    |
+        # a2 |    |
         #    |____|
-        #   A  t1  B
+        #   A  a1  B
         #
         def interpolant(n, m):
             (n0, dn), (m0, dm) = split(n, m)
@@ -429,9 +429,9 @@ def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
         #
         #  C______B
         #   \    /\
-        # t2 \  /  \
+        # a2 \  /  \
         #     \/____\
-        #     A  t1  C'
+        #     A  a1  C'
         #
         def interpolant(n, m):
             (n0, dn), (m0, dm) = split(n, m)
@@ -645,12 +645,12 @@ def wigner_seitz_x(x, nk, at=None, tau=None, epsilon=1e-8):
     """
     a = np.sqrt(np.dot(at[0, :2], at[0, :2]))
 
-    t1 = at[0, :2] / a
-    t2 = at[1, :2] / a
+    a1 = at[0, :2] / a
+    a2 = at[1, :2] / a
 
-    angle = int(round(np.arccos(np.dot(t1, t2)) * 180 / np.pi))
+    angle = int(round(np.arccos(np.dot(a1, a2)) * 180 / np.pi))
 
-    u1, u2 = reciprocals(t1, t2)
+    b1, b2 = reciprocals(a1, a2)
 
     if x == 'k':
         return wigner_seitz(nk, angle)
@@ -666,8 +666,8 @@ def wigner_seitz_x(x, nk, at=None, tau=None, epsilon=1e-8):
     wslen_x  = dict()
 
     for dk in shifts:
-        dk1 = np.dot(u1, dk[:2]) / a
-        dk2 = np.dot(u2, dk[:2]) / a
+        dk1 = np.dot(b1, dk[:2]) / a
+        dk2 = np.dot(b2, dk[:2]) / a
 
         irvec, ndegen, wslen = wigner_seitz(nk, angle, -dk1, -dk2, epsilon)
 

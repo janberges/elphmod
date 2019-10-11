@@ -373,11 +373,11 @@ def polarization(e, path, angle=60):
     y = slice(1, None, 3)
     z = slice(2, None, 3)
 
-    t1, t2 = bravais.translations(180 - angle)
-    u1, u2 = bravais.reciprocals(t1, t2)
+    a1, a2 = bravais.translations(180 - angle)
+    b1, b2 = bravais.reciprocals(a1, a2)
 
     for n, q in enumerate(path):
-        q = q[0] * u1 + q[1] * u2
+        q = q[0] * b1 + q[1] * b2
         Q = np.sqrt(q.dot(q))
 
         centered = Q < 1e-10
@@ -543,13 +543,13 @@ def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
     """
     # transform q points from crystal to cartesian coordinates:
 
-    t1, t2 = bravais.translations(angle)
-    u1, u2 = bravais.reciprocals(t1, t2)
+    a1, a2 = bravais.translations(angle)
+    b1, b2 = bravais.reciprocals(a1, a2)
 
     q_cart = []
 
     for iq, (q1, q2) in enumerate(q):
-        qx, qy = (q1 * u1 + q2 * u2) / (2 * np.pi)
+        qx, qy = (q1 * b1 + q2 * b2) / (2 * np.pi)
         q_cart.append((qx, qy, 0.0))
 
     # write 'fildyn0' with information about q-point mesh:

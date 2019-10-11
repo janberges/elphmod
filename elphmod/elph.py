@@ -393,7 +393,7 @@ def read_xml_files(filename, q, rep, bands, nbands, nk, squeeze=True, status=Tru
     if not hasattr(bands, '__len__'):
         bands = [bands]
 
-    t1, t2 = bravais.translations(angle, angle0)
+    a1, a2 = bravais.translations(angle, angle0)
 
     sizes = MPI.distribute(len(q))
 
@@ -435,8 +435,8 @@ def read_xml_files(filename, q, rep, bands, nbands, nk, squeeze=True, status=Tru
                     goto("<COORDINATES_XK ")
                     k = list(map(float, next(data).split()))[:2]
 
-                    k1 = int(round(np.dot(k, t1) * nk)) % nk
-                    k2 = int(round(np.dot(k, t2) * nk)) % nk
+                    k1 = int(round(np.dot(k, a1) * nk)) % nk
+                    k2 = int(round(np.dot(k, a2) * nk)) % nk
 
                     goto("<PARTIAL_ELPH ")
 
@@ -464,8 +464,8 @@ def write_xml_files(filename, data, angle=120, angle0=0):
 
     nQ, nb, nk, nk, nbands, nbands = data.shape
 
-    t1, t2 = bravais.translations(angle, angle0)
-    u1, u2 = bravais.reciprocals(t1, t2)
+    a1, a2 = bravais.translations(angle, angle0)
+    b1, b2 = bravais.reciprocals(a1, a2)
 
     for iq in range(nQ):
         for irep in range(nb):
@@ -494,7 +494,7 @@ def write_xml_files(filename, data, angle=120, angle0=0):
                     for k2 in range(nk):
                         ik += 1
 
-                        k = (k1 * u1 + k2 * u2) / nk
+                        k = (k1 * b1 + k2 * b2) / nk
 
                         xml.write("""
     <K_POINT.%d>

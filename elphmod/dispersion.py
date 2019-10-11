@@ -73,8 +73,8 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
     status = misc.StatusBar(my_points[comm.rank], title='calculate dispersion')
 
     if rotate:
-        t1, t2 = bravais.translations(180 - angle)
-        u1, u2 = bravais.reciprocals(t1, t2)
+        a1, a2 = bravais.translations(180 - angle)
+        b1, b2 = bravais.reciprocals(a1, a2)
 
     for point, (k1, k2) in enumerate(my_k):
         matrix_k = matrix(k1, k2)
@@ -103,7 +103,7 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
             if rotate:
                 K1, K2 = bravais.to_Voronoi(k1, k2, 2 * np.pi, angle=angle)[0]
 
-                x, y = K1 * u1 + K2 * u2
+                x, y = K1 * b1 + K2 * b2
                 phi = np.arctan2(y, x)
 
                 atoms = bands // 3
