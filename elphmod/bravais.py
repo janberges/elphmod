@@ -898,9 +898,9 @@ def GMKG(N=30, corner_indices=False, mesh=False, angle=60):
     M = 2 * np.pi * np.array([0.0, 1.0]) / 2
     K = 2 * np.pi * np.array([1.0, K1 ]) / 3
 
-    L1 = np.sqrt(3)
-    L2 = 1.0
-    L3 = 2.0
+    L1 = 1.0 / np.sqrt(3)
+    L2 = 1.0 / 3.0
+    L3 = 2.0 / 3.0
 
     if mesh and not N % 6: # use only points of N x N mesh
         N1 = N // 2
