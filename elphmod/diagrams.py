@@ -693,3 +693,69 @@ def g_Pi(q, e, g, U, kT=0.025, eps=1e-15,
         comm.Allgatherv(my_gPi, (gPi, sizes * nmodes * norb * norb))
 
     return gPi
+
+def double_fermi_surface_average(q, e, g2, kT=0.025,
+        occupations=occupations.fermi_dirac, comm=comm):
+    """Calculate double Fermi-surface average.
+
+    Parameters
+    ----------
+    q : list of 2-tuples
+        Considered q points defined via crystal coordinates q1, q2 in [0, 2pi).
+    e : ndarray
+        Electron dispersion on uniform mesh. The Fermi level must be at zero.
+    g2 : ndarray
+        Quantity to be averaged, typically electron-phonon coupling.
+    kT : float
+        Smearing temperature.
+    occupations : function
+        Particle distribution as a function of energy divided by kT.
+
+    Returns
+    -------
+    float
+        Double Fermi-surface average.
+    """
+    nk, nk, nel = e.shape
+    nQ, nph = g2.shape[:2]
+
+    d = occupations.delta(e / kT) / kT
+
+    e = np.tile(e, (2, 2, 1))
+    d = np.tile(d, (2, 2, 1))
+
+    scale = nk / (2 * np.pi)
+
+    sizes, bounds = MPI.distribute(nQ, bounds=True, comm=comm)
+
+    my_av = np.empty((sizes[comm.rank], nph), dtype=g2.dtype)
+    my_wg = np.empty(sizes[comm.rank])
+
+    d2 = np.empty((nk, nk, nel, nel))
+
+    k1 = slice(0, nk)
+    k2 = slice(0, nk)
+
+    for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
+        q1 = int(round(q[iq, 0] * scale)) % nk
+        q2 = int(round(q[iq, 1] * scale)) % nk
+
+        kq1 = slice(q1, q1 + nk)
+        kq2 = slice(q2, q2 + nk)
+
+        for n in range(nel):
+            for m in range(nel):
+                d2[:, :, n, m] = d[kq1, kq2, m] * d[k1, k2, n]
+
+        my_wg[my_iq] = d2.sum()
+
+        for nu in range(nph):
+            my_av[my_iq, nu] = (g2[iq, nu] * d2).sum()
+
+    av = np.empty((nQ, nph), dtype=g2.dtype)
+    wg = np.empty(nQ)
+
+    comm.Allgatherv(my_av, (av, sizes * nph))
+    comm.Allgatherv(my_wg, (wg, sizes))
+
+    return av, wg
