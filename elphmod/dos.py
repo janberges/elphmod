@@ -132,6 +132,46 @@ def hexa2F(energies, couplings):
 
     return np.vectorize(a2F)
 
+def double_delta(x, y):
+    """Calculate points where x = y = z."""
+
+    N, N = x.shape
+
+    triangles = [
+        np.array([
+            (i + k, j + k),
+            (i + 1, j,   ),
+            (i,     j + 1),
+        ])
+        for i in range(N)
+        for j in range(N)
+        for k in range(2)
+        if comm.rank == ((i * N + j) * 2 + k) % comm.size
+        ]
+
+    indices = [tuple(zip(*v % N)) for v in triangles]
+
+    triangles = [(x[i], y[i], v) for i, v in zip(indices, triangles)]
+
+    D = []
+
+    def dd(z):
+        for (A, B, C), (a, b, c), (X, Y, Z) in triangles:
+            denum = a * B - A * b - a * C + A * c + b * C - B * c
+
+            if denum == 0:
+                continue
+
+            n1 = (A * c - a * C + (a - A + C - c) * z) / denum
+            n2 = (a * B - A * b + (A - a + b - B) * z) / denum
+
+            if 0 <= n1 <= 1 and 0 <= n2 <= 1 and 0 <= n1 + n2 <= 1:
+                D.append(X + n1 * (Y - X) + n2 * (Z - X))
+
+        return np.reshape(comm.gather(D), (-1, 2))
+
+    return dd
+
 def simpleDOS(energies, smearing):
     """Calculate DOS from representative energy sample (Lorentzian sum).
 
