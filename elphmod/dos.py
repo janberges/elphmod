@@ -140,7 +140,7 @@ def double_delta(x, y):
     triangles = [
         np.array([
             (i + k, j + k),
-            (i + 1, j,   ),
+            (i + 1, j    ),
             (i,     j + 1),
         ])
         for i in range(N)
@@ -164,8 +164,10 @@ def double_delta(x, y):
 
             n1 = (A * c - a * C + (a - A + C - c) * z) / denum
             n2 = (a * B - A * b + (A - a + b - B) * z) / denum
+            n3 = n1 + n2
 
-            if 0 <= n1 <= 1 and 0 <= n2 <= 1 and 0 <= n1 + n2 <= 1:
+            if X[0] == Y[0] and 0 <= n1 <= 1 and 0 <= n2 <= 1 and 0 <= n3 <= 1\
+            or X[0] == Z[0] and 0 <  n1 <  1 and 0 <  n2 <  1 and 0 <  n3 <  1:
                 D.append(X + n1 * (Y - X) + n2 * (Z - X))
 
         return np.reshape(comm.gather(D), (-1, 2))
