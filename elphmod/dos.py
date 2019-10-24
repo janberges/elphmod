@@ -153,9 +153,12 @@ def double_delta(x, y):
 
     triangles = [(x[i], y[i], v) for i, v in zip(indices, triangles)]
 
-    D = []
+    prefactor = np.sqrt(3) / (2 * N ** 2)
 
     def dd(z):
+        my_D = []
+        my_W = []
+
         for (A, B, C), (a, b, c), (X, Y, Z) in triangles:
             denum = a * B - A * b - a * C + A * c + b * C - B * c
 
@@ -168,9 +171,21 @@ def double_delta(x, y):
 
             if X[0] == Y[0] and 0 <= n1 <= 1 and 0 <= n2 <= 1 and 0 <= n3 <= 1\
             or X[0] == Z[0] and 0 <  n1 <  1 and 0 <  n2 <  1 and 0 <  n3 <  1:
-                D.append(X + n1 * (Y - X) + n2 * (Z - X))
+                my_D.append(X + n1 * (Y - X) + n2 * (Z - X))
+                my_W.append(prefactor
+                    / np.sqrt(A * A + B * B + C * C - A * B - A * C - B * C)
+                    / np.sqrt(a * a + b * b + c * c - a * b - a * c - b * c))
 
-        return np.reshape(comm.gather(D), (-1, 2))
+        sizes = np.array(comm.allgather(len(my_W)))
+        size = sizes.sum()
+
+        D = np.empty((size, 2))
+        W = np.empty(size)
+
+        comm.Allgatherv(np.array(my_D), (D, sizes * 2))
+        comm.Allgatherv(np.array(my_W), (W, sizes))
+
+        return D, W
 
     return dd
 
@@ -185,6 +200,16 @@ def simpleDOS(energies, smearing):
         return np.sum(const / (smearing ** 2 + (energy - energies) ** 2))
 
     return np.vectorize(DOS)
+
+def simple_double_delta(energies1, energies2, smearing):
+    const = smearing / np.pi
+
+    def DD(energy):
+        return np.sum(const * const
+            / (smearing ** 2 + (energy - energies1) ** 2)
+            / (smearing ** 2 + (energy - energies2) ** 2)) / energies1.size
+
+    return np.vectorize(DD)
 
 if __name__ == '__main__':
     # Test DOS functions for tight-binding band of graphene:
