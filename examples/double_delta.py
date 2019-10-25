@@ -60,8 +60,11 @@ my_DDI_smear = np.empty(sizes[comm.rank])
 for my_n, n in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
     print('kT = %g eV' % kT[n])
 
-    my_DOS_smear[my_n] = elphmod.dos.simpleDOS(ekk, kT[n])(0)
-    my_DDI_smear[my_n] = elphmod.dos.simple_double_delta(ekk, ekq, kT[n])(0)
+    delta_kk = elphmod.occupations.fermi_dirac.delta(ekk / kT[n]) / kT[n]
+    delta_kq = elphmod.occupations.fermi_dirac.delta(ekq / kT[n]) / kT[n]
+
+    my_DOS_smear[my_n] = np.average(delta_kk)
+    my_DDI_smear[my_n] = np.average(delta_kk * delta_kq)
 
 DOS_smear = np.empty(len(kT))
 DDI_smear = np.empty(len(kT))

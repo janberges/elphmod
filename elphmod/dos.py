@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from . import MPI
+from . import MPI, occupations
 comm = MPI.comm
 
 def hexDOS(energies):
@@ -187,28 +187,6 @@ def double_delta(x, y):
 
     return dd
 
-def simpleDOS(energies, smearing):
-    """Calculate DOS from representative energy sample (Lorentzian sum).
-
-    Integration over all energies yields unity."""
-
-    const = smearing / np.pi / energies.size
-
-    def DOS(energy):
-        return np.sum(const / (smearing ** 2 + (energy - energies) ** 2))
-
-    return np.vectorize(DOS)
-
-def simple_double_delta(energies1, energies2, smearing):
-    const = smearing / np.pi
-
-    def DD(energy):
-        return const * const / energies1.size * np.sum(1
-            / (smearing ** 2 + (energy - energies1) ** 2)
-            / (smearing ** 2 + (energy - energies2) ** 2))
-
-    return np.vectorize(DD)
-
 if __name__ == '__main__':
     # Test DOS functions for tight-binding band of graphene:
 
@@ -223,6 +201,13 @@ if __name__ == '__main__':
 
     e = np.linspace(E.min(), E.max(), 300)
 
+    kT = 0.02
+
+    DOS = np.empty(len(e))
+
+    for n in range(len(e)):
+        DOS[n] = np.average(occupations.fermi_dirac.delta((E - e[n]) / kT)) / kT
+
     plt.fill_between(e, 0, hexDOS(E)(e), facecolor='lightgray')
-    plt.plot(e, simpleDOS(E, smearing=0.02)(e), color='red')
+    plt.plot(e, DOS, color='red')
     plt.show()
