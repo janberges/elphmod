@@ -4,6 +4,7 @@
 *.aux
 *.in
 *.log
+*.npy
 *.pdf
 *.png
 *.pyc
