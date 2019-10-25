@@ -27,6 +27,7 @@ if os.path.exists('el.npy'):
         ekk = np.empty((nk, nk))
 
     comm.Bcast(ekk)
+
 else:
     ekk = elphmod.dispersion.dispersion_full(el.H, nk)[:, :, 0] - mu
 
@@ -51,14 +52,22 @@ info('Calculate DOS and DDI for different smearings')
 
 kT = 10 ** logkT
 
+sizes, bounds = elphmod.MPI.distribute(len(kT), bounds=True)
+
+my_DOS_smear = np.empty(sizes[comm.rank])
+my_DDI_smear = np.empty(sizes[comm.rank])
+
+for my_n, n in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
+    print('kT = %g eV' % kT[n])
+
+    my_DOS_smear[my_n] = elphmod.dos.simpleDOS(ekk, kT[n])(0)
+    my_DDI_smear[my_n] = elphmod.dos.simple_double_delta(ekk, ekq, kT[n])(0)
+
 DOS_smear = np.empty(len(kT))
 DDI_smear = np.empty(len(kT))
 
-for n in range(len(kT)):
-    info('kT = %g eV' % kT[n])
-
-    DOS_smear[n] = elphmod.dos.simpleDOS(ekk, kT[n])(0)
-    DDI_smear[n] = elphmod.dos.simple_double_delta(ekk, ekq, kT[n])(0)
+comm.Gatherv(my_DOS_smear, (DOS_smear, sizes))
+comm.Gatherv(my_DDI_smear, (DDI_smear, sizes))
 
 info('Plot results')
 
