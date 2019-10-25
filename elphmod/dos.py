@@ -205,9 +205,9 @@ def simple_double_delta(energies1, energies2, smearing):
     const = smearing / np.pi
 
     def DD(energy):
-        return np.sum(const * const
+        return const * const / energies1.size * np.sum(1
             / (smearing ** 2 + (energy - energies1) ** 2)
-            / (smearing ** 2 + (energy - energies2) ** 2)) / energies1.size
+            / (smearing ** 2 + (energy - energies2) ** 2))
 
     return np.vectorize(DD)
 
