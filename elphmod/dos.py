@@ -153,7 +153,7 @@ def double_delta(x, y):
 
     triangles = [(x[i], y[i], v) for i, v in zip(indices, triangles)]
 
-    prefactor = np.sqrt(3) / (2 * N ** 2)
+    prefactor = 1.0 / N ** 2
 
     def dd(z):
         my_D = []
@@ -172,9 +172,7 @@ def double_delta(x, y):
             if X[0] == Y[0] and 0 <= n1 <= 1 and 0 <= n2 <= 1 and 0 <= n3 <= 1\
             or X[0] == Z[0] and 0 <  n1 <  1 and 0 <  n2 <  1 and 0 <  n3 <  1:
                 my_D.append(X + n1 * (Y - X) + n2 * (Z - X))
-                my_W.append(prefactor
-                    / np.sqrt(A * A + B * B + C * C - A * B - A * C - B * C)
-                    / np.sqrt(a * a + b * b + c * c - a * b - a * c - b * c))
+                my_W.append(prefactor / abs(denum))
 
         sizes = np.array(comm.allgather(len(my_W)))
         size = sizes.sum()
