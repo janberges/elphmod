@@ -12,7 +12,7 @@ mu = -0.1665
 kT = 0.01
 nk = 800
 
-step = 4
+step = 20
 Nk = nk // step
 
 q = [0.5, 0.0]
@@ -37,18 +37,65 @@ else:
     if comm.rank == 0:
         np.save('el.npy', ekk)
 
+Ekk = ekk[::step, ::step].copy()
+
+info('Calculate DDI on full q BZ')
+
+kT = 0.01
+
+delta_kk = elphmod.occupations.fermi_dirac.delta(ekk / kT) / kT
+
+q_irr = np.array(sorted(elphmod.bravais.irreducibles(Nk)))
+
+DDI_irr = np.empty((len(q_irr), 4))
+
+progress = elphmod.misc.StatusBar(len(q_irr))
+
+for iq, (q1, q2) in enumerate(step * q_irr):
+    ekq = np.roll(np.roll(ekk, shift=q1, axis=0), shift=q2, axis=1)
+    Ekq = ekq[::step, ::step].copy()
+
+    intersections, DDI = elphmod.dos.double_delta(Ekk, Ekq)(0)
+
+    delta_kq = elphmod.occupations.fermi_dirac.delta(ekq / kT) / kT
+
+    DDI_irr[iq, 0] = len(intersections)
+    DDI_irr[iq, 1] = DDI.sum()
+    DDI_irr[iq, 2] = np.average(delta_kk * delta_kq)
+
+    progress.update()
+
+DDI_irr[..., 3] = np.absolute(DDI_irr[..., 1] - DDI_irr[..., 2])
+
+DDI = np.empty((Nk, Nk, 4))
+
+for iq, (q1, q2) in enumerate(q_irr):
+    for Q1, Q2 in elphmod.bravais.images(q1, q2, Nk):
+        DDI[Q1, Q2] = DDI_irr[iq]
+
+images = [elphmod.plot.toBZ(DDI[..., n], points=501) for n in range(4)]
+
+if comm.rank == 0:
+    fig, ax = plt.subplots(1, 4)
+
+    for n in range(4):
+        ax[n].imshow(images[n], cmap='inferno', vmax=5 if n else None)
+
+    plt.show()
+
+info('Calculate density of states (DOS) with tetrahedron')
+
+DOS_tetra = elphmod.dos.hexDOS(Ekk)(0)
+
+info('Calculate double-delta integral (DDI) with tetrahedron')
+
 ekq = np.roll(np.roll(ekk,
     shift=int(round(q[0] * nk)), axis=0),
     shift=int(round(q[1] * nk)), axis=1)
 
-info('Calculate density of states (DOS) with tetrahedron')
+Ekq = ekq[::step, ::step].copy()
 
-DOS_tetra = elphmod.dos.hexDOS(ekk[::step, ::step])(0)
-
-info('Calculate double-delta integral (DDI) with tetrahedron')
-
-intersections, DDI_tetra = elphmod.dos.double_delta(
-    ekk[::step, ::step], ekq[::step, ::step])(0)
+intersections, DDI_tetra = elphmod.dos.double_delta(Ekk, Ekq)(0)
 
 DDI_tetra = DDI_tetra.sum()
 
