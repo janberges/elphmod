@@ -12,6 +12,9 @@ mu = -0.1665
 kT = 0.01
 nk = 800
 
+step = 4
+Nk = nk // step
+
 q = [0.5, 0.0]
 
 logkT = np.linspace(-8, 2, 100)
@@ -40,11 +43,12 @@ ekq = np.roll(np.roll(ekk,
 
 info('Calculate density of states (DOS) with tetrahedron')
 
-DOS_tetra = elphmod.dos.hexDOS(ekk)(0)
+DOS_tetra = elphmod.dos.hexDOS(ekk[::step, ::step])(0)
 
 info('Calculate double-delta integral (DDI) with tetrahedron')
 
-intersections, DDI_tetra = elphmod.dos.double_delta(ekk, ekq)(0)
+intersections, DDI_tetra = elphmod.dos.double_delta(
+    ekk[::step, ::step], ekq[::step, ::step])(0)
 
 DDI_tetra = DDI_tetra.sum()
 
@@ -89,9 +93,9 @@ if comm.rank == 0:
     outline = list(zip(*[(k1 * b1 + k2 * b2) / 3 for k1, k2
         in [(2, -1), (1, 1), (-1, 2), (-2, 1), (-1, -1), (1, -2), (2, -1)]]))
 
-    intersections = list(zip(*[(K1 * b1 + K2 * b2) / nk
+    intersections = list(zip(*[(K1 * b1 + K2 * b2) / Nk
         for k1, k2 in intersections
-        for K1, K2 in elphmod.bravais.to_Voronoi(k1, k2, nk)]))
+        for K1, K2 in elphmod.bravais.to_Voronoi(k1, k2, Nk)]))
 
     plt.contour(kx, ky, BZ_kk, colors='k', levels=[0.0])
     plt.contour(kx, ky, BZ_kq, colors='k', levels=[0.0])
