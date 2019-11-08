@@ -72,6 +72,34 @@ DDI_smear = np.empty(len(kT))
 comm.Gatherv(my_DOS_smear, (DOS_smear, sizes))
 comm.Gatherv(my_DDI_smear, (DDI_smear, sizes))
 
+info('Plot Fermi surfaces')
+
+contours_kk = []
+
+plot = dict(kxmin=-0.8, kxmax=0.8, kymin=-0.7, kymax=0.7,
+    return_k=True, resolution=101)
+
+kx, ky, BZ_kk = elphmod.plot.plot(ekk, **plot)
+kx, ky, BZ_kq = elphmod.plot.plot(ekq, **plot)
+
+if comm.rank == 0:
+    a1, a2 = elphmod.bravais.translations()
+    b1, b2 = elphmod.bravais.reciprocals(a1, a2)
+
+    outline = list(zip(*[(k1 * b1 + k2 * b2) / 3 for k1, k2
+        in [(2, -1), (1, 1), (-1, 2), (-2, 1), (-1, -1), (1, -2), (2, -1)]]))
+
+    intersections = list(zip(*[(K1 * b1 + K2 * b2) / nk
+        for k1, k2 in intersections
+        for K1, K2 in elphmod.bravais.to_Voronoi(k1, k2, nk)]))
+
+    plt.contour(kx, ky, BZ_kk, colors='k', levels=[0.0])
+    plt.contour(kx, ky, BZ_kq, colors='k', levels=[0.0])
+    plt.plot(*outline, 'b')
+    plt.plot(*intersections, 'ob')
+    plt.axis('equal')
+    plt.show()
+
 info('Plot results')
 
 if comm.rank == 0:
