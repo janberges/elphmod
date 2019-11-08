@@ -137,42 +137,36 @@ def double_delta(x, y):
 
     N, N = x.shape
 
-    triangles = [
-        np.array([
-            (i + k, j + k),
-            (i + 1, j    ),
-            (i,     j + 1),
-        ])
+    triangles = [(k, np.array([(i + k, j + k), (i + 1, j), (i, j + 1)]))
         for i in range(N)
         for j in range(N)
         for k in range(2)
         if comm.rank == ((i * N + j) * 2 + k) % comm.size
         ]
 
-    indices = [tuple(zip(*v % N)) for v in triangles]
+    indices = [tuple(v.T % N) for k, v in triangles]
 
-    triangles = [(x[i], y[i], v) for i, v in zip(indices, triangles)]
-
-    prefactor = 1.0 / N ** 2
+    triangles = [(k, v, x[i], y[i]) for (k, v), i in zip(triangles, indices)]
 
     def dd(z):
         my_D = []
         my_W = []
 
-        for (A, B, C), (a, b, c), (X, Y, Z) in triangles:
-            denum = a * B - A * b - a * C + A * c + b * C - B * c
+        for k, (X, Y, Z), (A, B, C), (a, b, c) in triangles:
+            w =  A * b - A * c - B * a + B * c + C * a - C * b
+            # = sum[ijk] epsilon(ijk) F(i) f(j)
 
-            if denum == 0:
+            if w == 0:
                 continue
 
-            n1 = (A * c - a * C + (a - A + C - c) * z) / denum
-            n2 = (a * B - A * b + (A - a + b - B) * z) / denum
-            n3 = n1 + n2
+            U = (z * b - z * c - B * z + B * c + C * z - C * b) / w # A = a = z
+            V = (A * z - A * c - z * a + z * c + C * a - C * z) / w # B = b = z
+            W = (A * b - A * z - B * a + B * z + z * a - z * b) / w # C = c = z
 
-            if X[0] == Y[0] and 0 <= n1 <= 1 and 0 <= n2 <= 1 and 0 <= n3 <= 1\
-            or X[0] == Z[0] and 0 <  n1 <  1 and 0 <  n2 <  1 and 0 <  n3 <  1:
-                my_D.append(X + n1 * (Y - X) + n2 * (Z - X))
-                my_W.append(prefactor / abs(denum))
+            if k == 0 and 0 <= U <= 1 and 0 <= V <= 1 and 0 <= W <= 1\
+            or k == 1 and 0 <  U <  1 and 0 <  V <  1 and 0 <  W <  1:
+                my_D.append(U * X + V * Y + W * Z)
+                my_W.append(w)
 
         sizes = np.array(comm.allgather(len(my_W)))
         size = sizes.sum()
@@ -183,7 +177,7 @@ def double_delta(x, y):
         comm.Allgatherv(np.array(my_D), (D, sizes * 2))
         comm.Allgatherv(np.array(my_W), (W, sizes))
 
-        return D, W
+        return D, 1 / (abs(W) * N ** 2)
 
     return dd
 

@@ -37,15 +37,19 @@ for key in solution:
 
 pprint(solution)
 
-K1 = collect(simpler(K1.subs(solution)), X)
-k1 = collect(simpler(k1.subs(solution)), X)
-K2 = collect(simpler(K2.subs(solution)), X)
-k2 = collect(simpler(k2.subs(solution)), X)
+K1 = simpler(K1.subs(solution))
+k1 = simpler(k1.subs(solution))
+K2 = simpler(K2.subs(solution))
+k2 = simpler(k2.subs(solution))
 
-pprint(K1 == k1)
-pprint(K1)
-pprint(K2 == k2)
-pprint(K2)
+print(K1 == k1)
+print(K1)
+print(K2 == k2)
+print(K2)
+
+K3 = simpler(1 - K1 - K2)
+
+print(K3)
 
 # Integral over region of intersection at e = E = 0:
 #
@@ -65,4 +69,4 @@ det = simpler(grad1x * grad2y - grad1y * grad2x)
 
 weight = simpler(1 / abs(det * V))
 
-pprint(weight)
+print(weight)
