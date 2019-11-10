@@ -872,6 +872,58 @@ def Fourier_interpolation(data, angle=60, hr_file=None, function=True):
 
     return dict((tuple(point), value) for point, value in zip(points, values))
 
+def path(points, b1, b2, b3=np.array([0, 0, 1]), N=30):
+    """Generate arbitrary path through Brillouin zone.
+
+    Parameters
+    ----------
+    points : ndarray
+        List of high-symmetry points in crystal coordinates.
+    b1, b2, b3 : ndarray
+        Reciprocal lattice vectors.
+    N : integer
+        Number of points per 2 pi / a.
+
+    Returns
+    -------
+    ndarray
+        Points in crystal coordinates with period 2 pi.
+    ndarray
+        Cumulative path distance.
+    list, optional
+        Indices of corner/high-symmetry points.
+    """
+    points = np.array(points)
+
+    b1 = np.array(b1)
+    b2 = np.array(b2)
+    b3 = np.array(b3)
+
+    points_cart = np.array([k1 * b1 + k2 * b2 + k3 * b3
+        for k1, k2, k3 in points])
+
+    k = []
+    x = []
+    corners = [0]
+
+    x0 = 0.0
+
+    for i in range(len(points) - 1):
+        dx = np.linalg.norm(points_cart[i + 1] - points_cart[i])
+        n = int(round(N * dx))
+
+        x1 = x0 + dx
+
+        for j in range(0 if i == 0 else 1, n + 1):
+            k.append((j * points[i + 1] + (n - j) * points[i]) / n)
+            x.append((j * x1 + (n - j) * x0) / n)
+
+        x0 = x1
+
+        corners.append(len(k) - 1)
+
+    return 2 * np.pi * np.array(k), np.array(x), corners
+
 def GMKG(N=30, corner_indices=False, mesh=False, angle=60):
     """Generate path Gamma-M-K-Gamma through Brillouin zone.
 
