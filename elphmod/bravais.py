@@ -62,7 +62,7 @@ def translations(angle=120, angle0=0):
 
     return a1, a2
 
-def reciprocals(a1, a2):
+def reciprocals(a1, a2, a3=None):
     """Generate translation vectors of reciprocal lattice.
 
     Parameters
@@ -75,13 +75,25 @@ def reciprocals(a1, a2):
     ndarray, ndarray
         Translation vectors of reciprocal lattice (without 2 pi).
     """
-    b1 = rotate(a2, -90 * deg)
-    b2 = rotate(a1, +90 * deg)
+    if a3 is None:
+        b1 = rotate(a2, -90 * deg)
+        b2 = rotate(a1, +90 * deg)
 
-    b1 /= np.dot(a1, b1)
-    b2 /= np.dot(a2, b2)
+        b1 /= np.dot(a1, b1)
+        b2 /= np.dot(a2, b2)
 
-    return b1, b2
+        return b1, b2
+
+    else:
+        b1 = np.cross(a2, a3)
+        b2 = np.cross(a3, a1)
+        b3 = np.cross(a1, a2)
+
+        b1 /= np.dot(a1, b1)
+        b2 /= np.dot(a2, b2)
+        b3 /= np.dot(a3, b3)
+
+        return b1, b2, b3
 
 def images(k1, k2, nk, angle=60):
     """Generate symmetry-equivalent k points.

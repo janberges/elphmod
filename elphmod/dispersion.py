@@ -47,8 +47,14 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
     ndarray, optional
         Indices which have been used to order the bands.
     """
-    points = len(k) if comm.rank == 0 else None
+    if comm.rank == 0:
+        k = np.array(k)
+        points, dimens = k.shape
+    else:
+        points = dimens = None
+
     points = comm.bcast(points) # number of k points
+    dimens = comm.bcast(dimens) # number of dimensions
 
     bands = int(round(np.sqrt(matrix().size))) # number of bands
 
@@ -58,7 +64,7 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
 
     # initialize local lists of k points, eigenvalues and eigenvectors:
 
-    my_k = np.empty((my_points[comm.rank], 2))
+    my_k = np.empty((my_points[comm.rank], dimens))
     my_v = np.empty((my_points[comm.rank], bands))
 
     if order or vectors:
@@ -66,7 +72,7 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
 
     # distribute k points among processors:
 
-    comm.Scatterv((k, my_points * 2), my_k)
+    comm.Scatterv((k, my_points * dimens), my_k)
 
     # diagonalize matrix for local lists of k points:
 
@@ -76,8 +82,8 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
         a1, a2 = bravais.translations(180 - angle)
         b1, b2 = bravais.reciprocals(a1, a2)
 
-    for point, (k1, k2) in enumerate(my_k):
-        matrix_k = matrix(k1, k2)
+    for point in range(len(my_k)):
+        matrix_k = matrix(*my_k[point])
 
         if order or vectors:
             if bands == 1:
@@ -101,9 +107,10 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
             # rotate phonon eigenvectors by negative angle of k point:
 
             if rotate:
-                K1, K2 = bravais.to_Voronoi(k1, k2, 2 * np.pi, angle=angle)[0]
+                k1, k2 = bravais.to_Voronoi(*my_k[point, :2], nk=2 * np.pi,
+                    angle=angle)[0]
 
-                x, y = K1 * b1 + K2 * b2
+                x, y = k1 * b1 + k2 * b2
                 phi = np.arctan2(y, x)
 
                 atoms = bands // 3
