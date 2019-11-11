@@ -182,7 +182,7 @@ def read_flfrc(flfrc):
         celldim = list(map(float, tmp[3:]))
 
         if ibrav == 0:
-            at = table(3)
+            at = table(3) * celldim[0]
 
         elif ibrav == 1:
             at = np.diag(celldim[:1] * 3)
