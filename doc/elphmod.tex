@@ -1,0 +1,94 @@
+\documentclass[a4paper]{article}
+\usepackage[margin=3cm]{geometry}
+\usepackage{mathtools, xcolor}
+
+\def\D{\mathrm d}
+
+\def\sub#1{_{\text{#1}}}
+\def\from#1{_{\mathrlap{#1}}}
+
+\let\epsilon\varepsilon
+\let\vec\boldsymbol
+
+\title{{\ttfamily \itshape
+    \textcolor{blue}{el}%
+    \textcolor{red}{ph}%
+    \textcolor{gray}{mod}%
+    }---{\Large Python modules for electron--phonon models}}
+
+\author{Jan Berges}
+
+\begin{document}
+\maketitle
+
+\section{Tetrahedron methods}
+
+\subsection{Double-delta integrals}
+
+The function \texttt{double\_delta} calculates two-dimensional (2D) integrals of the form
+%
+\begin{equation}
+    I = \int \D^2 k
+    \, \delta(\epsilon_{\vec k})
+    \, \delta(\epsilon_{\vec k + \vec q})
+    \, f(\vec k).
+\end{equation}
+%
+The two delta functions restrict the integral to neighborhoods of the intersection points $\vec k \sub S$ where $\epsilon_{\vec k \sub S} = \epsilon_{\vec k \sub S + \vec q} = 0$. In these neighborhoods, $\epsilon_{\vec k}$ and $\epsilon_{\vec k + \vec q}$ can be linearised in $\vec k$,
+%
+\begin{equation}
+    I = \sum_{\vec k \sub S} \int \from{\vec k \approx \vec k \sub S}
+    \, \D^2 k
+    \, \delta \Big(\frac{\partial \epsilon_{\vec k}}{\partial \vec k} \Big| \from{\vec k \sub S} \cdot \vec k \Big)
+    \, \delta \Big(\frac{\partial \epsilon_{\vec k + \vec q}}{\partial \vec k} \Big| \from{\vec k \sub S} \cdot \vec k \Big)
+    \, f(\vec k).
+\end{equation}
+%
+A change to coordinates $k_1 = \partial \epsilon_{\vec k} / \partial \vec k |_{\vec k \sub S} \cdot \vec k$ and $k_2 = \partial \epsilon_{\vec k + \vec q} / \partial \vec k |_{\vec k \sub S} \cdot \vec k$ can be performed if the gradients $\partial \epsilon_{\vec k} / \partial \vec k$ and $\partial \epsilon_{\vec k + \vec q} / \partial \vec k$ are not parallel to each other at $\vec k \sub S$ and yields
+%
+\begin{equation}
+    I = \sum_{\vec k \sub S} \int \from{\vec k \approx \vec k \sub S}
+    \, \D k_1
+    \, \D k_2
+    \frac{\delta(k_1) \, \delta(k_2) \, f(\vec k)}
+    {\big| \det \frac{\partial (k_1, k_2)}{\partial (k_x, k_y)} \big|}
+    = \sum_{\vec k \sub S} \int \from{\vec k \approx \vec k \sub S}
+    \, \D k_1
+    \, \D k_2
+    \frac{\delta(k_1) \, \delta(k_2) \, f(\vec k)}
+    {\big|
+        \frac{\partial \epsilon_{\vec k}}{\partial k_x}
+        \frac{\partial \epsilon_{\vec k + \vec q}}{\partial k_y}
+        -
+        \frac{\partial \epsilon_{\vec k + \vec q}}{\partial k_x}
+        \frac{\partial \epsilon_{\vec k}}{\partial k_y}
+    \big|}
+\end{equation}
+%
+Now, the integration can be carried out,
+%
+\begin{equation}
+    \label{eq:DDI}
+    I = \sum_{\vec k \sub S}
+    \frac{f(\vec k \sub S)}
+    {\big|
+        \frac{\partial \epsilon_{\vec k}}{\partial k_x}
+        \frac{\partial \epsilon_{\vec k + \vec q}}{\partial k_y}
+        -
+        \frac{\partial \epsilon_{\vec k + \vec q}}{\partial k_x}
+        \frac{\partial \epsilon_{\vec k}}{\partial k_y}
+    \big| \from{\vec k \sub S}}.
+\end{equation}
+
+This expression is conveniently evaluated using the 2D tetrahedron method. Let $\epsilon_{\vec k}$ and $\epsilon_{\vec k + \vec q}$ be defined on a triangular mesh and interpolated linearly in between. We consider the contribution to $I$ from a single triangle with the vertices $\vec k_n$ with $n \in \{ 1, 2, 3 \}$. Excluding (including) the edge of the triangle, it contains an intersection point
+%
+\begin{equation}
+    \vec k \sub S = \frac 1 d \sum_n c_n \, \vec k_n
+    \quad \text{with} \quad
+    d = \sum_n c_n
+    \quad \text{and} \quad
+    c_n = \sum_{i j} \epsilon_{i j n} \, \epsilon_{\vec k_i} \, \epsilon_{\vec k_j + \vec q}
+\end{equation}
+%
+    if $0 < c_n < d$ ($0 \leq c_n \leq d$) for all $n$. Here, $\epsilon_{i j n}$ is the Levi--Civita symbol. If the triangle is equilateral, the denominator in Eq.~\ref{eq:DDI} is given by $|d|$.
+\end{document}
