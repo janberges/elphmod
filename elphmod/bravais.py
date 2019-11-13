@@ -769,7 +769,7 @@ def read_wigner_file(name, nat):
 
     return data
 
-def Fourier_interpolation(data, angle=60, hr_file=None, function=True):
+def Fourier_interpolation(data, angle=60, sign=-1, hr_file=None, function=True):
     """Perform Fourier interpolation on triangular or rectangular lattice.
 
     Parameters
@@ -778,6 +778,8 @@ def Fourier_interpolation(data, angle=60, hr_file=None, function=True):
         Data on uniform triangular or rectangular lattice.
     angle : number
         Angle between lattice vectors in degrees.
+    sign : number
+        Sign in exponential function in first Fourier transform.
     hr_file : str
         Filename. If given, save "_hr.dat" file as produced by Wannier90.
     function : bool
@@ -800,7 +802,7 @@ def Fourier_interpolation(data, angle=60, hr_file=None, function=True):
 
     i = np.arange(N)
 
-    transform = np.exp(2j * np.pi / N * np.outer(i, i)) / N
+    transform = np.exp(sign * 2j * np.pi / N * np.outer(i, i)) / N
 
     data = np.dot(np.dot(transform, data), transform)
 
@@ -860,7 +862,7 @@ def Fourier_interpolation(data, angle=60, hr_file=None, function=True):
 
     # define interpolation function and generalize is with respect to arrays:
 
-    idphi = -2j * np.pi / N
+    idphi = -sign * 2j * np.pi / N
 
     def interpolant(*point):
         return np.dot(values, np.exp(idphi * np.dot(points, point))).real
