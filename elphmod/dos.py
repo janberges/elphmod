@@ -132,27 +132,29 @@ def hexa2F(energies, couplings):
 
     return np.vectorize(a2F)
 
-def double_delta(x, y):
+def double_delta(x, y, eps=1e-7):
     """Calculate points where x = y = z."""
 
     N, N = x.shape
 
-    triangles = [(k, np.array([(i + k, j + k), (i + 1, j), (i, j + 1)]))
+    triangles = [np.array([(i + k, j + k), (i + 1, j), (i, j + 1)])
         for i in range(N)
         for j in range(N)
         for k in range(2)
         if comm.rank == ((i * N + j) * 2 + k) % comm.size
         ]
 
-    indices = [tuple(v.T % N) for k, v in triangles]
+    indices = [tuple(v.T % N) for v in triangles]
 
-    triangles = [(k, v, x[i], y[i]) for (k, v), i in zip(triangles, indices)]
+    triangles = [(v, x[i], y[i]) for v, i in zip(triangles, indices)]
+
+    prefactor = 1.0 / N ** 2
 
     def dd(z):
         my_D = []
         my_W = []
 
-        for k, (X, Y, Z), (A, B, C), (a, b, c) in triangles:
+        for (X, Y, Z), (A, B, C), (a, b, c) in triangles:
             w =  A * b - A * c - B * a + B * c + C * a - C * b
             # = sum[ijk] epsilon(ijk) F(i) f(j)
 
@@ -163,10 +165,9 @@ def double_delta(x, y):
             V = (A * z - A * c - z * a + z * c + C * a - C * z) / w # B = b = z
             W = (A * b - A * z - B * a + B * z + z * a - z * b) / w # C = c = z
 
-            if k == 0 and 0 <= U <= 1 and 0 <= V <= 1 and 0 <= W <= 1\
-            or k == 1 and 0 <  U <  1 and 0 <  V <  1 and 0 <  W <  1:
+            if 0 <= U <= 1 and 0 <= V <= 1 and 0 <= W <= 1:
                 my_D.append(U * X + V * Y + W * Z)
-                my_W.append(w)
+                my_W.append(prefactor / abs(w))
 
         sizes = np.array(comm.allgather(len(my_W)))
         size = sizes.sum()
@@ -174,10 +175,26 @@ def double_delta(x, y):
         D = np.empty((size, 2))
         W = np.empty(size)
 
-        comm.Allgatherv(np.array(my_D), (D, sizes * 2))
-        comm.Allgatherv(np.array(my_W), (W, sizes))
+        comm.Gatherv(np.array(my_D), (D, sizes * 2))
+        comm.Gatherv(np.array(my_W), (W, sizes))
 
-        return D, 1 / (abs(W) * N ** 2)
+        unique = dict()
+
+        if comm.rank == 0:
+            groups = np.arange(len(D))
+
+            for i in range(len(D)):
+                for j in range(i + 1, len(D)):
+                    if np.all(np.absolute(D[j] - D[i]) < eps):
+                        groups[np.where(groups == groups[j])] = groups[i]
+
+            for group in set(groups):
+                members = np.where(groups == group)
+                d = np.average(D[members], axis=0)
+                w = np.average(W[members], axis=0)
+                unique[tuple(d)] = w
+
+        return comm.bcast(unique)
 
     return dd
 

@@ -55,12 +55,12 @@ for iq, (q1, q2) in enumerate(step * q_irr):
     ekq = np.roll(np.roll(ekk, shift=q1, axis=0), shift=q2, axis=1)
     Ekq = ekq[::step, ::step].copy()
 
-    intersections, DDI = elphmod.dos.double_delta(Ekk, Ekq)(0)
+    intersections = elphmod.dos.double_delta(Ekk, Ekq)(0)
 
     delta_kq = elphmod.occupations.fermi_dirac.delta(ekq / kT) / kT
 
     DDI_irr[iq, 0] = len(intersections)
-    DDI_irr[iq, 1] = DDI.sum()
+    DDI_irr[iq, 1] = sum(intersections.values())
     DDI_irr[iq, 2] = np.average(delta_kk * delta_kq)
 
     progress.update()
@@ -95,9 +95,9 @@ ekq = np.roll(np.roll(ekk,
 
 Ekq = ekq[::step, ::step].copy()
 
-intersections, DDI_tetra = elphmod.dos.double_delta(Ekk, Ekq)(0)
+intersections = elphmod.dos.double_delta(Ekk, Ekq)(0)
 
-DDI_tetra = DDI_tetra.sum()
+DDI_tetra = sum(intersections.values())
 
 info('Calculate DOS and DDI for different smearings')
 
@@ -141,7 +141,7 @@ if comm.rank == 0:
         in [(2, -1), (1, 1), (-1, 2), (-2, 1), (-1, -1), (1, -2), (2, -1)]]))
 
     intersections = list(zip(*[(K1 * b1 + K2 * b2) / Nk
-        for k1, k2 in intersections
+        for k1, k2 in intersections.keys()
         for K1, K2 in elphmod.bravais.to_Voronoi(k1, k2, Nk)]))
 
     plt.contour(kx, ky, BZ_kk, colors='k', levels=[0.0])
