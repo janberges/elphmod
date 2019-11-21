@@ -83,12 +83,14 @@ Now, the integration can be carried out,
 This expression is conveniently evaluated using the 2D tetrahedron method. Let $\epsilon_{\vec k}$ and $\epsilon_{\vec k + \vec q}$ be defined on a triangular mesh and interpolated linearly in between. We consider the contribution to $I$ from a single triangle with the vertices $\vec k_n$ with $n \in \{ 1, 2, 3 \}$. Excluding (including) the edge of the triangle, it contains an intersection point
 %
 \begin{equation}
-    \vec k \sub S = \frac 1 d \sum_n c_n \, \vec k_n
+    \vec k \sub S = \sum_n a_n \, \vec k_n
     \quad \text{with} \quad
-    d = \sum_n c_n
+    a_n = \frac {c_n} d,
+    \quad
+    d = \sum_n c_n,
     \quad \text{and} \quad
     c_n = \sum_{i j} \epsilon_{i j n} \, \epsilon_{\vec k_i} \, \epsilon_{\vec k_j + \vec q}
 \end{equation}
 %
-    if $0 < c_n < d$ ($0 \leq c_n \leq d$) for all $n$. Here, $\epsilon_{i j n}$ is the Levi--Civita symbol. If the triangle is equilateral, the denominator in Eq.~\ref{eq:DDI} is given by $|d|$.
+if $0 < a_n < 1$ ($0 \leq a_n \leq 1$) for all $n$. Here, $\epsilon_{i j n}$ is the Levi--Civita symbol. If the triangle is equilateral, the denominator in Eq.~\ref{eq:DDI} is given by $|d|$. Since on each triangle, $f(\vec k)$ depends linearly on $\vec k$, the enumerator is given by $f(\vec k \sub S) = \sum_n a_n \, f(\vec k_n)$.
 \end{document}

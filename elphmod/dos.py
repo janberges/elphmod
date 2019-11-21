@@ -132,10 +132,30 @@ def hexa2F(energies, couplings):
 
     return np.vectorize(a2F)
 
-def double_delta(x, y, eps=1e-7):
-    """Calculate points where x = y = z."""
+def double_delta(x, y, f=None, eps=1e-7):
+    """Calculate double-delta integrals via 2D tetrahedron method .
 
+        I(z) = 1/N sum[k] delta(x[k] - z) delta(y[k] - z) f[k]
+
+    Parameters
+    ----------
+    x, y, f : ndarray
+        Three functions sampled on uniform N x N mesh.
+    eps : ndarray
+        Negligible difference between fractional mesh-point indices.
+
+    Returns
+    -------
+    function : float -> dict
+        Intersection points of x, y = z isolines and corresponding weights as a
+        function of z. The above double-delta integral I(z) can be calulated as:
+
+            I_z = sum(double_delta(x, y, f)(z).values())
+    """
     N, N = x.shape
+
+    if f is None:
+        f = np.ones((N, N), dtype=int)
 
     triangles = [np.array([(i + k, j + k), (i + 1, j), (i, j + 1)])
         for i in range(N)
@@ -146,7 +166,7 @@ def double_delta(x, y, eps=1e-7):
 
     indices = [tuple(v.T % N) for v in triangles]
 
-    triangles = [(v, x[i], y[i]) for v, i in zip(triangles, indices)]
+    triangles = [(v, x[i], y[i], f[i]) for v, i in zip(triangles, indices)]
 
     prefactor = 1.0 / N ** 2
 
@@ -154,8 +174,8 @@ def double_delta(x, y, eps=1e-7):
         my_D = []
         my_W = []
 
-        for (X, Y, Z), (A, B, C), (a, b, c) in triangles:
-            w =  A * b - A * c - B * a + B * c + C * a - C * b
+        for (X, Y, Z), (A, B, C), (a, b, c), (F, G, H) in triangles:
+            w = A * b - A * c - B * a + B * c + C * a - C * b
             # = sum[ijk] epsilon(ijk) F(i) f(j)
 
             if w == 0:
@@ -167,7 +187,7 @@ def double_delta(x, y, eps=1e-7):
 
             if 0 <= U <= 1 and 0 <= V <= 1 and 0 <= W <= 1:
                 my_D.append(U * X + V * Y + W * Z)
-                my_W.append(prefactor / abs(w))
+                my_W.append(prefactor * (U * F + V * G + W * H) / abs(w))
 
         sizes = np.array(comm.allgather(len(my_W)))
         size = sizes.sum()
