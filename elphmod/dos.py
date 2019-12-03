@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from . import MPI, occupations
+from . import misc, MPI, occupations
 comm = MPI.comm
 
 def hexDOS(energies):
@@ -201,17 +201,9 @@ def double_delta(x, y, f=None, eps=1e-7):
         unique = dict()
 
         if comm.rank == 0:
-            groups = np.arange(len(D))
-
-            for i in range(len(D)):
-                for j in range(i + 1, len(D)):
-                    if np.all(np.absolute(D[j] - D[i]) < eps):
-                        groups[np.where(groups == groups[j])] = groups[i]
-
-            for group in set(groups):
-                members = np.where(groups == group)
-                d = np.average(D[members], axis=0)
-                w = np.average(W[members], axis=0)
+            for group in misc.group(D, eps=eps):
+                d = np.average(D[group], axis=0)
+                w = np.average(W[group], axis=0)
                 unique[tuple(d)] = w
 
         return comm.bcast(unique)

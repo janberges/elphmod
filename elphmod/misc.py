@@ -1,5 +1,6 @@
 #/usr/bin/env python
 
+import numpy as np
 import sys
 
 from . import MPI
@@ -34,3 +35,27 @@ class StatusBar(object):
 
         if self.counter == self.count:
             sys.stdout.write('\n')
+
+def group(points, eps=1e-7):
+    """Group points into neighborhoods.
+
+    Parameters
+    ----------
+    points : ndarray
+        Points to be grouped.
+    eps : float
+        Maximal distance between points in the same group.
+
+    Returns
+    -------
+    list of lists
+        Groups of indices.
+    """
+    groups = np.arange(len(points))
+
+    for i in range(len(points)):
+        for j in range(i + 1, len(points)):
+            if np.all(np.absolute(points[j] - points[i]) < eps):
+                groups[np.where(groups == groups[j])] = groups[i]
+
+    return [np.where(groups == group)[0] for group in set(groups)]
