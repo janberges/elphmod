@@ -380,6 +380,46 @@ def read_EPW_output(epw_out, q, nq, nb, nk, bands=1,
 
     return elph[..., 0, 0] if bands == 1 and squeeze else elph
 
+def read_patterns(filename, q, nrep, status=True):
+    """Read XML files with displacement patterns from QE."""
+
+    if not hasattr(q, '__len__'):
+        q = range(q)
+
+    sizes = MPI.distribute(len(q))
+
+    patterns = np.empty((len(q), nrep, nrep))
+
+    my_patterns = np.empty((sizes[comm.rank], nrep, nrep))
+
+    my_q = np.empty(sizes[comm.rank], dtype=int)
+    comm.Scatterv((np.array(q), sizes), my_q)
+
+    for my_iq, iq in enumerate(my_q):
+        if status:
+            print("Read displacement pattern for q point %d.." % (iq + 1))
+
+        with open(filename % (iq + 1)) as data:
+            def goto(pattern):
+                for line in data:
+                    if pattern in line:
+                        return line
+
+            goto("<NUMBER_IRR_REP ")
+            if nrep != int(next(data)):
+                print("Wrong number of representations!")
+
+            for irep in range(nrep):
+                goto("<DISPLACEMENT_PATTERN ")
+
+                for jrep in range(nrep):
+                    my_patterns[my_iq, irep, jrep] = float(
+                        next(data).split(",")[0])
+
+    comm.Allgatherv(my_patterns, (patterns, sizes * nrep * nrep))
+
+    return patterns
+
 def read_xml_files(filename, q, rep, bands, nbands, nk, squeeze=True, status=True,
         angle=120, angle0=0):
     """Read XML files with coupling in displacement basis from QE (nosym)."""
