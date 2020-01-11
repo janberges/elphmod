@@ -489,6 +489,9 @@ def interpolate_dynamical_matrices_new(ph, D_irr, q_irr, nq, apply_asr=True):
         phid[na, :] *= np.sqrt(ph.M[na])
         phid[:, na] *= np.sqrt(ph.M[na])
 
+    if apply_asr:
+        asr(phid)
+
     ph.R, ph.data = short_range_model(phid, ph.M, ph.a, ph.r)
 
 def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
