@@ -309,7 +309,7 @@ def toBZ(data=None, points=1000, interpolation=bravais.linear_interpolation,
     else:
         return image
 
-def sign_color(data, negative=color1, positive=color2,
+def sign_color(data, negative=color1, neutral=(255, 255, 255), positive=color2,
         minimum=None, maximum=None):
     """Transform gray-scale image to RGB, where zero is displayed as white."""
 
@@ -326,10 +326,12 @@ def sign_color(data, negative=color1, positive=color2,
     image = np.repeat(image[:, :, np.newaxis], 3, axis=-1)
 
     for c in range(3):
-        image[:, :, c][lt0] *= 255 - negative[c]
-        image[:, :, c][gt0] *= 255 - positive[c]
+        image[:, :, c][lt0] = (negative[c] * image[:, :, c][lt0]
+            + neutral[c] * (1 - image[:, :, c][lt0]))
+        image[:, :, c][gt0] *= (positive[c] * image[:, :, c][gt0]
+            + neutral[c] * (1 - image[:, :, c][gt0]))
 
-    return (255 - image).astype(int)
+    return image.astype(int)
 
 def HSV2RGB(H, S=1, V=1):
     """Transform hue, saturation, value to red, green, blue."""
