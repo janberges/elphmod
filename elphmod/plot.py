@@ -609,13 +609,29 @@ def compline(x, y, composition):
     for ic in range(nc + 1):
         lines[ic] += y - lines[nc] / 2
 
-    X = np.concatenate((x, x[::-1], x[:1]))
-    Y = np.empty((nc, len(X)))
+    X = np.empty(     2 * nx + 1 )
+    Y = np.empty((nc, 2 * nx + 1))
+
+    X[  :nx] = x
+    X[nx:-1] = x[::-1]
+    X[   -1] = x[0]
 
     for ic in range(nc):
-        Y[ic] = np.concatenate((lines[ic], lines[ic + 1, ::-1], lines[ic, :1]))
+        Y[ic,   :nx] = lines[ic]
+        Y[ic, nx:-1] = lines[ic + 1, ::-1]
+        Y[ic,    -1] = lines[ic, 0]
 
-    return X, Y
+    XY = np.empty((nc, 2, 2 * nx + 1))
+
+    sgn = 1
+
+    for ic in range(nc):
+        XY[ic, 0] = X[    ::sgn]
+        XY[ic, 1] = Y[ic, ::sgn]
+
+        sgn *= -1
+
+    return XY
 
 if __name__ == '__main__':
     import os
