@@ -596,7 +596,7 @@ def plot_pie_with_TeX(filename, data, points=1000,
             color1=color1, lower=data.min(),
             color2=color2, upper=data.max(), **kwargs)
 
-def compline(x, y, composition):
+def compline(x, y, composition, center=True):
     """Plot composition along line."""
 
     nx, nc = composition.shape
@@ -606,8 +606,9 @@ def compline(x, y, composition):
     for ic in range(nc):
         lines[ic + 1] = lines[ic] + composition[:, ic]
 
-    for ic in range(nc + 1):
-        lines[ic] += y - lines[nc] / 2
+    if center:
+        for ic in range(nc + 1):
+            lines[ic] += y - lines[nc] / 2
 
     X = np.empty(     2 * nx + 1 )
     Y = np.empty((nc, 2 * nx + 1))
