@@ -222,7 +222,8 @@ def arrange(images, columns=None):
         axis=0)
 
 def toBZ(data=None, points=1000, interpolation=bravais.linear_interpolation,
-        angle=120, angle0=0, outside=0.0, return_k=False, return_only_k=False):
+        angle=120, angle0=0, outside=0.0, return_k=False, return_only_k=False,
+        even=False):
     """Map data on uniform grid onto (wedge of) Brillouin zone.
 
     Parameters
@@ -250,6 +251,10 @@ def toBZ(data=None, points=1000, interpolation=bravais.linear_interpolation,
 
     nkx = int(round(points * kxmax))
     nky = int(round(points * kymax))
+
+    if even:
+        nkx += nkx % 2
+        nky += nky % 2
 
     # (note that endpoint=False is combined with a retstep/2 shift)
     kx, dkx = np.linspace(-kxmax, kxmax, nkx, endpoint=False, retstep=True)
