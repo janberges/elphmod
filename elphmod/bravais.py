@@ -999,3 +999,47 @@ def GMKG(N=30, corner_indices=False, mesh=False, angle=60):
         return np.array(path), x, [0, N1, N1 + N2, N1 + N2 + N3 - 1]
     else:
         return np.array(path), x
+
+def read_pwi(pwi):
+    """Read crystal structure from PW input file.
+
+    Parameters
+    ----------
+    pwi : str
+        File name.
+
+    Returns
+    -------
+    dict
+        Crystal structure.
+    """
+    struct = dict()
+
+    with open(pwi) as lines:
+        for line in lines:
+            words = line.split()
+
+            if not words:
+                continue
+
+            key = words[0].lower()
+
+            if key in 'abc':
+                struct[key] = float(words[2])
+
+            elif key == 'nat':
+                struct[key] = int(words[2])
+
+            elif key == 'atomic_positions':
+                struct['at'] = []
+                struct['r'] = np.empty((struct['nat'], 3))
+
+                for n in range(struct['nat']):
+                    words = next(lines).split()
+
+                    struct['at'].append(words[0])
+
+                    for x in range(3):
+                        struct['r'][n, x] = float(words[1 + x])
+
+    return struct
