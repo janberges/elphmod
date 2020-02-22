@@ -1043,3 +1043,42 @@ def read_pwi(pwi):
                         struct['r'][n, x] = float(words[1 + x])
 
     return struct
+
+def readPOSCAR(filename):
+    """Read crystal structure from VASP input file.
+
+    Parameters
+    ----------
+    filename : str
+        File name.
+
+    Returns
+    -------
+    dict
+        Crystal structure.
+    """
+    with open(filename) as POSCAR:
+        title = next(POSCAR)
+
+        a = float(next(POSCAR))
+
+        t1 = np.array(list(map(float, next(POSCAR).split())))
+        t2 = np.array(list(map(float, next(POSCAR).split())))
+        t3 = np.array(list(map(float, next(POSCAR).split())))
+
+        elements = next(POSCAR).split()
+
+        numbers = list(map(int, next(POSCAR).split()))
+
+        next(POSCAR)
+        next(POSCAR)
+
+        atoms = dict()
+
+        for element, number in zip(elements, numbers):
+            atoms[element] = np.empty((number, 3))
+
+            for n in range(number):
+                atoms[element][n] = list(map(float, next(POSCAR).split()[:3]))
+
+    return t1, t2, t3, atoms
