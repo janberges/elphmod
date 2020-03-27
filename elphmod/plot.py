@@ -426,6 +426,8 @@ def label_pie_with_TeX(filename,
 
     width = 7.0, # total width in cm
 
+    preamble = r'\usepackage[math]{iwona}',
+
     # dimensions in arbitrary units:
 
     width_L   = 5.0, # width of part left of colorbar (Brillouin zone)
@@ -445,11 +447,9 @@ def label_pie_with_TeX(filename,
     form  = lambda x: '$%g$' % x,
     unit  = 'Unit',
 
-    color1 = color1,
-    color2 = color2,
-
     nCDW = 10,
-    ):
+
+    **coloring):
     """Label 'pie diagram' of different data on Brillouin zone."""
 
     radius = 0.5 * width_L
@@ -488,7 +488,7 @@ def label_pie_with_TeX(filename,
     stem = filename.rsplit('.', 1)[0]
 
     colorbar = color(np.reshape(np.linspace(upper, lower, 300), (-1, 1)),
-        color1, color2)
+        **coloring)
 
     save('%s_colorbar.png' % stem, colorbar)
 
@@ -526,8 +526,8 @@ def label_pie_with_TeX(filename,
         TeX.write(r'''\documentclass{{article}}
 
 \usepackage[paperwidth={width}cm, paperheight={height}cm, margin=0cm]{{geometry}}
-\usepackage[math]{{iwona}}
 \usepackage{{tikz}}
+{preamble}
 
 \setlength\parindent{{0pt}}
 
@@ -601,21 +601,24 @@ def label_pie_with_TeX(filename,
 \endgroup%
 ''')
 
-def plot_pie_with_TeX(filename, data, points=1000,
-        color1=color1, color2=color2, angle=60, **kwargs):
+def plot_pie_with_TeX(filename, data, points=1000, angle=60, **kwargs):
     """Create 'pie diagram' of different data on Brillouin zone."""
 
     data = np.array(data)
 
-    image = toBZ(data, points=points, outside=np.nan, angle=angle)
+    image = toBZ(data, points=points, outside=np.nan, angle0=-30, angle=angle)
 
     if comm.rank == 0:
         imagename = filename.rsplit('.', 1)[0] + '.png'
-        save(imagename, color(image, color1, color2))
+        save(imagename, color(image, **kwargs))
 
         label_pie_with_TeX(filename, imagename,
-            color1=color1, lower=data.min(),
-            color2=color2, upper=data.max(), **kwargs)
+            lower=data.min(), upper=data.max(), **kwargs)
+
+        os.system('pdflatex --interaction=batchmode ' + filename)
+
+        for suffix in 'aux', 'log':
+            os.system('rm %s' % filename.replace('tex', suffix))
 
 def compline(x, y, composition, center=True):
     """Plot composition along line."""
