@@ -6,6 +6,22 @@ import numpy as np
 from . import bravais, dispersion, MPI
 comm = MPI.comm
 
+def read_local_Coulomb_tensor(filename, no):
+    """Read local Coulomb tensor from VASP."""
+
+    U = np.empty((no, no, no, no), dtype=complex)
+
+    with open(filename) as data:
+        for line in data:
+            columns = line.split()
+
+            i, j, k, l = [int(n) - 1 for n in columns[:4]]
+            Re, Im = [float(n) for n in columns[4:]]
+
+            U[i, j, k, l] = float(Re) + 1j * float(Im)
+
+    return U
+
 def read_orbital_Coulomb_interaction(filename, nq, no, dd=False, skip=2):
     """Read Coulomb interaction in orbital basis.."""
 
