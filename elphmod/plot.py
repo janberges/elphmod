@@ -363,7 +363,8 @@ def PHI2RGB(alpha, beta, gamma):
     return 255 * (0.5 - 0.5 * np.cos(np.array([alpha, beta, gamma])))
 
 def color(data, color1=(240, 1, 255), color2=(0, 1, 255), nancolor=(0, 0, 255),
-        model='HSV', minimum=None, maximum=None, exponent=1):
+        model='HSV', minimum=None, maximum=None, exponent=1, color3=None,
+        **ignore):
     """Transform gray-scale image to RGB."""
 
     color1   = np.array(color1)
@@ -376,7 +377,20 @@ def color(data, color1=(240, 1, 255), color2=(0, 1, 255), nancolor=(0, 0, 255),
     if maximum is None:
         maximum = np.nanmax(data)
 
-    image = (data - minimum) / (maximum - minimum)
+    if color3 is not None:
+        color3 = np.array(color3)
+
+        image = data.copy()
+
+        for i in range(image.shape[0]):
+            for j in range(image.shape[1]):
+                if not np.isnan(image[i, j]):
+                    if image[i, j] > 0:
+                        image[i, j] /= maximum
+                    else:
+                        image[i, j] /= -minimum
+    else:
+        image = (data - minimum) / (maximum - minimum)
 
     if exponent != 1:
         image **= exponent
@@ -389,6 +403,8 @@ def color(data, color1=(240, 1, 255), color2=(0, 1, 255), nancolor=(0, 0, 255),
 
             if np.isnan(x):
                 new_image[i, j] = nancolor
+            elif x < 0:
+                new_image[i, j] = (1 + x) * color1 - x * color3
             else:
                 new_image[i, j] = (1 - x) * color1 + x * color2
 
