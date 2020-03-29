@@ -363,7 +363,7 @@ def sgnsqrt(w2):
 def polarization(e, path, angle=60):
     """Characterize as in-plane longitudinal/transverse or out-of-plane."""
 
-    bands = e.shape[1]
+    bands = e.shape[2]
 
     mode = np.empty((len(path), bands, 3))
 
