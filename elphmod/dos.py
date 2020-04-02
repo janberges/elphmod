@@ -175,15 +175,15 @@ def double_delta(x, y, f=None, eps=1e-7):
         my_W = []
 
         for (X, Y, Z), (A, B, C), (a, b, c), (F, G, H) in triangles:
-            w = A * b - A * c - B * a + B * c + C * a - C * b
+            w = A * b - B * a - A * c + C * a + B * c - C * b
             # = sum[ijk] epsilon(ijk) F(i) f(j)
 
             if w == 0:
                 continue
 
-            U = (z * b - z * c - B * z + B * c + C * z - C * b) / w # A = a = z
-            V = (A * z - A * c - z * a + z * c + C * a - C * z) / w # B = b = z
-            W = (A * b - A * z - B * a + B * z + z * a - z * b) / w # C = c = z
+            U = (z * b - B * z - z * c + C * z + B * c - C * b) / w # A = a = z
+            V = (A * z - z * a - A * c + C * a + z * c - C * z) / w # B = b = z
+            W = (A * b - B * a - A * z + z * a + B * z - z * b) / w # C = c = z
 
             if 0 <= U <= 1 and 0 <= V <= 1 and 0 <= W <= 1:
                 my_D.append(U * X + V * Y + W * Z)
