@@ -285,6 +285,52 @@ def complete(data, angle=60):
         if not np.isnan(data).any():
             return
 
+def complete_k(wedge, nq):
+    """Calculate k dependence for equivalent q points.
+
+    Parameters
+    ----------
+    wedge : ndarray
+        Data on irreducible q wedge and uniform k mesh.
+    nq : int
+        Number of q points per dimension.
+
+    Returns
+    -------
+    ndarray
+        Data on uniform q and k meshes.
+    """
+    q = sorted(irreducibles(nq))
+
+    nQ, nk, nk = wedge.shape
+
+    mesh = np.empty((nq, nq, nk, nk), dtype=wedge.dtype)
+
+    symmetries_q = [image
+        for name, image in symmetries(np.zeros((nq, nq)), unity=True)]
+
+    symmetries_k = [image
+        for name, image in symmetries(np.zeros((nk, nk)), unity=True)]
+
+    done = set()
+
+    for sym_q, sym_k in zip(symmetries_q, symmetries_k):
+        for iq, (q1, q2) in enumerate(q):
+            Q1, Q2 = sym_q[q1, q2]
+
+            if (Q1, Q2) in done:
+                continue
+
+            done.add((Q1, Q2))
+
+            for k1 in range(nk):
+                for k2 in range(nk):
+                    K1, K2 = sym_k[k1, k2]
+
+                    mesh[Q1, Q2, K1, K2] = wedge[iq, k1, k2]
+
+    return mesh
+
 def stack(*points, **kwargs):
     """Minimize distance of points on periodic axis via full-period shifts.
 

@@ -259,30 +259,11 @@ def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
             dtype=dtype)
 
         if comm.rank == 0:
-            symmetries_q = [image for name, image in bravais.symmetries(
-                np.zeros((nq, nq)), unity=True)]
-
-            symmetries_k = [image for name, image in bravais.symmetries(
-                np.zeros((nk, nk)), unity=True)]
-
-            done = set()
-            q_irr = sorted(bravais.irreducibles(nq))
-
-            for sym_q, sym_k in zip(symmetries_q, symmetries_k):
-                for iq, (q1, q2) in enumerate(q_irr):
-                    Q1, Q2 = sym_q[q1, q2]
-
-                    if (Q1, Q2) in done:
-                        continue
-
-                    done.add((Q1, Q2))
-
-                    for k1 in range(nk):
-                        for k2 in range(nk):
-                            K1, K2 = sym_k[k1, k2]
-
-                            elph_complete[Q1, Q2, :, K1, K2] \
-                                = elph[iq, :, k1, k2]
+            for nu in range(nb):
+                for ibnd in range(bands):
+                    for jbnd in range(bands):
+                        elph_complete[:, :, nu, :, :, ibnd, jbnd] = \
+                            bravais.complete_k(elph[:, nu, :, :, ibnd, jbnd], nq)
 
         comm.Bcast(elph_complete)
         elph = elph_complete
