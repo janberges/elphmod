@@ -237,7 +237,7 @@ def polarization(e, c, kT=0.025, eps=1e-15, subspace=None,
 
     return calculate_polarization
 
-def phonon_self_energy(q, e, g2, kT=0.025, eps=1e-15,
+def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15,
         occupations=occupations.fermi_dirac, fluctuations=False, Delta=None,
         Delta_diff=False, Delta_occupations=occupations.gauss, Delta_kT=0.025,
         comm=comm):
@@ -276,8 +276,19 @@ def phonon_self_energy(q, e, g2, kT=0.025, eps=1e-15,
     ndarray
         Phonon self-energy.
     """
-    nk, nk, nbnd = e.shape
-    nQ, nb = g2.shape[:2]
+    nQ = len(q)
+    nk = e.shape[0]
+
+    e = np.reshape(e, (nk, nk, -1))
+    nbnd = e.shape[-1]
+
+    if g2 is None:
+        g2 = np.ones((nQ, 1))
+
+    else:
+        g2 = np.reshape(g2, (nQ, -1, nk, nk, nbnd, nbnd))
+
+    nb = g2.shape[1]
 
     x = e / kT
 
