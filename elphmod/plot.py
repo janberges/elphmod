@@ -322,19 +322,19 @@ def sign_color(data, negative=color1, neutral=(255, 255, 255), positive=color2,
 
     image[np.where(np.isnan(image))] = 0
 
-    lt0 = np.where(image < 0)
-    gt0 = np.where(image > 0)
+    lt0 = np.where(image <  0)
+    ge0 = np.where(image >= 0)
 
     image[lt0] /= data.min() if minimum is None else minimum
-    image[gt0] /= data.max() if maximum is None else maximum
+    image[ge0] /= data.max() if maximum is None else maximum
 
     image = np.repeat(image[:, :, np.newaxis], 3, axis=-1)
 
     for c in range(3):
         image[:, :, c][lt0] = (negative[c] * image[:, :, c][lt0]
             + neutral[c] * (1 - image[:, :, c][lt0]))
-        image[:, :, c][gt0] *= (positive[c] * image[:, :, c][gt0]
-            + neutral[c] * (1 - image[:, :, c][gt0]))
+        image[:, :, c][ge0] = (positive[c] * image[:, :, c][ge0]
+            + neutral[c] * (1 - image[:, :, c][ge0]))
 
     return image.astype(int)
 
@@ -387,12 +387,13 @@ def color(data, color1=(240, 1, 255), color2=(0, 1, 255), nancolor=(0, 0, 255),
                 if not np.isnan(image[i, j]):
                     if image[i, j] > 0:
                         image[i, j] /= maximum
+                        image[i, j] **= exponent
                     else:
-                        image[i, j] /= -minimum
+                        image[i, j] /= minimum
+                        image[i, j] **= exponent
+                        image[i, j] *= -1
     else:
         image = (data - minimum) / (maximum - minimum)
-
-    if exponent != 1:
         image **= exponent
 
     new_image = np.empty(image.shape + (3,))
