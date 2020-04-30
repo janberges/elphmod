@@ -27,6 +27,11 @@ class Model(object):
             for my_n, n in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
                 my_g[my_n] = self.data[n] * np.exp(1j * np.dot(self.Rg[n], q))
 
+                # Sign convention in bloch2wan.f90 of EPW:
+                # 1273  cfac = exp( -ci*rdotk ) / dble(nq)
+                # 1274  epmatwp(:,:,:,:,ir) = epmatwp(:,:,:,:,ir)
+                #           + cfac * epmatwe(:,:,:,:,iq)
+
             self.gq = np.empty((nph, nRk, nel, nel), dtype=complex)
 
             comm.Allreduce(my_g.sum(axis=0), self.gq)
@@ -37,6 +42,11 @@ class Model(object):
 
         for my_n, n in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
             my_g[my_n] = self.gq[:, n] * np.exp(1j * np.dot(self.Rk[n], k))
+
+            # Sign convention in bloch2wan.f90 of EPW:
+            # 1148  cfac = exp( -ci*rdotk ) / dble(nkstot)
+            # 1149  epmatw( :, :, ir) = epmatw( :, :, ir)
+            #           + cfac * epmats( :, :, ik)
 
         if broadcast or comm.rank == 0:
             g = np.empty((nph, nel, nel), dtype=complex)

@@ -18,6 +18,13 @@ class Model(object):
         for n in range(D.shape[0]):
             D[n] = self.data[n] * np.exp(-1j * np.dot(self.R[n], q))
 
+            # Sign convention in do_q3r.f90 of QE:
+            # 231  CALL cfft3d ( phid (:,j1,j2,na1,na2), &
+            # 232       nr1,nr2,nr3, nr1,nr2,nr3, 1, 1 )
+            # 233  phid(:,j1,j2,na1,na2) = &
+            # 234       phid(:,j1,j2,na1,na2) / DBLE(nr1*nr2*nr3)
+            # The last argument of cfft3d is the sign (+1).
+
         return D.sum(axis=0)
 
     def __init__(self, flfrc, apply_asr=False):
