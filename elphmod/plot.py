@@ -602,7 +602,8 @@ def label_pie_with_TeX(filename,
 \endgroup%
 ''')
 
-def plot_pie_with_TeX(filename, data, points=1000, angle=60, **kwargs):
+def plot_pie_with_TeX(filename, data, points=1000, angle=60, pdf=False,
+    **kwargs):
     """Create 'pie diagram' of different data on Brillouin zone."""
 
     data = np.array(data)
@@ -616,10 +617,11 @@ def plot_pie_with_TeX(filename, data, points=1000, angle=60, **kwargs):
         label_pie_with_TeX(filename, imagename,
             lower=data.min(), upper=data.max(), **kwargs)
 
-        os.system('pdflatex --interaction=batchmode ' + filename)
+        if pdf:
+            os.system('pdflatex --interaction=batchmode ' + filename)
 
-        for suffix in 'aux', 'log':
-            os.system('rm %s' % filename.replace('tex', suffix))
+            for suffix in 'aux', 'log':
+                os.system('rm %s' % filename.replace('tex', suffix))
 
 def compline(x, y, composition, center=True):
     """Plot composition along line."""
