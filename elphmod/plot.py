@@ -450,6 +450,8 @@ def label_pie_with_TeX(filename,
 
     nCDW = 10,
 
+    standalone = True,
+
     **coloring):
     """Label 'pie diagram' of different data on Brillouin zone."""
 
@@ -524,7 +526,8 @@ def label_pie_with_TeX(filename,
     with open(filename, 'w') as TeX:
         # write embedding LaTeX document:
 
-        TeX.write(r'''\documentclass{{article}}
+        if standalone:
+            TeX.write(r'''\documentclass{{article}}
 
 \usepackage[paperwidth={width}cm, paperheight={height}cm, margin=0cm]{{geometry}}
 \usepackage{{tikz}}
@@ -533,11 +536,8 @@ def label_pie_with_TeX(filename,
 \setlength\parindent{{0pt}}
 
 \begin{{document}}
-  \input{{{stem}.tikz}}
-\end{{document}}
 '''.format(**X))
 
-    with open('%s.tikz' % stem, 'w') as TeX:
         # write ebmedded LaTeX code:
 
         TeX.write(r'''\begingroup%
@@ -602,8 +602,12 @@ def label_pie_with_TeX(filename,
 \endgroup%
 ''')
 
-def plot_pie_with_TeX(filename, data, points=1000, angle=60, pdf=False,
-    **kwargs):
+        if standalone:
+            TeX.write(r'''\end{document}
+''')
+
+def plot_pie_with_TeX(filename, data, points=1000, angle=60, standalone=True,
+    pdf=False, **kwargs):
     """Create 'pie diagram' of different data on Brillouin zone."""
 
     data = np.array(data)
@@ -615,9 +619,9 @@ def plot_pie_with_TeX(filename, data, points=1000, angle=60, pdf=False,
         save(imagename, color(image, **kwargs))
 
         label_pie_with_TeX(filename, imagename,
-            lower=data.min(), upper=data.max(), **kwargs)
+            lower=data.min(), upper=data.max(), standalone=standalone, **kwargs)
 
-        if pdf:
+        if standalone and pdf:
             os.system('pdflatex --interaction=batchmode ' + filename)
 
             for suffix in 'aux', 'log':
