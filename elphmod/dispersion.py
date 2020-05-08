@@ -347,9 +347,7 @@ def dispersion_full_nosym(matrix, size, *args, **kwargs):
 
     return out
 
-def band_order(v, V, by_mean=True):
-    # dv=float('inf')
-
+def band_order(v, V, by_mean=True, dv=float('inf')):
     """Sort bands by overlap of eigenvectors at neighboring k points."""
 
     points, bands = v.shape
@@ -364,13 +362,10 @@ def band_order(v, V, by_mean=True):
 
         for i in range(bands):
             o[n, i] = max(available, key=lambda j:
-                np.absolute(np.dot(V[n0, :, o[n0, i]], V[n, :, j].conj())))
+                abs(np.dot(V[n0, :, o[n0, i]], V[n, :, j].conj()))
+                if abs(v[n0, o[n0, i]] - v[n, j]) < dv else 0)
 
             available.remove(o[n, i])
-
-            #o[n, i] = max(range(bands), key=lambda j:
-            #       abs(np.dot(V[n0, :, o[n0, i]],  V[n, :, j].conj()))
-            #    if abs(       v[n0,    o[n0, i]] - v[n,    j]) < dv else -1)
 
         # Only eigenvectors belonging to different eigenvalues are guaranteed to
         # be orthogonal. Thus k points with degenerate eigenvectors are not used
