@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from . import MPI
+from . import dispersion, MPI
 comm = MPI.comm
 
 class Model(object):
@@ -180,7 +180,7 @@ def read_symmetry_points(bandsout):
 
     return points
 
-def read_atomic_projections(atomic_proj_xml):
+def read_atomic_projections(atomic_proj_xml, order=False, **order_kwargs):
     """Read projected bands from 'outdir/prefix.save/atomic_proj.xml'."""
 
     if comm.rank == 0:
@@ -212,7 +212,7 @@ def read_atomic_projections(atomic_proj_xml):
     x = np.empty(nk)
     k = np.empty((nk, 3))
     eps = np.empty((nk, bands))
-    proj = np.empty((nk, bands, no))
+    proj = np.empty((nk, bands, no), dtype=complex)
 
     if comm.rank == 0:
         goto('<K-POINTS ')
@@ -229,7 +229,7 @@ def read_atomic_projections(atomic_proj_xml):
                 goto('<ATMWFC.')
                 for n in range(bands):
                     Re, Im = list(map(float, next(data).split(',')))
-                    proj[ik, n, a] = Re * Re + Im * Im
+                    proj[ik, n, a] = Re + 1j * Im
 
         data.close()
 
@@ -241,12 +241,22 @@ def read_atomic_projections(atomic_proj_xml):
 
         eps -= mu
 
+        if order:
+            o = dispersion.band_order(eps, np.transpose(proj, axes=(0, 2, 1)),
+                **order_kwargs)
+
+            for ik in range(nk):
+                eps[ik] = eps[ik, o[ik]]
+
+                for a in range(no):
+                    proj[ik, :, a] = proj[ik, o[ik], a]
+
     comm.Bcast(x)
     comm.Bcast(k)
     comm.Bcast(eps)
     comm.Bcast(proj)
 
-    return x, k, eps, proj
+    return x, k, eps, abs(proj) ** 2
 
 def read_Fermi_level(pw_scf_out):
     """Read Fermi level from output of self-consistent PW run."""
