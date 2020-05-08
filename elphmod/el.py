@@ -242,8 +242,8 @@ def read_atomic_projections(atomic_proj_xml, order=False, **order_kwargs):
         eps -= mu
 
         if order:
-            o = dispersion.band_order(eps, np.transpose(proj, axes=(0, 2, 1)),
-                **order_kwargs)
+            o = dispersion.band_order(eps,
+                np.transpose(proj, axes=(0, 2, 1)).copy(), **order_kwargs)
 
             for ik in range(nk):
                 eps[ik] = eps[ik, o[ik]]
