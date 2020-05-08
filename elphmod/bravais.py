@@ -972,7 +972,8 @@ def path(points, b1, b2, b3=np.array([0, 0, 1]), N=30):
 
     return 2 * np.pi * np.array(k), np.array(x), corners
 
-def GMKG(N=30, corner_indices=False, mesh=False, angle=60, straight=True):
+def GMKG(N=30, corner_indices=False, mesh=False, angle=60, straight=True,
+        lift_degen=True):
     """Generate path Gamma-M-K-Gamma through Brillouin zone.
 
     (This function should be replaced by a more general one to produce arbitrary
@@ -994,6 +995,8 @@ def GMKG(N=30, corner_indices=False, mesh=False, angle=60, straight=True):
     straight : bool
         Cross K in a straight line? In this case, the path does not enclose the
         irreducible wedge.
+    lift_degen : bool
+        Lift degeneracy at K by infinitesimal shift toward Gamma?
 
     Returns
     -------
@@ -1017,6 +1020,12 @@ def GMKG(N=30, corner_indices=False, mesh=False, angle=60, straight=True):
 
     if not straight:
         k = K
+
+    if lift_degen:
+        shrink = 1.0 - 1e-10
+
+        k *= shrink
+        K *= shrink
 
     L1 = 1.0 / np.sqrt(3)
     L2 = 1.0 / 3.0
