@@ -10,7 +10,39 @@ class Model(object):
 
     The methods of this class follow 'wan2bloch.f90' of EPW 5.0.
     """
-    def g(self, q1=0, q2=0, q3=0, k1=0, k2=0, k3=0, broadcast=True, comm=comm):
+    def g(self, q1=0, q2=0, q3=0, k1=0, k2=0, k3=0, elbnd=False, phbnd=False,
+            broadcast=True, comm=comm):
+        """Calculate electron-phonon coupling for arbitary points k and k + q.
+
+        Parameters
+        ----------
+        q1, q2, q2 : float
+            q point in crystal coordinates with period 2 pi.
+        k1, k2, k3 : float
+            Ingoing k point in crystal coordinates with period 2 pi.
+        elbnd : bool
+            Transform to electronic band basis? Provided for convenience. Since
+            the Hamiltonian is diagonalized on the fly for each requested matrix
+            element, this option lacks efficiency and control of complex phases.
+            Consider the method `sample` of this class instead.
+        phbnd : bool
+            Transform to phononic band basis? Provided for convenience. Since
+            the dynamical matrix is diagonalized on the fly for each requested
+            matrix element, this option lacks efficiency and control of complex
+            phases. Consider the method `sample` of this class instead.
+        broadcast : bool
+            Broadcast result to all processors? If False, returns None on all
+            but the first processor.
+        comm : MPI communicator
+            Group of processors running this function (for parallelization of
+            Fourier transforms).
+
+        Returns
+        -------
+        ndarray
+            Electron-phonon coupling 2 omega g^2 in Ry^3.
+        """
+
         nRq, nph, nRk, nel, nel = self.data.shape
 
         q = np.array([q1, q2, q3])
@@ -54,6 +86,18 @@ class Model(object):
             g = None
 
         comm.Reduce(my_g.sum(axis=0), g)
+
+        if comm.rank == 0:
+            if elbnd:
+                Uk  = np.linalg.eigh(self.el.H(*k))[1]
+                Ukq = np.linalg.eigh(self.el.H(*k + q))[1]
+
+                g = np.einsum('xab,an,bm->xnm', g, Uk, Ukq.conj())
+
+            if phbnd:
+                uq = np.linalg.eigh(self.ph.D(*q))[1]
+
+                g = np.einsum('xab,xu->uab', g, uq)
 
         if broadcast:
             comm.Bcast(g)
