@@ -7,6 +7,7 @@ from . import dispersion
 from . import dos
 from . import el
 from . import elel
+from . import eliashberg
 from . import elph
 from . import misc
 from . import occupations
