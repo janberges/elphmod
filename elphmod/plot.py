@@ -314,6 +314,96 @@ def toBZ(data=None, points=1000, interpolation=bravais.linear_interpolation,
     else:
         return image
 
+class Color(object):
+    def __init__(self, A=0, B=0, C=0, model='RGB'):
+        self.A = A
+        self.B = B
+        self.C = C
+        self.model = model
+
+    def __repr__(self):
+        return '%s(%g, %g, %g)' % (self.model, self.A, self.B, self.C)
+
+    def __add__(i, u):
+        if i.model == u.model:
+            if i.model == 'RGB':
+                return Color(i.A + u.A, i.B + u.B, i.C + u.C)
+            if i.model == 'HSV'\
+            or i.model == 'PSV':
+                return Color(
+                    (i.A * i.C + u.A * u.C) / (i.C + u.C),
+                    (i.B * i.C + u.B * u.C) / (i.C + u.C),
+                    i.C + u.C, i.model)
+        else:
+            return i.toRGB() + u.toRGB()
+
+    def __mul__(i, u):
+        if i.model == 'RGB':
+            return Color(i.A * u, i.B * u, i.C * u)
+        if i.model == 'HSV'\
+        or i.model == 'PSV':
+            return Color(i.A, i.B, i.C * u, i.model)
+
+    __rmul__ = __mul__
+
+    def __sub__(i, u):
+        return i + (-1 * u)
+
+    def __truediv__(i, u):
+        return i * u ** -1
+
+    def RGB(self):
+        if self.model == 'HSV':
+            return HSV2RGB(self.A, self.B, self.C)
+        elif self.model == 'PSV':
+            return PSV2RGB(self.A, self.B, self.C)
+        else:
+            return self.A, self.B, self.C
+
+    def toRGB(self):
+        return Color(*self.RGB())
+
+def color_scheme(*colors, default=Color(255, 255, 255)):
+    colors = [(x[0], x[1], x[2] if len(x) > 2 else None) for x in colors]
+
+    X, colors, fun = zip(*sorted(colors))
+
+    def color(x):
+        if np.isnan(x):
+            return default
+
+        for n in range(len(colors) - 1):
+            if X[n] <= x <= X[n + 1]:
+                w = (x - X[n]) / (X[n + 1] - X[n])
+
+                if fun[n] is not None:
+                    w = fun[n](w)
+
+                return (1 - w) * colors[n] + w * colors[n + 1]
+
+        return default
+
+    return color
+
+def color_new(data, scheme, minimum=None, maximum=None):
+    if minimum is None:
+        minimum = np.nanmin(data)
+
+    if maximum is None:
+        maximum = np.nanmax(data)
+
+    data = (data - minimum) / (maximum - minimum)
+
+    image = np.empty(data.shape + (3,))
+
+    for i in range(data.shape[0]):
+        for j in range(data.shape[1]):
+            x = data[i, j]
+
+            image[i, j] = scheme(data[i, j]).RGB()
+
+    return image
+
 def sign_color(data, negative=color1, neutral=(255, 255, 255), positive=color2,
         minimum=None, maximum=None):
     """Transform gray-scale image to RGB, where zero is displayed as white."""
@@ -338,7 +428,7 @@ def sign_color(data, negative=color1, neutral=(255, 255, 255), positive=color2,
 
     return image.astype(int)
 
-def HSV2RGB(H, S=1, V=1):
+def HSV2RGB(H, S=1, V=255):
     """Transform hue, saturation, value to red, green, blue."""
 
     H %= 360
@@ -362,10 +452,18 @@ def PHI2RGB(alpha, beta, gamma):
 
     return 255 * (0.5 - 0.5 * np.cos(np.array([alpha, beta, gamma])))
 
+def PSV2RGB(P=0, S=1, V=255):
+    """Set color via phase, shift, and value."""
+
+    return V * (0.5 - 0.5 * np.cos(P + S * np.array([0, 1, 2])))
+
 def color(data, color1=(240, 1, 255), color2=(0, 1, 255), nancolor=(0, 0, 255),
         model='HSV', minimum=None, maximum=None, exponent=1, color3=None,
-        **ignore):
+        scheme=None, **ignore):
     """Transform gray-scale image to RGB."""
+
+    if scheme is not None:
+        return color_new(data, minimum=minimum, maximum=maximum, scheme=scheme)
 
     color1   = np.array(color1)
     color2   = np.array(color2)
