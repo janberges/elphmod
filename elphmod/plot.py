@@ -19,7 +19,8 @@ color1 = 0, 0, 255
 color2 = 255, 0, 0
 
 def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
-        interpolation=bravais.linear_interpolation, angle=60, return_k=False):
+        interpolation=bravais.linear_interpolation, angle=60, return_k=False,
+        broadcast=True):
     """Plot in cartesian reciprocal coordinates."""
 
     nk, nk = mesh.shape
@@ -57,9 +58,15 @@ def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
 
         status.update()
 
-    image = np.empty((nky, nkx) if comm.rank == 0 else (0, 0), dtype=mesh.dtype)
+    if broadcast or comm.rank == 0:
+        image = np.empty((nky, nkx), dtype=mesh.dtype)
+    else:
+        image = None
 
     comm.Gatherv(my_image, (image, sizes))
+
+    if broadcast:
+        comm.Bcast(image)
 
     if return_k:
         return kx, ky, image
@@ -223,7 +230,7 @@ def arrange(images, columns=None):
 
 def toBZ(data=None, points=1000, interpolation=bravais.linear_interpolation,
         angle=120, angle0=0, outside=0.0, return_k=False, return_only_k=False,
-        even=False):
+        even=False, broadcast=True):
     """Map data on uniform grid onto (wedge of) Brillouin zone.
 
     Parameters
@@ -305,9 +312,15 @@ def toBZ(data=None, points=1000, interpolation=bravais.linear_interpolation,
 
         my_image[n] = fun[idata](k1 * nk, k2 * nk)
 
-    image = np.empty((nky, nkx) if comm.rank == 0 else (0, 0), dtype=data.dtype)
+    if broadcast or comm.rank == 0:
+        image = np.empty((nky, nkx), dtype=data.dtype)
+    else:
+        image = None
 
     comm.Gatherv(my_image, (image, sizes))
+
+    if broadcast:
+        comm.Bcast(image)
 
     if return_k:
         return kxmax, kymax, kx, ky, image
@@ -430,7 +443,7 @@ def colormap(*args):
 
     return color
 
-def color(data, colormap, minimum=None, maximum=None):
+def color(data, colormap, minimum=None, maximum=None, comm=comm):
     if minimum is None:
         minimum = np.nanmin(data)
 
@@ -442,13 +455,22 @@ def color(data, colormap, minimum=None, maximum=None):
     data = np.maximum(data, 0) # Avoid that data slightly exceeds [0, 1]
     data = np.minimum(data, 1) # because of numerical inaccuracies.
 
-    image = np.empty(data.shape + (3,))
+    shape = data.shape
+    data = data.flatten()
 
-    for i in range(data.shape[0]):
-        for j in range(data.shape[1]):
-            x = data[i, j]
+    sizes, bounds = MPI.distribute(data.size, bounds=True, comm=comm)
 
-            image[i, j] = colormap(data[i, j]).RGB()
+    my_image = np.empty((sizes[comm.rank], 3))
+
+    status = misc.StatusBar(sizes[comm.rank], title='color')
+
+    for my_i, i in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
+        my_image[my_i] = colormap(data[i]).RGB()
+        status.update()
+
+    image = np.empty(shape + (3,))
+
+    comm.Allgatherv(my_image, (image, sizes * 3))
 
     return image
 
