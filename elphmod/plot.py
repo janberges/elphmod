@@ -363,7 +363,7 @@ class Color(object):
     def toRGB(self):
         return Color(*self.RGB())
 
-def color_scheme(*args):
+def colormap(*args):
     default = Color(255, 255, 255)
     points = []
 
@@ -389,7 +389,7 @@ def color_scheme(*args):
 
     return color
 
-def color_new(data, scheme, minimum=None, maximum=None):
+def color(data, colormap, minimum=None, maximum=None):
     if minimum is None:
         minimum = np.nanmin(data)
 
@@ -404,33 +404,9 @@ def color_new(data, scheme, minimum=None, maximum=None):
         for j in range(data.shape[1]):
             x = data[i, j]
 
-            image[i, j] = scheme(data[i, j]).RGB()
+            image[i, j] = colormap(data[i, j]).RGB()
 
     return image
-
-def sign_color(data, negative=color1, neutral=(255, 255, 255), positive=color2,
-        minimum=None, maximum=None):
-    """Transform gray-scale image to RGB, where zero is displayed as white."""
-
-    image = data.copy()
-
-    image[np.where(np.isnan(image))] = 0
-
-    lt0 = np.where(image <  0)
-    ge0 = np.where(image >= 0)
-
-    image[lt0] /= data.min() if minimum is None else minimum
-    image[ge0] /= data.max() if maximum is None else maximum
-
-    image = np.repeat(image[:, :, np.newaxis], 3, axis=-1)
-
-    for c in range(3):
-        image[:, :, c][lt0] = (negative[c] * image[:, :, c][lt0]
-            + neutral[c] * (1 - image[:, :, c][lt0]))
-        image[:, :, c][ge0] = (positive[c] * image[:, :, c][ge0]
-            + neutral[c] * (1 - image[:, :, c][ge0]))
-
-    return image.astype(int)
 
 def HSV2RGB(H, S=1, V=255):
     """Transform hue, saturation, value to red, green, blue."""
@@ -455,73 +431,10 @@ def HSV2RGB(H, S=1, V=255):
     if h == 4: return t, p, V
     if h == 5: return V, p, q
 
-def PHI2RGB(alpha, beta, gamma):
-    """Set color via phases of RGB channels (0 -> 0, pi -> 255, 2 pi -> 0)."""
-
-    return 255 * (0.5 - 0.5 * np.cos(np.array([alpha, beta, gamma])))
-
 def PSV2RGB(P=0, S=1, V=255):
     """Set color via phase, shift, and value."""
 
     return V * (0.5 - 0.5 * np.cos(P + S * np.array([0, 1, 2])))
-
-def color(data, color1=(240, 1, 255), color2=(0, 1, 255), nancolor=(0, 0, 255),
-        model='HSV', minimum=None, maximum=None, exponent=1, color3=None,
-        scheme=None, **ignore):
-    """Transform gray-scale image to RGB."""
-
-    if scheme is not None:
-        return color_new(data, minimum=minimum, maximum=maximum, scheme=scheme)
-
-    color1   = np.array(color1)
-    color2   = np.array(color2)
-    nancolor = np.array(nancolor)
-
-    if minimum is None:
-        minimum = np.nanmin(data)
-
-    if maximum is None:
-        maximum = np.nanmax(data)
-
-    if color3 is not None:
-        color3 = np.array(color3)
-
-        image = data.copy()
-
-        for i in range(image.shape[0]):
-            for j in range(image.shape[1]):
-                if not np.isnan(image[i, j]):
-                    if image[i, j] > 0:
-                        image[i, j] /= maximum
-                        image[i, j] **= exponent
-                    elif image[i, j] < 0:
-                        image[i, j] /= minimum
-                        image[i, j] **= exponent
-                        image[i, j] *= -1
-    else:
-        image = (data - minimum) / (maximum - minimum)
-        image **= exponent
-
-    new_image = np.empty(image.shape + (3,))
-
-    for i in range(image.shape[0]):
-        for j in range(image.shape[1]):
-            x = image[i, j]
-
-            if np.isnan(x):
-                new_image[i, j] = nancolor
-            elif x < 0:
-                new_image[i, j] = (1 + x) * color1 - x * color3
-            else:
-                new_image[i, j] = (1 - x) * color1 + x * color2
-
-            if model == 'HSV':
-                new_image[i, j] = HSV2RGB(*new_image[i, j])
-
-            elif model == 'PHI':
-                new_image[i, j] = PHI2RGB(*new_image[i, j])
-
-    return new_image
 
 def save(filename, data):
     """Save image as 8-bit bitmap."""
