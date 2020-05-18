@@ -75,7 +75,7 @@ def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
 
 def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
         resolution=500, interpolation=bravais.linear_interpolation, angle=60,
-        outside=0.0):
+        outside=0.0, broadcast=True):
     """Show f(q1, q2, k1, k2) on "Brillouin zone made of Brillouin zones"."""
 
     nQ, nk, nk = mesh.shape
@@ -130,9 +130,15 @@ def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
 
         status.update()
 
-    image = np.empty((nqy, nqx), dtype=mesh.dtype)
+    if broadcast or comm.rank == 0:
+        image = np.empty((nqy, nqx), dtype=mesh.dtype)
+    else:
+        image = None
 
     comm.Gatherv(my_image, (image, sizes))
+
+    if broadcast:
+        comm.Bcast(image)
 
     return image
 
