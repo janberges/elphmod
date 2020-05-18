@@ -315,6 +315,32 @@ def toBZ(data=None, points=1000, interpolation=bravais.linear_interpolation,
         return image
 
 class Color(object):
+    """Representation of a color.
+
+    Colors can be defined using different models:
+
+        RGB (red, green, blue):
+            The three RGB channels take values from 0 to 255.
+        HSV (hue, saturation, value):
+            The hue is the color angle in degrees from 0 to 360.
+            Values of 0, 120, and 240 correspond to red, green, and blue.
+            The saturation takes values from -1 to 1.
+            A value of 0 is white; negative values yield complementary colors.
+            The value is the RGB amplitude from 0 to 255.
+            A value of 0 is black.
+        PSV (phase, shift, value):
+            Superposition of shifted RGB "waves".
+            The phase and the phase shift from R to G (G to B) are in radians.
+            The value is the amplitude of the wave from 0 to 255.
+
+    Colors can be mixed:
+
+        red = Color(255, 0, 0, 'RGB')
+        green = Color(120, 1, 255, 'HSV')
+        yellow = (red + green) / 2
+
+    Here, colors of different models are converted to RGB first.
+    """
     def __init__(self, A=0, B=0, C=0, model='RGB'):
         self.A = A
         self.B = B
@@ -352,6 +378,8 @@ class Color(object):
     def __truediv__(i, u):
         return i * u ** -1
 
+    __div__ = __truediv__
+
     def RGB(self):
         if self.model == 'HSV':
             return HSV2RGB(self.A, self.B, self.C)
@@ -364,6 +392,19 @@ class Color(object):
         return Color(*self.RGB())
 
 def colormap(*args):
+    """Map interval [0, 1] to colors.
+
+    Colors can be defined for an arbitrary number of points in the interval. In
+    between, colors are interpolated linearly. The color for the point `None` is
+    used for NaNs and beyond the outmost points where colors have been defined.
+
+    Example:
+
+        cmap = colormap(
+            (0, Color(0.0, 1, 255, 'PSV'), np.sqrt),
+            (1, Color(5.5, 1, 255, 'PSV')),
+            (None, Color(0, 0, 0, 'RGB')))
+    """
     default = Color(255, 255, 255)
     points = []
 
