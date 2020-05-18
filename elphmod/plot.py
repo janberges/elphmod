@@ -363,23 +363,27 @@ class Color(object):
     def toRGB(self):
         return Color(*self.RGB())
 
-def color_scheme(default=Color(255, 255, 255), **colors):
-    colors = [(x[0], x[1], x[2] if len(x) > 2 else None) for x in colors]
+def color_scheme(*args):
+    default = Color(255, 255, 255)
+    points = []
 
-    X, colors, fun = zip(*sorted(colors))
+    for arg in args:
+        if arg[0] is None:
+            default = arg[1]
+        else:
+            points.append((arg[0], arg[1], arg[2] if len(arg) > 2 else None))
 
-    def color(x):
-        if np.isnan(x):
-            return default
+    values, colors, functions = zip(*points)
 
-        for n in range(len(colors) - 1):
-            if X[n] <= x <= X[n + 1]:
-                w = (x - X[n]) / (X[n + 1] - X[n])
+    def color(value):
+        for n in range(len(points) - 1):
+            if values[n] <= value <= values[n + 1]:
+                weight = (value - values[n]) / (values[n + 1] - values[n])
 
-                if fun[n] is not None:
-                    w = fun[n](w)
+                if functions[n] is not None:
+                    weight = functions[n](weight)
 
-                return (1 - w) * colors[n] + w * colors[n + 1]
+                return (1 - weight) * colors[n] + weight * colors[n + 1]
 
         return default
 
