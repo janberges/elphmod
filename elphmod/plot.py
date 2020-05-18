@@ -486,7 +486,7 @@ def color(data, color1=(240, 1, 255), color2=(0, 1, 255), nancolor=(0, 0, 255),
                     if image[i, j] > 0:
                         image[i, j] /= maximum
                         image[i, j] **= exponent
-                    else:
+                    elif image[i, j] < 0:
                         image[i, j] /= minimum
                         image[i, j] **= exponent
                         image[i, j] *= -1
