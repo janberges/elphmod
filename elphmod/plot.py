@@ -363,7 +363,7 @@ class Color(object):
     def toRGB(self):
         return Color(*self.RGB())
 
-def color_scheme(*colors, default=Color(255, 255, 255)):
+def color_scheme(default=Color(255, 255, 255), **colors):
     colors = [(x[0], x[1], x[2] if len(x) > 2 else None) for x in colors]
 
     X, colors, fun = zip(*sorted(colors))
