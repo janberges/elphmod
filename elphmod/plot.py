@@ -439,6 +439,9 @@ def color(data, colormap, minimum=None, maximum=None):
 
     data = (data - minimum) / (maximum - minimum)
 
+    data = np.maximum(data, 0) # Avoid that data slightly exceeds [0, 1]
+    data = np.minimum(data, 1) # because of numerical inaccuracies.
+
     image = np.empty(data.shape + (3,))
 
     for i in range(data.shape[0]):
@@ -479,6 +482,9 @@ def PSV2RGB(P=0, S=1, V=255):
 
 def save(filename, data):
     """Save image as 8-bit bitmap."""
+
+    data[np.where(data < 0)] = 0
+    data[np.where(data >= 256)] = 255
 
     plt.imsave(filename, data.astype(np.uint8))
 
