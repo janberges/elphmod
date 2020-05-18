@@ -435,6 +435,10 @@ def sign_color(data, negative=color1, neutral=(255, 255, 255), positive=color2,
 def HSV2RGB(H, S=1, V=255):
     """Transform hue, saturation, value to red, green, blue."""
 
+    if S < 0:
+        S = -S
+        H += 180
+
     H %= 360
 
     h = np.floor(H / 60)
