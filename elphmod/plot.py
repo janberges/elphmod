@@ -354,7 +354,7 @@ class Color(object):
 
     Here, colors of different models are converted to RGB first.
     """
-    def __init__(self, A=0, B=0, C=0, model='RGB'):
+    def __init__(self, A, B, C, model='RGB'):
         self.A = A
         self.B = B
         self.C = C
@@ -497,7 +497,7 @@ def HSV2RGB(H, S=1, V=255):
     if h == 4: return t, p, V
     if h == 5: return V, p, q
 
-def PSV2RGB(P=0, S=1, V=255):
+def PSV2RGB(P, S=1, V=255):
     """Set color via phase, shift, and value."""
 
     return V * (0.5 - 0.5 * np.cos(P + S * np.array([0, 1, 2])))
