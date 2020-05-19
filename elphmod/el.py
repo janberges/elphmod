@@ -17,9 +17,9 @@ class Model(object):
         for n in range(H.shape[0]):
             H[n] = self.data[n] * np.exp(1j * np.dot(self.R[n], k))
 
-             # Sign convention in hamiltonian.f90 of Wannier90:
-             # 295  fac=exp(-cmplx_i*rdotk)/real(num_kpts,dp)
-             # 296  ham_r(:,:,irpt)=ham_r(:,:,irpt)+fac*ham_k(:,:,loop_kpt)
+            # Sign convention in hamiltonian.f90 of Wannier90:
+            # 295  fac=exp(-cmplx_i*rdotk)/real(num_kpts,dp)
+            # 296  ham_r(:,:,irpt)=ham_r(:,:,irpt)+fac*ham_k(:,:,loop_kpt)
 
         return H.sum(axis=0)
 
