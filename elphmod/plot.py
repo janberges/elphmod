@@ -523,7 +523,7 @@ def RGB2HSV(R, G, B):
     V = max(R, G, B)
     extent = V - min(R, G, B)
 
-    if R == B == G:
+    if R == G == B:
         H = 0
     elif V == R:
         H = 60 * ((G - B) / extent)
