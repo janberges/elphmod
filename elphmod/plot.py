@@ -357,12 +357,13 @@ class Color(object):
 
     Here, colors of different models are converted to RGB first.
     """
-    def __init__(self, A, B, C, model='RGB', context=None):
+    def __init__(self, A, B, C, model='RGB'):
         self.A = A
         self.B = B
         self.C = C
         self.model = model
-        self.context = context
+
+    context = None
 
     def __str__(self):
         if self.context == 'TeX':
