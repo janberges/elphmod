@@ -357,14 +357,23 @@ class Color(object):
 
     Here, colors of different models are converted to RGB first.
     """
-    def __init__(self, A, B, C, model='RGB'):
+    def __init__(self, A, B, C, model='RGB', context=None):
         self.A = A
         self.B = B
         self.C = C
         self.model = model
+        self.context = context
+
+    def __str__(self):
+        if self.context == 'TeX':
+            return '{rgb,255:red,%d;green,%d;blue,%d}' % self.RGB()
+        elif self.context == 'HTML':
+            return '#%02x%02x%02x' % self.RGB()
+        else:
+            return '%s(%g, %g, %g)' % (self.model, self.A, self.B, self.C)
 
     def __repr__(self):
-        return '%s(%g, %g, %g)' % (self.model, self.A, self.B, self.C)
+        return 'Color(%g, %g, %g, %s)' % (self.A, self.B, self.C, self.model)
 
     def __add__(i, u):
         if i.model == u.model:
