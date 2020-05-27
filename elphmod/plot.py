@@ -517,6 +517,25 @@ def HSV2RGB(H, S=1, V=255):
     if h == 4: return t, p, V
     if h == 5: return V, p, q
 
+def RGB2HSV(R, G, B):
+    """Transform red, green, blue to hue, saturation, value."""
+
+    V = max(R, G, B)
+    extent = V - min(R, G, B)
+
+    if R == B == G:
+        H = 0
+    elif V == R:
+        H = 60 * ((G - B) / extent)
+    elif V == G:
+        H = 60 * ((B - R) / extent + 2)
+    elif V == B:
+        H = 60 * ((R - G) / extent + 4)
+
+    S = extent / V if V else 0
+
+    return H, S, V
+
 def PSV2RGB(P, S=1, V=255):
     """Set color via phase, shift, and value."""
 
