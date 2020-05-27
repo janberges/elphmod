@@ -15,9 +15,6 @@ import matplotlib.pyplot as plt
 from . import bravais, MPI, misc
 comm = MPI.comm
 
-color1 = 0, 0, 255
-color2 = 255, 0, 0
-
 def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
         interpolation=bravais.linear_interpolation, angle=60, return_k=False,
         broadcast=True):
@@ -433,28 +430,35 @@ def colormap(*args):
         else:
             points.append((arg[0], arg[1], arg[2] if len(arg) > 2 else None))
 
-    values, colors, functions = zip(*points)
+    def color(x):
+        for n in range(len(color.x) - 1):
+            if color.x[n] <= x <= color.x[n + 1]:
+                weight = (x - color.x[n]) / (color.x[n + 1] - color.x[n])
 
-    def color(value):
-        for n in range(len(points) - 1):
-            if values[n] <= value <= values[n + 1]:
-                weight = (value - values[n]) / (values[n + 1] - values[n])
+                if color.f[n] is not None:
+                    weight = color.f[n](weight)
 
-                if functions[n] is not None:
-                    weight = functions[n](weight)
-
-                return (1 - weight) * colors[n] + weight * colors[n + 1]
+                return (1 - weight) * color.c[n] + weight * color.c[n + 1]
 
         return default
 
+    color.x, color.c, color.f = tuple(map(list, zip(*points)))
+
     return color
 
-def color(data, colormap, minimum=None, maximum=None, comm=comm):
+def color(data, cmap=None, minimum=None, maximum=None, comm=comm):
     if minimum is None:
         minimum = np.nanmin(data)
 
     if maximum is None:
         maximum = np.nanmax(data)
+
+    if cmap is None:
+        cmap = colormap((0, Color(255, 255, 255)), (1, Color(0, 0, 0)))
+
+    for n, x in enumerate(cmap.x):
+        if type(x) is str:
+            cmap.x[n] = (float(x) - minimum) / (maximum - minimum)
 
     data = (data - minimum) / (maximum - minimum)
 
@@ -471,7 +475,7 @@ def color(data, colormap, minimum=None, maximum=None, comm=comm):
     status = misc.StatusBar(sizes[comm.rank], title='color')
 
     for my_i, i in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
-        my_image[my_i] = colormap(data[i]).RGB()
+        my_image[my_i] = cmap(data[i]).RGB()
         status.update()
 
     image = np.empty(shape + (3,))
@@ -516,8 +520,7 @@ def save(filename, data):
 
     plt.imsave(filename, data.astype(np.uint8))
 
-def label_pie_with_TeX(filename,
-    imagename = None,
+def label_pie_with_TeX(stem,
 
     width = 7.0, # total width in cm
 
@@ -545,8 +548,7 @@ def label_pie_with_TeX(filename,
     nCDW = 10,
 
     standalone = True,
-
-    **coloring):
+    ):
     """Label 'pie diagram' of different data on Brillouin zone."""
 
     radius = 0.5 * width_L
@@ -582,13 +584,6 @@ def label_pie_with_TeX(filename,
 
     scale = 1 / x_dim
 
-    stem = filename.rsplit('.', 1)[0]
-
-    colorbar = color(np.reshape(np.linspace(upper, lower, 300), (-1, 1)),
-        **coloring)
-
-    save('%s_colorbar.png' % stem, colorbar)
-
     if nCDW:
         a1, a2 = bravais.translations(120, angle0=-30)
         b1, b2 = bravais.reciprocals(a1, a2)
@@ -617,7 +612,7 @@ def label_pie_with_TeX(filename,
 
     X = locals()
 
-    with open(filename, 'w') as TeX:
+    with open('%s.tex' % stem, 'w') as TeX:
         # write embedding LaTeX document:
 
         if standalone:
@@ -654,9 +649,8 @@ def label_pie_with_TeX(filename,
             TeX.write(r'''
   \node [below right] at (-{radius}, {radius}) {{{label}}};'''.format(**X))
 
-        if imagename is not None:
-            TeX.write(r'''
-  \node {{\includegraphics[height={KK}\unit]{{{imagename}}}}};'''.format(**X))
+        TeX.write(r'''
+  \node {{\includegraphics[height={KK}\unit]{{{stem}.png}}}};'''.format(**X))
 
         TeX.write(r'''
   \foreach \angle in {{ 30, 90, ..., 330 }}
@@ -701,25 +695,30 @@ def label_pie_with_TeX(filename,
 ''')
 
 def plot_pie_with_TeX(filename, data, points=1000, angle=60, standalone=True,
-    pdf=False, **kwargs):
+    pdf=False, colormap=None, **kwargs):
     """Create 'pie diagram' of different data on Brillouin zone."""
 
     data = np.array(data)
 
     image = toBZ(data, points=points, outside=np.nan, angle0=-30, angle=angle)
+    image = color(image, colormap)
+
+    colorbar = np.reshape(np.linspace(1, 0, 300), (-1, 1))
+    colorbar = color(colorbar, colormap)
 
     if comm.rank == 0:
-        imagename = filename.rsplit('.', 1)[0] + '.png'
-        save(imagename, color(image, **kwargs))
+        stem = filename.rsplit('.', 1)[0]
+        save('%s.png' % stem, image)
+        save('%s_colorbar.png' % stem, colorbar)
 
-        label_pie_with_TeX(filename, imagename,
+        label_pie_with_TeX(stem,
             lower=data.min(), upper=data.max(), standalone=standalone, **kwargs)
 
         if standalone and pdf:
-            os.system('pdflatex --interaction=batchmode ' + filename)
+            os.system('pdflatex --interaction=batchmode %s' % stem)
 
             for suffix in 'aux', 'log':
-                os.system('rm %s' % filename.replace('tex', suffix))
+                os.system('rm %s.%s' % (stem, suffix))
 
 def compline(x, y, composition, center=True):
     """Plot composition along line."""
