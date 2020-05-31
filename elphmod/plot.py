@@ -382,6 +382,9 @@ class Color(object):
                 return Color(i.A + u.A, i.B + u.B, i.C + u.C)
             if i.model == 'HSV'\
             or i.model == 'PSV':
+                if i.C == u.C == 0:
+                    return Color((i.A + u.A) / 2, (i.B + u.B) / 2, 0, i.model)
+
                 return Color(
                     (i.A * i.C + u.A * u.C) / (i.C + u.C),
                     (i.B * i.C + u.B * u.C) / (i.C + u.C),
