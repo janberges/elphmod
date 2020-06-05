@@ -395,8 +395,12 @@ def map_dispersions(V1, V2):
     mapping = np.empty((points, bands), dtype=int)
 
     for n in range(points):
+        available = set(range(bands))
+
         for i in range(bands):
-            mapping[n, i] = max(range(bands), key=lambda j:
+            mapping[n, i] = max(available, key=lambda j:
                 np.absolute(np.dot(V1[n, :, i], V2[n, :, j].conj())))
+
+            available.remove(mapping[n, i])
 
     return np.reshape(mapping, shape[:-1])
