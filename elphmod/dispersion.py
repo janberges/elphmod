@@ -251,6 +251,8 @@ def dispersion_full(matrix, size, angle=60, vectors=False, gauge=False,
             main_path = [n for n in range(points) if on_main_path(n)]
             main_order = band_order(v[main_path], V[main_path])
 
+            status = misc.StatusBar(points, title='disentangle bands')
+
             for n, N in zip(main_path, main_order):
                 side_path = [m for m in range(points) if on_side_path(n, m)]
                 side_order = band_order(v[side_path], V[side_path],
@@ -262,6 +264,8 @@ def dispersion_full(matrix, size, angle=60, vectors=False, gauge=False,
 
                     if vectors:
                         V[m] = V[m, :, o[m]]
+
+                    status.update()
 
     else:
         v = dispersion(matrix, 2 * np.pi / size * k, angle=angle,
