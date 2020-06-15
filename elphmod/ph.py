@@ -445,7 +445,7 @@ def interpolate_dynamical_matrices_new(ph, D_irr, q_irr, nq, apply_asr=True):
     a1, a2 = bravais.translations()
     b1, b2 = bravais.reciprocals(a1, a2)
 
-    r0 = ph.r[:, :2].T / ph.a[0, 0]
+    r = ph.r[:, :2].T / ph.a[0, 0]
 
     scale = nq / (2 * np.pi)
 
@@ -453,24 +453,15 @@ def interpolate_dynamical_matrices_new(ph, D_irr, q_irr, nq, apply_asr=True):
         q0 = q1 * b1 + q2 * b2
 
         for phi in 0, 2 * np.pi / 3, 4 * np.pi / 3:
-            U = rotation(phi)[:2, :2]
-
-            q = np.dot(U, q0)
-            r = np.dot(U, r0)
-
             for reflect in False, True:
-                if reflect:
-                    U = reflection()[:2, :2]
-
-                    q = np.dot(U, q)
-                    r = np.dot(U, r)
-
+                q = np.dot(rotation(phi)[:2, :2], q0)
                 D = apply(D_irr[iq], rotation(phi, 3))
 
                 if reflect:
+                    q = np.dot(reflection()[:2, :2], q)
                     D = apply(D, reflection(3))
 
-                phase = np.exp(1j * np.array(np.dot(q, r - r0)))
+                phase = np.exp(1j * np.array(np.dot(q0 - q, r)))
 
                 for n in range(len(phase)):
                     D[3 * n:3 * n + 3, :] *= phase[n].conj()
