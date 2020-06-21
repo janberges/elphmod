@@ -37,10 +37,10 @@ if comm.rank == 0:
     w0 = ref[:, 1:]
 
     for i in range(w.shape[1]):
-        X, Y = elphmod.plot.compline(x, w[:, i], 3 * pol[:, i])
+        fatbands = elphmod.plot.compline(x, w[:, i], 3 * pol[:, i])
 
-        for j in range(3):
-            plt.fill(X, Y[j], color=colors[j], linewidth=0.0)
+        for fatband, color in zip(fatbands, colors):
+            plt.fill(*fatband, color=color, linewidth=0.0)
 
         plt.plot(x0, w0[:, i], 'ko')
 
