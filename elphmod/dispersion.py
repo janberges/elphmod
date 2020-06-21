@@ -249,14 +249,14 @@ def dispersion_full(matrix, size, angle=60, vectors=False, gauge=False,
             o = np.empty((points, bands), dtype=int)
 
             main_path = [n for n in range(points) if on_main_path(n)]
-            main_order = band_order(v[main_path], V[main_path])
+            main_order = band_order(v[main_path], V[main_path], status=False)
 
             status = misc.StatusBar(points, title='disentangle bands')
 
             for n, N in zip(main_path, main_order):
                 side_path = [m for m in range(points) if on_side_path(n, m)]
                 side_order = band_order(v[side_path], V[side_path],
-                    by_mean=False)
+                    by_mean=False, status=False)
 
                 for m, M in zip(side_path, side_order):
                     o[m] = M[N]
@@ -351,7 +351,7 @@ def dispersion_full_nosym(matrix, size, *args, **kwargs):
 
     return out
 
-def band_order(v, V, by_mean=True, dv=float('inf')):
+def band_order(v, V, by_mean=True, dv=float('inf'), status=True):
     """Sort bands by overlap of eigenvectors at neighboring k points."""
 
     points, bands = v.shape
@@ -360,6 +360,9 @@ def band_order(v, V, by_mean=True, dv=float('inf')):
 
     n0 = 0
     o[n0] = range(bands)
+
+    if status:
+        bar = misc.StatusBar(points - 1, title='disentangle bands')
 
     for n in range(1, points):
         available = set(range(bands))
@@ -377,6 +380,9 @@ def band_order(v, V, by_mean=True, dv=float('inf')):
 
         if np.all(np.absolute(np.diff(v[n])) > 1e-10):
             n0 = n
+
+        if status:
+            bar.update()
 
     # reorder disentangled bands by average frequency:
 
