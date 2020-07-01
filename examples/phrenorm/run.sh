@@ -1,14 +1,23 @@
 #!/bin/bash
 
-for PP in S.pbe-hgh.UPF Ta.pbe-hgh.UPF
+for pp in S.pbe-hgh.UPF Ta.pbe-hgh.UPF
 do
-    test -e $PP || wget https://www.quantum-espresso.org/upf_files/$PP
+    test -e $pp || wget https://www.quantum-espresso.org/upf_files/$pp
 done
 
-NK=2
+nk=2
 
-mpirun pw.x -nk $NK < scf.in
-mpirun ph.x -nk $NK < dfpt.in
-mpirun ph.x -nk $NK < cdfpt.in
-mpirun pw.x -nk $NK < nscf.in
-mpirun epw.x < epw.in
+for method in dfpt cdfpt
+do
+    mpirun pw.x -nk $nk < scf.in | tee scf.out
+    mpirun ph.x -nk $nk < $method.in | tee $method.out
+
+    mpirun q2r.x < q2r.in | tee q2r.out
+    ./ph2epw.sh
+
+    mpirun pw.x -nk $nk < nscf.in | tee nscf.out
+    mpirun -n 1 epw.x -nk 1 < epw.in | tee epw.out
+
+    cp ifc $method.ifc
+    cp work/TaS2.epmatwp1 $method.epmatwp1
+done

@@ -2,7 +2,7 @@ TaS2
 &INPUTEPW
 outdir = 'work/'
 prefix = 'TaS2'
-dvscf_dir = 'save/'
+dvscf_dir = 'save'
 
 wannierize = .true.
 elph = .true.
@@ -15,24 +15,32 @@ nbndskip = 8
 
 proj(1) = 'Ta: dz2; dx2-y2; dxy'
 
-dis_froz_min = -1.0
-dis_froz_max = +2.0
+dis_froz_min = 2.0
+dis_froz_max = 4.0
 
-dis_win_min = -1.0
-dis_win_max = +4.0
+dis_win_min = 1.0
+dis_win_max = 8.0
 
 num_iter = 0
 
 wdata(1) = 'dis_num_iter 10000'
 wdata(2) = 'write_hr true'
 
-nk1 = 6
-nk2 = 6
+nk1 = 4
+nk2 = 4
 nk3 = 1
 
 nq1 = 2
 nq2 = 2
 nq3 = 1
+
+nkf1 = 4
+nkf2 = 4
+nkf3 = 1
+
+nqf1 = 2
+nqf2 = 2
+nqf3 = 1
 /
 2 cartesian
 0.0  0.000000000 0.0

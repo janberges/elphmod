@@ -10,25 +10,5 @@
 *.pyc
 *.tex
 *.tikz
-*.UPF
-
-bands.dat*
-work
-
-*.amn
-*.chk
-*.eig
-*.mmn
-*.nnkp
-*.werr
-*.wout
-*_band.dat
-*_band.gnu
-*_band.kpt
-*_hr.dat
-*_wsvec.dat
-
-dyn*
-ifc
 
 __pycache__
