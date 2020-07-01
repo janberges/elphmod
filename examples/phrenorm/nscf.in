@@ -1,25 +1,26 @@
 &CONTROL
-outdir = 'work'
-prefix = 'TaS2'
-pseudo_dir = '.'
+     prefix = 'TaS2'
+     outdir = 'work'
+ pseudo_dir = '.'
+
 calculation = 'nscf'
 /
 &SYSTEM
-ibrav = 4
-ntyp = 2
-nat = 3
+      ibrav = 4
+       ntyp = 2
+        nat = 3
 
-a = 3.37
-c = 10.0
+          a = 3.37
+          c = 10.0
 
-ecutwfc = 10.0
+    ecutwfc = 10.0
 
 occupations = 'smearing'
-smearing = 'fermi-dirac'
-degauss = 0.005
+   smearing = 'fermi-dirac'
+    degauss = 0.005
 /
 &ELECTRONS
-conv_thr = 1e-10
+   conv_thr = 1e-10
 /
 
 ATOMIC_SPECIES

@@ -1,18 +1,18 @@
 TaS2
 &INPUTPH
-outdir = 'work'
-prefix = 'TaS2'
+  prefix = 'TaS2'
+  outdir = 'work'
 
-fildyn = 'dyn'
+  fildyn = 'dyn'
 fildvscf = 'dvscf'
 
-ldisp = .true.
-nq1 = 2
-nq2 = 2
-nq3 = 1
+   ldisp = .true.
+     nq1 = 2
+     nq2 = 2
+     nq3 = 1
 
-cdfpt = .true.
+   cdfpt = .true.
 subspace = 'subspace.in'
 
-tr2_ph = 1e-12
+  tr2_ph = 1e-12
 /
