@@ -21,3 +21,6 @@ do
     cp ifc $method.ifc
     cp work/TaS2.epmatwp1 $method.epmatwp1
 done
+
+mpirun python3 plot_electrons.py
+mpirun python3 plot_phonons.py
