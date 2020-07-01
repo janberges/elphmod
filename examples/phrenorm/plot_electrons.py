@@ -3,7 +3,7 @@
 import elphmod
 import matplotlib.pyplot as plt
 
-k, x, GMKG = elphmod.bravais.GMKG(corner_indices=True)
+k, x, GMKG = elphmod.bravais.GMKG(100, corner_indices=True)
 
 el = elphmod.el.Model('TaS2_hr.dat')
 mu = elphmod.el.read_Fermi_level('scf.out')

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 Ry2eV = 13.605693009
 
-q, x, GMKG = elphmod.bravais.GMKG(corner_indices=True)
+q, x, GMKG = elphmod.bravais.GMKG(100, corner_indices=True)
 
 for method in 'dfpt', 'cdfpt':
     ph = elphmod.ph.Model('%s.ifc' % method, apply_asr=True)
