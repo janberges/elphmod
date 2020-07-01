@@ -5,15 +5,10 @@ do
     test -e $PP || wget https://www.quantum-espresso.org/upf_files/$PP
 done
 
-mpirun -np 4 pw.x -nk 2 < TaS2.scf
-mpirun -np 4 pw.x -nk 2 < TaS2.bands
-mpirun -np 4 bands.x -nk 2 < TaS2.pltbnd
+NK=2
 
-mpirun -np 4 pw.x -nk 2 < TaS2.nscf
-wannier90.x -pp TaS2
-mpirun -np 4 pw2wannier90.x < TaS2.pw2w90
-wannier90.x TaS2
-
-echo "p 'bands.dat.gnu' u (\$1*2*pi/3.387):2, 'TaS2_band.dat' w l" | gnuplot -p
-
-mpirun -np 4 ph.x -nk 2 < TaS2.dfpt
+mpirun pw.x -nk $NK < scf.in
+mpirun ph.x -nk $NK < dfpt.in
+mpirun ph.x -nk $NK < cdfpt.in
+mpirun pw.x -nk $NK < nscf.in
+mpirun epw.x < epw.in
