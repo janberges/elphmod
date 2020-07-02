@@ -22,6 +22,4 @@ do
     cp work/TaS2.epmatwp1 $method.epmatwp1
 done
 
-mpirun python3 plot_electrons.py
-mpirun python3 plot_phonons.py
 mpirun python3 renormalize.py

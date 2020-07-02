@@ -14,12 +14,12 @@ kT = 0.005 * Ry2eV
 
 nk = 4; nq = 2; nel = 1; nph = 9
 
-info('Prepare q points')
+info('Prepare wave vectors')
 
 q = sorted(elphmod.bravais.irreducibles(nq))
 q = 2 * np.pi * np.array(q, dtype=float) / nq
 
-q_path, x, GMKG = elphmod.bravais.GMKG(100, corner_indices=True)
+k, x, GMKG = elphmod.bravais.GMKG(100, corner_indices=True)
 
 info('Prepare electrons')
 
@@ -88,18 +88,37 @@ ph['pp'] = copy.copy(ph['cdfpt'])
 elphmod.ph.interpolate_dynamical_matrices_new(ph['pp'], D + Pi, q, nq,
     apply_asr=True)
 
+info('Plot electrons')
+
+e, U, order = elphmod.dispersion.dispersion(el.H, k, vectors=True, order=True)
+e -= mu
+
+if comm.rank == 0:
+    proj = 0.1 * abs(U) ** 2
+
+    for n in range(el.size):
+        fatbands = elphmod.plot.compline(x, e[:, n], proj[:, :, n])
+
+        for fatband, color in zip(fatbands, 'rgb'):
+            plt.fill(*fatband, color=color, linewidth=0.0)
+
+    plt.ylabel(r'$\epsilon$ (eV)')
+    plt.xlabel(r'$k$')
+    plt.xticks(x[GMKG], 'GMKG')
+    plt.show()
+
 info('Plot cDFPT, DFPT and renormalized phonons')
 
 for method in sorted(ph):
-    w2, u, order = elphmod.dispersion.dispersion(ph[method].D, q_path,
+    w2, u, order = elphmod.dispersion.dispersion(ph[method].D, k,
         vectors=True, order=True)
 
     w = elphmod.ph.sgnsqrt(w2) * Ry2eV * 1e3
 
     if elphmod.MPI.comm.rank == 0:
-        proj = elphmod.ph.polarization(u, q_path)
+        proj = elphmod.ph.polarization(u, k)
 
-        for nu in range(nph):
+        for nu in range(ph[method].size):
             fatbands = elphmod.plot.compline(x, w[:, nu], proj[:, nu])
 
             for fatband, color in zip(fatbands, 'ymk'):
