@@ -6,8 +6,6 @@ TaS2
 
   wannierize = .true.
         elph = .true.
-
-    epbwrite = .true.
     epwwrite = .true.
 
      nbndsub = 3
@@ -17,12 +15,10 @@ TaS2
 
  dis_win_min = 1.0
  dis_win_max = 8.0
-
 dis_froz_min = 2.0
 dis_froz_max = 4.0
 
     num_iter = 0
-
     wdata(1) = 'dis_num_iter 10000'
     wdata(2) = 'write_hr true'
 
