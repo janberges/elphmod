@@ -6,6 +6,10 @@ import sys
 from . import MPI
 comm = MPI.comm
 
+Ry = 13.605693009 # Rydberg energy (eV)
+a0 = 0.52917721090380 # Bohr radius (AA)
+kB = 8.61733e-5 # Boltzmann constant (eV/K)
+
 class StatusBar(object):
     def __init__(self, count, width=60, title='progress'):
         if comm.rank:

@@ -3,7 +3,8 @@
 import math
 import numpy as np
 
-kB = 8.61733e-5 # Boltzmann constant (eV/K)
+from . import misc
+kB = misc.kB
 
 xmax = 709.0 # approx. log([max. double] / 2 - 1)
 
