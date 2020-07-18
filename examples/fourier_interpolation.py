@@ -36,8 +36,7 @@ comm.Allgatherv(my_D, (D, sizes * ph.size * ph.size))
 
 ph2 = copy.copy(ph)
 
-elphmod.ph.interpolate_dynamical_matrices_new(ph2, D, q, nq,
-    apply_asr=True)
+elphmod.ph.q2r(ph2, D, q, nq, apply_asr=True)
 
 plt.figure()
 

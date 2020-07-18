@@ -406,7 +406,7 @@ def polarization(e, path, angle=60):
 
     return mode
 
-def interpolate_dynamical_matrices_new(ph, D_irr, q_irr, nq, apply_asr=True):
+def q2r(ph, D_irr, q_irr, nq, apply_asr=True):
     """Interpolate dynamical matrices given for irreducible wedge of q points.
 
     This function replaces `interpolate_dynamical_matrices`, which depends on

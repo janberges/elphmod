@@ -88,8 +88,7 @@ info('Renormalize phonons')
 
 ph['pp'] = copy.copy(ph['cdfpt'])
 
-elphmod.ph.interpolate_dynamical_matrices_new(ph['pp'], D + Pi, q, nq,
-    apply_asr=True)
+elphmod.ph.q2r(ph['pp'], D + Pi, q, nq, apply_asr=True)
 
 info('Plot electrons')
 
