@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # adapted from Samuel Ponce's pp.py
 
 prefix=TaS2

@@ -12,7 +12,11 @@ Ry2eV = 13.605693009
 
 kT = 0.005 * Ry2eV
 
-nk = 4; nq = 2; nel = 1; nph = 9
+nk = 4
+nq = 2
+
+nel = 1
+nph = 9
 
 info('Prepare wave vectors')
 
@@ -72,12 +76,11 @@ info('Calculate bare dynamical matrices')
 
 sizes, bounds = elphmod.MPI.distribute(len(q), bounds=True)
 
+D    = np.empty((len(q),           nph, nph), dtype=complex)
 my_D = np.empty((sizes[comm.rank], nph, nph), dtype=complex)
 
 for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
     my_D[my_iq] = ph['cdfpt'].D(*q[iq])
-
-D = np.empty((len(q), nph, nph), dtype=complex)
 
 comm.Allgatherv(my_D, (D, sizes * nph * nph))
 
@@ -115,7 +118,7 @@ for method in sorted(ph):
 
     w = elphmod.ph.sgnsqrt(w2) * Ry2eV * 1e3
 
-    if elphmod.MPI.comm.rank == 0:
+    if comm.rank == 0:
         proj = elphmod.ph.polarization(u, k)
 
         for nu in range(ph[method].size):
