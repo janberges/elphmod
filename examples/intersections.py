@@ -34,8 +34,8 @@ if elphmod.MPI.comm.rank == 0:
         for k1, k2 in intersections.keys()
         for k1, k2 in elphmod.bravais.to_Voronoi(k1, k2, nk=nk)])
 
-    plt.contour(kx, ky, FS_kk, 0.0, colors='k')
-    plt.contour(kx, ky, FS_kq, 0.0, colors='k')
+    plt.contour(kx, ky, FS_kk, levels=[0.0], colors='k')
+    plt.contour(kx, ky, FS_kq, levels=[0.0], colors='k')
 
     plt.plot(x, y, 'ob')
     plt.axis('image')
