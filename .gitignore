@@ -1,14 +1,2 @@
-.*
-!.gitignore
-
-*.aux
-*.in
-*.log
-*.npy
-*.pdf
-*.png
 *.pyc
-*.tex
-*.tikz
-
 __pycache__
