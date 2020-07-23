@@ -9,7 +9,7 @@ comm = elphmod.MPI.comm
 
 Ry2eV = 13.605693009
 
-data = 'NbSe2-cDFPT-LR'
+data = 'NbSe2_cDFPT'
 
 nq = 12
 

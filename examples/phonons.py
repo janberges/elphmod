@@ -12,7 +12,7 @@ eV2cmm1 = 8065.54
 
 colors = ['skyblue', 'dodgerblue', 'orange']
 
-data = 'NbSe2-cDFPT-LR'
+data = 'NbSe2_cDFPT'
 
 info("Set up mass-spring model..")
 
