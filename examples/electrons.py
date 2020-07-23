@@ -1,14 +1,13 @@
-#/usr/bin/env python
+#/usr/bin/env python3
 
 import elphmod
-
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 comm = elphmod.MPI.comm
 info = elphmod.MPI.info
 
-eF = -0.1665
+mu = -0.1665
 
 info("Set up Wannier Hamiltonian..")
 
@@ -16,26 +15,25 @@ el = elphmod.el.Model('data/NbSe2_hr.dat')
 
 info("Diagonalize Hamiltonian along G-M-K-G..")
 
-k, x, GMKG = elphmod.bravais.GMKG(120, corner_indices=True)
+k, x, GMKG = elphmod.bravais.GMKG(150, corner_indices=True)
 
-eps, psi, order = elphmod.dispersion.dispersion(el.H, k,
+e, U, order = elphmod.dispersion.dispersion(el.H, k,
     vectors=True, order=True)
 
-eps -= eF
+e -= mu
 
 info("Diagonalize Hamiltonian on uniform mesh..")
 
-nk = 120
+E = elphmod.dispersion.dispersion_full(el.H, 72) - mu
 
-eps_full = elphmod.dispersion.dispersion_full(el.H, nk) - eF
+info("Calculate density of states..")
 
-info("Calculate DOS of metallic band..")
+w = np.linspace(E.min(), E.max(), 150)
 
-ne = 300
+DOS = 0
 
-e = np.linspace(eps_full[:, :, 0].min(), eps_full[:, :, 0].max(), ne)
-
-DOS = elphmod.dos.hexDOS(eps_full[:, :, 0])(e)
+for n in range(el.size):
+    DOS = DOS + elphmod.dos.hexDOS(E[:, :, n])(w)
 
 info("Plot dispersion and DOS..")
 
@@ -50,31 +48,12 @@ if comm.rank == 0:
     ax1.set_xticklabels('GMKG')
 
     for n in range(el.size):
-        X, Y = elphmod.plot.compline(x, eps[:, n],
-            0.05 * (psi[:, :, n] * psi[:, :, n].conj()).real)
+        fatbands = elphmod.plot.compline(x, e[:, n],
+            0.1 * (U[:, :, n] * U[:, :, n].conj()).real)
 
-        for i in range(3):
-            ax1.fill(X, Y[i], color='RCB'[i], linewidth=0.0)
+        for fatband, color in zip(fatbands, 'rcb'):
+            ax1.fill(*fatband, color=color, linewidth=0.0)
 
-    ax2.fill(DOS, e, color='C')
+    ax2.fill(DOS, w, color='c', linewidth=0.0)
 
-    plt.show()
-
-info("Interpolate dispersion onto very dense k mesh..")
-
-eps_dense = elphmod.bravais.resize(eps_full[:, :, 0], shape=(2400, 2400))
-
-info("Calculate electron susceptibility along G-M-K-G..")
-
-chi = elphmod.diagrams.susceptibility(eps_dense)
-
-chi_q = elphmod.dispersion.dispersion(chi, k[1:-1], broadcast=False)
-
-if comm.rank == 0:
-    plt.xlabel('wave vector')
-    plt.ylabel('susceptibility (1/eV)')
-    plt.xticks(x[GMKG], 'GMKG')
-
-    plt.plot(x[1:-1], chi_q)
-    plt.ylim(ymax=0)
     plt.show()
