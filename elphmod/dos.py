@@ -209,28 +209,3 @@ def double_delta(x, y, f=None, eps=1e-7):
         return comm.bcast(unique)
 
     return dd
-
-if __name__ == '__main__':
-    # Test DOS functions for tight-binding band of graphene:
-
-    import matplotlib.pyplot as plt
-
-    k = np.linspace(0, 2 * np.pi, 36, endpoint=False)
-    E = np.empty(k.shape * 2)
-
-    for i, p in enumerate(k):
-        for j, q in enumerate(k):
-            E[i, j] = -np.sqrt(3 + 2 * (np.cos(p) + np.cos(q) + np.cos(p + q)))
-
-    e = np.linspace(E.min(), E.max(), 300)
-
-    kT = 0.02
-
-    DOS = np.empty(len(e))
-
-    for n in range(len(e)):
-        DOS[n] = np.average(occupations.fermi_dirac.delta((E - e[n]) / kT)) / kT
-
-    plt.fill_between(e, 0, hexDOS(E)(e), facecolor='lightgray')
-    plt.plot(e, DOS, color='red')
-    plt.show()
