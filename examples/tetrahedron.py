@@ -35,21 +35,15 @@ solution = solve({K1 - k1, K2 - k2}, {T, t})
 for key in solution:
     solution[key] = simpler(solution[key])
 
-pprint(solution)
-
 K1 = simpler(K1.subs(solution))
 k1 = simpler(k1.subs(solution))
 K2 = simpler(K2.subs(solution))
 k2 = simpler(k2.subs(solution))
 
-print(K1 == k1)
-print(K1)
-print(K2 == k2)
-print(K2)
+assert K1 == k1
+assert K2 == k2
 
 K3 = simpler(1 - K1 - K2)
-
-print(K3)
 
 # Integral over region of intersection at e = E = 0:
 #
@@ -69,4 +63,7 @@ det = simpler(grad1x * grad2y - grad1y * grad2x)
 
 weight = simpler(1 / abs(det * V))
 
+print(K1)
+print(K2)
+print(K3)
 print(weight)
