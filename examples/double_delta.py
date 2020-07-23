@@ -1,164 +1,68 @@
-#/usr/bin/env python
+#/usr/bin/env python3
 
 import elphmod
 import matplotlib.pyplot as plt
 import numpy as np
-import os
 
 comm = elphmod.MPI.comm
-info = elphmod.MPI.info
 
 mu = -0.1665
+
+nk = 120
+dk = 12
+nq = nk
+
 kT = 0.01
-nk = 800
 
-step = 20
-Nk = nk // step
-
-q = [0.5, 0.0]
-
-logkT = np.linspace(-8, 2, 100)
-
-info('Calculate electron dispersion')
+cmap = elphmod.plot.colormap(
+    (0.0, elphmod.plot.Color(0.0, 1, 255, model='PSV')),
+    (1.0, elphmod.plot.Color(5.5, 1, 255, model='PSV')))
 
 el = elphmod.el.Model('data/NbSe2_hr.dat')
 
-if os.path.exists('el.npy'):
-    if comm.rank == 0:
-        ekk = np.load('el.npy')
-    else:
-        ekk = np.empty((nk, nk))
-
-    comm.Bcast(ekk)
-
-else:
-    ekk = elphmod.dispersion.dispersion_full(el.H, nk)[:, :, 0] - mu
-
-    if comm.rank == 0:
-        np.save('el.npy', ekk)
-
-Ekk = ekk[::step, ::step].copy()
-
-info('Calculate DDI on full q BZ')
-
-kT = 0.01
+ekk = elphmod.dispersion.dispersion_full(el.H, nk)[:, :, 0] - mu
+Ekk = ekk[::dk, ::dk]
 
 delta_kk = elphmod.occupations.fermi_dirac.delta(ekk / kT) / kT
 
-q_irr = np.array(sorted(elphmod.bravais.irreducibles(Nk)))
+q = np.array(sorted(elphmod.bravais.irreducibles(nq)))
 
-DDI_irr = np.empty((len(q_irr), 4))
+wedge = np.empty((len(q), 2))
 
-progress = elphmod.misc.StatusBar(len(q_irr))
+progress = elphmod.misc.StatusBar(len(q),
+    title='calculate double-delta integrals')
 
-for iq, (q1, q2) in enumerate(step * q_irr):
-    ekq = np.roll(np.roll(ekk, shift=q1, axis=0), shift=q2, axis=1)
-    Ekq = ekq[::step, ::step].copy()
-
-    intersections = elphmod.dos.double_delta(Ekk, Ekq)(0)
+for iq, (q1, q2) in enumerate(q):
+    ekq = np.roll(np.roll(ekk, shift=-q1, axis=0), shift=-q2, axis=1)
+    Ekq = ekq[::dk, ::dk]
 
     delta_kq = elphmod.occupations.fermi_dirac.delta(ekq / kT) / kT
 
-    DDI_irr[iq, 0] = len(intersections)
-    DDI_irr[iq, 1] = sum(intersections.values())
-    DDI_irr[iq, 2] = np.average(delta_kk * delta_kq)
+    intersections = elphmod.dos.double_delta(Ekk, Ekq)(0.0)
+
+    wedge[iq, 0] = np.average(delta_kk * delta_kq)
+    wedge[iq, 1] = sum(intersections.values())
 
     progress.update()
 
-DDI_irr[..., 3] = np.absolute(DDI_irr[..., 1] - DDI_irr[..., 2])
+mesh = np.empty((nq, nq, 2))
 
-DDI = np.empty((Nk, Nk, 4))
-
-for iq, (q1, q2) in enumerate(q_irr):
-    for Q1, Q2 in elphmod.bravais.images(q1, q2, Nk):
-        DDI[Q1, Q2] = DDI_irr[iq]
-
-images = [elphmod.plot.toBZ(DDI[..., n], points=501) for n in range(4)]
+for iq, (q1, q2) in enumerate(q):
+    for q1, q2 in elphmod.bravais.images(q1, q2, nq):
+        mesh[q1, q2] = wedge[iq]
 
 if comm.rank == 0:
-    fig, ax = plt.subplots(1, 4)
+    figure, axes = plt.subplots(1, 2)
 
-    for n in range(4):
-        ax[n].imshow(images[n], cmap='inferno', vmax=5 if n else None)
+for n in range(2):
+    BZ = elphmod.plot.toBZ(mesh[..., n], outside=np.nan, points=300)
 
-    plt.show()
+    image = elphmod.plot.color(BZ, cmap=cmap, maximum=5.0).astype(int)
 
-info('Calculate density of states (DOS) with tetrahedron')
-
-DOS_tetra = elphmod.dos.hexDOS(Ekk)(0)
-
-info('Calculate double-delta integral (DDI) with tetrahedron')
-
-ekq = np.roll(np.roll(ekk,
-    shift=int(round(q[0] * nk)), axis=0),
-    shift=int(round(q[1] * nk)), axis=1)
-
-Ekq = ekq[::step, ::step].copy()
-
-intersections = elphmod.dos.double_delta(Ekk, Ekq)(0)
-
-DDI_tetra = sum(intersections.values())
-
-info('Calculate DOS and DDI for different smearings')
-
-kT = 10 ** logkT
-
-sizes, bounds = elphmod.MPI.distribute(len(kT), bounds=True)
-
-my_DOS_smear = np.empty(sizes[comm.rank])
-my_DDI_smear = np.empty(sizes[comm.rank])
-
-for my_n, n in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
-    print('kT = %g eV' % kT[n])
-
-    delta_kk = elphmod.occupations.fermi_dirac.delta(ekk / kT[n]) / kT[n]
-    delta_kq = elphmod.occupations.fermi_dirac.delta(ekq / kT[n]) / kT[n]
-
-    my_DOS_smear[my_n] = np.average(delta_kk)
-    my_DDI_smear[my_n] = np.average(delta_kk * delta_kq)
-
-DOS_smear = np.empty(len(kT))
-DDI_smear = np.empty(len(kT))
-
-comm.Gatherv(my_DOS_smear, (DOS_smear, sizes))
-comm.Gatherv(my_DDI_smear, (DDI_smear, sizes))
-
-info('Plot Fermi surfaces')
-
-contours_kk = []
-
-plot = dict(kxmin=-0.8, kxmax=0.8, kymin=-0.7, kymax=0.7,
-    return_k=True, resolution=101)
-
-kx, ky, BZ_kk = elphmod.plot.plot(ekk, **plot)
-kx, ky, BZ_kq = elphmod.plot.plot(ekq, **plot)
+    if comm.rank == 0:
+        axes[n].imshow(image)
+        axes[n].axis('image')
+        axes[n].axis('off')
 
 if comm.rank == 0:
-    a1, a2 = elphmod.bravais.translations()
-    b1, b2 = elphmod.bravais.reciprocals(a1, a2)
-
-    outline = list(zip(*[(k1 * b1 + k2 * b2) / 3 for k1, k2
-        in [(2, -1), (1, 1), (-1, 2), (-2, 1), (-1, -1), (1, -2), (2, -1)]]))
-
-    intersections = list(zip(*[(K1 * b1 + K2 * b2) / Nk
-        for k1, k2 in intersections.keys()
-        for K1, K2 in elphmod.bravais.to_Voronoi(k1, k2, Nk)]))
-
-    plt.contour(kx, ky, BZ_kk, colors='k', levels=[0.0])
-    plt.contour(kx, ky, BZ_kq, colors='k', levels=[0.0])
-    plt.plot(*outline, 'b')
-    plt.plot(*intersections, 'ob')
-    plt.axis('equal')
-    plt.show()
-
-info('Plot results')
-
-if comm.rank == 0:
-    plt.xlabel('log($k T$/eV)')
-    plt.ylabel('DOS/eV$^{-1}$, DDI/eV$^{-2}$')
-    plt.axhline(y=DOS_tetra, color='r', label='DOS (tetra.)')
-    plt.axhline(y=DDI_tetra, color='b', label='DDI (tetra.)')
-    plt.plot(logkT, DOS_smear, 'or', label='DOS (smear.)')
-    plt.plot(logkT, DDI_smear, 'ob', label='DDI (smear.)')
-    plt.legend()
     plt.show()
