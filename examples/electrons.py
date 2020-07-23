@@ -9,6 +9,8 @@ info = elphmod.MPI.info
 
 mu = -0.1665
 
+colors = ['orange', 'skyblue', 'dodgerblue']
+
 info("Set up Wannier Hamiltonian..")
 
 el = elphmod.el.Model('data/NbSe2_hr.dat')
@@ -35,7 +37,7 @@ DOS = 0
 for n in range(el.size):
     DOS = DOS + elphmod.dos.hexDOS(E[:, :, n])(w)
 
-info("Plot dispersion and DOS..")
+info("Plot dispersion and density of states..")
 
 if comm.rank == 0:
     fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
@@ -51,9 +53,9 @@ if comm.rank == 0:
         fatbands = elphmod.plot.compline(x, e[:, n],
             0.1 * (U[:, :, n] * U[:, :, n].conj()).real)
 
-        for fatband, color in zip(fatbands, 'rcb'):
+        for fatband, color in zip(fatbands, colors):
             ax1.fill(*fatband, color=color, linewidth=0.0)
 
-    ax2.fill(DOS, w, color='c', linewidth=0.0)
+    ax2.fill(DOS, w, color=colors[0], linewidth=0.0)
 
     plt.show()

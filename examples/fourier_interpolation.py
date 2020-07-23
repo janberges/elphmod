@@ -1,8 +1,7 @@
-#/usr/bin/env python
-
-import elphmod
+#/usr/bin/env python3
 
 import copy
+import elphmod
 import matplotlib.pyplot as plt
 import numpy as np
 

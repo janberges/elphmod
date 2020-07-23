@@ -1,6 +1,9 @@
-#/usr/bin/env python
+#/usr/bin/env python3
 
 import elphmod
+
+if elphmod.MPI.comm.rank != 0:
+    raise SystemExit
 
 N = 72
 
