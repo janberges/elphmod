@@ -16,4 +16,5 @@ One way to install them is inside a virtual environment:
 E x a m p l e s
 
     $ cd examples
-    $ mpirun python3 example.py
+    $ mpirun python3 electrons.py
+    $ mpirun python3 phonons.py
