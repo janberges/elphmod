@@ -369,7 +369,7 @@ class Color(object):
         if self.context == 'TeX':
             return '{rgb,255:red,%d;green,%d;blue,%d}' % self.RGB()
         elif self.context == 'HTML':
-            return '#%02x%02x%02x' % self.RGB()
+            return '#%02x%02x%02x' % tuple(np.around(self.RGB()).astype(int))
         else:
             return '%s(%g, %g, %g)' % (self.model, self.A, self.B, self.C)
 
