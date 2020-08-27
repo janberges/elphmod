@@ -427,12 +427,20 @@ def colormap(*args):
     between, colors are interpolated linearly. The color for the point `None` is
     used for NaNs and beyond the outmost points where colors have been defined.
 
-    Example:
+    Examples:
 
-        cmap = colormap(
+        bluebrown = colormap( # PRB 101, 155107 (2020)
             (0, Color(0.0, 1, 255, 'PSV'), np.sqrt),
             (1, Color(5.5, 1, 255, 'PSV')),
             (None, Color(0, 0, 0, 'RGB')))
+
+        AFMhot = elphmod.plot.colormap( # Gnuplot
+            (0.00, elphmod.plot.Color(  0,   0,   0)),
+            (0.25, elphmod.plot.Color(128,   0,   0)),
+            (0.50, elphmod.plot.Color(255, 128,   0)),
+            (0.75, elphmod.plot.Color(255, 255, 128)),
+            (1.00, elphmod.plot.Color(255, 255, 255)),
+            )
     """
     default = Color(255, 255, 255)
     points = []
