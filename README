@@ -10,7 +10,7 @@ One way to install them is inside a virtual environment:
 
     $ python3 -m venv elphmod.venv
     $ source elphmod.venv/bin/activate
-    $ pip3 install -r triqs.src/requirements.txt
+    $ pip3 install -r requirements.txt
 
 
 E x a m p l e s
