@@ -22,7 +22,7 @@ def fermi_dirac_delta(x):
 
     x = np.minimum(np.absolute(x), xmax)
 
-    return 1 / (2 * (np.cosh(x) + 1))
+    return 1 / (2 * np.cosh(x) + 2)
 
 fermi_dirac.delta = fermi_dirac_delta
 
@@ -112,12 +112,12 @@ def lorentz(x):
     Loon. Here, we have x = epsilon / h with the height h of the hybridization,
     instead of x = epsilon / (kB T) with the temperature T.
     """
-    return 0.5 - 1.0 / np.pi * np.arctan(x / np.pi)
+    return 0.5 - np.arctan(x / np.pi) / np.pi
 
 def lorentz_delta(x):
     """Calculate negative derivative of Lorentz step function."""
 
-    return 1.0 / (x ** 2 + np.pi ** 2)
+    return 1.0 / (x * x + np.pi * np.pi)
 
 lorentz.delta = lorentz_delta
 
