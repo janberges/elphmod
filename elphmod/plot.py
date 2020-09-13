@@ -432,7 +432,8 @@ def colormap(*args):
         bluebrown = colormap( # PRB 101, 155107 (2020)
             (0, Color(0.0, 1, 255, 'PSV'), np.sqrt),
             (1, Color(5.5, 1, 255, 'PSV')),
-            (None, Color(0, 0, 0, 'RGB')))
+            (None, Color(255, 255, 255, 'RGB')),
+            )
 
         AFMhot = colormap( # Gnuplot
             (0.00, Color(  0,   0,   0)),
