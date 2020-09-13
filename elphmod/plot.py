@@ -434,12 +434,12 @@ def colormap(*args):
             (1, Color(5.5, 1, 255, 'PSV')),
             (None, Color(0, 0, 0, 'RGB')))
 
-        AFMhot = elphmod.plot.colormap( # Gnuplot
-            (0.00, elphmod.plot.Color(  0,   0,   0)),
-            (0.25, elphmod.plot.Color(128,   0,   0)),
-            (0.50, elphmod.plot.Color(255, 128,   0)),
-            (0.75, elphmod.plot.Color(255, 255, 128)),
-            (1.00, elphmod.plot.Color(255, 255, 255)),
+        AFMhot = colormap( # Gnuplot
+            (0.00, Color(  0,   0,   0)),
+            (0.25, Color(128,   0,   0)),
+            (0.50, Color(255, 128,   0)),
+            (0.75, Color(255, 255, 128)),
+            (1.00, Color(255, 255, 255)),
             )
     """
     default = Color(255, 255, 255)
@@ -553,6 +553,38 @@ def PSV2RGB(P, S=1, V=255):
     return V * (0.5 - 0.5 * np.cos(P + S * np.array([0, 1, 2])))
 
 def save(filename, data):
+    """Save grayscale, RGB, or RGBA image as 8-bit PNG.
+
+    Specified at https://www.w3.org/TR/PNG/.
+    Inspired by Blender thumbnailer code.
+    """
+    import zlib, struct
+
+    data[np.where(data < 0)] = 0
+    data[np.where(data >= 256)] = 255
+
+    height, width, colors = data.shape
+    color = {1:0, 3:2, 4:6}[colors]
+
+    lines = np.empty((height, 1 + width * colors), dtype=np.uint8)
+    lines[:, 0] = 0 # https://www.w3.org/TR/PNG/#4Concepts.EncodingFiltering
+    lines[:, 1:] = data.reshape((height, -1))
+
+    with open(filename, 'wb') as png:
+        png.write(b'\x89PNG\r\n\x1a\n')
+
+        def chunk(name, data):
+            png.write(struct.pack("!I", len(data)))
+            png.write(name)
+            png.write(data)
+            png.write(struct.pack("!I", zlib.crc32(name + data) & 0xffffffff))
+
+        chunk(b'IHDR', struct.pack("!2I5B", width, height, 8, color, 0, 0, 0))
+        chunk(b'IDAT',
+            zlib.compress(struct.pack('%dB' % lines.size, *lines.flat), 9))
+        chunk(b'IEND', b'')
+
+def save_old(filename, data):
     """Save image as 8-bit bitmap."""
 
     data[np.where(data < 0)] = 0
