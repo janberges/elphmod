@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from . import dispersion, MPI
+from . import dispersion, misc, MPI
 comm = MPI.comm
 
 class Model(object):
@@ -272,3 +272,53 @@ def read_Fermi_level(pw_scf_out):
     eF = comm.bcast(eF)
 
     return eF
+
+def read_pwo(pw_scf_out):
+    """Read energies from PW output file."""
+
+    if comm.rank == 0:
+        with open(pw_scf_out) as lines:
+            for line in lines:
+                if 'number of electrons' in line:
+                    Ne = float(line.split()[-1])
+
+                elif 'number of Kohn-Sham states' in line:
+                    Ns = int(line.split()[-1])
+
+                elif 'number of k points' in line:
+                    Nk = int(line.split()[4])
+
+                elif 'Fermi energy' in line:
+                    eF = float(line.split()[-2])
+
+                elif line.startswith('!'):
+                    E = float(line.split()[-2]) * misc.Ry
+
+                elif 'End of self-consistent calculation' in line:
+                    e = []
+
+                    for ik in range(Nk):
+                        for _ in range(3):
+                            next(lines)
+
+                        e.append([])
+
+                        while len(e[-1]) < Ns:
+                            e[-1].extend(list(map(float, next(lines).split())))
+
+        e = np.array(e) - eF
+
+    else:
+        Ne = Ns = Nk = E = None
+
+    Ne = comm.bcast(Ne)
+    Ns = comm.bcast(Ns)
+    Nk = comm.bcast(Nk)
+    E  = comm.bcast(E)
+
+    if comm.rank != 0:
+        e = np.empty((Nk, Ns))
+
+    comm.Bcast(e)
+
+    return e, Ne, E
