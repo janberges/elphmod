@@ -14,8 +14,7 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
     ----------
     matrix : function
         Matrix to be diagonalized as a function of k in crystal coordinates with
-        period 2 pi. The order of the returned square matrix must be provided by
-        setting the attribute 'size'.
+        period 2 pi.
     k : list of 2-tuples
         k points in crystal coordinates with period 2 pi.
     angle : float
