@@ -88,6 +88,19 @@ class Model(object):
         comm.Reduce(my_g.sum(axis=0), g)
 
         if comm.rank == 0:
+            # Eigenvector convention in wan2bloch.f90 of EPW:
+            # 127    CALL zhpevx ('V', 'A', 'U', nbnd, champ , zero, zero, &
+            # 128                 0, 0, -one, neig, w, cz, nbnd, cwork, &
+            # 129                 rwork, iwork, ifail, info)
+            # ...
+            # 155    cuf = conjg( transpose ( cz ) )
+
+            # Index convention in wan2bloch.f90 of EPW:
+            # 1295 CALL zgemm ('n', 'n', nbnd, nbnd, nbnd, cone, cufkq, &
+            # 1296      nbnd, epmatf (:,:,imode), nbnd, czero, eptmp, nbnd)
+            # 1297 CALL zgemm ('n', 'c', nbnd, nbnd, nbnd, cone, eptmp, &
+            # 1298      nbnd, cufkk, nbnd, czero, epmatf(:,:,imode), nbnd)
+
             if elbnd:
                 Uk  = np.linalg.eigh(self.el.H(*k))[1]
                 Ukq = np.linalg.eigh(self.el.H(*k + q))[1]
