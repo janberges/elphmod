@@ -159,85 +159,98 @@ class Model(object):
 
     def sample(self, q, nk, U=None, u=None,
             broadcast=True, shared_memory=False):
-        """Sample coupling for given q and k points and transform to band basis.
 
-        One purpose of this routine is full control of the complex phase.
+        return dispersion.sample_coupling(g=self.g, *args, **kwargs)
 
-        Parameters
-        ----------
-        q : list of 2-tuples
-            q points in crystal coordinates q1, q2 in [0, 2pi).
-        nk : int
-            Number of k points per dimension.
-        U : ndarray, optional
-            Electron eigenvectors for given k mesh.
-            If present, transform from orbital to band basis.
-        u : ndarray, optional
-            Phonon eigenvectors for given q points.
-            If present, transform from displacement to band basis.
-        broadcast : bool
-            Broadcast result from rank 0 to all processes?
-        shared_memory : bool, optional
-            Store transformed coupling in shared memory?
-        """
-        sizes, bounds = MPI.distribute(len(q), bounds=True)
-        col, row = MPI.matrix(len(q))
+def sample(g, q, nk, U=None, u=None,
+        broadcast=True, shared_memory=False):
+    """Sample coupling for given q and k points and transform to band basis.
 
-        scale = 2 * np.pi / nk
+    One purpose of this routine is full control of the complex phase.
 
-        nel = self.el.size if U is None else U.shape[-1]
-        nph = self.ph.size if u is None else u.shape[-1]
+    Parameters
+    ----------
+    g : function
+        Electron-phonon coupling in the basis of electronic orbitals and
+        Cartesian ionic displacements as a function of q and k in crystal
+        coordinates with period 2 pi.
+    q : list of 2-tuples
+        q points in crystal coordinates q1, q2 in [0, 2pi).
+    nk : int
+        Number of k points per dimension.
+    U : ndarray, optional
+        Electron eigenvectors for given k mesh.
+        If present, transform from orbital to band basis.
+    u : ndarray, optional
+        Phonon eigenvectors for given q points.
+        If present, transform from displacement to band basis.
+    broadcast : bool
+        Broadcast result from rank 0 to all processes?
+    shared_memory : bool, optional
+        Store transformed coupling in shared memory?
+    """
+    sizes, bounds = MPI.distribute(len(q), bounds=True)
+    col, row = MPI.matrix(len(q))
 
-        my_g = np.empty((sizes[row.rank], nph, nk, nk, nel, nel), dtype=complex)
+    scale = 2 * np.pi / nk
 
-        status = misc.StatusBar(sizes[comm.rank] * nk * nk,
-            title='sample coupling')
+    nph, nel, nel = g().shape
 
-        for my_iq, iq in enumerate(range(*bounds[row.rank:row.rank + 2])):
-            q1, q2 = q[iq]
+    if U is not None:
+        nel = U.shape[-1]
 
-            Q1 = int(round(q1 / scale))
-            Q2 = int(round(q2 / scale))
+    if u is None:
+        nph = u.shape[-1]
 
-            for K1 in range(nk):
-                KQ1 = (K1 + Q1) % nk
-                k1 = K1 * scale
+    my_g = np.empty((sizes[row.rank], nph, nk, nk, nel, nel), dtype=complex)
 
-                for K2 in range(nk):
-                    KQ2 = (K2 + Q2) % nk
-                    k2 = K2 * scale
+    status = misc.StatusBar(sizes[comm.rank] * nk * nk,
+        title='sample coupling')
 
-                    gqk = self.g(q1=q1, q2=q2, k1=k1, k2=k2,
-                        broadcast=False, comm=col)
+    for my_iq, iq in enumerate(range(*bounds[row.rank:row.rank + 2])):
+        q1, q2 = q[iq]
 
-                    if col.rank == 0:
-                        if U is not None:
-                            gqk = np.einsum('xab,an,bm->xnm',
-                                gqk, U[K1, K2], U[KQ1, KQ2].conj())
+        Q1 = int(round(q1 / scale))
+        Q2 = int(round(q2 / scale))
 
-                        if u is not None:
-                            gqk = np.einsum('xab,xu->uab', gqk, u[iq])
+        for K1 in range(nk):
+            KQ1 = (K1 + Q1) % nk
+            k1 = K1 * scale
 
-                        my_g[my_iq, :, K1, K2, :, :] = gqk
+            for K2 in range(nk):
+                KQ2 = (K2 + Q2) % nk
+                k2 = K2 * scale
 
-                    status.update()
+                gqk = g(q1=q1, q2=q2, k1=k1, k2=k2, broadcast=False, comm=col)
 
-        node, images, g = MPI.shared_array((len(q), nph, nk, nk, nel, nel),
-            dtype=complex,
-            shared_memory=shared_memory,
-            single_memory=not broadcast)
+                if col.rank == 0:
+                    if U is not None:
+                        gqk = np.einsum('xab,an,bm->xnm',
+                            gqk, U[K1, K2], U[KQ1, KQ2].conj())
 
-        if col.rank == 0:
-            row.Gatherv(my_g, (g, row.gather(my_g.size)))
+                    if u is not None:
+                        gqk = np.einsum('xab,xu->uab', gqk, u[iq])
 
-        col.Barrier() # should not be necessary
+                    my_g[my_iq, :, K1, K2, :, :] = gqk
 
-        if node.rank == 0:
-            images.Bcast(g)
+                status.update()
 
-        node.Barrier()
+    node, images, g = MPI.shared_array((len(q), nph, nk, nk, nel, nel),
+        dtype=complex,
+        shared_memory=shared_memory,
+        single_memory=not broadcast)
 
-        return g
+    if col.rank == 0:
+        row.Gatherv(my_g, (g, row.gather(my_g.size)))
+
+    col.Barrier() # should not be necessary
+
+    if node.rank == 0:
+        images.Bcast(g)
+
+    node.Barrier()
+
+    return g
 
 def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
         completion=True, complete_k=False, squeeze=False, status=False,
