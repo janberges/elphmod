@@ -14,6 +14,8 @@ class Model(object):
             broadcast=True, comm=comm):
         """Calculate electron-phonon coupling for arbitary points k and k + q.
 
+        g[nu, m, n] = hbar/sqrt(M) <k+q m|dV/du(nu)|k n>
+
         Parameters
         ----------
         q1, q2, q2 : float
@@ -105,7 +107,7 @@ class Model(object):
                 Uk  = np.linalg.eigh(self.el.H(*k))[1]
                 Ukq = np.linalg.eigh(self.el.H(*k + q))[1]
 
-                g = np.einsum('xab,an,bm->xnm', g, Uk, Ukq.conj())
+                g = np.einsum('am,xab,bn->xmn', Ukq.conj(), g, Uk)
 
             if phbnd:
                 uq = np.linalg.eigh(self.ph.D(*q))[1]
@@ -141,6 +143,12 @@ class Model(object):
                 g = np.fromfile(data, dtype=np.complex128)
 
             g = np.reshape(g, shape)
+            g = np.swapaxes(g, (3, 4)).copy()
+
+            # index orders:
+            # EPW (Fortran): a, b, R', x, R
+            # after read-in: R, x, R', b, a
+            # after transp.: R, x, R', a, b
 
             # undo supercell double counting:
 
@@ -238,8 +246,8 @@ def sample(g, q, nk, U=None, u=None,
 
                 if col.rank == 0:
                     if U is not None:
-                        gqk = np.einsum('xab,an,bm->xnm',
-                            gqk, U[K1, K2], U[KQ1, KQ2].conj())
+                        gqk = np.einsum('am,xab,bn->xmn',
+                            U[KQ1, KQ2].conj(), gqk, U[K1, K2])
 
                     if u is not None:
                         gqk = np.einsum('xab,xu->uab', gqk, u[iq])
@@ -306,7 +314,7 @@ def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
                     continue
 
                 k1, k2         = [int(i) - 1 for i in columns[:2]]
-                ibnd, jbnd, nu = [int(i) - 1 for i in columns[band_slice]]
+                jbnd, ibnd, nu = [int(i) - 1 for i in columns[band_slice]]
 
                 ibnd -= offset
                 jbnd -= offset
@@ -420,7 +428,7 @@ def read_EPW_output(epw_out, q, nq, nb, nk, bands=1,
                     for _ in range(bands * bands * nb):
                         columns = next(data).split()
 
-                        ibnd, jbnd, nu = [int(i) - 1 for i in columns[:3]]
+                        jbnd, ibnd, nu = [int(i) - 1 for i in columns[:3]]
 
                         if epf:
                             elph[iq, nu, k1, k2, ibnd, jbnd] = complex(
@@ -546,7 +554,7 @@ def read_xml_files(filename, q, rep, bands, nbands, nk, squeeze=True, status=Tru
                             if n < 0 or m < 0:
                                 next(data)
                             else:
-                                my_elph[my_iq, my_irep, k1, k2, n, m] = complex(
+                                my_elph[my_iq, my_irep, k1, k2, m, n] = complex(
                                     *list(map(float, next(data).split(","))))
 
     comm.Allgatherv(my_elph, (elph,
@@ -605,8 +613,8 @@ def write_xml_files(filename, data, angle=120, angle0=0):
       <PARTIAL_ELPH type="complex" size="%d">"""
                             % (ik, k[0], k[1], 0.0, nbands * nbands))
 
-                        for i in range(nbands):
-                            for j in range(nbands):
+                        for j in range(nbands):
+                            for i in range(nbands):
                                 g = data[iq, irep, k1, k2, i, j]
 
                                 xml.write("""

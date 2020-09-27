@@ -243,8 +243,8 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15,
         comm=comm):
     """Calculate phonon self-energy.
 
-        Pi(q, nu) = 2/N sum[k] |g(q, nu, k)|^2
-            [f(k+q) - f(k)] / [e(k+q) - e(k)]
+        Pi(q, nu) = 2/N sum[k, m, n] |g(q, nu, k, m, n)|^2
+            [f(k+q, m) - f(k, n)] / [e(k+q, m) - e(k, n)]
 
     Parameters
     ----------
@@ -337,15 +337,15 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15,
         kq1 = slice(q1, q1 + nk)
         kq2 = slice(q2, q2 + nk)
 
-        for n in range(nbnd):
-            for m in range(nbnd):
+        for m in range(nbnd):
+            for n in range(nbnd):
                 df = f[kq1, kq2, m] - f[k1, k2, n]
                 de = e[kq1, kq2, m] - e[k1, k2, n]
 
                 ok = abs(de) > eps
 
-                dfde[:, :, n, m][ ok] = df[ok] / de[ok]
-                dfde[:, :, n, m][~ok] = d[:, :, n][~ok]
+                dfde[:, :, m, n][ ok] = df[ok] / de[ok]
+                dfde[:, :, m, n][~ok] = d[:, :, n][~ok]
 
                 if Delta is not None:
                     if Delta_diff:
@@ -356,7 +356,7 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15,
                     else:
                         envelope = Theta[kq1, kq2, m] * Theta[k1, k2, n]
 
-                    dfde[:, :, n, m] *= envelope
+                    dfde[:, :, m, n] *= envelope
 
         for nu in range(nb):
             Pi_k = g2[iq, nu] * dfde
@@ -540,33 +540,34 @@ def renormalize_coupling(q, e, g, W, U, nbnd_sub=None, kT=0.025, eps=1e-15,
         kq1 = slice(q1, q1 + nk)
         kq2 = slice(q2, q2 + nk)
 
-        for n in range(nbnd_sub):
-            for m in range(nbnd_sub):
+        for m in range(nbnd_sub):
+            for n in range(nbnd_sub):
                 df = f[kq1, kq2, m] - f[k1, k2, n]
                 de = e[kq1, kq2, m] - e[k1, k2, n]
 
                 ok = abs(de) > eps
 
-                dfde[:, :, n, m][ ok] = df[ok] / de[ok]
-                dfde[:, :, n, m][~ok] = d[:, :, n][~ok]
+                dfde[:, :, m, n][ ok] = df[ok] / de[ok]
+                dfde[:, :, m, n][~ok] = d[:, :, n][~ok]
 
         if dd:
-            indices = 'xKLNM,KLNM,ac,KLaM,KLaN,klcn,klcm->xklnm'
+            indices = 'klam,klan,ac,KLcM,KLcN,KLMN,xKLMN->xklmn'
         else:
-            indices = 'xKLNM,KLNM,abcd,KLaM,KLbN,klcn,kldm->xklnm'
+            indices = 'klam,klbn,bacd,KLcM,KLdN,KLMN,xKLMN->xklmn'
 
         my_g_[my_iq] = g[iq] + prefactor * np.einsum(indices,
-            g[iq, :, :, :, :nbnd_sub, :nbnd_sub], dfde, W[iq],
+            U[kq1, kq2].conj(), U[k1, k2],
+            W[iq],
             U[kq1, kq2, :, :nbnd_sub], U[k1, k2, :, :nbnd_sub].conj(),
-            U[k1, k2], U[kq1, kq2].conj())
+            dfde, g[iq, :, :, :, :nbnd_sub, :nbnd_sub])
 
-        #            K N             k n
-        #          ___/___ b     c ___/___
-        #   x q   /   \   \       /   \
-        # ~~~~~~~o         :::::::
-        #         \___\___/       \___\___
-        #             /    a     d    /
-        #           K+q M           k+q m
+        #   k+q m           K+q M
+        #  ___/___ a     c ___/___
+        #     \   \       /   \   \   x q
+        #          :::::::         o~~~~~~~
+        #  ___\___/       \___\___/
+        #     /    b     d    /
+        #    k n             K N
 
     g_ = np.empty((nQ, nmodes, nk, nk, nbnd, nbnd), dtype=complex)
 
@@ -670,31 +671,32 @@ def g_Pi(q, e, g, U, kT=0.025, eps=1e-15,
         kq1 = slice(q1, q1 + nk)
         kq2 = slice(q2, q2 + nk)
 
-        for n in range(nbnd):
-            for m in range(nbnd):
+        for m in range(nbnd):
+            for n in range(nbnd):
                 df = f[kq1, kq2, m] - f[k1, k2, n]
                 de = e[kq1, kq2, m] - e[k1, k2, n]
 
                 ok = abs(de) > eps
 
-                dfde[:, :, n, m][ ok] = df[ok] / de[ok]
-                dfde[:, :, n, m][~ok] = d[:, :, n][~ok]
+                dfde[:, :, m, n][ ok] = df[ok] / de[ok]
+                dfde[:, :, m, n][~ok] = d[:, :, n][~ok]
 
         if dd:
-            indices = 'xklab,klan,klbm,klnm,klcn,klcm->xc'
+            indices = 'klcm,klcn,klmn,klam,klbn,xklab->xc'
         else:
-            indices = 'xklab,klan,klbm,klnm,klcn,kldm->xcd'
+            indices = 'klcm,kldn,klmn,klam,klbn,xklab->xcd'
 
-        my_gPi[my_iq] = prefactor * np.einsum(indices, g[iq],
-            U[k1, k2], U[kq1, kq2].conj(), dfde, U[k1, k2].conj(), U[kq1, kq2])
+        my_gPi[my_iq] = prefactor * np.einsum(indices,
+            U[kq1, kq2], U[k1, k2].conj(), dfde, U[kq1, kq2].conj(), U[k1, k2],
+            g[iq])
 
-        #            k n
-        #        a ___/___ c
-        #   x q   /   \
-        # ~~~~~~~o
-        #         \___\___
-        #        b    /    d
-        #           k+q m
+        #     k+q m
+        #  c ___/___ a
+        #       \   \   x q
+        #            o~~~~~~~
+        #    ___\___/
+        #  d    /    b
+        #      k n
 
     if dd:
         gPi = np.empty((nQ, nmodes, norb), dtype=complex)
@@ -754,9 +756,9 @@ def double_fermi_surface_average(q, e, g2, kT=0.025,
         kq1 = slice(q1, q1 + nk)
         kq2 = slice(q2, q2 + nk)
 
-        for n in range(nel):
-            for m in range(nel):
-                d2[:, :, n, m] = d[kq1, kq2, m] * d[k1, k2, n]
+        for m in range(nel):
+            for n in range(nel):
+                d2[:, :, m, n] = d[kq1, kq2, m] * d[k1, k2, n]
 
         my_wg[my_iq] = d2.sum()
 
