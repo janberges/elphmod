@@ -413,3 +413,55 @@ def map_dispersions(V1, V2):
             available.remove(mapping[n, i])
 
     return np.reshape(mapping, shape[:-1])
+
+def unfolding_weights(k, R, U0, U, blocks):
+    """Calculate weights for "unfolding" of supercell dispersions.
+
+    Parameters
+    ----------
+    k : list of d-tuples
+        k points in arbitrary representation.
+    R : list of d-tuples
+        Positions of the unit cells in the supercell. The representation must
+        be compatible with the k points: If `k` is given in crystal coordinates
+        with a period of 2 pi, `R` must be given in crystal coordinates with a
+        period of 1. `k` and `R` can also be defined in Cartesian coordinates.
+    U0: ndarray
+        Eigenvectors of the symmetric system.
+    U: ndarray
+        Eigenvectors of the supercell system.
+    blocks : list of indexing objects
+        Blocks of U that correspond to U0. This is needed to map supercell
+        basis states to unit-cell basis states.
+
+    Returns
+    -------
+    ndarray
+        Weights of the supercell states.
+    """
+    bands0 = U0.shape[-1]
+    bands  =  U.shape[-1]
+
+    U0 = U0 / np.sqrt(bands / bands0)
+
+    sizes, bounds = MPI.distribute(len(k), bounds=True)
+
+    my_w = np.empty((sizes[comm.rank], bands))
+
+    status = misc.StatusBar(sizes[comm.rank], title='unfold bands')
+
+    for my_ik, ik in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
+        for n in range(bands):
+            my_w[my_ik, n] = sum(abs(sum(
+                np.dot(U0[ik, :, m].conj(), U[ik, blocks[ir], n])
+                * np.exp(1j * np.dot(k[ik], R[ir]))
+                for ir in range(len(R)))) ** 2
+                for m in range(bands0))
+
+        status.update()
+
+    w = np.empty((len(k), bands, 1))
+
+    comm.Gatherv(my_w, (w, sizes * bands))
+
+    return w
