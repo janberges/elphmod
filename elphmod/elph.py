@@ -143,7 +143,7 @@ class Model(object):
                 g = np.fromfile(data, dtype=np.complex128)
 
             g = np.reshape(g, shape)
-            g = np.swapaxes(g, (3, 4)).copy()
+            g = np.swapaxes(g, 3, 4).copy()
 
             # index orders:
             # EPW (Fortran): a, b, R', x, R
@@ -178,10 +178,8 @@ class Model(object):
 
         self.q = None
 
-    def sample(self, q, nk, U=None, u=None,
-            broadcast=True, shared_memory=False):
-
-        return dispersion.sample_coupling(g=self.g, *args, **kwargs)
+    def sample(self, *args, **kwargs):
+        return sample(g=self.g, *args, **kwargs)
 
 def sample(g, q, nk, U=None, u=None,
         broadcast=True, shared_memory=False):
@@ -220,7 +218,7 @@ def sample(g, q, nk, U=None, u=None,
     if U is not None:
         nel = U.shape[-1]
 
-    if u is None:
+    if u is not None:
         nph = u.shape[-1]
 
     my_g = np.empty((sizes[row.rank], nph, nk, nk, nel, nel), dtype=complex)
