@@ -772,3 +772,97 @@ def double_fermi_surface_average(q, e, g2, kT=0.025,
     comm.Allgatherv(my_wg, (wg, sizes))
 
     return av, wg
+
+def triangle(q1, q2, q3, e, g1, g2, g3, kT=0.025, i0=1e-14,
+        occupations=occupations.fermi_dirac, comm=comm):
+    """Calculate triangle diagram.
+
+        sum[k a b c] g*(q u k b a) g(q' v k c a) g(q-q' v k+q' b c)
+              e(k a)    [f(k+q b)  - f(k+q' c)]   / [e(k+q b)  - e(k+q' c)]
+            + e(k+q b)  [f(k+q' c) - f(k a)   ]  /  [e(k+q' c) - e(k a)   ]
+            + e(k+q' c) [f(k a)    - f(k+q b) ] /   [e(k a)    - e(k+q b) ]
+
+               q u
+                o
+               / \
+              /   \
+             /     \
+       k a  v       ^  k+q b
+           /         \
+          /           \
+         /             \
+        o------->-------o
+    q' v     k+q' c      q-q' v
+
+    Parameters
+    ----------
+    q1, q2, q3 : 2-tuples
+        q points of the vertices in crystal coordinates q1, q2 in [0, 2pi).
+        In the above diagram, q1 = q, q2 = q', and q3 = q - q'.
+    e : ndarray
+        Electron dispersion on uniform mesh. The Fermi level must be at zero.
+    g1, g2, g3 : ndarray
+        Electron-phonon coupling for given q points.
+    kT : float
+        Smearing temperature.
+    eps : float
+        Smallest allowed absolute value of divisor.
+    occupations : function
+        Particle distribution as a function of energy divided by kT.
+
+    Returns
+    -------
+    ndarray
+        Value of triangle.
+    """
+    nk, nk, nbnd = e.shape
+
+    x = e / kT
+
+    f = occupations(x)
+
+    e  = np.tile(e,  (2, 2, 1))
+    f  = np.tile(f,  (2, 2, 1))
+    g1 = np.tile(g1, (2, 2, 1, 1))
+    g2 = np.tile(g2, (2, 2, 1, 1))
+    g3 = np.tile(g3, (2, 2, 1, 1))
+
+    scale = nk / (2 * np.pi)
+    prefactor = 1.0 / nk ** 2
+
+    chi = np.empty((nbnd, nbnd, nbnd, nk, nk), dtype=complex)
+
+    q11 = int(round(q1[0] * scale)) % nk
+    q12 = int(round(q1[1] * scale)) % nk
+
+    q21 = int(round(q2[0] * scale)) % nk
+    q22 = int(round(q2[1] * scale)) % nk
+
+    k1 = slice(0, nk)
+    k2 = slice(0, nk)
+
+    kq1 = slice(q11, q11 + nk)
+    kq2 = slice(q12, q12 + nk)
+
+    kQ1 = slice(q21, q21 + nk)
+    kQ2 = slice(q22, q22 + nk)
+
+    for a in range(nbnd):
+        ea = e[k1, k2, a]
+        fa = f[k1, k2, a]
+
+        for b in range(nbnd):
+            eb = e[kq1, kq2, b]
+            fb = f[kq1, kq2, b]
+
+            for c in range(nbnd):
+                ec = e[kQ1, kQ2, c]
+                fc = f[kQ1, kQ2, c]
+
+                chi[a, b, c] = ea * (fb - fc) + eb * (fc - fa) + ec * (fa - fb)
+                chi[a, b, c] /= (eb - ec) * (ec - ea) * (ea - eb) + i0
+
+    chi = np.einsum('abckl,klba,klca,klbc', chi,
+        g1[k1, k2].conj(), g2[k1, k2], g3[kQ1, kQ2])
+
+    return prefactor * chi.sum()
