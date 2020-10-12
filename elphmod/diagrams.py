@@ -773,7 +773,7 @@ def double_fermi_surface_average(q, e, g2, kT=0.025,
 
     return av, wg
 
-def triangle(q1, q2, q3, e, g1, g2, g3, kT=0.025, i0=1e-14,
+def triangle(q1, q2, q3, e, g1, g2, g3, kT=0.025, eps=1e-14,
         occupations=occupations.fermi_dirac, comm=comm):
     """Calculate triangle diagram.
 
@@ -820,9 +820,11 @@ def triangle(q1, q2, q3, e, g1, g2, g3, kT=0.025, i0=1e-14,
     x = e / kT
 
     f = occupations(x)
+    d = occupations.delta(x) / kT
 
     e  = np.tile(e,  (2, 2, 1))
     f  = np.tile(f,  (2, 2, 1))
+    d  = np.tile(d,  (2, 2, 1))
     g1 = np.tile(g1, (2, 2, 1, 1))
     g2 = np.tile(g2, (2, 2, 1, 1))
     g3 = np.tile(g3, (2, 2, 1, 1))
@@ -850,17 +852,46 @@ def triangle(q1, q2, q3, e, g1, g2, g3, kT=0.025, i0=1e-14,
     for a in range(nbnd):
         ea = e[k1, k2, a]
         fa = f[k1, k2, a]
+        da = d[k1, k2, a]
 
         for b in range(nbnd):
             eb = e[kq1, kq2, b]
             fb = f[kq1, kq2, b]
+            db = d[kq1, kq2, b]
 
             for c in range(nbnd):
                 ec = e[kQ1, kQ2, c]
                 fc = f[kQ1, kQ2, c]
+                dc = d[kQ1, kQ2, c]
 
-                chi[a, b, c] = ea * (fb - fc) + eb * (fc - fa) + ec * (fa - fb)
-                chi[a, b, c] /= (eb - ec) * (ec - ea) * (ea - eb) + i0
+                dea = eb - ec
+                deb = ec - ea
+                dec = ea - eb
+
+                dfa = fb - fc
+                dfb = fc - fa
+                dfc = fa - fb
+
+                la = abs(dea) > eps
+                lb = abs(deb) > eps
+                lc = abs(dec) > eps
+
+                l = la & lb & lc; L = l
+                chi[a, b, c][l] \
+                    = (ea[l] * dfa[l] + eb[l] * dfb[l] + ec[l] * dfc[l]) \
+                    / (dea[l] * deb[l] * dec[l])
+
+                l = ~la & lb & lc; L |= l
+                chi[a, b, c][l] = (db[l] + dfc[l] / dec[l]) / dec[l]
+
+                l = la & ~lb & lc; L |= l
+                chi[a, b, c][l] = (dc[l] + dfa[l] / dea[l]) / dea[l]
+
+                l = la & lb & ~lc; L |= l
+                chi[a, b, c][l] = (da[l] + dfb[l] / deb[l]) / deb[l]
+
+                l = ~L
+                chi[a, b, c][l] = da[l] * (0.5 - fa[l])
 
     chi = np.einsum('abckl,klba,klca,klbc', chi,
         g1[k1, k2].conj(), g2[k1, k2], g3[kQ1, kQ2])
