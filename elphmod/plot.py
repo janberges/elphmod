@@ -366,12 +366,16 @@ class Color(object):
     context = None
 
     def __str__(self):
-        if self.context == 'TeX':
-            return '{rgb,255:red,%d;green,%d;blue,%d}' % self.RGB()
-        elif self.context == 'HTML':
-            return '#%02x%02x%02x' % tuple(np.around(self.RGB()).astype(int))
-        else:
+        if self.context is None:
             return '%s(%g, %g, %g)' % (self.model, self.A, self.B, self.C)
+
+        RGB = tuple(np.around(self.RGB()).astype(int))
+
+        if self.context == 'TeX':
+            return '{rgb,255:red,%d;green,%d;blue,%d}' % RGB
+
+        if self.context == 'HTML':
+            return '#%02x%02x%02x' % RGB
 
     def __repr__(self):
         return 'Color(%g, %g, %g, %s)' % (self.A, self.B, self.C, self.model)
@@ -551,7 +555,7 @@ def RGB2HSV(R, G, B):
 def PSV2RGB(P, S=1, V=255):
     """Set color via phase, shift, and value."""
 
-    return V * (0.5 - 0.5 * np.cos(P + S * np.array([0, 1, 2])))
+    return tuple(V * (0.5 - 0.5 * np.cos(P + S * np.array([0, 1, 2]))))
 
 def save(filename, data):
     """Save grayscale, RGB, or RGBA image as 8-bit PNG.
