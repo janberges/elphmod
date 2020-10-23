@@ -920,15 +920,15 @@ def Fourier_interpolation(data, angle=60, sign=-1, hr_file=None, function=True):
 
     return dict((tuple(point), value) for point, value in zip(points, values))
 
-def path(points, b1, b2, b3=np.array([0, 0, 1]), N=30):
+def path(points, b, N=30):
     """Generate arbitrary path through Brillouin zone.
 
     Parameters
     ----------
     points : ndarray
         List of high-symmetry points in crystal coordinates.
-    b1, b2, b3 : ndarray
-        Reciprocal lattice vectors.
+    b : ndarray
+        List of reciprocal lattice vectors.
     N : integer
         Number of points per 2 pi / a.
 
@@ -943,12 +943,7 @@ def path(points, b1, b2, b3=np.array([0, 0, 1]), N=30):
     """
     points = np.array(points)
 
-    b1 = np.array(b1)
-    b2 = np.array(b2)
-    b3 = np.array(b3)
-
-    points_cart = np.array([k1 * b1 + k2 * b2 + k3 * b3
-        for k1, k2, k3 in points])
+    points_cart = np.einsum('kc,cx->kx', points, b)
 
     k = []
     x = []
