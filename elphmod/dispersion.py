@@ -414,7 +414,7 @@ def map_dispersions(V1, V2):
 
     return np.reshape(mapping, shape[:-1])
 
-def unfolding_weights(k, R, U0, U, blocks):
+def unfolding_weights(k, R, U0, U, blocks0, blocks):
     """Calculate weights for "unfolding" of supercell dispersions.
 
     Parameters
@@ -430,9 +430,10 @@ def unfolding_weights(k, R, U0, U, blocks):
         Eigenvectors of the symmetric system.
     U: ndarray
         Eigenvectors of the supercell system.
+    blocks0 : list of indexing objects
+        Mapping from indices of `R` to slices of `U0`.
     blocks : list of indexing objects
-        Blocks of U that correspond to U0. This is needed to map supercell
-        basis states to unit-cell basis states.
+        Mapping from indices of `R` to slices of `U`.
 
     Returns
     -------
@@ -453,7 +454,7 @@ def unfolding_weights(k, R, U0, U, blocks):
     for my_ik, ik in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         for n in range(bands):
             my_w[my_ik, n] = sum(abs(sum(
-                np.dot(U0[ik, :, m].conj(), U[ik, blocks[ir], n])
+                np.dot(U0[ik, blocks0[ir], m].conj(), U[ik, blocks[ir], n])
                 * np.exp(1j * np.dot(k[ik], R[ir]))
                 for ir in range(len(R)))) ** 2
                 for m in range(bands0))
