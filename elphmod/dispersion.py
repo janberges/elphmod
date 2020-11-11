@@ -414,7 +414,7 @@ def map_dispersions(V1, V2):
 
     return np.reshape(mapping, shape[:-1])
 
-def unfolding_weights(k, R, U0, U, blocks0, blocks):
+def unfolding_weights(k, R, U0, U, blocks0, blocks, sgn=-1):
     """Calculate weights for "unfolding" of supercell dispersions.
 
     Parameters
@@ -434,6 +434,10 @@ def unfolding_weights(k, R, U0, U, blocks0, blocks):
         Mapping from indices of `R` to slices of `U0`.
     blocks : list of indexing objects
         Mapping from indices of `R` to slices of `U`.
+    sgn : int
+        Sign convention for Fourier transform in tight-binding model. The
+        default sign -1 is suitable for data from Wannier90 as provided by
+        `el.Model.H`. Other conventions [doi:10.26092/elib/250] require +1.
 
     Returns
     -------
@@ -455,7 +459,7 @@ def unfolding_weights(k, R, U0, U, blocks0, blocks):
         for n in range(bands):
             my_w[my_ik, n] = sum(abs(sum(
                 np.dot(U0[ik, blocks0[ir], m].conj(), U[ik, blocks[ir], n])
-                * np.exp(1j * np.dot(k[ik], R[ir]))
+                * np.exp(sgn * 1j * np.dot(k[ik], R[ir]))
                 for ir in range(len(R)))) ** 2
                 for m in range(bands0))
 
