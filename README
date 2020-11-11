@@ -1,20 +1,32 @@
-~ e l p h m o d ~
+# elphmod
 
-Python modules for electron-phonon models
+This is a collection of Python modules to handle electron-phonon models:
 
+* `el` - tight-binding models from Wannier90
+* `ph` - mass-spring models from Quantum ESPRESSO
+* `elph` - electron-phonon coupling from EPW
+* `elel` - Coulomb interaction from VASP
+* `MPI` - work distribution and shared memory
+* `bravais` - lattices, symmetries, and interpolation
+* `dispersion` - diagonalization on paths and meshes
+* `dos` - 2D tetrahedron methods
+* `diagrams` - susceptibilities, self-energies, etc.
+* `occupations` - step and delta smearing functions
+* `eliashberg` - parameters for McMillan's formula
+* `plot` - BZ plots, color models, and fatbands
+* `misc` - status bars etc.
 
-I n s t a l l a t i o n
+## Installation
 
 elphmod depends on the Python packages listed in the file "requirements.txt".
 One way to install them is inside a virtual environment:
 
-    $ python3 -m venv elphmod.venv
-    $ source elphmod.venv/bin/activate
-    $ pip3 install -r requirements.txt
+    python3 -m venv elphmod.venv
+    source elphmod.venv/bin/activate
+    pip3 install -r requirements.txt
 
+## Examples
 
-E x a m p l e s
-
-    $ cd examples
-    $ mpirun python3 electrons.py
-    $ mpirun python3 phonons.py
+    cd examples
+    mpirun python3 electrons.py
+    mpirun python3 phonons.py
