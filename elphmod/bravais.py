@@ -3,6 +3,7 @@
 from __future__ import division
 
 import numpy as np
+import sys
 
 from . import MPI
 comm = MPI.comm
@@ -42,10 +43,12 @@ def translations(angle=120, angle0=0):
     angle : float
         Angle between first and second vector in degrees.
 
-        VALUE  LATTICE
-           60  hexagonal
-           90  square
-          120  hexagonal (ibrav = 4 in Quantum ESPRESSO)
+        .. code-block:: text
+
+            VALUE  LATTICE
+               60  hexagonal
+               90  square
+              120  hexagonal (ibrav = 4 in Quantum ESPRESSO)
 
     angle0 : float
         Angle between x axis and first vector in degrees.
@@ -334,25 +337,29 @@ def complete_k(wedge, nq):
 def stack(*points, **kwargs):
     """Minimize distance of points on periodic axis via full-period shifts.
 
+    Example:
+
+    .. code-block:: python
+
+        >>> stack(3, 5, 9, 12, period=10)
+        [13, 15, 9, 12]
+
+    .. code-block:: text
+
+         In: ... | ox x   x| xo o   o| oo o   o| ...
+        Out: ... | oo o   x| xx x   o| oo o   o| ...
+
     Parameters
     ----------
     *points
         Points on periodic axis.
     period : float
-        Period of axis. Specified via **kwargs for Python-2 compatibility.
+        Period of axis. Specified via `**kwargs` for Python-2 compatibility.
 
     Returns
     -------
     ndarray
         Points equivalent to input, with minimal distance on non-periodic axis.
-
-    Example
-    -------
-    >>> stack(3, 5, 9, 12, period=10)
-    [13, 15, 9, 12]
-
-     In: ... | ox x   x| xo o   o| oo o   o| ...
-    Out: ... | oo o   x| xx x   o| oo o   o| ...
     """
     period = kwargs.get('period', 2 * np.pi)
 
@@ -378,7 +385,8 @@ def stack(*points, **kwargs):
 
     return min(stackings, key=np.std)
 
-stack = np.vectorize(stack)
+if 'sphinx' not in sys.modules:
+    stack = np.vectorize(stack)
 
 def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
     """Perform linear interpolation on triangular or rectangular lattice.

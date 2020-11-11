@@ -9,9 +9,13 @@ comm = MPI.comm
 info = MPI.info
 
 def susceptibility(e, kT=0.025, eta=1e-10, occupations=occupations.fermi_dirac):
-    """Calculate real part of static electronic susceptibility.
+    r"""Calculate real part of static electronic susceptibility.
 
-        chi(q) = 2/N sum[k] [f(k+q) - f(k)] / [e(k+q) - e(k) + i eta]
+    .. math::
+
+        \chi_{\vec q} = \frac 2 N \sum_{\vec k} \frac
+            {f(\epsilon_{\vec k + \vec q}) - f(\epsilon_{\vec k})}
+            {\epsilon_{\vec k + \vec q} - \epsilon_{\vec k} + \I \eta}
 
     The resolution in q is limited by the resolution in k.
 
@@ -60,9 +64,12 @@ def susceptibility(e, kT=0.025, eta=1e-10, occupations=occupations.fermi_dirac):
     return calculate_susceptibility
 
 def susceptibility2(e, kT=0.025, nmats=1000, hyb_width=1.0, hyb_height=0.0):
-    """Calculate the Lindhardt bubble using the Green's functions explicitly.
+    r"""Calculate the Lindhardt bubble using the Green's functions explicitly.
 
-        chi = beta/4 - 1/beta sum[GG - 1/(i nu)^2]
+    .. math::
+
+        \chi = \frac \beta 4 - \frac 1 \beta
+            \sum_n G(\nu_n) - \frac 1 {(\I \nu_n)^2}
 
     Only omega = 0 (static) calculation is performed.
 
@@ -131,11 +138,18 @@ def susceptibility2(e, kT=0.025, nmats=1000, hyb_width=1.0, hyb_height=0.0):
 
 def polarization(e, c, kT=0.025, eps=1e-15, subspace=None,
         occupations=occupations.fermi_dirac):
-    """Calculate RPA polarization in orbital basis (density-density).
+    r"""Calculate RPA polarization in orbital basis (density-density).
 
-        Pi(q, a, b) = 2/N sum[k, n, m]
-            <k+q m|k+q a> <k a|k n> <k n|k b> <k+q b|k+q m>
-            [f(k+q, m) - f(k, n)] / [e(k+q, m) - e(k, n)]
+    .. math::
+
+        \Pi_{\vec q \alpha \beta} = \frac 2 N \sum_{\vec k m n}
+            \bracket{\vec k + \vec q m}{\vec k + \vec q \alpha}
+            \bracket{\vec k \alpha}{\vec k n}
+            \frac
+                {f(\epsilon_{\vec k + \vec q m}) - f(\epsilon_{\vec k n})}
+                {\epsilon_{\vec k + \vec q m} - \epsilon_{\vec k n}}
+            \bracket{\vec k n}{\vec k \beta}
+            \bracket{\vec k + \vec q \beta}{\vec k + \vec q m}
 
     The resolution in q is limited by the resolution in k.
 
@@ -241,10 +255,14 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15,
         occupations=occupations.fermi_dirac, fluctuations=False, Delta=None,
         Delta_diff=False, Delta_occupations=occupations.gauss, Delta_kT=0.025,
         comm=comm):
-    """Calculate phonon self-energy.
+    r"""Calculate phonon self-energy.
 
-        Pi(q, nu) = 2/N sum[k, m, n] |g(q, nu, k, m, n)|^2
-            [f(k+q, m) - f(k, n)] / [e(k+q, m) - e(k, n)]
+    .. math::
+
+        \Pi_{\vec q \nu} = \frac 2 N \sum_{\vec k m n}
+            |g_{\vec q \nu \vec k m n}|^2 \frac
+                {f(\epsilon_{\vec k + \vec q m}) - f(\epsilon_{\vec k n})}
+                {\epsilon_{\vec k + \vec q m} - \epsilon_{\vec k n}}
 
     Parameters
     ----------
@@ -460,10 +478,15 @@ def phonon_self_energy2(q, e, g2, kT=0.025, nmats=1000, hyb_width=1.0,
 
 def renormalize_coupling(q, e, g, W, U, nbnd_sub=None, kT=0.025, eps=1e-15,
         occupations=occupations.fermi_dirac, status=True):
-    """Calculate renormalized electron-phonon coupling.
+    r"""Calculate renormalized electron-phonon coupling.
 
-    g'(k, q, i, x) = g(k, q, i, x) + 2/N sum[k'] g(k', q, i, x)
-        [f(k'+q) - f(k')] / [e(k'+q) - e(k')] W(k, k', q)
+    .. math::
+
+        \tilde g_{\vec k \vec q i x} = g_{\vec k \vec q i x}
+            + \frac 2 N \sum_{\vec k'} g_{\vec k' \vec q i x} \frac
+                {f(\epsilon_{\vec k' + \vec q}) - f(\epsilon_{\vec k'})}
+                {\epsilon_{\vec k' + \vec q} - \epsilon_{\vec k'}}
+            W_{\vec k \vec k' \vec q}
 
     Parameters
     ----------
@@ -775,24 +798,45 @@ def double_fermi_surface_average(q, e, g2, kT=0.025,
 
 def triangle(q1, q2, q3, e, g1, g2, g3, kT=0.025, eps=1e-14,
         occupations=occupations.fermi_dirac, comm=comm):
-    """Calculate triangle diagram.
+    r"""Calculate triangle diagram.
 
-        sum[k a b c] g*(q u k b a) g(q' v k c a) g(q-q' v k+q' b c)
-              e(k a)    [f(k+q b)  - f(k+q' c)]   / [e(k+q b)  - e(k+q' c)]
-            + e(k+q b)  [f(k+q' c) - f(k a)   ]  /  [e(k+q' c) - e(k a)   ]
-            + e(k+q' c) [f(k a)    - f(k+q b) ] /   [e(k a)    - e(k+q b) ]
+    .. math::
 
-               q u
-                o
-               / \
-              /   \
-             /     \
-       k a  v       ^  k+q b
-           /         \
-          /           \
-         /             \
-        o------->-------o
-    q' v     k+q' c      q-q' v
+        \chi_{\vec q \mu \vec q' \nu}
+            &= \sum_{\vec k \alpha \beta \gamma} \frac
+            {
+                \epsilon_{\vec k \alpha}
+                    (f_{\vec k + \vec q \beta} - f_{\vec k + \vec q' \gamma})
+                + \epsilon_{\vec k + \vec q \beta}
+                    (f_{\vec k + \vec q' \gamma} - f_{\vec k \alpha})
+                + \epsilon_{\vec k + \vec q' \gamma}
+                    (f_{\vec k \alpha} - f_{\vec k + \vec q \beta})
+            }{
+                (\epsilon_{\vec k + \vec q \beta}
+                    - \epsilon_{\vec k + \vec q' \gamma})
+                (\epsilon_{\vec k + \vec q' \gamma}
+                    - \epsilon_{\vec k \alpha})
+                (\epsilon_{\vec k \alpha}
+                    - \epsilon_{\vec k + \vec q \beta})
+            }
+            \\ &\times
+            g^*_{\vec q \mu \vec k \beta \alpha}
+            g_{\vec q' \nu \vec k \gamma \alpha}
+            g_{\vec q - \vec q' \nu \vec k + \vec q' \beta \gamma}
+
+    .. code-block:: text
+
+                   q u
+                    o
+                   / \
+                  /   \
+                 /     \
+           k a  v       ^  k+q b
+               /         \
+              /           \
+             /             \
+            o------->-------o
+        q' v     k+q' c      q-q' v
 
     Parameters
     ----------

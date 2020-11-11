@@ -179,6 +179,12 @@ class Model(object):
         self.q = None
 
     def sample(self, *args, **kwargs):
+        """Sample coupling.
+
+        See also
+        --------
+        sample
+        """
         return sample(g=self.g, *args, **kwargs)
 
 def sample(g, q, nk, U=None, u=None,

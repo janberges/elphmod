@@ -351,6 +351,8 @@ class Color(object):
 
     Colors can be mixed:
 
+    .. code-block:: python
+
         red = Color(255, 0, 0, 'RGB')
         green = Color(120, 1, 255, 'HSV')
         yellow = (red + green) / 2
@@ -432,6 +434,8 @@ def colormap(*args):
     used for NaNs and beyond the outmost points where colors have been defined.
 
     Examples:
+
+    .. code-block::
 
         bluebrown = colormap( # PRB 101, 155107 (2020)
             (0, Color(0.0, 1, 255, 'PSV'), np.sqrt),

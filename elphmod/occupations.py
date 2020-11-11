@@ -2,6 +2,7 @@
 
 import math
 import numpy as np
+import sys
 
 from . import misc
 kB = misc.kB
@@ -31,7 +32,8 @@ def gauss(x):
 
     return 0.5 * (1 - math.erf(x))
 
-gauss = np.vectorize(gauss)
+if 'sphinx' not in sys.modules:
+    gauss = np.vectorize(gauss)
 
 def gauss_delta(x):
     """Calculate negative derivative of Gaussian step function."""
@@ -41,27 +43,31 @@ def gauss_delta(x):
 gauss.delta = gauss_delta
 
 def methfessel_paxton_general(x, N=0):
-    """Calculate Methfessel-Paxton step function and its negative derivative.
+    r"""Calculate Methfessel-Paxton step function and its negative derivative.
 
     From Phys. Rev. B 40, 3616 (1989):
 
-        S(0, x) = 1/2 [1 - erf(x)]
-        S(N, x) = S(0, x) + sum[n = 1, N] A(n) H(2 n - 1, x) exp(-x^2)
-        D(N, x) = -S'(N, x) = sum[n = 0, N] A(n) H(2 n, x) exp(-x^2)
-        A(n) = (-1)^n / [sqrt(pi) n! 4^n]
+    .. math::
+
+        S_0(x) &= \frac {1 - erf(x)} 2 \\
+        S_N(x) &= S_0(x) + \sum_{n = 1}^N A_n H_{2 n - 1}(x) \exp(-x^2) \\
+        D_N(x) &= -S'(N, x) = \sum{n = 0}^N A_n H_{2 n}(x) \exp(-x^2) \\
+        A_n &= \frac{(-1)^n}{\sqrt \pi n! 4^n}
 
     Hermite polynomials:
 
-        H(0,     x) = 1
-        H(1,     x) = 2 x
-        H(n + 1, x) = 2 x H(n, x) - 2 n H(n - 1, x)
+    .. math::
+
+        H_0(x) &= 1 \\
+        H_1(x) &= 2 x \\
+        H_{n + 1}(x) &= 2 x H_n(x) - 2 n H_{n - 1}(x) \\
 
     For N = 0, the Gaussian step function is returned.
 
     This routine has been adapted from Quantum ESPRESSO:
 
-         Step function: Modules/wgauss.f90
-        Delta function: Modules/w0gauss.f90
+    * Step function: Modules/wgauss.f90
+    * Delta function: Modules/w0gauss.f90
     """
     S = gauss(x)
     D = gauss_delta(x)
@@ -90,7 +96,8 @@ def methfessel_paxton_general(x, N=0):
 
     return S, D
 
-methfessel_paxton_general = np.vectorize(methfessel_paxton_general)
+if 'sphinx' not in sys.modules:
+    methfessel_paxton_general = np.vectorize(methfessel_paxton_general)
 
 def methfessel_paxton(x):
     """Calculate first-order Methfessel-Paxton step function."""
@@ -128,7 +135,8 @@ def fermi_dirac_matsubara(x, nmats=1000):
 
     return 0.5 + 2 * np.sum(1.0 / (inu - x)).real
 
-fermi_dirac_matsubara = np.vectorize(fermi_dirac_matsubara)
+if 'sphinx' not in sys.modules:
+    fermi_dirac_matsubara = np.vectorize(fermi_dirac_matsubara)
 
 def fermi_dirac_matsubara_delta(x, nmats=1000):
     """Calculate negative derivative of Fermi function as Matsubara sum."""
@@ -137,7 +145,9 @@ def fermi_dirac_matsubara_delta(x, nmats=1000):
 
     return -2 * np.sum(1.0 / (inu - x) ** 2).real
 
-fermi_dirac_matsubara_delta = np.vectorize(fermi_dirac_matsubara_delta)
+if 'sphinx' not in sys.modules:
+    fermi_dirac_matsubara_delta = np.vectorize(fermi_dirac_matsubara_delta)
+
 fermi_dirac_matsubara.delta = fermi_dirac_matsubara_delta
 
 if __name__ == '__main__':

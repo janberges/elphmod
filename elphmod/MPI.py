@@ -55,25 +55,30 @@ def shared_array(shape, dtype=float, shared_memory=True, single_memory=False,
 
     Example:
 
-    # Set up huge array:
-    node, images, array = shared_array(2 ** 30, dtype=np.uint8)
+    .. code-block:: python
 
-    # Write data on one node:
-    if comm.rank == 0:
-        array[:] = 0
+        # Set up huge array:
+        node, images, array = shared_array(2 ** 30, dtype=np.uint8)
 
-    # Broadcast data to other nodes:
-    if node.rank == 0:
-        images.Bcast(array)
+        # Write data on one node:
+        if comm.rank == 0:
+            array[:] = 0
 
-    # Wait if node.rank != 0:
-    comm.Barrier()
-                               ______ ______
-                    Figure:   |_0,_0_|_4,_0_|
-                              |_1,_1_|_5,_1_|
-    comm.rank and node.rank   |_2,_2_|_6,_2_|
-    on machine with 2 nodes   |_3,_3_|_7,_3_|
-    with 4 processors each.    node 1 node 2
+        # Broadcast data to other nodes:
+        if node.rank == 0:
+            images.Bcast(array)
+
+        # Wait if node.rank != 0:
+        comm.Barrier()
+
+    .. code-block:: text
+
+                                   ______ ______
+                        Figure:   |_0,_0_|_4,_0_|
+                                  |_1,_1_|_5,_1_|
+        comm.rank and node.rank   |_2,_2_|_6,_2_|
+        on machine with 2 nodes   |_3,_3_|_7,_3_|
+        with 4 processors each.    node 1 node 2
 
     Because of the sorting ``key=comm.rank`` in the split functions below,
     ``comm.rank == 0`` is equivalent to ``node.rank == images.rank == 0``.

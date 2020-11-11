@@ -6,13 +6,15 @@ from . import misc, MPI, occupations
 comm = MPI.comm
 
 def hexDOS(energies):
-    """Calculate DOS from energies on triangular mesh (2D tetrahedron method).
+    r"""Calculate DOS from energies on triangular mesh (2D tetrahedron method).
 
     Integration over all energies yields unity.
 
     Derivation: The density of states can be expressed as
 
-        DOS(E) = 1/V integral[W(k) = E] dk / |grad W(k)|,
+    .. math::
+
+        \rho(E) = \frac 1 V \int_{W(k) = E} \frac{\D k}{|\vec \nabla W(k)|},
 
     where V is the volume of a reciprocal unit cell, W(k) is the dispersion
     relation and the integral is over an iso-energy surface/line in k space.
@@ -22,18 +24,26 @@ def hexDOS(energies):
     on each of which the energy is interpolated linearly. On a triangle with the
     energies A, B, C at its corners, the gradient of the energy plane is
 
-        |grad W| = 2/[sqrt(3) a] sqrt(A^2 + B^2 + C^2 - AB - AC - BC).
+    .. math::
+
+        |\vec \nabla W| = \frac 2 {\sqrt 3 a}
+            \sqrt{A^2 + B^2 + C^2 - A B - A C - B C}.
 
     For the special case A < B < E < C, the reciprocal length of the E isoline
     within the triangle reads
 
-        dk = a sqrt(A^2 + B^2 + C^2 - AB - AC - BC) (C - E) / [(C - A) (C - B)].
+    .. math::
+
+        \D k = a \sqrt{A^2 + B^2 + C^2 - A B - A C - B C}
+            \frac{C - E}{(C - A) (C - B)}.
 
     Taking into account that V = N^2 a^2 sqrt(3)/2, one finds the contribution
     of this triangle to the density of states:
 
-        1/N^2 (C - E) / [(C - A) (C - B)]."""
+    .. math::
 
+        \frac 1 {N^2} \frac{C - E}{(C - A) (C - B)}.
+    """
     N, N = energies.shape
 
     triangles = [
@@ -75,14 +85,19 @@ def hexDOS(energies):
     return np.vectorize(DOS)
 
 def hexa2F(energies, couplings):
-    """Calculate a2F from energies and coupling.
+    r"""Calculate a2F from energies and coupling.
 
     Integration over all energies yields the arithmetic mean of the coupling.
 
     Note that it may be more convenient to calculate the mass renormalization
 
-        lambda[n] = integral[w > 0] dw 2w a^2F(w) / (w^2 + w[n]^2)
-                  = N(0) sum[q, nu] 2w[q, nu] g^2[q nu] / (w[q, nu]^2 + w[n]^2)
+    .. math::
+        \lambda_n = \int_0^\infty \D \omega
+            \frac{2 \omega \alpha^2 F(\omega)}
+                {\omega^2 + \omega_n^2}
+            = N(0) \sum_{\vec q \nu}
+            \frac{2 \omega_{\vec q \nu} g^2_{\vec q \nu}}
+                {\omega_{\vec q \nu}^2 + \omega_n^2}
 
     directly from energies and couplings, without integrating this function."""
 
@@ -133,9 +148,11 @@ def hexa2F(energies, couplings):
     return np.vectorize(a2F)
 
 def double_delta(x, y, f=None, eps=1e-7):
-    """Calculate double-delta integrals via 2D tetrahedron method .
+    r"""Calculate double-delta integrals via 2D tetrahedron method .
 
-        I(z) = 1/N sum[k] delta(x[k] - z) delta(y[k] - z) f[k]
+    .. math::
+        I(z) = \frac 1 N \sum_{\vec k}
+            \delta(x_{\vec k} - z) \delta(y_{\vec k} - z) f_{\vec k}
 
     Parameters
     ----------
@@ -149,6 +166,8 @@ def double_delta(x, y, f=None, eps=1e-7):
     function : float -> dict
         Intersection points of x, y = z isolines and corresponding weights as a
         function of z. The above double-delta integral I(z) can be calulated as:
+
+        .. code-block:: python
 
             I_z = sum(double_delta(x, y, f)(z).values())
     """
