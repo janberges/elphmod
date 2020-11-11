@@ -1,3 +1,6 @@
 *.png
 *.pyc
+*.venv
 __pycache__
+doctrees
+html
