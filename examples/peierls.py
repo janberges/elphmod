@@ -56,7 +56,7 @@ E, U = elphmod.dispersion.dispersion(H, K, vectors=True)
 
 w = np.ones(e.shape + (1,))
 W = elphmod.dispersion.unfolding_weights(k, R, u, U,
-    blocks0=[0, 0, 0], blocks=[0, 1, 2])
+    blocks0=[0, 0, 0], blocks=[0, 1, 2], sgn=+1)
 
 # plotting:
 
