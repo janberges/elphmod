@@ -350,6 +350,32 @@ def dispersion_full_nosym(matrix, size, *args, **kwargs):
 
     return out
 
+def sample(matrix, k):
+    """Calculate Hamiltonian or dynamical matrix for given k points.
+
+    Parameters
+    ----------
+    matrix : function
+        Matrix as a function of k.
+    k : list of tuples
+        k points.
+    """
+    sizes, bounds = MPI.distribute(len(k), bounds=True)
+
+    template = matrix()
+
+    my_matrix = np.empty((sizes[comm.rank],) + template.shape,
+        dtype=template.dtype)
+
+    for my_ik, ik in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
+        my_matrix[my_ik] = matrix(*k[ik])
+
+    matrix = np.empty((len(k),) + template.shape, dtype=template.dtype)
+
+    comm.Allgatherv(my_matrix, (matrix, sizes * template.size))
+
+    return matrix
+
 def band_order(v, V, by_mean=True, dv=float('inf'), status=True):
     """Sort bands by overlap of eigenvectors at neighboring k points."""
 
