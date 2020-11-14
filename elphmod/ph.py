@@ -27,18 +27,27 @@ class Model(object):
 
         return D.sum(axis=0)
 
-    def __init__(self, flfrc, apply_asr=False):
+    def __init__(self, flfrc=None, apply_asr=False,
+        phid=np.zeros((1, 1, 1, 1, 1, 3, 3)), amass=np.ones(1),
+        at=np.eye(3), tau=np.zeros((1, 3))):
         """Prepare interatomic force constants."""
 
-        if comm.rank == 0:
-            model = read_flfrc(flfrc)
-
-            # optionally, apply acoustic sum rule:
-
+        if flfrc is None:
             if apply_asr:
-                asr(model[0])
+                phid = phid.copy()
+                asr(phid)
+
+            model = phid, amass, at, tau
         else:
-            model = None
+            if comm.rank == 0:
+                model = read_flfrc(flfrc)
+
+                # optionally, apply acoustic sum rule:
+
+                if apply_asr:
+                    asr(model[0])
+            else:
+                model = None
 
         model = comm.bcast(model)
 
