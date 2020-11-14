@@ -491,8 +491,8 @@ def unfolding_weights(k, R, U0, U, blocks0, blocks, sgn=-1):
 
         status.update()
 
-    w = np.empty((len(k), bands, 1))
+    w = np.empty((len(k), bands))
 
-    comm.Gatherv(my_w, (w, sizes * bands))
+    comm.Allgatherv(my_w, (w, sizes * bands))
 
     return w
