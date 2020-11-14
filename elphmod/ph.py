@@ -464,11 +464,11 @@ def q2r(ph, D_irr, q_irr, nq, apply_asr=True):
         for phi in 0, 2 * np.pi / 3, 4 * np.pi / 3:
             for reflect in False, True:
                 q = np.dot(rotation(phi)[:2, :2], q0)
-                D = apply(D_irr[iq], rotation(phi, 3))
+                D = apply(D_irr[iq], rotation(phi, ph.nat))
 
                 if reflect:
                     q = np.dot(reflection()[:2, :2], q)
-                    D = apply(D, reflection(3))
+                    D = apply(D, reflection(ph.nat))
 
                 phase = np.exp(1j * np.array(np.dot(q0 - q, r)))
 
