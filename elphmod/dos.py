@@ -275,8 +275,7 @@ def isoline(energies):
     triangles = list(triangles)
     triangles = triangles[comm.rank::comm.size]
 
-    triangles = [(np.array(v), fun(*zip(*v)))
-        for v in triangles]
+    triangles = [(np.array(v), fun(*zip(*v))) for v in triangles]
 
     def FS(E):
         my_points = []
@@ -304,14 +303,15 @@ def isoline(energies):
                         tuple(i * (1 - beta) + k * beta),
                         ))
 
-        points = []
+        points = set()
 
         for group in comm.allgather(my_points):
-            points.extend(group)
+            points.update(group)
 
-        points = set(points)
-
-        contours = [list(points.pop())]
+        try:
+            contours = [list(points.pop())]
+        except KeyError:
+            return []
 
         while points:
             for point in points:
