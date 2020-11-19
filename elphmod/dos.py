@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from . import misc, MPI, occupations
+from . import bravais, misc, MPI, occupations
 comm = MPI.comm
 
 def hexDOS(energies):
@@ -228,3 +228,104 @@ def double_delta(x, y, f=None, eps=1e-7):
         return comm.bcast(unique)
 
     return dd
+
+def isoline(energies):
+    r"""Calculate isoline on triangular mesh (2D tetrahedron method)."""
+
+    N, N = energies.shape
+
+    triangles = set()
+
+    dk1 = [1, 0, -1, -1, 0, 1]
+    dk2 = [0, 1, 1, 0, -1, -1]
+
+    fun = bravais.linear_interpolation(energies)
+
+    for k1 in range(N):
+        for k2 in range(N):
+            images = bravais.to_Voronoi(k1, k2, N)
+
+            if len(images) == 1:
+                K1, K2 = images.pop()
+
+                for n in range(-1, 5):
+                    triangle = [
+                        (K1, K2),
+                        (K1 + dk1[n], K2 + dk2[n]),
+                        (K1 + dk1[n + 1], K2 + dk2[n + 1]),
+                        ]
+
+                    for n, (c1, c2) in enumerate(triangle):
+                        if c1 - c2 > N:
+                            triangle[n] = (c1 - 0.5, c2 + 0.5)
+                        elif c1 - c2 < -N:
+                            triangle[n] = (c1 + 0.5, c2 - 0.5)
+                        elif 2 * c1 + c2 > N:
+                            triangle[n] = (c1 - 0.5, c2)
+                        elif 2 * c1 + c2 < -N:
+                            triangle[n] = (c1 + 0.5, c2)
+                        elif c1 + 2 * c2 > N:
+                            triangle[n] = (c1, c2 - 0.5)
+                        elif c1 + 2 * c2 < -N:
+                            triangle[n] = (c1, c2 + 0.5)
+
+                    triangles.add(tuple(sorted(triangle,
+                        key=lambda x: (fun(*x), x))))
+
+    triangles = list(triangles)
+    triangles = triangles[comm.rank::comm.size]
+
+    triangles = [(np.array(v), fun(*zip(*v)))
+        for v in triangles]
+
+    def FS(E):
+        my_points = []
+
+        for (i, j, k), (A, B, C) in triangles:
+            if A < E <= B:
+                if E == B == C:
+                    my_points.append((tuple(j), tuple(k)))
+                else:
+                    alpha = (E - A) / (B - A)
+                    beta = (E - A) / (C - A)
+                    my_points.append((
+                        tuple(i * (1 - alpha) + j * alpha),
+                        tuple(i * (1 - beta) + k * beta),
+                        ))
+
+            elif B <= E < C:
+                if E == A == B:
+                    my_points.extend((tuple(i), (j)))
+                else:
+                    alpha = (E - B) / (C - B)
+                    beta = (E - A) / (C - A)
+                    my_points.append((
+                        tuple(j * (1 - alpha) + k * alpha),
+                        tuple(i * (1 - beta) + k * beta),
+                        ))
+
+        points = []
+
+        for group in comm.allgather(my_points):
+            points.extend(group)
+
+        points = set(points)
+
+        contours = [list(points.pop())]
+
+        while points:
+            for point in points:
+                if contours[-1][-1] in point:
+                    contours[-1].append(point[1 - point.index(contours[-1][-1])])
+                    points.remove(point)
+                    break
+                elif contours[-1][0] in point:
+                    contours[-1].insert(0, point[1 - point.index(contours[-1][0])])
+                    points.remove(point)
+                    break
+            else:
+                contours.append(list(points.pop()))
+
+        return [np.array(contour) / N for contour in contours]
+
+    return FS
