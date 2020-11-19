@@ -385,8 +385,6 @@ def stack(*points, **kwargs):
 
     return min(stackings, key=np.std)
 
-if 'sphinx' not in sys.modules:
-    stack = np.vectorize(stack)
 
 def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
     """Perform linear interpolation on triangular or rectangular lattice.
@@ -1065,6 +1063,26 @@ def GMKG(N=30, corner_indices=False, mesh=False, angle=60, straight=True,
         return np.array(path), x, [0, N1, N1 + N2, N1 + N2 + N3 - 1]
     else:
         return np.array(path), x
+
+def BZ(angle=120, angle0=0):
+    """Draw Brillouin zone outline."""
+
+    a1, a2 = translations(angle=angle, angle0=angle0)
+    b1, b2 = reciprocals(a1, a2)
+
+    if angle == 60:
+        K = [(1, 2), (-1, 1), (-2, -1), (-1, -2), (1, -1), (2, 1), (1, 2)]
+        outline = np.array([k1 * b1 + k2 * b2 for k1, k2 in K]) / 3
+
+    elif angle == 90:
+        M = [(1, 1), (-1, 1), (-1, -1), (1, -1), (1, 1)]
+        outline = np.array([k1 * b1 + k2 * b2 for k1, k2 in M])
+
+    elif angle == 120:
+        K = [(1, 1), (-1, 2), (-2, 1), (-1, -1), (1, -2), (2, -1), (1, 1)]
+        outline = np.array([k1 * b1 + k2 * b2 for k1, k2 in K]) / 3
+
+    return outline
 
 def read_pwi(pwi):
     """Read crystal structure from PW input file.

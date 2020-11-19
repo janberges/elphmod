@@ -36,6 +36,7 @@ if elphmod.MPI.comm.rank == 0:
 
     plt.contour(kx, ky, FS_kk, levels=[0.0], colors='k')
     plt.contour(kx, ky, FS_kq, levels=[0.0], colors='k')
+    plt.plot(*zip(*elphmod.bravais.BZ()), color='b')
 
     plt.plot(x, y, 'ob')
     plt.axis('image')
