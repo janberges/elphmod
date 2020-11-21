@@ -1099,34 +1099,68 @@ def read_pwi(pwi):
     """
     struct = dict()
 
-    with open(pwi) as lines:
-        for line in lines:
-            words = line.split()
+    if comm.rank == 0:
+        with open(pwi) as lines:
+            for line in lines:
+                words = line.split()
 
-            if not words:
-                continue
+                if not words:
+                    continue
 
-            key = words[0].lower()
+                key = words[0].lower()
 
-            if key in 'abc':
-                struct[key] = float(words[2])
+                if key in 'abc':
+                    struct[key] = float(words[2])
 
-            elif key == 'nat':
-                struct[key] = int(words[2])
+                elif key == 'nat':
+                    struct[key] = int(words[2])
 
-            elif key == 'atomic_positions':
-                struct['at'] = []
-                struct['r'] = np.empty((struct['nat'], 3))
+                elif key == 'atomic_positions':
+                    struct['at'] = []
+                    struct['r'] = np.empty((struct['nat'], 3))
 
-                for n in range(struct['nat']):
-                    words = next(lines).split()
+                    for n in range(struct['nat']):
+                        words = next(lines).split()
 
-                    struct['at'].append(words[0])
+                        struct['at'].append(words[0])
 
-                    for x in range(3):
-                        struct['r'][n, x] = float(words[1 + x])
+                        for x in range(3):
+                            struct['r'][n, x] = float(words[1 + x])
+    else:
+        struct = None
+
+    struct = comm.bcast(struct)
 
     return struct
+
+def write_pwi(pwi, struct):
+    """Write crystal structure to PW input file.
+
+    Parameters
+    ----------
+    pwi : str
+        File name.
+    struct : dict
+        Crystal structure.
+    """
+    if comm.rank != 0:
+        return
+
+    with open(pwi, 'w') as data:
+        data.write('&SYSTEM\n')
+
+        for key in 'a', 'b', 'c', 'nat':
+            if key in struct:
+                data.write('%3s = %.10g\n' % (key, struct[key]))
+
+        data.write('/\n')
+
+        data.write('ATOMIC_POSITIONS\n')
+
+        for X, (r1, r2, r3) in zip(struct['at'], struct['r']):
+            data.write('%2s %12.9f %12.9f %12.9f\n' % (X, r1, r2, r3))
+
+        data.write('/\n')
 
 def readPOSCAR(filename):
     """Read crystal structure from VASP input file.
