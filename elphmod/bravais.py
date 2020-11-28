@@ -985,8 +985,7 @@ def GMKG(N=30, corner_indices=False, mesh=False, angle=60, straight=True,
     ----------
     N : integer
         Number of mesh points per dimension if 'mesh' is True and `N` is a
-        multiple of 6. Otherwise the number of points between M (inclusively)
-        and K (exclusively).
+        multiple of 6. Otherwise the number of points per 2 pi / a.
     corner_indices : bool
         Return indices of corner/high-symmetry points?
     mesh : bool
