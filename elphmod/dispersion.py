@@ -14,9 +14,9 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
     ----------
     matrix : function
         Matrix to be diagonalized as a function of k in crystal coordinates with
-        period 2 pi.
+        period :math:`2 \pi`.
     k : list of 2-tuples
-        k points in crystal coordinates with period 2 pi.
+        k points in crystal coordinates with period :math:`2 \pi`.
     angle : float
         Angle between the axes of the reciprocal lattice.
     vectors : bool
@@ -328,7 +328,7 @@ def dispersion_full_nosym(matrix, size, *args, **kwargs):
 
     Use this routine to get eigenvectors less symmetric than the eigenvalues!
 
-    To do: The reshape part fails if `dispersion` returns a scalar."""
+    To do: The reshape part fails if :func:`dispersion` returns a scalar."""
 
     if comm.rank == 0:
         k = np.empty((size * size, 2))
@@ -450,8 +450,9 @@ def unfolding_weights(k, R, U0, U, blocks0, blocks, sgn=-1):
     R : list of d-tuples
         Positions of the unit cells in the supercell. The representation must
         be compatible with the k points: If `k` is given in crystal coordinates
-        with a period of 2 pi, `R` must be given in crystal coordinates with a
-        period of 1. `k` and `R` can also be defined in Cartesian coordinates.
+        with a period of :math:`2 \pi`, `R` must be given in crystal
+        coordinates with a period of 1. `k` and `R` can also be defined in
+        Cartesian coordinates.
     U0: ndarray
         Eigenvectors of the symmetric system.
     U: ndarray
@@ -461,9 +462,10 @@ def unfolding_weights(k, R, U0, U, blocks0, blocks, sgn=-1):
     blocks : list of indexing objects
         Mapping from indices of `R` to slices of `U`.
     sgn : int
-        Sign convention for Fourier transform in tight-binding model. The
-        default sign -1 is suitable for data from Wannier90 as provided by
-        `el.Model.H`. Other conventions [doi:10.26092/elib/250] require +1.
+        Sign convention for Fourier transform in tight-binding model.
+        The default sign ``-1`` is suitable for data from Wannier90 as provided
+        by :meth:`el.Model.H`.
+        `Other conventions <https://doi.org/10.26092/elib/250>`_ require ``+1``.
 
     Returns
     -------

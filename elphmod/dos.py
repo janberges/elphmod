@@ -16,29 +16,31 @@ def hexDOS(energies):
 
         \rho(E) = \frac 1 V \int_{W(k) = E} \frac{\D k}{|\vec \nabla W(k)|},
 
-    where V is the volume of a reciprocal unit cell, W(k) is the dispersion
-    relation and the integral is over an iso-energy surface/line in k space.
+    where :math:`V` is the volume of a reciprocal unit cell, :math:`W(k)` is
+    the dispersion relation and the integral is over an iso-energy surface/line
+    in k space.
 
     In the following, consider a two dimensional reciprocal unit cell which can
-    be divided into 2 x N x N equilateral triangles of reciprocal side length a,
-    on each of which the energy is interpolated linearly. On a triangle with the
-    energies A, B, C at its corners, the gradient of the energy plane is
+    be divided into :math:`2 \times N \times N` equilateral triangles of
+    reciprocal side length :math:`a`, on each of which the energy is
+    interpolated linearly. On a triangle with the energies :math:`A, B, C` at
+    its corners, the gradient of the energy plane is
 
     .. math::
 
         |\vec \nabla W| = \frac 2 {\sqrt 3 a}
             \sqrt{A^2 + B^2 + C^2 - A B - A C - B C}.
 
-    For the special case A < B < E < C, the reciprocal length of the E isoline
-    within the triangle reads
+    For the special case :math:`A < B < E < C`, the reciprocal length of the
+    :math:`E` isoline within the triangle reads
 
     .. math::
 
         \D k = a \sqrt{A^2 + B^2 + C^2 - A B - A C - B C}
             \frac{C - E}{(C - A) (C - B)}.
 
-    Taking into account that V = N^2 a^2 sqrt(3)/2, one finds the contribution
-    of this triangle to the density of states:
+    Taking into account that :math:`V = N^2 a^2 \sqrt 3 / 2`, one finds the
+    contribution of this triangle to the density of states:
 
     .. math::
 
@@ -164,8 +166,9 @@ def double_delta(x, y, f=None, eps=1e-7):
     Returns
     -------
     function : float -> dict
-        Intersection points of x, y = z isolines and corresponding weights as a
-        function of z. The above double-delta integral I(z) can be calulated as:
+        Intersection points of :math:`x, y = z` isolines and corresponding
+        weights as a function of :math:`z`. The above double-delta integral
+        :math:`I(z)` can be calulated as:
 
         .. code-block:: python
 

@@ -430,8 +430,9 @@ def colormap(*args):
     """Map interval [0, 1] to colors.
 
     Colors can be defined for an arbitrary number of points in the interval. In
-    between, colors are interpolated linearly. The color for the point `None` is
-    used for NaNs and beyond the outmost points where colors have been defined.
+    between, colors are interpolated linearly. The color for the point ``None``
+    is used for NaNs and beyond the outmost points where colors have been
+    defined.
 
     Examples:
 

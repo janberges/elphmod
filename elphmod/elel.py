@@ -23,7 +23,7 @@ def read_local_Coulomb_tensor(filename, no):
     return U
 
 def read_orbital_Coulomb_interaction(filename, nq, no, dd=False, skip=2):
-    """Read Coulomb interaction in orbital basis.."""
+    """Read Coulomb interaction in orbital basis."""
 
     if dd:
         U = np.empty((nq, nq, no, no), dtype=complex)
@@ -54,7 +54,7 @@ def read_orbital_Coulomb_interaction(filename, nq, no, dd=False, skip=2):
     return U
 
 def read_band_Coulomb_interaction(filename, nQ, nk, binary=False, share=False):
-    """Read Coulomb interaction for single band in band basis.."""
+    """Read Coulomb interaction for single band in band basis."""
 
     if share:
         node, images, U = MPI.shared_array((nQ, nk, nk, nk, nk), dtype=complex)
@@ -89,7 +89,7 @@ def read_band_Coulomb_interaction(filename, nQ, nk, binary=False, share=False):
     return U
 
 def write_band_Coulomb_interaction(filename, U, binary=False):
-    """Write Coulomb interaction for single band in band basis.."""
+    """Write Coulomb interaction for single band in band basis."""
 
     if comm.rank == 0:
         nQ, nk, nk, nk, nk = U.shape

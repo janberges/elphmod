@@ -36,7 +36,7 @@ class Model(object):
         self.size = self.data.shape[1]
 
 def read_hrdat(hrdat):
-    """Read '_hr.dat' file from Wannier90."""
+    """Read *_hr.dat* file from Wannier90."""
 
     if comm.rank == 0:
         data = open(hrdat)
@@ -92,7 +92,7 @@ def read_hrdat(hrdat):
     return cells, const
 
 def read_bands(filband):
-    """Read bands from 'filband' just like Quantum ESRESSO's 'plotband.x'."""
+    """Read bands from *filband* just like Quantum ESRESSO's ``plotband.x``."""
 
     if comm.rank == 0:
         data = open(filband)
@@ -139,7 +139,7 @@ def read_bands(filband):
     return k, x, bands
 
 def read_bands_plot(filbandgnu, bands):
-    """Read bands from 'filband.gnu' produced by Quantum ESPRESSO's 'bands.x'.
+    """Read bands from *filband.gnu* produced by Quantum ESPRESSO's ``bands.x``.
 
     Parameters
     ----------
@@ -170,7 +170,7 @@ def read_symmetry_points(bandsout):
     Parameters
     ----------
     bandsout : str
-        File with standard output from Quantum ESPRESSO's 'bands.x'.
+        File with standard output from Quantum ESPRESSO's ``bands.x``.
 
     Returns
     -------
@@ -187,7 +187,7 @@ def read_symmetry_points(bandsout):
     return points
 
 def read_atomic_projections(atomic_proj_xml, order=False, **order_kwargs):
-    """Read projected bands from 'outdir/prefix.save/atomic_proj.xml'."""
+    """Read projected bands from *outdir/prefix.save/atomic_proj.xml*."""
 
     if comm.rank == 0:
         data = open(atomic_proj_xml)

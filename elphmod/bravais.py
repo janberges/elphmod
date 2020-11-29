@@ -41,9 +41,7 @@ def translations(angle=120, angle0=0):
     Parameters
     ----------
     angle : float
-        Angle between first and second vector in degrees.
-
-        .. code-block:: text
+        Angle between first and second vector in degrees::
 
             VALUE  LATTICE
                60  hexagonal
@@ -76,7 +74,7 @@ def reciprocals(a1, a2, a3=None):
     Returns
     -------
     ndarray, ndarray
-        Translation vectors of reciprocal lattice (without 2 pi).
+        Translation vectors of reciprocal lattice (without :math:`2 \pi`).
     """
     if a3 is None:
         b1 = rotate(a2, -90 * deg)
@@ -162,10 +160,12 @@ def irreducibles(nk, angle=60):
 
         Of all equivalent points, the first occurrence in the sequence
 
-            (0, 0), (0, 1), ..., (0, nk - 1), (1, 0), (1, 1), ...
+        .. math::
 
-        is chosen. sorted(...) should yield the same irreducible q points as
-        used by Quantum ESPRESSO's PHonon code and found in the file 'fildyn0'.
+            (0, 0), (0, 1), \dots, (0, n_k - 1), (1, 0), (1, 1), \dots
+
+        is chosen. :func:`sorted` should yield the same irreducible q points as
+        used by Quantum ESPRESSO's PHonon code and found in the file *fildyn0*.
     """
     # set up sequence as described above:
 
@@ -408,8 +408,8 @@ def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
     Returns
     -------
     function
-        Interpolant for `data`. `linear_interpolation(data)(i, j)` yields the
-        same value as `data[i, j]`. Thus the data array is "generalized" with
+        Interpolant for `data`. ``linear_interpolation(data)(i, j)`` yields the
+        same value as ``data[i, j]``. Thus the data array is "generalized" with
         respect to fractional indices.
 
     See Also
@@ -529,13 +529,17 @@ def resize(data, shape=None, angle=60, axes=(0, 1), period=None):
     ----------
     shape : 2-tuple of ints
         New lattice shape. Defaults to the original shape.
-
-    For the other parameters see `linear_interpolation`.
+    shape, angle, axes, period
+        Parameters for :func:`linear_interpolation`.
 
     Returns
     -------
     ndarray
         Resized data array.
+
+    See Also
+    --------
+    linear_interpolation
     """
     # move lattice axes to the front:
 
@@ -680,21 +684,21 @@ def wigner_seitz(nk, angle=120, dk1=0.0, dk2=0.0, epsilon=0.0):
     return irvec, ndegen, wslen
 
 def wigner_seitz_x(x, nk, at=None, tau=None, epsilon=1e-8):
-    """Emulate the EPW subroutine 'wigner_seitz{x}' in 'wigner.f90'.
+    """Emulate the EPW subroutine *wigner_seitz{x}* in *wigner.f90*.
 
     Parameters
     ----------
     x : str
         Type of Wigner-Seitz cell:
 
-            'k': cell-centered
-            'q': bond-centered
-            'g': atom-centered
+        * ``'k'``: cell-centered
+        * ``'q'``: bond-centered
+        * ``'g'``: atom-centered
 
     nk : int
         Number of points per dimension.
     at, tau : ndarray
-        Geometry as returned by `ph.read_flfrc` and `ph.model`.
+        Geometry as returned by :func:`ph.read_flfrc` and :func:`ph.model`.
     epsilon : float
         Maxmium absolute difference of "equal" floats.
 
@@ -833,16 +837,16 @@ def Fourier_interpolation(data, angle=60, sign=-1, hr_file=None, function=True):
     sign : number
         Sign in exponential function in first Fourier transform.
     hr_file : str
-        Filename. If given, save "_hr.dat" file as produced by Wannier90.
+        Filename. If given, save *_hr.dat* file as produced by Wannier90.
     function : bool
         Return interpolation function or parameter dictionary?
 
     Returns
     -------
     function
-        Interpolant for `data`. `Fourier_interpolation(data)(i, j)` yields the
-        same value as `data[i, j]`. Thus the data array is "generalized" with
-        respect to fractional indices.
+        Interpolant for `data`. ``Fourier_interpolation(data)(i, j)`` yields
+        the same value as ``data[i, j]``. Thus the data array is "generalized"
+        with respect to fractional indices.
 
     See Also
     --------
@@ -936,12 +940,12 @@ def path(points, b, N=30):
     b : ndarray
         List of reciprocal lattice vectors.
     N : integer
-        Number of points per 2 pi / a.
+        Number of points per :math:`2 \pi / a`.
 
     Returns
     -------
     ndarray
-        Points in crystal coordinates with period 2 pi.
+        Points in crystal coordinates with period :math:`2 \pi`.
     ndarray
         Cumulative path distance.
     list, optional
@@ -975,17 +979,17 @@ def path(points, b, N=30):
 
 def GMKG(N=30, corner_indices=False, mesh=False, angle=60, straight=True,
         lift_degen=True):
-    """Generate path Gamma-M-K-Gamma through Brillouin zone.
+    """Generate path |Ggr|-M-K-|Ggr| through Brillouin zone.
 
     (This function should be replaced by a more general one to produce arbitrary
     paths through both triangular and rectangular Brillouin zones, where special
-    points can be defined using labels such as "G", "M", or "K".)
+    points can be defined using labels such as ``'G'``, ``'M'``, or ``'K'``.)
 
     Parameters
     ----------
     N : integer
-        Number of mesh points per dimension if 'mesh' is True and `N` is a
-        multiple of 6. Otherwise the number of points per 2 pi / a.
+        Number of mesh points per dimension if `mesh` is ``True`` and `N` is a
+        multiple of 6. Otherwise the number of points per :math:`2 \pi / a`.
     corner_indices : bool
         Return indices of corner/high-symmetry points?
     mesh : bool
@@ -996,12 +1000,12 @@ def GMKG(N=30, corner_indices=False, mesh=False, angle=60, straight=True,
         Cross K in a straight line? In this case, the path does not enclose the
         irreducible wedge.
     lift_degen : bool
-        Lift degeneracy at K by infinitesimal shift toward Gamma?
+        Lift degeneracy at K by infinitesimal shift toward |Ggr|?
 
     Returns
     -------
     ndarray
-        Points in crystal coordinates with period 2 pi.
+        Points in crystal coordinates with period :math:`2 \pi`.
     ndarray
         Cumulative path distance.
     list, optional

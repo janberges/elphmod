@@ -62,7 +62,7 @@ def methfessel_paxton_general(x, N=0):
         H_1(x) &= 2 x \\
         H_{n + 1}(x) &= 2 x H_n(x) - 2 n H_{n - 1}(x) \\
 
-    For N = 0, the Gaussian step function is returned.
+    For ``N = 0``, the Gaussian step function is returned.
 
     This routine has been adapted from Quantum ESPRESSO:
 
@@ -116,8 +116,9 @@ def lorentz(x):
 
     Used to simulate the influence of a wide box-shaped hybridization function
     at low temperatures. Formula derived by Tim O. Wehling and Erik G.C.P. van
-    Loon. Here, we have x = epsilon / h with the height h of the hybridization,
-    instead of x = epsilon / (kB T) with the temperature T.
+    Loon. Here, we have :math:`x = \epsilon / h` with the height :math:`h` of
+    the hybridization, instead of :math:`x = \epsilon / k T` with the
+    temperature :math:`T`.
     """
     return 0.5 - np.arctan(x / np.pi) / np.pi
 

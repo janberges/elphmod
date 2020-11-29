@@ -28,12 +28,13 @@ def susceptibility(e, kT=0.025, eta=1e-10, occupations=occupations.fermi_dirac):
     eta : float
         Absolute value of "infinitesimal" imaginary number in denominator.
     occupations : function
-        Particle distribution as a function of energy divided by kT.
+        Particle distribution as a function of energy divided by `kT`.
 
     Returns
     -------
     function
-        Static electronic susceptibility as a function of q1, q2 in [0, 2pi).
+        Static electronic susceptibility as a function of :math:`q_1, q_2 \in
+        [0, 2 \pi)`.
     """
     nk, nk = e.shape
 
@@ -73,7 +74,7 @@ def susceptibility2(e, kT=0.025, nmats=1000, hyb_width=1.0, hyb_height=0.0):
 
     Only omega = 0 (static) calculation is performed.
 
-    For the treatment of the 1/inu tail, see:
+    For the treatment of the :math:`1 / \I \nu_n` tail, see:
 
         Appendix B of the thesis of Hartmut Hafermann.
 
@@ -99,7 +100,8 @@ def susceptibility2(e, kT=0.025, nmats=1000, hyb_width=1.0, hyb_height=0.0):
     Returns
     -------
     function
-        Static electronic susceptibility as a function of q1, q2 in [0, 2pi).
+        Static electronic susceptibility as a function of :math:`q_1, q_2 \in
+        [0, 2 \pi)`.
     """
     nk, nk = e.shape
 
@@ -153,9 +155,9 @@ def polarization(e, c, kT=0.025, eps=1e-15, subspace=None,
 
     The resolution in q is limited by the resolution in k.
 
-    If 'subspace' is given, a cRPA calculation is performed. 'subspace' must be
-    a boolean array with the same shape as 'e', where 'True' marks states of the
-    target subspace, interactions between which are excluded.
+    If `subspace` is given, a cRPA calculation is performed. `subspace` must be
+    a boolean array with the same shape as `e`, where ``True`` marks states of
+    the target subspace, interactions between which are excluded.
 
     Parameters
     ----------
@@ -171,12 +173,13 @@ def polarization(e, c, kT=0.025, eps=1e-15, subspace=None,
     subspace : ndarray or None
         Boolean array to select k points and/or bands in cRPA target subspace.
     occupations : function
-        Particle distribution as a function of energy divided by kT.
+        Particle distribution as a function of energy divided by `kT`.
 
     Returns
     -------
     function
-        RPA polarization in orbital basis as a function of q1, q2 in [0, 2pi).
+        RPA polarization in orbital basis as a function of :math:`q_1, q_2 \in
+        [0, 2 \pi)`.
     """
     cRPA = subspace is not None
 
@@ -267,7 +270,8 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15,
     Parameters
     ----------
     q : list of 2-tuples
-        Considered q points defined via crystal coordinates q1, q2 in [0, 2pi).
+        Considered q points defined via crystal coordinates :math:`q_1, q_2 \in
+        [0, 2 \pi)`.
     e : ndarray
         Electron dispersion on uniform mesh. The Fermi level must be at zero.
     g2 : ndarray
@@ -277,7 +281,7 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15,
     eps : float
         Smallest allowed absolute value of divisor.
     occupations : function
-        Particle distribution as a function of energy divided by kT.
+        Particle distribution as a function of energy divided by `kT`.
     fluctuations : bool
         Return integrand too (for fluctuation analysis)?
     Delta : float
@@ -405,7 +409,8 @@ def phonon_self_energy2(q, e, g2, kT=0.025, nmats=1000, hyb_width=1.0,
     Parameters
     ----------
     q : list of 2-tuples
-        Considered q points defined via crystal coordinates q1, q2 in [0, 2pi).
+        Considered q points defined via crystal coordinates :math:`q_1, q_2 \in
+        [0, 2 \pi)`.
     e : ndarray
         Electron dispersion on uniform mesh. The Fermi level must be at zero.
     g2 : ndarray
@@ -491,7 +496,8 @@ def renormalize_coupling(q, e, g, W, U, nbnd_sub=None, kT=0.025, eps=1e-15,
     Parameters
     ----------
     q : list of 2-tuples
-        Considered q points defined via crystal coordinates q1, q2 in [0, 2pi).
+        Considered q points defined via crystal coordinates :math:`q_1, q_2 \in
+        [0, 2 \pi)`.
     e : ndarray
         Electron dispersion on uniform mesh. The Fermi level must be at zero.
     g : ndarray
@@ -507,7 +513,7 @@ def renormalize_coupling(q, e, g, W, U, nbnd_sub=None, kT=0.025, eps=1e-15,
     eps : float
         Smallest allowed absolute value of divisor.
     occupations : function
-        Particle distribution as a function of energy divided by kT.
+        Particle distribution as a function of energy divided by `kT`.
     status : bool
         Print status messages during the calculation?
 
@@ -606,7 +612,7 @@ def renormalize_coupling_orbital(W, *args, **kwargs):
     W : ndarray
         Dressed Coulomb interaction in orbital basis.
     *args, **kwargs
-        Parameters passed to `g_Pi`.
+        Parameters passed to :func:`g_Pi`.
 
     Returns
     -------
@@ -633,7 +639,8 @@ def g_Pi(q, e, g, U, kT=0.025, eps=1e-15,
     Parameters
     ----------
     q : list of 2-tuples
-        Considered q points defined via crystal coordinates q1, q2 in [0, 2pi).
+        Considered q points defined via crystal coordinates :math:`q_1, q_2 \in
+        [0, 2 \pi)`.
     e : ndarray
         Electron dispersion on uniform mesh. The Fermi level must be at zero.
     g : ndarray
@@ -645,7 +652,7 @@ def g_Pi(q, e, g, U, kT=0.025, eps=1e-15,
     eps : float
         Smallest allowed absolute value of divisor.
     occupations : function
-        Particle distribution as a function of energy divided by kT.
+        Particle distribution as a function of energy divided by `kT`.
     dd : bool
         Consider only density-density terms?
     status : bool
@@ -737,7 +744,8 @@ def double_fermi_surface_average(q, e, g2, kT=0.025,
     Parameters
     ----------
     q : list of 2-tuples
-        Considered q points defined via crystal coordinates q1, q2 in [0, 2pi).
+        Considered q points defined via crystal coordinates :math:`q_1, q_2 \in
+        [0, 2 \pi)`.
     e : ndarray
         Electron dispersion on uniform mesh. The Fermi level must be at zero.
     g2 : ndarray
@@ -745,7 +753,7 @@ def double_fermi_surface_average(q, e, g2, kT=0.025,
     kT : float
         Smearing temperature.
     occupations : function
-        Particle distribution as a function of energy divided by kT.
+        Particle distribution as a function of energy divided by `kT`.
 
     Returns
     -------
@@ -841,8 +849,8 @@ def triangle(q1, q2, q3, e, g1, g2, g3, kT=0.025, eps=1e-14,
     Parameters
     ----------
     q1, q2, q3 : 2-tuples
-        q points of the vertices in crystal coordinates q1, q2 in [0, 2pi).
-        In the above diagram, q1 = q, q2 = q', and q3 = q - q'.
+        q points of the vertices in crystal coordinates :math:`q_1, q_2 \in [0,
+        2 \pi)`.  In the above diagram, :math:`q_1 = q, q_2 = q', q3 = q - q'`.
     e : ndarray
         Electron dispersion on uniform mesh. The Fermi level must be at zero.
     g1, g2, g3 : ndarray
@@ -852,7 +860,7 @@ def triangle(q1, q2, q3, e, g1, g2, g3, kT=0.025, eps=1e-14,
     eps : float
         Smallest allowed absolute value of divisor.
     occupations : function
-        Particle distribution as a function of energy divided by kT.
+        Particle distribution as a function of energy divided by `kT`.
 
     Returns
     -------

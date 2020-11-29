@@ -14,12 +14,16 @@ mathjax_config = {
             'D': [r'\mathrm{d}'],
             'E': [r'\mathrm{e}'],
             'I': [r'\mathrm{i}'],
-            'bra': [r'\rangle#1|',1],
+            'bra': [r'\langle#1|',1],
             'bracket': [r'\langle#1|#2\rangle',2],
             'ket': [r'|#1\rangle',1],
             },
         },
     }
+
+rst_epilog = '''
+.. include:: <isogrk1.txt>
+'''
 
 html_theme = 'classic'
 

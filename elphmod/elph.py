@@ -8,20 +8,25 @@ comm = MPI.comm
 class Model(object):
     """Localized model for electron-phonon coupling.
 
-    The methods of this class follow 'wan2bloch.f90' of EPW 5.0.
+    The methods of this class follow *wan2bloch.f90* of EPW 5.0.
     """
     def g(self, q1=0, q2=0, q3=0, k1=0, k2=0, k3=0, elbnd=False, phbnd=False,
             broadcast=True, comm=comm):
-        """Calculate electron-phonon coupling for arbitary points k and k + q.
+        r"""Calculate electron-phonon coupling for arbitary points k and k + q.
 
-        g[nu, m, n] = hbar/sqrt(M) <k+q m|dV/du(nu)|k n>
+        .. math::
+
+            \sqrt{2 \omega} g_{\nu m n} = \frac \hbar {\sqrt M}
+                \bra{\vec k + \vec q m}
+                    \frac{\partial V}{\partial u_\nu}
+                \ket{\vec k n}
 
         Parameters
         ----------
         q1, q2, q2 : float
-            q point in crystal coordinates with period 2 pi.
+            q point in crystal coordinates with period :math:`2 \pi`.
         k1, k2, k3 : float
-            Ingoing k point in crystal coordinates with period 2 pi.
+            Ingoing k point in crystal coordinates with period :math:`2 \pi`.
         elbnd : bool
             Transform to electronic band basis? Provided for convenience. Since
             the Hamiltonian is diagonalized on the fly for each requested matrix
@@ -33,8 +38,8 @@ class Model(object):
             matrix element, this option lacks efficiency and control of complex
             phases. Consider the method `sample` of this class instead.
         broadcast : bool
-            Broadcast result to all processors? If False, returns None on all
-            but the first processor.
+            Broadcast result to all processors? If ``False``, returns ``None``
+            on all but the first processor.
         comm : MPI communicator
             Group of processors running this function (for parallelization of
             Fourier transforms).
@@ -42,7 +47,8 @@ class Model(object):
         Returns
         -------
         ndarray
-            Electron-phonon coupling 2 omega g^2 in Ry^3.
+            Electron-phonon matrix element :math:`\sqrt{2 \omega} g_{\nu m n}`
+            in Ry\ :sup:`3/2`.
         """
 
         nRq, nph, nRk, nel, nel = self.data.shape
@@ -198,9 +204,9 @@ def sample(g, q, nk, U=None, u=None,
     g : function
         Electron-phonon coupling in the basis of electronic orbitals and
         Cartesian ionic displacements as a function of q and k in crystal
-        coordinates with period 2 pi.
+        coordinates with period :math:`2 \pi`.
     q : list of 2-tuples
-        q points in crystal coordinates q1, q2 in [0, 2pi).
+        q points in crystal coordinates :math:`q_1, q_2 \in [0, 2 \pi)`.
     nk : int
         Number of k points per dimension.
     U : ndarray, optional
@@ -495,7 +501,7 @@ def read_patterns(filename, q, nrep, status=True):
 
 def read_xml_files(filename, q, rep, bands, nbands, nk, squeeze=True, status=True,
         angle=120, angle0=0):
-    """Read XML files with coupling in displacement basis from QE (nosym)."""
+    """Read XML files with coupling in displacement basis from QE (*nosym*)."""
 
     if not hasattr(q, '__len__'):
         q = range(q)
