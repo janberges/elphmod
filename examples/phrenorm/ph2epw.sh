@@ -1,5 +1,7 @@
 #!/bin/bash
-# adapted from Samuel Ponce's pp.py
+
+# Based on script pp.py provided with EPW code (C) 2015 Samuel Ponce.
+# This program is free software under the terms of the GNU GPLv3 or later.
 
 prefix=TaS2
 points=2

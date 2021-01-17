@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Copyright (C) 2020 elphmod Developers
+# This program is free software under the terms of the GNU GPLv3 or later.
+
 for pp in S.pbe-hgh.UPF Ta.pbe-hgh.UPF
 do
     test -e $pp || wget https://www.quantum-espresso.org/upf_files/$pp
