@@ -1,6 +1,9 @@
+*.egg-info
 *.png
 *.pyc
 *.venv
 __pycache__
+build
+dist
 doctrees
 html
