@@ -7,8 +7,7 @@ This example shows how to
 * consistently renormalize phonon dispersions (go from cDFPT to DFPT).
 
 For the cDFPT part, you need a modified version of Quantum ESPRESSO. You can
-find the relevant source files in the repository "qe-mod" on the same server
-from where you downloaded "elphmod".
+use the script `qe_mod.py` in this directory to apply the required changes.
 
 The results obtained in this example are very far from converged! In return,
 the ab initio part takes less than a minute on a laptop with only two cores.
