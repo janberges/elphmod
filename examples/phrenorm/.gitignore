@@ -1,6 +1,8 @@
 *.UPF
+*.bib
+*.bvec
 *.chk
-*.epmatwp1
+*.epmatwp
 *.fmt
 *.ifc
 *.kgmap

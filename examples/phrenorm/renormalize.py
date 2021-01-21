@@ -50,7 +50,7 @@ info('Prepare electron-phonon coupling')
 g = dict()
 
 for method in sorted(ph):
-    elph = elphmod.elph.Model('%s.epmatwp1' % method, 'wigner.dat',
+    elph = elphmod.elph.Model('%s.epmatwp' % method, 'wigner.dat',
         el, ph['cdfpt'])
 
     g[method] = elph.sample(q=q, nk=nk, U=U, u=None, broadcast=False)

@@ -8,11 +8,11 @@ import sys
 if len(sys.argv) > 1:
     QE = sys.argv[1]
 else:
-    print('''Usage: qe_mod.py /path/to/q-e/
+    print('''Usage: python3 qe_mod.py /path/to/q-e/
 
 ATTENTION: This script will modify QE sources files without backup!
 Use QE's Git repository and verify or undo changes with "git diff"!
-The changes are compatible with QE version "qe-6.3-backports" only!''')
+The changes are compatible with version "qe-6.7MaX-Release" only!''')
 
     raise SystemExit
 
@@ -32,10 +32,10 @@ def modify(filename, *args):
             else:
                 new.write(arg.lstrip('\n'))
 
-modify('LR_Modules/lrcom.f90', (1, 49), r'''
+modify('LR_Modules/lrcom.f90', (1, 66), r'''
   LOGICAL  :: cdfpt          ! if .TRUE. applies cDFPT
   INTEGER, ALLOCATABLE :: cdfpt_subspace(:, :, :, :)
-''', (50,))
+''', (67,))
 
 modify('LR_Modules/orthogonalize.f90', (1, 31), r'''
   USE klist,            ONLY : lgauss, degauss, ngauss, ltetra, wk, xk
@@ -65,22 +65,22 @@ modify('LR_Modules/orthogonalize.f90', (1, 31), r'''
               !
 ''', (93,))
 
-modify('PHonon/PH/phq_readin.f90', (1, 73), r'''
+modify('PHonon/PH/phq_readin.f90', (1, 68), r'''
   USE control_lr,    ONLY : lgamma, lrpa, cdfpt, cdfpt_subspace
-''', (75, 110), r'''
+''', (70, 112), r'''
   CHARACTER(LEN=256) :: subspace
   !
-''', (111, 123), r'''
-                       lshift_q, cdfpt, subspace
-''', (125, 302), r'''
+''', (113, 128), r'''
+                       skip_upperfan, cdfpt, subspace
+''', (130, 341), r'''
   cdfpt = .false.
   subspace = 'subspace.dat'
   !
-''', (303, 338), r'''
+''', (342, 388), r'''
   !
   CALL mp_bcast(cdfpt, meta_ionode_id, world_comm)
   IF (cdfpt) CALL setup_subspace(cdfpt_subspace, subspace)
-''', (339, 844), r'''
+''', (389, 961), r'''
 CONTAINS
   !
   SUBROUTINE setup_subspace(subspace, filename)
@@ -112,15 +112,16 @@ CONTAINS
      !
      CALL bcast_integer(subspace, size(subspace), meta_ionode_id, world_comm)
   END SUBROUTINE
-''', (845,))
+''', (962,))
 
-modify('EPW/src/ephwann_shuffle.f90', (1, 358), r'''
+modify('EPW/src/ephwann_shuffle.f90', (1, 376), r'''
   !
   IF (ionode) THEN
     OPEN (13, file='wigner.dat', action='write', status='replace', access='stream')
-    WRITE (13) nrr_k, irvec_k, ndegen_k, wslen_k
-    WRITE (13) nrr_q, irvec_q, ndegen_q, wslen_q
-    WRITE (13) nrr_g, irvec_g, ndegen_g, wslen_g
+    WRITE (13) dims, dims2
+    WRITE (13) nrr_k, irvec_k, ndegen_k
+    WRITE (13) nrr_g, irvec_g, ndegen_g
     CLOSE (13)
   ENDIF
-''', (359,))
+  !
+''', (377,))

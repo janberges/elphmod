@@ -134,22 +134,17 @@ class Model(object):
 
         # read lattice vectors within Wigner-Seitz cell:
 
-        (nrr_k, irvec_k, ndegen_k, wslen_k,
-         nrr_q, irvec_q, ndegen_q, wslen_q,
-         nrr_g, irvec_g, ndegen_g, wslen_g) = bravais.read_wigner_file(wigner,
-            nat=ph.nat)
-
-        self.Rk = irvec_k
-        self.Rg = irvec_g
+        self.Rk, ndegen_k, self.Rg, ndegen_g = bravais.read_wigner_file(wigner)
 
         # read coupling in Wannier basis from EPW output:
         # ('epmatwp' allocated and printed in 'ephwann_shuffle.f90')
 
-        shape = (nrr_g, ph.size, nrr_k, el.size, el.size)
+        shape = len(self.Rg), ph.size, len(self.Rk), el.size, el.size
 
         if comm.rank == 0:
             with open(epmatwp) as data:
-                g = np.fromfile(data, dtype=np.complex128)
+                g = np.fromfile(data, dtype=np.complex128, count=np.prod(shape))
+                # To do: Check if cut off data is really empty!
 
             g = np.reshape(g, shape)
             g = np.swapaxes(g, 3, 4).copy()
@@ -159,19 +154,37 @@ class Model(object):
             # after read-in: R, x, R', b, a
             # after transp.: R, x, R', a, b
 
-            # undo supercell double counting:
-
-            for irk in range(nrr_k):
-                g[:, :, irk] /= ndegen_k[irk]
-
             block = [slice(3 * na, 3 * (na + 1)) for na in range(ph.nat)]
 
-            for irg in range(nrr_g):
-                for na in range(ph.nat):
-                    if ndegen_g[na, irg]:
-                        g[irg, block[na]] /= ndegen_g[na, irg]
-                    else:
-                        g[irg, block[na]] = 0.0
+            # undo supercell double counting:
+
+            if ndegen_k.size == len(self.Rk):
+                for irk in range(len(self.Rk)):
+                    g[:, :, irk, :, :] /= ndegen_k[0, 0, irk]
+
+            else: # "use_ws"
+                for irk in range(len(self.Rk)):
+                    for m in range(el.size):
+                        for n in range(el.size):
+                            if ndegen_k[n, m, irk]:
+                                g[:, :, irk, m, n] /= ndegen_k[n, m, irk]
+                            else:
+                                g[:, :, irk, m, n] = 0.0
+
+            if ndegen_g.size == len(self.Rg):
+                for irg in range(len(self.Rg)):
+                    g[irg, :, :, :, :] /= ndegen_g[0, 0, 0, irg]
+
+            else: # "use_ws"
+                for irg in range(len(self.Rg)):
+                    for na in range(ph.nat):
+                        for m in range(el.size):
+                            for n in range(el.size):
+                                if ndegen_g[n, m, na, irg]:
+                                    g[irg, block[na], :, m, n] \
+                                        /= ndegen_g[n, m, na, irg]
+                                else:
+                                    g[irg, block[na], :, m, n] = 0.0
 
             # divide by square root of atomic masses:
 

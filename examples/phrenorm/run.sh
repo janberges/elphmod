@@ -22,7 +22,7 @@ do
     mpirun -n 1 epw.x -nk 1 < epw.in | tee epw.out
 
     cp ifc $method.ifc
-    cp work/TaS2.epmatwp1 $method.epmatwp1
+    cp work/TaS2.epmatwp $method.epmatwp
 done
 
 mpirun python3 renormalize.py
