@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 comm = elphmod.MPI.comm
 info = elphmod.MPI.info
 
-Ry2eV = 13.605693009
 eV2cmm1 = 8065.54
 
 colors = ['skyblue', 'dodgerblue', 'orange']
@@ -29,7 +28,7 @@ w2, u, order = elphmod.dispersion.dispersion(ph.D, q,
     vectors=True, order=True)
 
 if comm.rank == 0:
-    w = elphmod.ph.sgnsqrt(w2) * Ry2eV * 1e3
+    w = elphmod.ph.sgnsqrt(w2) * elphmod.misc.Ry * 1e3
 
     pol = elphmod.ph.polarization(u, q)
 

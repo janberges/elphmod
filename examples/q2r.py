@@ -10,8 +10,6 @@ import numpy as np
 
 comm = elphmod.MPI.comm
 
-Ry2eV = 13.605693009
-
 data = 'NbSe2_cDFPT'
 
 nq = 12
@@ -49,7 +47,7 @@ for subplot, D in enumerate([ph.D, ph2.D]):
         vectors=True, order=True, broadcast=False)
 
     if comm.rank == 0:
-        w = elphmod.ph.sgnsqrt(w2) * Ry2eV * 1e3
+        w = elphmod.ph.sgnsqrt(w2) * elphmod.misc.Ry * 1e3
 
         pol = elphmod.ph.polarization(e, q_path)
 

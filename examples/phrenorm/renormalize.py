@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (C) 2020 elphmod Developers
+# Copyright (C) 2021 elphmod Developers
 # This program is free software under the terms of the GNU GPLv3 or later.
 
 import copy
@@ -11,9 +11,7 @@ import numpy as np
 comm = elphmod.MPI.comm
 info = elphmod.MPI.info
 
-Ry2eV = 13.605693009
-
-kT = 0.005 * Ry2eV
+kT = 0.005 * elphmod.misc.Ry
 
 nk = 4
 nq = 2
@@ -56,10 +54,10 @@ for method in sorted(ph):
     g[method] = elph.sample(q=q, nk=nk, U=U, u=None, broadcast=False)
 
 if comm.rank == 0:
-    g2 = np.einsum('qiklnm,qjklnm->qijklnm', g['cdfpt'].conj(), g['dfpt'])
-    g2 *= Ry2eV ** 3
+    g2 = np.einsum('qiklmn,qjklmn->qijklmn', g['cdfpt'].conj(), g['dfpt'])
+    g2 *= elphmod.misc.Ry ** 3
 
-    g2 += np.einsum('qijklnm->qjiklnm', g2.conj())
+    g2 += np.einsum('qijklmn->qjiklmn', g2.conj())
     g2 /= 2
 
 else:
@@ -73,21 +71,11 @@ Pi = elphmod.diagrams.phonon_self_energy(q, e, g2, kT=kT,
     occupations=elphmod.occupations.fermi_dirac)
 
 Pi = np.reshape(Pi, (len(q), nph, nph))
-Pi /= Ry2eV ** 2
-
-info('Calculate bare dynamical matrices')
-
-sizes, bounds = elphmod.MPI.distribute(len(q), bounds=True)
-
-D    = np.empty((len(q),           nph, nph), dtype=complex)
-my_D = np.empty((sizes[comm.rank], nph, nph), dtype=complex)
-
-for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
-    my_D[my_iq] = ph['cdfpt'].D(*q[iq])
-
-comm.Allgatherv(my_D, (D, sizes * nph * nph))
+Pi /= elphmod.misc.Ry ** 2
 
 info('Renormalize phonons')
+
+D = elphmod.dispersion.sample(ph['cdfpt'].D, q)
 
 ph['pp'] = copy.copy(ph['cdfpt'])
 
@@ -118,7 +106,7 @@ for method in sorted(ph):
     w2, u, order = elphmod.dispersion.dispersion(ph[method].D, k,
         vectors=True, order=True)
 
-    w = elphmod.ph.sgnsqrt(w2) * Ry2eV * 1e3
+    w = elphmod.ph.sgnsqrt(w2) * elphmod.misc.Ry * 1e3
 
     if comm.rank == 0:
         proj = elphmod.ph.polarization(u, k)
