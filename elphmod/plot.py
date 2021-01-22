@@ -5,18 +5,17 @@
 
 import numpy as np
 
-import os
-
-if 'DISPLAY' not in os.environ:
-    # switch to non-GUI backend:
-
-    import matplotlib
-    matplotlib.use('agg')
-
-import matplotlib.pyplot as plt
-
 from . import bravais, MPI, misc
 comm = MPI.comm
+
+def choose_backend():
+    """Switch to non-GUI Matplotlib backend if necessary."""
+
+    import os
+    import matplotlib
+
+    if 'DISPLAY' not in os.environ:
+        matplotlib.use('agg')
 
 def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
         interpolation=bravais.linear_interpolation, angle=60, return_k=False,
@@ -597,14 +596,6 @@ def save(filename, data):
             zlib.compress(struct.pack('%dB' % lines.size, *lines.flat), 9))
         chunk(b'IEND', b'')
 
-def save_old(filename, data):
-    """Save image as 8-bit bitmap."""
-
-    data[np.where(data < 0)] = 0
-    data[np.where(data >= 256)] = 255
-
-    plt.imsave(filename, data.astype(np.uint8))
-
 def label_pie_with_TeX(stem,
 
     width = 7.0, # total width in cm
@@ -800,6 +791,8 @@ def plot_pie_with_TeX(filename, data, points=1000, angle=60, standalone=True,
             lower=data.min(), upper=data.max(), standalone=standalone, **kwargs)
 
         if standalone and pdf:
+            import os
+
             os.system('pdflatex --interaction=batchmode %s' % stem)
 
             for suffix in 'aux', 'log':

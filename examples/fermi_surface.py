@@ -28,4 +28,3 @@ image = elphmod.plot.color(delta, cmap)
 
 if elphmod.MPI.comm.rank == 0:
     elphmod.plot.save('fermi_surface.png', image)
-    elphmod.plot.save_old('fermi_surface_ref.png', image)
