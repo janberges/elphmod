@@ -3,16 +3,17 @@
 # Copyright (C) 2021 elphmod Developers
 # This program is free software under the terms of the GNU GPLv3 or later.
 
+# Some routines in this file follow wan2bloch.f90 of EPW v5.3.1.
+# Copyright (C) 2010-2016 S. Ponce', R. Margine, C. Verdi, F. Giustino
+
 import numpy as np
 
 from . import bravais, dispersion, el, misc, MPI, ph
 comm = MPI.comm
 
 class Model(object):
-    """Localized model for electron-phonon coupling.
+    """Localized model for electron-phonon coupling."""
 
-    The methods of this class follow *wan2bloch.f90* of EPW 5.0.
-    """
     def g(self, q1=0, q2=0, q3=0, k1=0, k2=0, k3=0, elbnd=False, phbnd=False,
             broadcast=True, comm=comm):
         r"""Calculate electron-phonon coupling for arbitary points k and k + q.
@@ -71,9 +72,9 @@ class Model(object):
                 my_g[my_n] = self.data[n] * np.exp(1j * np.dot(self.Rg[n], q))
 
                 # Sign convention in bloch2wan.f90 of EPW:
-                # 1273  cfac = exp( -ci*rdotk ) / dble(nq)
-                # 1274  epmatwp(:,:,:,:,ir) = epmatwp(:,:,:,:,ir)
-                #           + cfac * epmatwe(:,:,:,:,iq)
+                # 1222  cfac = EXP(-ci * rdotk) / DBLE(nq)
+                # 1223  epmatwp(:, :, :, :, ir) = epmatwp(:, :, :, :, ir)
+                #           + cfac * epmatwe(:, :, :, :, iq)
 
             self.gq = np.empty((nph, nRk, nel, nel), dtype=complex)
 
@@ -87,9 +88,9 @@ class Model(object):
             my_g[my_n] = self.gq[:, n] * np.exp(1j * np.dot(self.Rk[n], k))
 
             # Sign convention in bloch2wan.f90 of EPW:
-            # 1148  cfac = exp( -ci*rdotk ) / dble(nkstot)
-            # 1149  epmatw( :, :, ir) = epmatw( :, :, ir)
-            #           + cfac * epmats( :, :, ik)
+            # 1120  cfac = EXP(-ci * rdotk) / DBLE(nkstot)
+            # 1121  epmatw( :, :, ir) = epmatw( :, :, ir)
+            #           + cfac * epmats(:, :, ik)
 
         if broadcast or comm.rank == 0:
             g = np.empty((nph, nel, nel), dtype=complex)
@@ -100,17 +101,16 @@ class Model(object):
 
         if comm.rank == 0:
             # Eigenvector convention in wan2bloch.f90 of EPW:
-            # 127    CALL zhpevx ('V', 'A', 'U', nbnd, champ , zero, zero, &
-            # 128                 0, 0, -one, neig, w, cz, nbnd, cwork, &
-            # 129                 rwork, iwork, ifail, info)
+            # 164  cz(:, :) = chf(:, :)
+            # 165  CALL ZHEEVD('V', 'L', nbnd, cz, nbnd, w, ...
             # ...
-            # 155    cuf = conjg( transpose ( cz ) )
+            # 278  cuf = CONJG(TRANSPOSE(cz))
 
             # Index convention in wan2bloch.f90 of EPW:
-            # 1295 CALL zgemm ('n', 'n', nbnd, nbnd, nbnd, cone, cufkq, &
-            # 1296      nbnd, epmatf (:,:,imode), nbnd, czero, eptmp, nbnd)
-            # 1297 CALL zgemm ('n', 'c', nbnd, nbnd, nbnd, cone, eptmp, &
-            # 1298      nbnd, cufkk, nbnd, czero, epmatf(:,:,imode), nbnd)
+            # 2098  CALL ZGEMM('n', 'n', nbnd, nbnd, nbnd, cone, cufkq, &
+            # 2099       nbnd, epmatf(:, :, imode), nbnd, czero, eptmp, nbnd)
+            # 2100  CALL ZGEMM('n', 'c', nbnd, nbnd, nbnd, cone, eptmp, &
+            # 2101       nbnd, cufkk, nbnd, czero, epmatf(:, :, imode), nbnd)
 
             if elbnd:
                 Uk  = np.linalg.eigh(self.el.H(*k))[1]
