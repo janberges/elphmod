@@ -23,12 +23,20 @@ installed as follows:
 
     sudo apt install libopenmpi-dev
 
-It also depends on the Python packages listed in the file "requirements.txt".
-One way to install them is inside a virtual environment:
+To install the latest version of elphmod in a virtual environment:
 
     python3 -m venv elphmod.venv
     source elphmod.venv/bin/activate
-    pip3 install -r requirements.txt
+    python3 -m pip install --upgrade pip setuptools wheel
+    python3 -m pip install git+https://github.com/janberges/elphmod
+
+Alternatively, download the repository and install all dependencies (including
+those of documentation and examples) and a link to the repository in your home
+directory:
+
+    git clone https://github.com/janberges/elphmod
+    python3 -m pip install --user -r elphmod/requirements.txt
+    python3 -m pip install --user -e elphmod
 
 ## Documentation
 

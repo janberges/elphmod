@@ -5,7 +5,7 @@
 
 import setuptools
 
-with open('README', 'r', encoding='utf-8') as README:
+with open('README.md', 'r', encoding='utf-8') as README:
     long_description = README.read()
 
 setuptools.setup(
@@ -19,13 +19,7 @@ setuptools.setup(
     url                           = 'https://bitbucket.org/berges/elphmod',
     packages                      = setuptools.find_packages(),
     python_requires               = '>=2.7',
-    install_requires              = [
-        'numpy',
-        'scipy',
-        'mpi4py',
-        'matplotlib',
-        'numpydoc',
-        ],
+    install_requires              = ['numpy', 'scipy', 'mpi4py'],
     classifiers                   = [
         'Programming Language :: Python',
         'License :: OSI Approved :: GNU General Public License (GPL)',
