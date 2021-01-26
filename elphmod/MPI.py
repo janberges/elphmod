@@ -6,7 +6,62 @@
 import sys
 import numpy as np
 
-from mpi4py import MPI
+try:
+    from mpipy import MPI
+
+except ImportError:
+    class Communicator(object):
+        def __init__(self):
+            self.rank = 0
+            self.size = 1
+
+        def Barrier(self):
+            pass
+
+        def barrier(self):
+            pass
+
+        def Bcast(self, data):
+            pass
+
+        def bcast(self, data):
+            return data
+
+        def Gatherv(self, send, recv):
+            recv[0][...] = send
+
+        def Allgatherv(self, send, recv):
+            recv[0][...] = send
+
+        def allgather(self, send):
+            return [send]
+
+        def Reduce(self, send, recv):
+            recv[...] = send
+
+        def Allreduce(self, send, recv):
+            recv[...] = send
+
+        def allreduce(self, send):
+            return send
+
+        def Scatterv(self, send, recv):
+            recv[...] = send[0]
+
+        def Split(self, color, key=None):
+            return self
+
+        def Split_type(self, color, key=None):
+            return self
+
+    class Interface(object):
+        def __init__(self):
+            self.COMM_WORLD = Communicator()
+            self.UNDEFINED = 0
+            self.COMM_TYPE_SHARED = self.UNDEFINED
+
+    MPI = Interface()
+
 comm = MPI.COMM_WORLD
 
 def distribute(size, bounds=False, comm=comm, chunks=None):
