@@ -143,8 +143,8 @@ def shared_array(shape, dtype=float, shared_memory=True, single_memory=False,
     """
     dtype = np.dtype(dtype)
 
-    if MPI.COMM_TYPE_SHARED == MPI.UNDEFINED:
-        # workaround if shared memory is not supported:
+    if shared_memory and MPI.COMM_TYPE_SHARED == MPI.UNDEFINED:
+        # disable shared memory if it is not supported:
 
         info("Shared memory not implemented")
 
