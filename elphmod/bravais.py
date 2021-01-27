@@ -991,7 +991,7 @@ def GMKG(N=30, corner_indices=False, mesh=False, angle=60, straight=True,
         Return points of uniform mesh that exactly lie on the path? If ``True``,
         `N` must be a multiple of 6.
     angle : number
-        Angle between lattice vectors.
+        Angle between reciprocal basis lattice vectors.
     straight : bool
         Cross K in a straight line? In this case, the path does not enclose the
         irreducible wedge.
