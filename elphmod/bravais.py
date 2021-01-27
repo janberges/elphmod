@@ -988,7 +988,8 @@ def GMKG(N=30, corner_indices=False, mesh=False, angle=60, straight=True,
     corner_indices : bool
         Return indices of corner/high-symmetry points?
     mesh : bool
-        Return points of uniform mesh that exactly lie on the path?
+        Return points of uniform mesh that exactly lie on the path? If ``True``,
+        `N` must be a multiple of 6.
     angle : number
         Angle between lattice vectors.
     straight : bool
