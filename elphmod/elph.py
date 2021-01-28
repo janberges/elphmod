@@ -128,13 +128,14 @@ class Model(object):
 
         return g
 
-    def __init__(self, epmatwp, wigner, el, ph):
+    def __init__(self, epmatwp, wigner, el, ph, old_ws=False):
         self.el = el
         self.ph = ph
 
         # read lattice vectors within Wigner-Seitz cell:
 
-        self.Rk, ndegen_k, self.Rg, ndegen_g = bravais.read_wigner_file(wigner)
+        self.Rk, ndegen_k, self.Rg, ndegen_g = bravais.read_wigner_file(wigner,
+            old_ws=old_ws, nat=ph.nat)
 
         # read coupling in Wannier basis from EPW output:
         # ('epmatwp' allocated and printed in 'ephwann_shuffle.f90')
@@ -158,7 +159,11 @@ class Model(object):
 
             # undo supercell double counting:
 
-            if ndegen_k.size == len(self.Rk):
+            if old_ws:
+                for irk in range(len(self.Rk)):
+                    g[:, :, irk] /= ndegen_k[irk]
+
+            elif ndegen_k.size == len(self.Rk):
                 for irk in range(len(self.Rk)):
                     g[:, :, irk, :, :] /= ndegen_k[0, 0, irk]
 
@@ -171,7 +176,15 @@ class Model(object):
                             else:
                                 g[:, :, irk, m, n] = 0.0
 
-            if ndegen_g.size == len(self.Rg):
+            if old_ws:
+                for irg in range(len(self.Rg)):
+                    for na in range(ph.nat):
+                        if ndegen_g[na, irg]:
+                            g[irg, block[na]] /= ndegen_g[na, irg]
+                        else:
+                            g[irg, block[na]] = 0.0
+
+            elif ndegen_g.size == len(self.Rg):
                 for irg in range(len(self.Rg)):
                     g[irg, :, :, :, :] /= ndegen_g[0, 0, 0, irg]
 
