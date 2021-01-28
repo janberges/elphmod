@@ -194,6 +194,84 @@ def read_atomic_projections(atomic_proj_xml, order=False, **order_kwargs):
 
     if comm.rank == 0:
         data = open(atomic_proj_xml)
+        next(data)
+
+        header = next(data).strip('<HEADER />\n')
+        header = dict([item.split('=') for item in header.split(' ')])
+        header = dict((key, value.strip('"')) for key, value in header.items())
+
+        bands = int(header['NUMBER_OF_BANDS'])
+        nk = int(header['NUMBER_OF_K-POINTS'])
+        no = int(header['NUMBER_OF_ATOMIC_WFC'])
+        mu = float(header['FERMI_ENERGY'])
+    else:
+        bands = nk = no = None
+
+    bands = comm.bcast(bands)
+    nk = comm.bcast(nk)
+    no = comm.bcast(no)
+
+    x = np.empty(nk)
+    k = np.empty((nk, 3))
+    eps = np.empty((nk, bands))
+    proj = np.empty((nk, bands, no), dtype=complex)
+
+    if comm.rank == 0:
+        next(data)
+
+        for ik in range(nk):
+            next(data) # <K-POINT>
+            k[ik] = list(map(float, next(data).split()))
+            next(data) # </K-POINT>
+
+            next(data) # <E>
+            levels = []
+            while len(levels) < bands:
+                levels.extend(list(map(float, next(data).split())))
+            eps[ik] = levels
+            next(data) # </E>
+
+            next(data) # <PROJS>
+            for a in range(no):
+                next(data) # <ATOMIC_WFC>
+                for n in range(bands):
+                    Re, Im = list(map(float, next(data).split()))
+                    proj[ik, n, a] = Re + 1j * Im
+                next(data) # </ATOMIC_WFC>
+            next(data) # </PROJS>
+
+        data.close()
+
+        x[0] = 0
+
+        for i in range(1, nk):
+            dk = k[i] - k[i - 1]
+            x[i] = x[i - 1] + np.sqrt(np.dot(dk, dk))
+
+        eps -= mu
+
+        if order:
+            o = dispersion.band_order(eps,
+                np.transpose(proj, axes=(0, 2, 1)).copy(), **order_kwargs)
+
+            for ik in range(nk):
+                eps[ik] = eps[ik, o[ik]]
+
+                for a in range(no):
+                    proj[ik, :, a] = proj[ik, o[ik], a]
+
+    comm.Bcast(x)
+    comm.Bcast(k)
+    comm.Bcast(eps)
+    comm.Bcast(proj)
+
+    return x, k, eps, abs(proj) ** 2
+
+def read_atomic_projections_old(atomic_proj_xml, order=False, **order_kwargs):
+    """Read projected bands from *outdir/prefix.save/atomic_proj.xml*."""
+
+    if comm.rank == 0:
+        data = open(atomic_proj_xml)
 
         def goto(pattern):
             for line in data:
@@ -228,10 +306,10 @@ def read_atomic_projections(atomic_proj_xml, order=False, **order_kwargs):
         for i in range(nk):
             k[i] = list(map(float, next(data).split()))
 
-        for i in range(nk):
+        for ik in range(nk):
             goto('<EIG ')
             for n in range(bands):
-                eps[i, n] = float(next(data))
+                eps[ik, n] = float(next(data))
 
         for ik in range(nk):
             for a in range(no):
