@@ -7,7 +7,7 @@ import sys
 import numpy as np
 
 try:
-    from mpipy import MPI
+    from mpi4py import MPI
 
 except ImportError:
     class Communicator(object):
