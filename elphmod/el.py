@@ -345,6 +345,75 @@ def read_atomic_projections_old(atomic_proj_xml, order=False, **order_kwargs):
 
     return x, k, eps, abs(proj) ** 2
 
+def read_projwfc_out(projwfc_out):
+    """Identify orbitals in *atomic_proj.xml* via output of ``projwfc.x``."""
+
+    if comm.rank == 0:
+        orbitals = []
+
+        labels = [
+            ['s'],
+            ['px', 'py', 'pz'],
+            ['dz2', 'dxz', 'dyz', 'dx2-y2', 'dxy'],
+            ]
+
+        with open(projwfc_out) as data:
+            for line in data:
+                if 'Atomic states used for projection' in line:
+                    next(data)
+                    next(data)
+
+                    while True:
+                        info = next(data).rstrip()
+
+                        if info:
+                            X = info[28:31].strip()
+                            n = int(info[39])
+                            l = int(info[44])
+                            m = int(info[49])
+
+                            orbitals.append('%s-%s (n=%d)'
+                                % (X, labels[l][m - 1], n))
+                        else:
+                            break
+    else:
+        orbitals = None
+
+    orbitals = comm.bcast(orbitals)
+
+    return orbitals
+
+def proj_sum(proj, orbitals, *groups):
+    """Sum over selected atomic projections.
+
+    Examples:
+
+    .. code-block::
+
+        proj = read_atomic_projections('atomic_proj.xml')
+        orbitals = read_projwf_out('projwfc.out')
+        proj = proj_sum(proj, orbitals, 'S-p', 'Ta-dz2, Ta-dx2-y2, Ta-dxy')
+    """
+
+    summed = np.empty(proj.shape[:2] + (len(groups),))
+
+    if comm.rank == 0:
+        for n, group in enumerate(groups):
+            indices = set()
+
+            for selection in group.split(','):
+                selection = selection.strip()
+
+                for a, orbital in enumerate(orbitals):
+                    if selection in orbital:
+                        indices.add(a)
+
+            summed[..., n] = proj[..., sorted(indices)].sum(axis=2)
+
+    comm.Bcast(summed)
+
+    return summed
+
 def read_Fermi_level(pw_scf_out):
     """Read Fermi level from output of self-consistent PW run."""
 
