@@ -1,0 +1,40 @@
+&CONTROL
+     prefix = 'TaS2'
+     outdir = 'work'
+ pseudo_dir = '.'
+
+calculation = 'bands'
+/
+&SYSTEM
+      ibrav = 4
+       ntyp = 2
+        nat = 3
+
+          a = 3.37
+          c = 10.0
+
+    ecutwfc = 10.0
+
+occupations = 'smearing'
+   smearing = 'fermi-dirac'
+    degauss = 0.005
+/
+&ELECTRONS
+   conv_thr = 1e-10
+/
+
+ATOMIC_SPECIES
+Ta 180.95 Ta.upf
+S   32.06  S.upf
+
+ATOMIC_POSITIONS crystal
+S   0.333333333  0.666666667  0.160998168
+Ta  0.000000000  0.000000000  0.000000000
+S   0.333333333  0.666666667 -0.160998168
+
+K_POINTS crystal_b
+4
+0.000000000  0.000000000  0.000000000  17
+0.500000000  0.000000000  0.000000000  10
+0.333333333  0.333333333  0.000000000  20
+0.000000000  0.000000000  0.000000000   0
