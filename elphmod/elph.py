@@ -12,8 +12,30 @@ from . import bravais, dispersion, el, misc, MPI, ph
 comm = MPI.comm
 
 class Model(object):
-    """Localized model for electron-phonon coupling."""
+    """Localized model for electron-phonon coupling.
 
+    Parameters
+    ----------
+    epmatwp : str
+        File with electron-phonon coupling in localized bases from EPW.
+    wigner : str
+        File with definition of Wigner-Seitz supercells from modified EPW.
+    el : object
+        Tight-binding model for the electrons.
+    ph : object
+        Mass-spring model for the phonons.
+    old_ws : bool
+        Use previous definition of Wigner-Seitz cells?
+
+    Attributes
+    ----------
+    el, ph : object
+        Tight-binding and mass-spring models.
+    Rk, Rg : ndarray
+        Lattice vectors of Wigner-Seitz supercells.
+    data : ndarray
+        Corresponding electron-phonon matrix elements.
+    """
     def g(self, q1=0, q2=0, q3=0, k1=0, k2=0, k3=0, elbnd=False, phbnd=False,
             broadcast=True, comm=comm):
         r"""Calculate electron-phonon coupling for arbitary points k and k + q.

@@ -9,8 +9,22 @@ from . import dispersion, misc, MPI
 comm = MPI.comm
 
 class Model(object):
-    """Tight-binding model for the electrons."""
+    """Tight-binding model for the electrons.
 
+    Parameters
+    ----------
+    hrdat : str
+        File with Hamiltonian in Wannier basis from Wannier90.
+
+    Attributes
+    ----------
+    R : ndarray
+        Lattice vectors of Wigner-Seitz supercell.
+    data : ndarray
+        Corresponding onsite energies and hoppings.
+    size : int
+        Number of Wannier functions/bands.
+    """
     def H(self, k1=0, k2=0, k3=0):
         """Set up Hamilton operator for arbitrary k point."""
 
@@ -33,8 +47,6 @@ class Model(object):
         return H.sum(axis=0)
 
     def __init__(self, hrdat):
-        """Prepare hopping parameters."""
-
         self.R, self.data = read_hrdat(hrdat)
         self.size = self.data.shape[1]
 

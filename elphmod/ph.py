@@ -10,8 +10,40 @@ from . import bravais, MPI
 comm = MPI.comm
 
 class Model(object):
-    """Mass-spring model for the phonons."""
+    """Mass-spring model for the phonons.
 
+    Parameters
+    ----------
+    flfrc : str
+        File with interatomic force constants from ``q2r.x``.
+    apply_asr : bool
+        Apply acoustic sum rule correction to force constants?
+    phid : ndarray
+        Force constants if `flfrc` is omitted.
+    amass : ndarray
+        Atomic masses if `flfrc` is omitted.
+    at : ndarray
+        Bravais lattice vectors if `flfrc` is omitted.
+    tau : ndarray
+        Positions of basis atoms if `flfrc` is omitted.
+
+    Attributes
+    ----------
+    M : ndarray
+        Atomic masses.
+    a : ndarray
+        Bravais lattice vectors.
+    r : ndarray
+        Positions of basis atoms.
+    R : ndarray
+        Lattice vectors of Wigner-Seitz supercell.
+    data : ndarray
+        Corresponding self and interatomic force constants.
+    size : int
+        Number of displacement directions/bands.
+    nat : int
+        Number of atoms.
+    """
     def D(self, q1=0, q2=0, q3=0):
         "Set up dynamical matrix for arbitrary q point."""
 
@@ -33,7 +65,6 @@ class Model(object):
     def __init__(self, flfrc=None, apply_asr=False,
         phid=np.zeros((1, 1, 1, 1, 1, 3, 3)), amass=np.ones(1),
         at=np.eye(3), tau=np.zeros((1, 3))):
-        """Prepare interatomic force constants."""
 
         if flfrc is None:
             if apply_asr:
