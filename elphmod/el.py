@@ -490,3 +490,38 @@ def read_pwo(pw_scf_out):
     comm.Bcast(e)
 
     return e, Ne, E
+
+
+def read_wannier90_eig_file(seedname, num_bands, nkpts):
+    """Read Kohn-Sham energies (eV) from the Wannier90 output seedname.eig file.
+    
+    Parameters
+    ----------
+    seedname: string
+        For example 'tas2', if the file is named 'tas2.eig'
+    num_bands: integer
+        Number of bands in your pseudopotential 
+    nkpts: integer
+        Number of k-points in your Wannier90 calculations. 
+        For example 1296 for 36x36x1
+    
+    Returns
+    -------
+    ndarray
+        Kohn-Sham energies: eig[num_bands, nkpts]
+        
+    """    
+    
+    eig = np.empty((num_bands, nkpts))
+
+    f=open( seedname + '.eig', "r")
+    lines=f.readlines()
+        
+    for lineI in range(len(lines)):
+        bandI, kI , eigI = lines[lineI].split()
+        
+        eig[int(bandI)-1, int(kI)-1] = np.real(eigI)
+    
+    f.close()
+    
+    return eig
