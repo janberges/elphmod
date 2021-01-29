@@ -1226,3 +1226,33 @@ def readPOSCAR(filename):
                 atoms[element][n] = list(map(float, next(POSCAR).split()[:3]))
 
     return t1, t2, t3, atoms
+
+
+def point_on_path(test_point, point_A, point_B, eps = 1e-14):
+    """Test wether a test_point is between the points A and B.
+    
+    Parameters
+    ----------
+    eps: float
+    Numerical parameter, in case the the cross product is not exactly 0. 
+    
+    Returns
+    -------
+    bool
+        True, if the test_point is on a straight line between point A and B
+    """    
+        
+    cross = np.cross(point_B-point_A, test_point-point_A)   
+    if all(abs(v) < eps  for v in cross):
+        dot = np.dot((point_B-point_A), test_point-point_A)
+        
+        if dot>=0:
+            
+            squared_distance = (point_B-point_A)[0]**2+(point_B-point_A)[1]**2
+            
+            if dot<=squared_distance:
+                #'The test point is between A and B'                
+                return True
+
+
+
