@@ -26,6 +26,8 @@ class Model(object):
         Mass-spring model for the phonons.
     old_ws : bool
         Use previous definition of Wigner-Seitz cells?
+    divide_mass : bool
+        Divide electron-phonon coupling by square root of atomic masses?
 
     Attributes
     ----------
@@ -150,7 +152,8 @@ class Model(object):
 
         return g
 
-    def __init__(self, epmatwp, wigner, el, ph, old_ws=False):
+    def __init__(self, epmatwp, wigner, el, ph, old_ws=False, divide_mass=True):
+
         self.el = el
         self.ph = ph
 
@@ -223,8 +226,9 @@ class Model(object):
 
             # divide by square root of atomic masses:
 
-            for na in range(ph.nat):
-                g[:, block[na]] /= np.sqrt(ph.M[na])
+            if divide_mass:
+                for na in range(ph.nat):
+                    g[:, block[na]] /= np.sqrt(ph.M[na])
 
         else:
             g = np.empty(shape, dtype=np.complex128)
