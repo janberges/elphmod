@@ -1255,4 +1255,54 @@ def point_on_path(test_point, point_A, point_B, eps = 1e-14):
                 return True
 
 
+def crystal_to_cartesian(R_CRYSTAL, a1,a2,a3):
+    """Transform a lattice structure R_CRYSTAL from crystal coordinates to
+    cartesian coordinates.
+    
+    Parameters
+    ----------
+    R_CRYSTAL: ndarray
+        Lattice structure in crystal coordinates
+    a1,a2,a3: ndarray
+        Lattice vectors
+    
+    Returns
+    -------
+    R_CARTESIAN: ndarray
+        Lattice structure in cartesian coordinates
+    """   
+    R_CARTESIAN = np.empty(R_CRYSTAL.shape)
+
+    for ii in np.arange(R_CARTESIAN.shape[0]):
+        R_CARTESIAN[ii,:] = R_CRYSTAL[ii,0]*a1+R_CRYSTAL[ii,1]*a2+R_CRYSTAL[ii,2]*a3
+    return R_CARTESIAN
+
+def cartesian_to_crystal(R_CARTESIAN, a1,a2,a3):
+    """Transform a lattice structure R_CARTESIAN from crystal coordinates to
+    cartesian coordinates.
+    
+    Parameters
+    ----------
+    R_CARTESIAN: ndarray
+        Lattice structure in cartesian coordinates
+    a1,a2,a3: ndarray
+        Lattice vectors
+    
+    Returns
+    -------
+    R_CRYSTAL: ndarray
+        Lattice structure in crystal coordinates
+    """  
+    R_CRYSTAL = np.empty(R_CARTESIAN.shape)
+    A_Matrix = np.zeros([3,3])
+
+    A_Matrix[:,0] = a1
+    A_Matrix[:,1] = a2
+    A_Matrix[:,2] = a3
+
+    A_Matrix_Inverse = np.linalg.inv(A_Matrix)
+
+    for ii in np.arange(R_CARTESIAN.shape[0]):
+        R_CRYSTAL[ii,:] = np.dot(A_Matrix_Inverse, R_CARTESIAN[ii,:])
+    return R_CRYSTAL
 
