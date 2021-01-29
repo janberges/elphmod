@@ -531,7 +531,7 @@ def eband_from_qe_pwo(pw_scf_out):
     """The 'one-electron contribution' energy in the Quantum ESPRESSO pw_scf-output
     is a sum of eband+deband. Here, we can calculate the eband part:
         
-    To make compare it with the Quantum ESPRESSO result, you need to modify
+    To compare it with the Quantum ESPRESSO result, you need to modify
     the 'SUBROUTINE print_energies ( printout )' from 'electrons.f90'. 
     
     CHANGE:
@@ -555,6 +555,9 @@ def eband_from_qe_pwo(pw_scf_out):
             /'     sum bands 				 =',F17.8,' Ry' &
             /'     one-electron contribution =',F17.8,' Ry' &
         
+    
+    
+    At some point, we should add the deband routine as well...
     
     Parameters
     ----------
