@@ -190,6 +190,27 @@ def shared_array(shape, dtype=float, shared_memory=True, single_memory=False,
 
     return node, images, array
 
+def load(filename, comm=comm):
+    """Read and broadcast NumPy data."""
+
+    if comm.rank == 0:
+        data = np.load(filename)
+
+        shape = data.shape
+        dtype = data.dtype
+    else:
+        shape = dtype = None
+
+    shape = comm.bcast(shape)
+    dtype = comm.bcast(dtype)
+
+    if comm.rank != 0:
+        data = np.empty(shape, dtype=dtype)
+
+    comm.Bcast(data)
+
+    return data
+
 def info(message, error=False, comm=comm):
     """Print status message from first process."""
 
