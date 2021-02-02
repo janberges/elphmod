@@ -248,8 +248,7 @@ class Model(object):
         """
         return sample(g=self.g, *args, **kwargs)
 
-def sample(g, q, nk, U=None, u=None,
-        broadcast=True, shared_memory=False):
+def sample(g, q, nk, U=None, u=None, broadcast=True, shared_memory=False):
     """Sample coupling for given q and k points and transform to band basis.
 
     One purpose of this routine is full control of the complex phase.
@@ -278,8 +277,6 @@ def sample(g, q, nk, U=None, u=None,
     sizes, bounds = MPI.distribute(len(q), bounds=True)
     col, row = MPI.matrix(len(q))
 
-    scale = 2 * np.pi / nk
-
     nph, nel, nel = g().shape
 
     if U is not None:
@@ -290,8 +287,9 @@ def sample(g, q, nk, U=None, u=None,
 
     my_g = np.empty((sizes[row.rank], nph, nk, nk, nel, nel), dtype=complex)
 
-    status = misc.StatusBar(sizes[comm.rank] * nk * nk,
-        title='sample coupling')
+    status = misc.StatusBar(sizes[comm.rank] * nk * nk, title='sample coupling')
+
+    scale = 2 * np.pi / nk
 
     for my_iq, iq in enumerate(range(*bounds[row.rank:row.rank + 2])):
         q1, q2 = q[iq]
@@ -322,14 +320,66 @@ def sample(g, q, nk, U=None, u=None,
                 status.update()
 
     node, images, g = MPI.shared_array((len(q), nph, nk, nk, nel, nel),
-        dtype=complex,
-        shared_memory=shared_memory,
-        single_memory=not broadcast)
+        dtype=complex, shared_memory=shared_memory, single_memory=not broadcast)
 
     if col.rank == 0:
         row.Gatherv(my_g, (g, row.gather(my_g.size)))
 
     col.Barrier() # should not be necessary
+
+    if node.rank == 0:
+        images.Bcast(g)
+
+    node.Barrier()
+
+    return g
+
+def transform(g, q, nk, U=None, u=None, broadcast=True, shared_memory=False):
+    """Transform q- and k-dependent coupling to band basis.
+
+    See Also
+    --------
+    sample
+    """
+    sizes, bounds = MPI.distribute(len(q), bounds=True)
+
+    nQ, nph, nk, nk, nel, nel = g.shape
+
+    if U is not None:
+        nel = U.shape[-1]
+
+    if u is not None:
+        nph = u.shape[-1]
+
+    my_g = np.empty((sizes[comm.rank], nph, nk, nk, nel, nel), dtype=complex)
+
+    scale = 2 * np.pi / nk
+
+    for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
+        q1 = int(round(q[iq][0] / scale))
+        q2 = int(round(q[iq][1] / scale))
+
+        for k1 in range(nk):
+            kq1 = (k1 + q1) % nk
+
+            for k2 in range(nk):
+                kq2 = (k2 + q2) % nk
+
+                gqk = g[iq, :, k1, k2, :, :]
+
+                if U is not None:
+                    gqk = np.einsum('am,xab,bn->xmn',
+                        U[kq1, kq2].conj(), gqk, U[k1, k2])
+
+                if u is not None:
+                    gqk = np.einsum('xab,xu->uab', gqk, u[iq])
+
+                my_g[my_iq, :, k1, k2, :, :] = gqk
+
+    node, images, g = MPI.shared_array((len(q), nph, nk, nk, nel, nel),
+        dtype=complex, shared_memory=shared_memory, single_memory=not broadcast)
+
+    comm.Gatherv(my_g, (g, comm.gather(my_g.size)))
 
     if node.rank == 0:
         images.Bcast(g)
