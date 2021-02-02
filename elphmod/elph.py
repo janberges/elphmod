@@ -744,24 +744,6 @@ def write_xml_files(filename, data, angle=120, angle0=0):
 </Root>
 """)
 
-def read(filename, nq, bands):
-    """Read and complete Fermi-surface averaged electron-phonon coupling."""
-
-    elph = np.empty((nq, nq, bands))
-
-    with open(filename) as data:
-        for line in data:
-            columns = line.split()
-
-            q1 = int(columns[0])
-            q2 = int(columns[1])
-
-            for Q1, Q2 in bravais.images(q1, q2, nq):
-                for band in range(bands):
-                    elph[Q1, Q2, band] = float(columns[2 + band])
-
-    return elph
-
 def write_data(filename, data):
     """Write array to ASCII file."""
 
