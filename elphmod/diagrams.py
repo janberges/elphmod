@@ -141,20 +141,20 @@ def susceptibility2(e, kT=0.025, nmats=1000, hyb_width=1.0, hyb_height=0.0):
 
     return calculate_susceptibility
 
-def polarization(e, c, kT=0.025, eps=1e-15, subspace=None,
+def polarization(e, U, kT=0.025, eps=1e-15, subspace=None,
         occupations=occupations.fermi_dirac):
     r"""Calculate RPA polarization in orbital basis (density-density).
 
     .. math::
 
         \Pi_{\vec q \alpha \beta} = \frac 2 N \sum_{\vec k m n}
-            \bracket{\vec k + \vec q m}{\vec k + \vec q \alpha}
-            \bracket{\vec k \alpha}{\vec k n}
+            \bracket{\vec k + \vec q \alpha}{\vec k + \vec q m}
+            \bracket{\vec k n}{\vec k \alpha}
             \frac
                 {f(\epsilon_{\vec k + \vec q m}) - f(\epsilon_{\vec k n})}
                 {\epsilon_{\vec k + \vec q m} - \epsilon_{\vec k n}}
-            \bracket{\vec k n}{\vec k \beta}
-            \bracket{\vec k + \vec q \beta}{\vec k + \vec q m}
+            \bracket{\vec k + \vec q m}{\vec k + \vec q \beta}
+            \bracket{\vec k \beta}{\vec k n}
 
     The resolution in q is limited by the resolution in k.
 
@@ -166,7 +166,7 @@ def polarization(e, c, kT=0.025, eps=1e-15, subspace=None,
     ----------
     e : ndarray
         Electron dispersion on uniform mesh. The Fermi level must be at zero.
-    c : ndarray
+    U : ndarray
         Coefficients for transform to orbital basis. These are given by the
         eigenvectors of the Wannier Hamiltonian.
     kT : float
@@ -189,14 +189,14 @@ def polarization(e, c, kT=0.025, eps=1e-15, subspace=None,
     if e.ndim == 2:
         e = e[:, :, np.newaxis]
 
-    if c.ndim == 3:
-        c = c[:, :, :, np.newaxis]
+    if U.ndim == 3:
+        U = U[:, :, :, np.newaxis]
 
     if cRPA and subspace.shape != e.shape:
         subspace = np.reshape(subspace, e.shape)
 
     nk, nk, nb = e.shape
-    nk, nk, no, nb = c.shape # c[k1, k2, a, n] = <k a|k n>
+    nk, nk, no, nb = U.shape # U[k1, k2, a, n] = <k a|k n>
 
     x = e / kT
 
@@ -205,7 +205,7 @@ def polarization(e, c, kT=0.025, eps=1e-15, subspace=None,
 
     e = np.tile(e, (2, 2, 1))
     f = np.tile(f, (2, 2, 1))
-    c = np.tile(c, (2, 2, 1, 1))
+    U = np.tile(U, (2, 2, 1, 1))
 
     if cRPA:
         subspace = np.tile(subspace, (2, 2, 1))
@@ -227,8 +227,8 @@ def polarization(e, c, kT=0.025, eps=1e-15, subspace=None,
 
         Pi = np.empty((nb, nb, no, no), dtype=complex)
 
-        for n in range(nb):
-            for m in range(nb):
+        for m in range(nb):
+            for n in range(nb):
                 df = f[kq1, kq2, m] - f[k1, k2, n]
                 de = e[kq1, kq2, m] - e[k1, k2, n]
 
@@ -243,15 +243,9 @@ def polarization(e, c, kT=0.025, eps=1e-15, subspace=None,
 
                     dfde[exclude] = 0.0
 
-                cc = c[kq1, kq2, :, m].conj() * c[k1, k2, :, n]
+                UU = U[kq1, kq2, :, m].conj() * U[k1, k2, :, n]
 
-                for a in range(no):
-                    cca = cc[:, :, a]
-
-                    for b in range(no):
-                        ccb = cc[:, :, b].conj()
-
-                        Pi[n, m, a, b] = np.sum(cca * ccb * dfde)
+                Pi[m, n] = np.einsum('kla,kl,klb->ab', UU.conj(), dfde, UU)
 
         return prefactor * Pi.sum(axis=(0, 1))
 
@@ -615,7 +609,7 @@ def renormalize_coupling_orbital(W, *args, **kwargs):
     W : ndarray
         Dressed Coulomb interaction in orbital basis.
     *args, **kwargs
-        Parameters passed to :func:`g_Pi`.
+        Parameters passed to :func:`Pi_g`.
 
     Returns
     -------
@@ -624,18 +618,26 @@ def renormalize_coupling_orbital(W, *args, **kwargs):
 
     See Also
     --------
-    g_Pi
+    Pi_g
     """
     dd = W.ndim == 3
 
     if dd:
-        indices = 'qxa,qab->qxb'
+        indices = 'qac,qxc->qxa'
     else:
-        indices = 'qxab,qabcd->qxcd'
+        indices = 'qabcd,qxcd->qxab'
 
-    return np.einsum(indices, g_Pi(*args, dd=dd, **kwargs), W)
+    return np.einsum(indices, W, Pi_g(*args, dd=dd, **kwargs))
 
-def g_Pi(q, e, g, U, kT=0.025, eps=1e-15,
+    #            k+q m
+    #   a     c ___/___ a'
+    #  \   q   /   \   \   x q
+    #   :::::::         o~~~~~~~
+    #  /       \___\___/
+    #   b     d    /    b'
+    #             k n
+
+def Pi_g(q, e, g, U, kT=0.025, eps=1e-15,
         occupations=occupations.fermi_dirac, dd=True, status=True):
     """Join electron-phonon coupling and Lindhard bubble in orbital basis.
 
@@ -685,9 +687,9 @@ def g_Pi(q, e, g, U, kT=0.025, eps=1e-15,
     sizes, bounds = MPI.distribute(nQ, bounds=True)
 
     if dd:
-        my_gPi = np.empty((sizes[comm.rank], nmodes, norb), dtype=complex)
+        my_Pig = np.empty((sizes[comm.rank], nmodes, norb), dtype=complex)
     else:
-        my_gPi = np.empty((sizes[comm.rank], nmodes, norb, norb), dtype=complex)
+        my_Pig = np.empty((sizes[comm.rank], nmodes, norb, norb), dtype=complex)
 
     dfde = np.empty((nk, nk, nbnd, nbnd))
 
@@ -719,7 +721,7 @@ def g_Pi(q, e, g, U, kT=0.025, eps=1e-15,
         else:
             indices = 'klcm,kldn,klmn,klam,klbn,xklab->xcd'
 
-        my_gPi[my_iq] = prefactor * np.einsum(indices,
+        my_Pig[my_iq] = prefactor * np.einsum(indices,
             U[kq1, kq2], U[k1, k2].conj(), dfde, U[kq1, kq2].conj(), U[k1, k2],
             g[iq])
 
@@ -732,13 +734,13 @@ def g_Pi(q, e, g, U, kT=0.025, eps=1e-15,
         #      k n
 
     if dd:
-        gPi = np.empty((nQ, nmodes, norb), dtype=complex)
-        comm.Allgatherv(my_gPi, (gPi, sizes * nmodes * norb))
+        Pig = np.empty((nQ, nmodes, norb), dtype=complex)
+        comm.Allgatherv(my_Pig, (Pig, sizes * nmodes * norb))
     else:
-        gPi = np.empty((nQ, nmodes, norb, norb), dtype=complex)
-        comm.Allgatherv(my_gPi, (gPi, sizes * nmodes * norb * norb))
+        Pig = np.empty((nQ, nmodes, norb, norb), dtype=complex)
+        comm.Allgatherv(my_Pig, (Pig, sizes * nmodes * norb * norb))
 
-    return gPi
+    return Pig
 
 def double_fermi_surface_average(q, e, g2, kT=0.025,
         occupations=occupations.fermi_dirac, comm=comm):
