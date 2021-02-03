@@ -502,7 +502,7 @@ def renormalize_coupling_band(q, e, g, W, U, kT=0.025, eps=1e-15,
     W : ndarray
         Dressed q-dependent Coulomb interaction in orbital basis.
     U : ndarray
-        Eigenvectors of Wannier Hamiltonian belonging to considered band.
+        Eigenvectors of Wannier Hamiltonian belonging to considered bands.
     kT : float
         Smearing temperature.
     eps : float
@@ -517,7 +517,7 @@ def renormalize_coupling_band(q, e, g, W, U, kT=0.025, eps=1e-15,
     Returns
     -------
     ndarray
-        Dressed electron-phonon coupling.
+        Dressed electron-phonon coupling in band basis.
 
     See Also
     --------
@@ -611,20 +611,29 @@ def renormalize_coupling_band(q, e, g, W, U, kT=0.025, eps=1e-15,
 
     return g_
 
-def renormalize_coupling_orbital(W, *args, **kwargs):
+def renormalize_coupling_orbital(q, e, g, W, U, **kwargs):
     """Calculate renormalized electron-phonon coupling in orbital basis.
 
     Parameters
     ----------
+    q : list of 2-tuples
+        Considered q points defined via crystal coordinates :math:`q_1, q_2 \in
+        [0, 2 \pi)`.
+    e : ndarray
+        Electron dispersion on uniform mesh. The Fermi level must be at zero.
+    g : ndarray
+        Bare electron-phonon coupling in orbital basis.
     W : ndarray
         Dressed q-dependent Coulomb interaction in orbital basis.
-    *args, **kwargs
+    U : ndarray
+        Eigenvectors of Wannier Hamiltonian belonging to considered bands.
+    **kwargs
         Parameters passed to :func:`Pi_g`.
 
     Returns
     -------
     ndarray
-        k-independent change (!) of electron-phonon coupling.
+        Dressed electron-phonon coupling in orbital basis.
 
     See Also
     --------
@@ -638,7 +647,7 @@ def renormalize_coupling_orbital(W, *args, **kwargs):
     else:
         indices = 'qabcd,qxcd->qxab'
 
-    return np.einsum(indices, W, Pi_g(*args, dd=dd, **kwargs))
+    dg = np.einsum(indices, W, Pi_g(q, e, g, U, dd=dd, **kwargs))
 
     #            k+q m
     #   a     c ___/___ a'
@@ -647,6 +656,18 @@ def renormalize_coupling_orbital(W, *args, **kwargs):
     #  /       \___\___/
     #   b     d    /    b'
     #             k n
+
+    G = g.copy()
+
+    for k1 in range(G.shape[2]):
+        for k2 in range(G.shape[3]):
+            if dd:
+                for a in range(G.shape[4]):
+                    G[:, :, k1, k2, a, a] += dg[:, :, a]
+            else:
+                G[:, :, k1, k2, :, :] += dg
+
+    return G
 
 def Pi_g(q, e, g, U, kT=0.025, eps=1e-15,
         occupations=occupations.fermi_dirac, dd=True, status=True):
@@ -662,7 +683,7 @@ def Pi_g(q, e, g, U, kT=0.025, eps=1e-15,
     g : ndarray
         Bare electron-phonon coupling in orbital basis.
     U : ndarray
-        Eigenvectors of Wannier Hamiltonian belonging to considered band.
+        Eigenvectors of Wannier Hamiltonian belonging to considered bands.
     kT : float
         Smearing temperature.
     eps : float
@@ -677,7 +698,7 @@ def Pi_g(q, e, g, U, kT=0.025, eps=1e-15,
     Returns
     -------
     ndarray
-        Product of electron-phonon coupling and Lindhard bubble.
+        (k-independent) product of electron-phonon coupling and Lindhard bubble.
     """
     nk, nk, nbnd = e.shape
     nQ, nmodes, nk, nk, norb, norb = g.shape
