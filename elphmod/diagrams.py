@@ -484,11 +484,15 @@ def renormalize_coupling_band(q, e, g, W, U, kT=0.025, eps=1e-15,
 
     .. math::
 
-        \tilde g_{\vec k \vec q i x} = g_{\vec k \vec q i x}
-            + \frac 2 N \sum_{\vec k'} g_{\vec k' \vec q i x} \frac
-                {f(\epsilon_{\vec k' + \vec q}) - f(\epsilon_{\vec k'})}
-                {\epsilon_{\vec k' + \vec q} - \epsilon_{\vec k'}}
-            W_{\vec k \vec k' \vec q}
+        \tilde g_{\vec q \nu \vec k m n} = g_{\vec q \nu \vec k m n}
+            + \frac 2 N \sum_{\vec k' m' n' \alpha \beta \gamma \delta}
+            U_{\vec k + \vec q \alpha m}^* U_{\vec k \beta n}
+            W_{\vec q \alpha \beta \gamma \delta}
+            U_{\vec k' + \vec q \gamma m'} U_{\vec k' \delta n'}^*
+            \frac
+                {f(\epsilon_{\vec k' + \vec q m'}) - f(\epsilon_{\vec k' n'})}
+                {\epsilon_{\vec k' + \vec q m'} - \epsilon_{\vec k' n'}}
+            g_{\vec q \nu \vec k' m' n'}
 
     Parameters
     ----------
@@ -612,7 +616,19 @@ def renormalize_coupling_band(q, e, g, W, U, kT=0.025, eps=1e-15,
     return g_
 
 def renormalize_coupling_orbital(q, e, g, W, U, **kwargs):
-    """Calculate renormalized electron-phonon coupling in orbital basis.
+    r"""Calculate renormalized electron-phonon coupling in orbital basis.
+
+    .. math::
+
+        \tilde g_{\vec q \nu \vec k \alpha \beta} = g_{\vec q \nu \vec k \alpha \beta}
+            + \frac 2 N \sum_{\vec k m n \alpha' \beta' \gamma \delta}
+            W_{\vec q \alpha \beta \gamma \delta}
+            U_{\vec k + \vec q \gamma m} U_{\vec k \delta n}^*
+            \frac
+                {f(\epsilon_{\vec k + \vec q m}) - f(\epsilon_{\vec k n})}
+                {\epsilon_{\vec k + \vec q m} - \epsilon_{\vec k n}}
+            U_{\vec k + \vec q \alpha' m}^* U_{\vec k \beta' n}
+            g_{\vec q \nu \vec k \alpha' \beta'}
 
     Parameters
     ----------
