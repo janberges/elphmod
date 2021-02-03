@@ -37,6 +37,10 @@ class Model(object):
         Lattice vectors of Wigner-Seitz supercells.
     data : ndarray
         Corresponding electron-phonon matrix elements.
+    q : ndarray
+        Previously sampled q point, if any.
+    gq : ndarray
+        Rk-dependent coupling for above q point for possible reuse.
     """
     def g(self, q1=0, q2=0, q3=0, k1=0, k2=0, k3=0, elbnd=False, phbnd=False,
             broadcast=True, comm=comm):
@@ -84,7 +88,7 @@ class Model(object):
         q = np.array([q1, q2, q3])
         k = np.array([k1, k2, k3])
 
-        if self.q is None or np.any(q != self.q):
+        if comm.allreduce(self.q is None or np.any(q != self.q)):
             self.q = q
 
             sizes, bounds = MPI.distribute(nRq, bounds=True, comm=comm)
@@ -99,8 +103,6 @@ class Model(object):
                 # 1222  cfac = EXP(-ci * rdotk) / DBLE(nq)
                 # 1223  epmatwp(:, :, :, :, ir) = epmatwp(:, :, :, :, ir)
                 #           + cfac * epmatwe(:, :, :, :, iq)
-
-            self.gq = np.empty((nph, nRk, nel, nel), dtype=complex)
 
             comm.Allreduce(my_g.sum(axis=0), self.gq)
 
@@ -153,7 +155,6 @@ class Model(object):
         return g
 
     def __init__(self, epmatwp, wigner, el, ph, old_ws=False, divide_mass=True):
-
         self.el = el
         self.ph = ph
 
@@ -238,6 +239,8 @@ class Model(object):
         self.data = g
 
         self.q = None
+        self.gq = np.empty((ph.size, len(self.Rk), el.size, el.size),
+            dtype=complex)
 
     def sample(self, *args, **kwargs):
         """Sample coupling.
