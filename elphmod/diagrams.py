@@ -478,9 +478,9 @@ def phonon_self_energy2(q, e, g2, kT=0.025, nmats=1000, hyb_width=1.0,
 
     return Pi
 
-def renormalize_coupling(q, e, g, W, U, nbnd_sub=None, kT=0.025, eps=1e-15,
-        occupations=occupations.fermi_dirac, status=True):
-    r"""Calculate renormalized electron-phonon coupling.
+def renormalize_coupling_band(q, e, g, W, U, kT=0.025, eps=1e-15,
+        occupations=occupations.fermi_dirac, nbnd_sub=None, status=True):
+    r"""Calculate renormalized electron-phonon coupling in band basis.
 
     .. math::
 
@@ -498,19 +498,19 @@ def renormalize_coupling(q, e, g, W, U, nbnd_sub=None, kT=0.025, eps=1e-15,
     e : ndarray
         Electron dispersion on uniform mesh. The Fermi level must be at zero.
     g : ndarray
-        Bare electron-phonon coupling.
+        Bare electron-phonon coupling in band basis.
     W : ndarray
-        Dressed Coulomb interaction.
+        Dressed q-dependent Coulomb interaction in orbital basis.
     U : ndarray
         Eigenvectors of Wannier Hamiltonian belonging to considered band.
-    nbnd_sub : int
-        Number of bands for Lindhard bubble. Defaults to all bands.
     kT : float
         Smearing temperature.
     eps : float
         Smallest allowed absolute value of divisor.
     occupations : function
         Particle distribution as a function of energy divided by `kT`.
+    nbnd_sub : int
+        Number of bands for Lindhard bubble. Defaults to all bands.
     status : bool
         Print status messages during the calculation?
 
@@ -518,6 +518,10 @@ def renormalize_coupling(q, e, g, W, U, nbnd_sub=None, kT=0.025, eps=1e-15,
     -------
     ndarray
         Dressed electron-phonon coupling.
+
+    See Also
+    --------
+    renormalize_coupling_orbital
     """
     nk, nk, nbnd = e.shape
     nQ, nmodes, nk, nk, nbnd, nbnd = g.shape
@@ -579,7 +583,7 @@ def renormalize_coupling(q, e, g, W, U, nbnd_sub=None, kT=0.025, eps=1e-15,
         if dd:
             indices = 'klam,klan,ac,KLcM,KLcN,KLMN,xKLMN->xklmn'
         else:
-            indices = 'klam,klbn,bacd,KLcM,KLdN,KLMN,xKLMN->xklmn'
+            indices = 'klam,klbn,abcd,KLcM,KLdN,KLMN,xKLMN->xklmn'
 
         my_g_[my_iq] = g[iq] + prefactor * np.einsum(indices,
             U[kq1, kq2].conj(), U[k1, k2],
@@ -607,7 +611,7 @@ def renormalize_coupling_orbital(W, *args, **kwargs):
     Parameters
     ----------
     W : ndarray
-        Dressed Coulomb interaction in orbital basis.
+        Dressed q-dependent Coulomb interaction in orbital basis.
     *args, **kwargs
         Parameters passed to :func:`Pi_g`.
 
@@ -619,6 +623,7 @@ def renormalize_coupling_orbital(W, *args, **kwargs):
     See Also
     --------
     Pi_g
+    renormalize_coupling_orbital
     """
     dd = W.ndim == 3
 
@@ -649,7 +654,7 @@ def Pi_g(q, e, g, U, kT=0.025, eps=1e-15,
     e : ndarray
         Electron dispersion on uniform mesh. The Fermi level must be at zero.
     g : ndarray
-        Bare electron-phonon coupling in orbital and displacement basis.
+        Bare electron-phonon coupling in orbital basis.
     U : ndarray
         Eigenvectors of Wannier Hamiltonian belonging to considered band.
     kT : float
