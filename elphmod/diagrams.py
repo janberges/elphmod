@@ -581,15 +581,21 @@ def renormalize_coupling_band(q, e, g, W, U, kT=0.025, eps=1e-15,
                 dfde[:, :, m, n][~ok] = d[:, :, n][~ok]
 
         if dd:
-            indices = 'klam,klan,ac,KLcM,KLcN,KLMN,xKLMN->xklmn'
+            indices = 'KLcM,KLcN,KLMN,xKLMN->xc'
         else:
-            indices = 'klam,klbn,abcd,KLcM,KLdN,KLMN,xKLMN->xklmn'
+            indices = 'KLcM,KLdN,KLMN,xKLMN->xcd'
 
-        my_g_[my_iq] = g[iq] + prefactor * np.einsum(indices,
-            U[kq1, kq2].conj(), U[k1, k2],
-            W[iq],
+        Pig = prefactor * np.einsum(indices,
             U[kq1, kq2, :, :nbnd_sub], U[k1, k2, :, :nbnd_sub].conj(),
             dfde, g[iq, :, :, :, :nbnd_sub, :nbnd_sub])
+
+        if dd:
+            indices = 'klam,klan,ac,xc->xklmn'
+        else:
+            indices = 'klam,klbn,abcd,xcd->xklmn'
+
+        my_g_[my_iq] = g[iq] + np.einsum(indices,
+            U[kq1, kq2].conj(), U[k1, k2], W[iq], Pig)
 
         #   k+q m           K+q M
         #  ___/___ a     c ___/___
