@@ -6,7 +6,7 @@ project = 'elphmod'
 copyright = '2020, Uni Bremen'
 author = 'Uni Bremen'
 
-extensions = ['sphinx.ext.autodoc', 'numpydoc']
+extensions = ['sphinx.ext.autodoc', 'numpydoc', 'm2r2']
 
 mathjax_config = {
     'TeX': {
