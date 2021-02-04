@@ -1,5 +1,4 @@
 numpy
-scipy
 mpi4py --no-binary=mpi4py
 matplotlib
 numpydoc

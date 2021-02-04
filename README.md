@@ -18,11 +18,6 @@ This is a collection of Python modules to handle electron-phonon models:
 
 ## Installation
 
-elphmod depends on MPI (with shared-memory support). Using APT, it can be
-installed as follows:
-
-    sudo apt install libopenmpi-dev
-
 To install the latest version of elphmod in a virtual environment:
 
     python3 -m venv elphmod.venv
@@ -30,9 +25,15 @@ To install the latest version of elphmod in a virtual environment:
     python3 -m pip install --upgrade pip setuptools wheel
     python3 -m pip install git+https://github.com/janberges/elphmod
 
-Alternatively, download the repository and install all dependencies (including
-those of documentation and examples) and a link to the repository in your home
-directory:
+elphmod can optionally be run in parallel via MPI (with shared-memory support).
+Using APT and pip, you can install the corresponding dependencies as follows:
+
+    sudo apt install libopenmpi-dev
+    python3 -m pip install mpi4py --no-binary=mpi4py
+
+If you plan to work on elphmod itself, we recommend to download the complete
+repository and install all requirements (including those of documentation and
+examples) and a link to the repository in your home directory:
 
     git clone https://github.com/janberges/elphmod
     python3 -m pip install --user -r elphmod/requirements.txt

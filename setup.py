@@ -19,7 +19,7 @@ setuptools.setup(
     url                           = 'https://bitbucket.org/berges/elphmod',
     packages                      = setuptools.find_packages(),
     python_requires               = '>=2.7',
-    install_requires              = ['numpy', 'scipy', 'mpi4py'],
+    install_requires              = ['numpy'],
     classifiers                   = [
         'Programming Language :: Python',
         'License :: OSI Approved :: GNU General Public License (GPL)',
