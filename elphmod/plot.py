@@ -81,6 +81,8 @@ def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
 
     fun = dict()
 
+    q = np.around(np.array(q) / (2 * np.pi) * nq).astype(int)
+
     for iq, (Q1, Q2) in enumerate(q):
         fun[Q1, Q2] = interpolation(mesh[iq], angle=angle)
 
