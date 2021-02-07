@@ -400,7 +400,7 @@ def proj_sum(proj, orbitals, *groups):
 
     Examples:
 
-    .. code-block::
+    .. code-block:: python
 
         proj = read_atomic_projections('atomic_proj.xml')
         orbitals = read_projwf_out('projwfc.out')

@@ -440,7 +440,7 @@ def colormap(*args):
 
     Examples:
 
-    .. code-block::
+    .. code-block:: python
 
         bluebrown = colormap( # PRB 101, 155107 (2020)
             (0, Color(0.0, 1, 255, 'PSV'), np.sqrt),

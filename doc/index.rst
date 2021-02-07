@@ -1,3 +1,4 @@
+.. highlight:: bash
 .. mdinclude:: ../README.md
 
 Modules
