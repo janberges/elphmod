@@ -28,6 +28,8 @@ class Model(object):
         Use previous definition of Wigner-Seitz cells?
     divide_mass : bool
         Divide electron-phonon coupling by square root of atomic masses?
+    shared_memory : bool
+        Read coupling from EPW into shared memory?
 
     Attributes
     ----------
@@ -154,7 +156,9 @@ class Model(object):
 
         return g
 
-    def __init__(self, epmatwp, wigner, el, ph, old_ws=False, divide_mass=True):
+    def __init__(self, epmatwp, wigner, el, ph, old_ws=False, divide_mass=True,
+            shared_memory=False):
+
         self.el = el
         self.ph = ph
 
@@ -168,18 +172,23 @@ class Model(object):
 
         shape = len(self.Rg), ph.size, len(self.Rk), el.size, el.size
 
+        node, images, g = MPI.shared_array(shape, dtype=np.complex128,
+            shared_memory=shared_memory)
+
         if comm.rank == 0:
             with open(epmatwp) as data:
-                g = np.fromfile(data, dtype=np.complex128, count=np.prod(shape))
                 # To do: Check if cut off data is really empty!
 
-            g = np.reshape(g, shape)
-            g = np.swapaxes(g, 3, 4).copy()
+                for irg in range(shape[0]):
+                    tmp = np.fromfile(data, dtype=np.complex128,
+                        count=np.prod(shape[1:])).reshape(shape[1:])
 
-            # index orders:
-            # EPW (Fortran): a, b, R', x, R
-            # after read-in: R, x, R', b, a
-            # after transp.: R, x, R', a, b
+                    g[irg] = np.swapaxes(tmp, 2, 3)
+
+                    # index orders:
+                    # EPW (Fortran): a, b, R', x, R
+                    # after read-in: R, x, R', b, a
+                    # after transp.: R, x, R', a, b
 
             block = [slice(3 * na, 3 * (na + 1)) for na in range(ph.nat)]
 
@@ -231,10 +240,10 @@ class Model(object):
                 for na in range(ph.nat):
                     g[:, block[na]] /= np.sqrt(ph.M[na])
 
-        else:
-            g = np.empty(shape, dtype=np.complex128)
+        if node.rank == 0:
+            images.Bcast(g)
 
-        comm.Bcast(g)
+        comm.Barrier()
 
         self.data = g
 
