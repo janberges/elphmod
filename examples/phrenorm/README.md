@@ -2,7 +2,7 @@
 
 This example shows how to
 
-* perform a cDFPT calculation [Nomura, Arita: PRB 92, 245108 (2015)],
+* perform a cDFPT calculation [Nomura & Arita, PRB 92, 245108 (2015)],
 * work with electrons, phonons, and their coupling in localized bases,
 * consistently renormalize phonon dispersions (go from cDFPT to DFPT).
 
