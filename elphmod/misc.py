@@ -66,3 +66,60 @@ def group(points, eps=1e-7):
                 groups[np.where(groups == groups[j])] = groups[i]
 
     return [np.where(groups == group)[0] for group in set(groups)]
+
+def read_cube(cube):
+    """Read Gaussian cube file."""
+
+    if comm.rank == 0:
+        lines = open(cube)
+
+        next(lines)
+        next(lines)
+
+        cols = next(lines).split()
+        nat = int(cols[0])
+        r0 = np.array(list(map(float, cols[1:4])))
+    else:
+        nat = None
+
+    nat = comm.bcast(nat)
+
+    n = np.empty(3, dtype=int)
+    a = np.empty((3, 3), dtype=float)
+    X = np.empty(nat, dtype=int)
+    r = np.empty((nat, 3), dtype=float)
+
+    if comm.rank == 0:
+        for i in range(3):
+            cols = next(lines).split()
+            n[i] = int(cols[0])
+            a[i] = list(map(float, cols[1:4]))
+
+        for i in range(nat):
+            cols = next(lines).split()
+            X[i] = int(cols[0])
+            r[i] = list(map(float, cols[1:4]))
+
+    comm.Bcast(n)
+    comm.Bcast(a)
+    comm.Bcast(X)
+    comm.Bcast(r)
+
+    if comm.rank == 0:
+        data = np.empty(np.prod(n))
+
+        i = 0
+        for line in lines:
+            for number in line.split():
+                data[i] = float(number)
+                i += 1
+
+        data = np.reshape(data, n)
+
+        lines.close()
+    else:
+        data = np.empty(n, dtype=float)
+
+    comm.Bcast(data)
+
+    return a, X, r, data

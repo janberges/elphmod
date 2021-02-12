@@ -1,0 +1,12 @@
+&INPUTPP
+       prefix = 'TaS2'
+       outdir = 'work'
+
+     plot_num = 5
+  sample_bias = 0.1
+/
+&PLOT
+        iflag = 3
+output_format = 6
+      fileout = 'stm.cube'
+/
