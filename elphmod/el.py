@@ -376,7 +376,7 @@ def read_projwfc_out(projwfc_out):
                     next(data)
 
                     while True:
-                        info = next(data).rstrip()
+                        info = next(data, '').rstrip()
 
                         if info:
                             X = info[28:31].strip()
