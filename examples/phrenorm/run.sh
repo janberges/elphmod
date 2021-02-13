@@ -25,4 +25,4 @@ do
     cp work/TaS2.epmatwp $method.epmatwp
 done
 
-mpirun python3 renormalize.py
+mpirun python3 phrenorm.py
