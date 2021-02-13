@@ -16,7 +16,7 @@ do
     mpirun ph.x -nk $nk < $method.in | tee $method.out
 
     mpirun q2r.x < q2r.in | tee q2r.out
-    ./ph2epw.sh
+    ../../bin/ph2epw
 
     mpirun pw.x -nk $nk < nscf.in | tee nscf.out
     mpirun -n 1 epw.x -nk 1 < epw.in | tee epw.out

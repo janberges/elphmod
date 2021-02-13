@@ -18,6 +18,7 @@ setuptools.setup(
     long_description_content_type = 'text/markdown',
     url                           = 'https://bitbucket.org/berges/elphmod',
     packages                      = setuptools.find_packages(),
+    scripts                       = ['bin/ph2epw', 'bin/qe_mod'],
     python_requires               = '>=2.7',
     install_requires              = ['numpy'],
     classifiers                   = [

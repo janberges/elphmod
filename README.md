@@ -39,6 +39,11 @@ examples) and a link to the repository in your home directory:
     python3 -m pip install --user -r elphmod/requirements.txt
     python3 -m pip install --user -e elphmod
 
+Please note that scripts are still copied rather than linked. To circumvent
+this, you can alternatively install elphmod by prepending the absolute paths to
+`elphmod/elphmod` and `elphmod/bin` to the environmental variables `PYTHONPATH`
+and `PATH`, respectively.
+
 ## Documentation
 
 All functions are documented directly in the source files using NumPy-style
