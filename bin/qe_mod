@@ -8,7 +8,7 @@ import sys
 if len(sys.argv) > 1:
     QE = sys.argv[1]
 else:
-    print('''Usage: python3 qe_mod.py /path/to/q-e/
+    print('''Usage: qe_mod /path/to/q-e/
 
 ATTENTION: This script will modify QE sources files without backup!
 Use QE's Git repository and verify or undo changes with "git diff"!

@@ -18,12 +18,17 @@ setuptools.setup(
     long_description_content_type = 'text/markdown',
     url                           = 'https://bitbucket.org/berges/elphmod',
     packages                      = setuptools.find_packages(),
-    scripts                       = ['bin/kpoints', 'bin/ph2epw', 'bin/qe_mod'],
     python_requires               = '>=2.7',
     install_requires              = ['numpy'],
-    classifiers                   = [
+    classifiers = [
         'Programming Language :: Python',
         'License :: OSI Approved :: GNU General Public License (GPL)',
         'Operating System :: POSIX :: Linux',
+        ],
+    scripts = [
+        'bin/kpoints',
+        'bin/minimum',
+        'bin/ph2epw',
+        'bin/qe_mod',
         ],
     )
