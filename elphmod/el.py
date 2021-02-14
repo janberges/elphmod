@@ -201,7 +201,8 @@ def read_symmetry_points(bandsout):
 
     return points
 
-def read_atomic_projections(atomic_proj_xml, order=False, **order_kwargs):
+def read_atomic_projections(atomic_proj_xml, order=False, from_fermi=True,
+        **order_kwargs):
     """Read projected bands from *outdir/prefix.save/atomic_proj.xml*."""
 
     if comm.rank == 0:
@@ -260,7 +261,8 @@ def read_atomic_projections(atomic_proj_xml, order=False, **order_kwargs):
             dk = k[i] - k[i - 1]
             x[i] = x[i - 1] + np.sqrt(np.dot(dk, dk))
 
-        eps -= mu
+        if from_fermi:
+            eps -= mu
 
         if order:
             o = dispersion.band_order(eps,
@@ -279,7 +281,8 @@ def read_atomic_projections(atomic_proj_xml, order=False, **order_kwargs):
 
     return x, k, eps, abs(proj) ** 2
 
-def read_atomic_projections_old(atomic_proj_xml, order=False, **order_kwargs):
+def read_atomic_projections_old(atomic_proj_xml, order=False, from_fermi=True,
+        **order_kwargs):
     """Read projected bands from *outdir/prefix.save/atomic_proj.xml*."""
 
     if comm.rank == 0:
@@ -338,7 +341,8 @@ def read_atomic_projections_old(atomic_proj_xml, order=False, **order_kwargs):
             dk = k[i] - k[i - 1]
             x[i] = x[i - 1] + np.sqrt(np.dot(dk, dk))
 
-        eps -= mu
+        if from_fermi:
+            eps -= mu
 
         if order:
             o = dispersion.band_order(eps,
