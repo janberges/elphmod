@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+
+# Copyright (C) 2021 elphmod Developers
+# This program is free software under the terms of the GNU GPLv3 or later.
+
+k = []
+N = 1
+
+for axis in '1st', '2nd', '3rd':
+    nk = int(input('number of points along %s axis: ' % axis))
+    dk = 1.0 / nk
+    k.append([i * dk for i in range(nk)])
+    N *= nk
+
+cols = [0.0] * len(k)
+
+if 'y' in input('print weights (y/n): '):
+   cols.append(1.0 / N)
+
+print(N)
+
+for cols[0] in k[0]:
+   for cols[1] in k[1]:
+      for cols[2] in k[2]:
+         print(' '.join('%11.9f' % c for c in cols))
