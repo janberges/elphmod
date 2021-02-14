@@ -371,6 +371,8 @@ def read_projwfc_out(projwfc_out):
             ['s'],
             ['px', 'py', 'pz'],
             ['dz2', 'dxz', 'dyz', 'dx2-y2', 'dxy'],
+            ['fz3', 'fxz2', 'fyz2', 'fz(x2-y2)', 'fxyz', 'fx(x2-3y2)',
+                'fy(3x2-y2)'],
             ]
 
         with open(projwfc_out) as data:
@@ -388,10 +390,18 @@ def read_projwfc_out(projwfc_out):
                             l = int(info[44])
                             m = int(info[49])
 
-                            orbitals.append('%s-%s (n=%d)'
-                                % (X, labels[l][m - 1], n))
+                            orbitals.append('%s-%d%s'
+                                % (X, n, labels[l][m - 1]))
                         else:
                             break
+
+            for orbital in set(orbitals):
+                if orbitals.count(orbital) > 1:
+                    duplicates = [n for n in range(len(orbitals))
+                        if orbital == orbitals[n]]
+
+                    for m, n in enumerate(duplicates, 1):
+                        orbitals[n] = orbitals[n].replace('-', '%d-' % m, 1)
     else:
         orbitals = None
 
@@ -408,20 +418,48 @@ def proj_sum(proj, orbitals, *groups):
 
         proj = read_atomic_projections('atomic_proj.xml')
         orbitals = read_projwf_out('projwfc.out')
-        proj = proj_sum(proj, orbitals, 'S-p', 'Ta-dz2, Ta-dx2-y2, Ta-dxy')
+        proj = proj_sum(proj, orbitals, 'S-p', 'Ta-d{z2, x2-y2, xy}')
     """
+    import re
+
+    def info(orbital):
+        return re.match('(?:([A-Z][a-z]?)(\d*))?-?(\d*)(?:([spdf])(\S*))?',
+            orbital.strip()).groups()
+
+    def factorize(labels, brackets=None):
+        if brackets is None:
+            brackets = []
+
+            def hide(match):
+                brackets.append(match.group(1))
+                return '<%d>' % (len(brackets) - 1)
+
+            n = 1
+            while n:
+                labels, n = re.subn(r'\{([^}]*)\}', hide, labels)
+
+        for label in labels.split(','):
+            label, n = re.subn(r'(.*)<(\d+)>(.*)', lambda match:
+                ','.join(match.group(1) + x.strip() + match.group(3)
+                    for x in brackets[int(match.group(2))].split(',')), label)
+
+            if n:
+                for label in factorize(label, brackets):
+                    yield label
+            else:
+                yield label.strip()
 
     summed = np.empty(proj.shape[:2] + (len(groups),))
 
     if comm.rank == 0:
+        orbitals = list(map(info, orbitals))
+
         for n, group in enumerate(groups):
             indices = set()
 
-            for selection in group.split(','):
-                selection = selection.strip()
-
+            for selection in map(info, factorize(group)):
                 for a, orbital in enumerate(orbitals):
-                    if selection in orbital:
+                    if all(A == B for A, B in zip(selection, orbital) if A):
                         indices.add(a)
 
             summed[..., n] = proj[..., sorted(indices)].sum(axis=2)

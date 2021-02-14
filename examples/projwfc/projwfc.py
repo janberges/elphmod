@@ -14,7 +14,7 @@ x, k, eps, proj = elphmod.el.read_atomic_projections(
 orbitals = elphmod.el.read_projwfc_out('projwfc.out')
 
 width = 0.05 * elphmod.el.proj_sum(proj, orbitals, 'S-s', 'S-p',
-    'Ta-s', 'Ta-p', 'Ta-dxz, Ta-dyz', 'Ta-dz2, Ta-dx2-y2, Ta-dxy')
+    'Ta-s', 'Ta-p', 'Ta-d{xz, yz}', 'Ta-d{z2, x2-y2, xy}')
 
 if elphmod.MPI.comm.rank != 0:
     raise SystemExit
