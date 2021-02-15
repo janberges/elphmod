@@ -41,7 +41,7 @@ examples) and a link to the repository in your home directory:
 
 Please note that scripts are still copied rather than linked. To circumvent
 this, you can alternatively install elphmod by prepending the absolute paths to
-`elphmod/elphmod` and `elphmod/bin` to the environmental variables `PYTHONPATH`
+`elphmod/elphmod` and `elphmod/bin` to the environment variables `PYTHONPATH`
 and `PATH`, respectively.
 
 ## Documentation

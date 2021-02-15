@@ -11,9 +11,11 @@ labels = ['S-$s$', 'S-$p$', 'Ta-$s$', 'Ta-$p$', 'Ta-$d_{x z, y z}$',
 x, k, eps, proj = elphmod.el.read_atomic_projections(
     'work/TaS2.save/atomic_proj.xml', order=True)
 
+eps *= elphmod.misc.Ry
+
 orbitals = elphmod.el.read_projwfc_out('projwfc.out')
 
-width = 0.05 * elphmod.el.proj_sum(proj, orbitals, 'S-s', 'S-p',
+width = 0.5 * elphmod.el.proj_sum(proj, orbitals, 'S-s', 'S-p',
     'Ta-s', 'Ta-p', 'Ta-d{xz, yz}', 'Ta-d{z2, x2-y2, xy}')
 
 if elphmod.MPI.comm.rank != 0:
