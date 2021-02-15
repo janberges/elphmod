@@ -123,3 +123,51 @@ def read_cube(cube):
     comm.Bcast(data)
 
     return a, X, r, data
+
+def split(expr, sd=',', od='{', cd='}'):
+    """Split expression with separators and brackets using distributive law.
+
+    Parameters
+    ----------
+    expr : str
+        Expression to be expanded and split.
+    sd : str
+        Separating delimiter.
+    od : str
+        Opening delimiter.
+    cd : str
+        Closing delimiter.
+
+    Returns
+    -------
+    generator
+        Separated elements of expression.
+    """
+    import re
+
+    group = '[{0}]([^{0}{1}]*)[{1}]'.format(*
+        [re.sub(r'([\^\]])', r'\\\1', d) for d in (od, cd)])
+
+    groups = []
+
+    def pack(match):
+        groups.append(match.group(1))
+        return '<%d>' % (len(groups) - 1)
+
+    expr = od + expr + cd
+
+    n = 1
+    while n:
+        expr, n = re.subn(group, pack, expr)
+
+    def factorize(x):
+        match = re.match(r'(.*)<(\d+)>(.*)', x)
+
+        if match:
+            for y in groups[int(match.group(2))].split(sd):
+                for z in factorize(match.group(1) + y.strip() + match.group(3)):
+                    yield z
+        else:
+            yield x
+
+    return factorize(expr)

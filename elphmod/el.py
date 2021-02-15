@@ -426,29 +426,6 @@ def proj_sum(proj, orbitals, *groups):
         return re.match('(?:([A-Z][a-z]?)(\d*))?-?(\d*)(?:([spdf])(\S*))?',
             orbital.strip()).groups()
 
-    def factorize(labels, brackets=None):
-        if brackets is None:
-            brackets = []
-
-            def hide(match):
-                brackets.append(match.group(1))
-                return '<%d>' % (len(brackets) - 1)
-
-            n = 1
-            while n:
-                labels, n = re.subn(r'\{([^}]*)\}', hide, labels)
-
-        for label in labels.split(','):
-            label, n = re.subn(r'(.*)<(\d+)>(.*)', lambda match:
-                ','.join(match.group(1) + x.strip() + match.group(3)
-                    for x in brackets[int(match.group(2))].split(',')), label)
-
-            if n:
-                for label in factorize(label, brackets):
-                    yield label
-            else:
-                yield label.strip()
-
     summed = np.empty(proj.shape[:2] + (len(groups),))
 
     if comm.rank == 0:
@@ -457,7 +434,7 @@ def proj_sum(proj, orbitals, *groups):
         for n, group in enumerate(groups):
             indices = set()
 
-            for selection in map(info, factorize(group)):
+            for selection in map(info, misc.split(group)):
                 for a, orbital in enumerate(orbitals):
                     if all(A == B for A, B in zip(selection, orbital) if A):
                         indices.add(a)
