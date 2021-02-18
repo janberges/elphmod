@@ -45,6 +45,25 @@ def gauss_delta(x):
 
 gauss.delta = gauss_delta
 
+def marzari_vanderbilt(x):
+    """Calculate Marzari-Vanderbilt (cold smearing) step function."""
+
+    y = -x - 1 / np.sqrt(2)
+
+    return (math.erf(y) + 1) / 2 + np.exp(-y * y) / np.sqrt(2 * np.pi)
+
+if 'sphinx' not in sys.modules:
+    marzari_vanderbilt = np.vectorize(marzari_vanderbilt)
+
+def marzari_vanderbilt_delta(x):
+    """Calculate negative derivative of Marzari-Vanderbilt step function."""
+
+    y = x - 1 / np.sqrt(2)
+
+    return np.exp(-y * y) * (2 - np.sqrt(2) * x) / np.sqrt(np.pi)
+
+marzari_vanderbilt.delta = marzari_vanderbilt_delta
+
 def methfessel_paxton_general(x, N=0):
     r"""Calculate Methfessel-Paxton step function and its negative derivative.
 
