@@ -606,11 +606,12 @@ def polarization(e, path, angle=60):
 
     return mode
 
-def q2r(ph, D_irr, q_irr, nq, apply_asr=True):
+def q2r(ph, D_irr, q_irr, nq, angle=60, apply_asr=True):
     """Interpolate dynamical matrices given for irreducible wedge of q points.
 
     This function replaces `interpolate_dynamical_matrices`, which depends on
-    Quantum ESPRESSO. Currently, it only works for hexagonal 2D lattices.
+    Quantum ESPRESSO. Currently, it only works for 2D lattices. For the square
+    lattice, the rotation symmetry (90 degrees) is currently disabled!
 
     Parameters
     ----------
@@ -622,6 +623,8 @@ def q2r(ph, D_irr, q_irr, nq, apply_asr=True):
         Irreducible q points in crystal coordinates with period :math:`2 \pi`.
     nq : int
         Number of q points per dimension, i.e., size of uniform mesh.
+    angle : float
+        Angle between mesh axes in degrees.
     apply_asr : bool
         Enforce acoustic sum rule by overwriting self force constants?
     """
@@ -642,17 +645,21 @@ def q2r(ph, D_irr, q_irr, nq, apply_asr=True):
     def apply(A, U):
         return np.einsum('ij,jk,kl->il', U, A, U.T.conj())
 
-    a1, a2 = bravais.translations()
+    a1, a2 = bravais.translations(180 - angle)
     b1, b2 = bravais.reciprocals(a1, a2)
 
     r = ph.r[:, :2].T / ph.a[0, 0]
 
     scale = nq / (2 * np.pi)
 
+    # rotation currently disabled for square lattice:
+
+    angles = [0] if angle == 90 else [0, 2 * np.pi / 3, 4 * np.pi / 3]
+
     for iq, (q1, q2) in enumerate(q_irr):
         q0 = q1 * b1 + q2 * b2
 
-        for phi in 0, 2 * np.pi / 3, 4 * np.pi / 3:
+        for phi in angles:
             for reflect in False, True:
                 q = np.dot(rotation(phi)[:2, :2], q0)
                 D = apply(D_irr[iq], rotation(phi, ph.nat))
@@ -661,9 +668,11 @@ def q2r(ph, D_irr, q_irr, nq, apply_asr=True):
                     q = np.dot(reflection()[:2, :2], q)
                     D = apply(D, reflection(ph.nat))
 
+                # only valid if atom is mapped onto image of itself:
+
                 phase = np.exp(1j * np.array(np.dot(q0 - q, r)))
 
-                for n in range(len(phase)):
+                for n in range(ph.nat):
                     D[3 * n:3 * n + 3, :] *= phase[n].conj()
                     D[:, 3 * n:3 * n + 3] *= phase[n]
 
@@ -678,12 +687,10 @@ def q2r(ph, D_irr, q_irr, nq, apply_asr=True):
 
     phid = np.einsum('rq,qQxy,QR->rRxy', FT, D_full, FT).real
 
-    nat = ph.size // 3
-
-    phid = np.reshape(phid, (nq, nq, 1, nat, 3, nat, 3))
+    phid = np.reshape(phid, (nq, nq, 1, ph.nat, 3, ph.nat, 3))
     phid = np.transpose(phid, (3, 5, 0, 1, 2, 4, 6))
 
-    for na in range(nat):
+    for na in range(ph.nat):
         phid[na, :] *= np.sqrt(ph.M[na])
         phid[:, na] *= np.sqrt(ph.M[na])
 
