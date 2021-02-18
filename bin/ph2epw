@@ -36,6 +36,14 @@ do
 
         test $n -gt 1 && orig="$orig/$prefix.q_$n"
 
-        cp "$orig/$prefix.dvscf1" "$dvscf_dir/$prefix.dvscf_q$n"
+        for suffix in dvscf dvscf_paw
+        do
+            origfile="$orig/$prefix.$suffix"1
+
+            if test -f "$origfile"
+            then
+                cp "$origfile" "$dvscf_dir/$prefix.$suffix"_q$n
+            fi
+        done
     done
 done
