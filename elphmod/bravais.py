@@ -36,7 +36,7 @@ def rotate(vector, angle, two_dimensional=True):
             [cos, -sin],
             [sin,  cos],
             ])
-    
+
         return np.dot(rotation, vector)
     else:
         rotation = np.array([
@@ -44,9 +44,8 @@ def rotate(vector, angle, two_dimensional=True):
             [sin,  cos, 0.0],
             [0.0,  0.0, 1.0],
             ])
-    
+
         return np.dot(rotation, vector)
-        
 
 def translations(angle=120, angle0=0, two_dimensional=True):
     """Generate translation vectors of Bravais lattice.
@@ -69,22 +68,20 @@ def translations(angle=120, angle0=0, two_dimensional=True):
     ndarray, ndarray
         Translation vectors of Bravais lattice.
     """
-    
     if two_dimensional:
         a1 = np.array([1.0, 0.0])
-    
+
         a1 = rotate(a1, angle0 * deg)
         a2 = rotate(a1, angle  * deg)
-    
+
         return a1, a2
     else:
         a1 = np.array([1.0, 0.0, 0.0])
-    
+
         a1 = rotate(a1, angle0 * deg, two_dimensional=False)
         a2 = rotate(a1, angle  * deg, two_dimensional=False)
-    
+
         return a1, a2
-        
 
 def reciprocals(a1, a2, a3=None):
     """Generate translation vectors of reciprocal lattice.

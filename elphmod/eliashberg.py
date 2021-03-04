@@ -9,6 +9,26 @@ from . import MPI, bravais, dos, occupations
 comm = MPI.comm
 info = MPI.info
 
+def Tc(lamda, wlog, mustar=0.1):
+    """Calculate critical temperature using McMillan's formula.
+
+    Parameters
+    ----------
+    lamda : float
+        Effective electron-phonon coupling strength.
+    wlog : float
+        Effective phonon energy in eV.
+    mustar : float
+        Coulomb pseudopotential.
+
+    Returns
+    -------
+    float
+        Critical temperature in kelvin.
+    """
+    return wlog / (1.20 * occupations.kB) * np.exp(-1.04 * (1 + lamda)
+        / (lamda - 0.62 * lamda * mustar - mustar))
+
 def McMillan(nq, e, w2, g2, eps=1e-10, mustar=0.0):
     """Calculate parameters and result of McMillan's formula.
 
@@ -82,7 +102,4 @@ def McMillan(nq, e, w2, g2, eps=1e-10, mustar=0.0):
     wlog = np.exp(np.dot(weights, r2 * np.log(w2) / 2).sum()
         / np.dot(weights, r2).sum())
 
-    Tc = wlog / (1.20 * occupations.kB) * np.exp(-1.04 * (1 + lamda)
-        / (lamda - 0.62 * lamda * mustar - mustar))
-
-    return lamda, wlog, Tc
+    return lamda, wlog, Tc(lamda, wlog, muStar)
