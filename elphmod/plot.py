@@ -251,17 +251,22 @@ def toBZ(data=None, points=1000, interpolation=bravais.linear_interpolation,
     b1, b2 = bravais.reciprocals(a1, a2)
 
     if angle == 60:
-        t3 = a1 - a2
-        u3 = b1 + b2
+        a3 = a1 - a2
+        b3 = b1 + b2
+        M = 2.0 / 3.0
+
+    elif angle == 90:
+        a3 = a1
+        b3 = b1
+        M = 1.0 / 2.0
 
     elif angle == 120:
-        t3 = a1 + a2
-        u3 = b1 - b2
+        a3 = a1 + a2
+        b3 = b1 - b2
+        M = 2.0 / 3.0
 
-    M = 2.0 / 3.0
-
-    kxmax = max(abs(a1[0]), abs(a2[0]), abs(t3[0])) * M
-    kymax = max(abs(a1[1]), abs(a2[1]), abs(t3[1])) * M
+    kxmax = max(abs(a1[0]), abs(a2[0]), abs(a3[0])) * M
+    kymax = max(abs(a1[1]), abs(a2[1]), abs(a3[1])) * M
 
     nkx = int(round(points * kxmax))
     nky = int(round(points * kymax))
@@ -312,7 +317,7 @@ def toBZ(data=None, points=1000, interpolation=bravais.linear_interpolation,
 
         if abs(np.dot(k, b1)) > M: continue
         if abs(np.dot(k, b2)) > M: continue
-        if abs(np.dot(k, u3)) > M: continue
+        if abs(np.dot(k, b3)) > M: continue
 
         idata = np.floor((np.arctan2(ky[i], kx[j]) - angle0)
             * scale).astype(int) % ndata
