@@ -21,8 +21,8 @@ do
     mpirun pw.x -nk $nk < nscf.in | tee nscf.out
     mpirun -n 1 epw.x -nk 1 < epw.in | tee epw.out
 
-    cp ifc $method.ifc
-    cp work/TaS2.epmatwp $method.epmatwp
+    mv ifc $method.ifc
+    mv work/TaS2.epmatwp $method.epmatwp
 done
 
 mpirun python3 phrenorm.py
