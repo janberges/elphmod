@@ -29,6 +29,7 @@ setuptools.setup(
         'bin/kpoints',
         'bin/minimum',
         'bin/ph2epw',
-        'bin/qe_mod',
+        'bin/qe_mod_6.3',
+        'bin/qe_mod_6.7',
         ],
     )
