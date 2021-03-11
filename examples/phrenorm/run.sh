@@ -26,3 +26,4 @@ do
 done
 
 mpirun python3 phrenorm.py
+mpirun python3 defpot.py
