@@ -1157,6 +1157,9 @@ def read_pwi(pwi):
 
                 elif key == 'nat':
                     struct[key] = int(words[2])
+                
+                elif key == 'ibrav':
+                    struct[key] = int(words[2])
 
                 elif key == 'atomic_positions':
                     struct['at'] = []
@@ -1174,6 +1177,14 @@ def read_pwi(pwi):
 
                         for x in range(3):
                             struct['r'][n, x] = float(words[1 + x])
+                elif key == 'cell_parameters':
+                    struct['r_cell'] = np.empty((3,3))
+                    for n in range(3):
+                        words = next(lines).split()
+                        
+                        for x in range(3):
+                            struct['r_cell'][n, x] = float(words[x])
+                        
     else:
         struct = None
 
