@@ -1161,13 +1161,12 @@ def read_pwi(pwi):
                 elif key == 'atomic_positions':
                     struct['at'] = []
                     struct['r'] = np.empty((struct['nat'], 3))
-                    print(words)
                     if len(words)==1:
                         struct['coords'] = 'alat'
                     else:
                         struct['coords'] = words[1]
                     print('Read crystal structure in %s' % (struct['coords']))
-
+                    
                     for n in range(struct['nat']):
                         words = next(lines).split()
 
