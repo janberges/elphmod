@@ -24,10 +24,11 @@ for ik, (k1, k2) in enumerate(k):
 
 g *= elphmod.misc.Ry / elphmod.misc.a0
 
-plt.xticks(x[GMKG], 'GMKG')
-plt.ylabel(r'$\langle \vec k d_{z^2}| '
-    r'\partial V / \partial z_{\mathrm{S}} '
-    r'|\vec k d_{z^2} \rangle$ '
-    r'($\mathrm{eV/\AA}$)')
-plt.plot(x, g.real)
-plt.show()
+if elphmod.MPI.comm.rank == 0:
+    plt.xticks(x[GMKG], 'GMKG')
+    plt.ylabel(r'$\langle \vec k d_{z^2}| '
+        r'\partial V / \partial z_{\mathrm{S}} '
+        r'|\vec k d_{z^2} \rangle$ '
+        r'($\mathrm{eV/\AA}$)')
+    plt.plot(x, g.real)
+    plt.show()
