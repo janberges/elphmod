@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (C) 2020 elphmod Developers
+# Copyright (C) 2021 elphmod Developers
 # This program is free software under the terms of the GNU GPLv3 or later.
 
 url=http://www.pseudo-dojo.org/pseudos/nc-sr-04_pbe_standard # [1, 2]
