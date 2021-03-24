@@ -85,10 +85,12 @@ class Model(object):
 
         model = comm.bcast(model)
 
-        self.M, self.a, self.r = model[1:]
-        self.R, self.data = short_range_model(*model)
+        self.M, self.a, self.r = model[1:-1]
+        self.R, self.data = short_range_model(*model[0:-1])
         self.size = self.data.shape[1]
         self.nat = self.size // 3
+        self.atom_order = model[-1]
+        
 
 def group(n, size=3):
     """Create slice of dynamical matrix beloning to `n`-th atom."""
@@ -268,9 +270,9 @@ def read_flfrc(flfrc):
                 ]) * celldim[0]
 
         elif ibrav == 5: # trigonal (3-fold axis c)
-            tx = np.sqrt((1 - celldm[3]) / 2)
-            ty = np.sqrt((1 - celldm[3]) / 6)
-            tz = np.sqrt((1 + 2 * celldm[3]) / 3)
+            tx = np.sqrt((1 - celldim[3]) / 2)
+            ty = np.sqrt((1 - celldim[3]) / 6)
+            tz = np.sqrt((1 + 2 * celldim[3]) / 3)
 
             at = np.array([
                 [ tx,    -ty, tz],
@@ -279,12 +281,12 @@ def read_flfrc(flfrc):
                 ]) * celldim[0]
 
         elif ibrav == -5: # trigonal (3-fold axis <111>)
-            tx = np.sqrt((1 - celldm[3]) / 2)
-            ty = np.sqrt((1 - celldm[3]) / 6)
-            tz = np.sqrt((1 + 2 * celldm[3]) / 3)
+            tx = np.sqrt((1 - celldim[3]) / 2)
+            ty = np.sqrt((1 - celldim[3]) / 6)
+            tz = np.sqrt((1 + 2 * celldim[3]) / 3)
 
-            u = tz - 2 * sqrt(2) * ty
-            v = tz + sqrt(2) * ty
+            u = tz - 2 * np.sqrt(2) * ty
+            v = tz + np.sqrt(2) * ty
 
             at = np.array([
                 [u, v, v],
@@ -428,6 +430,14 @@ def read_flfrc(flfrc):
             tau[na, :] = list(map(float, tmp[2:5]))
 
         tau *= celldim[0]
+        
+        
+        atom_order = []
+
+        for index in ityp:
+            atom_order.append(atm[index])
+            
+            
 
         # read macroscopic dielectric function and effective charges:
 
@@ -462,7 +472,7 @@ def read_flfrc(flfrc):
 
     # return force constants, masses, and geometry:
 
-    return [phid, amass[ityp], at, tau]
+    return [phid, amass[ityp], at, tau, atom_order]
 
 def asr(phid):
     """Apply simple acoustic sum rule correction to force constants."""
