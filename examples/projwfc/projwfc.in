@@ -1,4 +1,4 @@
 &PROJWFC
-     prefix = 'TaS2'
-     outdir = 'work'
+    prefix = 'TaS2'
+    outdir = 'work'
 /
