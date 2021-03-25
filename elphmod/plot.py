@@ -808,7 +808,9 @@ def plot_pie_with_TeX(filename, data, points=1000, angle=60, standalone=True,
 def compline(x, y, composition, center=True):
     """Plot composition along line."""
 
-    nx, nc = composition.shape
+    nx = len(composition)
+    composition = np.reshape(composition, (nx, -1))
+    nc = composition.shape[1]
 
     lines = np.zeros((nc + 1, nx))
 
