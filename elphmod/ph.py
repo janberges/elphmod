@@ -26,6 +26,8 @@ class Model(object):
         Bravais lattice vectors if `flfrc` is omitted.
     tau : ndarray
         Positions of basis atoms if `flfrc` is omitted.
+    atom_order : list of str
+        Ordered list of atoms if `flfrc` is omitted.
 
     Attributes
     ----------
@@ -37,6 +39,8 @@ class Model(object):
         Positions of basis atoms.
     R : ndarray
         Lattice vectors of Wigner-Seitz supercell.
+    atom_order : list of str
+        Ordered list of atoms.
     data : ndarray
         Corresponding self and interatomic force constants.
     size : int
@@ -64,14 +68,14 @@ class Model(object):
 
     def __init__(self, flfrc=None, apply_asr=False,
         phid=np.zeros((1, 1, 1, 1, 1, 3, 3)), amass=np.ones(1),
-        at=np.eye(3), tau=np.zeros((1, 3))):
+        at=np.eye(3), tau=np.zeros((1, 3)), atom_order=['X']):
 
         if flfrc is None:
             if apply_asr:
                 phid = phid.copy()
                 asr(phid)
 
-            model = phid, amass, at, tau
+            model = phid, amass, at, tau, atom_order
         else:
             if comm.rank == 0:
                 model = read_flfrc(flfrc)
@@ -85,12 +89,10 @@ class Model(object):
 
         model = comm.bcast(model)
 
-        self.M, self.a, self.r = model[1:-1]
-        self.R, self.data = short_range_model(*model[0:-1])
+        self.M, self.a, self.r, self.atom_order = model[1:]
+        self.R, self.data = short_range_model(*model[:-1])
         self.size = self.data.shape[1]
         self.nat = self.size // 3
-        self.atom_order = model[-1]
-        
 
 def group(n, size=3):
     """Create slice of dynamical matrix beloning to `n`-th atom."""
@@ -430,14 +432,11 @@ def read_flfrc(flfrc):
             tau[na, :] = list(map(float, tmp[2:5]))
 
         tau *= celldim[0]
-        
-        
+
         atom_order = []
 
         for index in ityp:
-            atom_order.append(atm[index])
-            
-            
+            atom_order.append(atm[index].strip())
 
         # read macroscopic dielectric function and effective charges:
 
