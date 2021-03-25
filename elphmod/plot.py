@@ -603,6 +603,39 @@ def save(filename, data):
             zlib.compress(struct.pack('%dB' % lines.size, *lines.flat), 9))
         chunk(b'IEND', b'')
 
+def load(filename):
+    """Load grayscale, RGB, or RGBA image from 8-bit PNG."""
+
+    import zlib, struct
+
+    with open(filename, 'rb') as png:
+        png.read(8)
+
+        while True:
+            size, = struct.unpack("!I", png.read(4))
+            name = png.read(4)
+            data = png.read(size)
+            csum = png.read(4)
+
+            if struct.pack("!I", zlib.crc32(name + data) & 0xffffffff) != csum:
+                print("Chunk '%s' corrupted!" % name)
+
+            if name == b'IHDR':
+                width, height, _, color, _, _, _ = struct.unpack("!2I5B", data)
+                colors = {0:1, 2:3, 6:4}[color]
+
+            elif name == b'IDAT':
+                data = zlib.decompress(data)
+                lines = struct.unpack('%dB' % len(data), data)
+                lines = np.reshape(lines, (height, 1 + width * colors))
+                lines = lines.astype(np.uint8)
+                image = lines[:, 1:].reshape((height, width, colors))
+
+            if name == b'IEND':
+                break
+
+        return image
+
 def label_pie_with_TeX(stem,
 
     width = 7.0, # total width in cm
