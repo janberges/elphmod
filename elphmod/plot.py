@@ -571,57 +571,76 @@ def PSV2RGB(P, S=1, V=255):
 
     return tuple(V * (0.5 - 0.5 * np.cos(P + S * np.array([0, 1, 2]))))
 
-def save(filename, data):
+def save(filename, image):
     """Save grayscale, RGB, or RGBA image as 8-bit PNG.
 
     Specified at https://www.w3.org/TR/PNG/.
     Inspired by Blender thumbnailer code.
+
+    Parameters
+    ----------
+    filename : str
+        Name of PNG file to be written.
+    image : ndarray
+        8-bit image data of shape (height, width, colors), where colors may be
+        1 (grayscale), 3 (RGB), or 4 (RGBA).
     """
     import zlib, struct
 
-    data[np.where(data < 0)] = 0
-    data[np.where(data >= 256)] = 255
+    image[np.where(image < 0)] = 0
+    image[np.where(image >= 256)] = 255
 
-    height, width, colors = data.shape
+    height, width, colors = image.shape
     color = {1:0, 3:2, 4:6}[colors]
 
     lines = np.empty((height, 1 + width * colors), dtype=np.uint8)
     lines[:, 0] = 0 # https://www.w3.org/TR/PNG/#4Concepts.EncodingFiltering
-    lines[:, 1:] = data.reshape((height, -1))
+    lines[:, 1:] = image.reshape((height, -1))
 
     with open(filename, 'wb') as png:
         png.write(b'\x89PNG\r\n\x1a\n')
 
         def chunk(name, data):
-            png.write(struct.pack("!I", len(data)))
+            png.write(struct.pack('!I', len(data)))
             png.write(name)
             png.write(data)
-            png.write(struct.pack("!I", zlib.crc32(name + data) & 0xffffffff))
+            png.write(struct.pack('!I', zlib.crc32(name + data) & 0xffffffff))
 
-        chunk(b'IHDR', struct.pack("!2I5B", width, height, 8, color, 0, 0, 0))
+        chunk(b'IHDR', struct.pack('!2I5B', width, height, 8, color, 0, 0, 0))
         chunk(b'IDAT',
             zlib.compress(struct.pack('%dB' % lines.size, *lines.flat), 9))
         chunk(b'IEND', b'')
 
 def load(filename):
-    """Load grayscale, RGB, or RGBA image from 8-bit PNG."""
+    """Load grayscale, RGB, or RGBA image from 8-bit PNG.
 
+    Parameters
+    ----------
+    filename : str
+        Name of PNG file to be written.
+
+    Returns
+    -------
+    ndarray
+        8-bit image data of shape (height, width, colors), where colors may be
+        1 (grayscale), 3 (RGB), or 4 (RGBA).
+    """
     import zlib, struct
 
     with open(filename, 'rb') as png:
         png.read(8)
 
         while True:
-            size, = struct.unpack("!I", png.read(4))
+            size, = struct.unpack('!I', png.read(4))
             name = png.read(4)
             data = png.read(size)
             csum = png.read(4)
 
-            if struct.pack("!I", zlib.crc32(name + data) & 0xffffffff) != csum:
+            if struct.pack('!I', zlib.crc32(name + data) & 0xffffffff) != csum:
                 print("Chunk '%s' corrupted!" % name)
 
             if name == b'IHDR':
-                width, height, _, color, _, _, _ = struct.unpack("!2I5B", data)
+                width, height, _, color, _, _, _ = struct.unpack('!2I5B', data)
                 colors = {0:1, 2:3, 6:4}[color]
 
             elif name == b'IDAT':
