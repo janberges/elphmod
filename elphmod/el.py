@@ -463,6 +463,9 @@ def read_Fermi_level(pw_scf_out):
 def read_pwo(pw_scf_out):
     """Read energies from PW output file."""
 
+    Ne = Ns = Nk = E = None
+    e_given = False
+
     if comm.rank == 0:
         with open(pw_scf_out) as lines:
             for line in lines:
@@ -482,31 +485,38 @@ def read_pwo(pw_scf_out):
                     E = float(line.split()[-2]) * misc.Ry
 
                 elif 'End of self-consistent calculation' in line:
-                    e = []
+                    try:
+                        e = []
 
-                    for ik in range(Nk):
-                        for _ in range(3):
-                            next(lines)
+                        for ik in range(Nk):
+                            for _ in range(3):
+                                next(lines)
 
-                        e.append([])
+                            e.append([])
 
-                        while len(e[-1]) < Ns:
-                            e[-1].extend(list(map(float, next(lines).split())))
+                            while len(e[-1]) < Ns:
+                                e[-1].extend(list(map(float, next(lines).split())))
 
-        e = np.array(e) - eF
+                        e_given = True
 
-    else:
-        Ne = Ns = Nk = E = None
+                    except ValueError:
+                        pass
+
+        if e_given and eF is not None:
+            e = np.array(e) - eF
 
     Ne = comm.bcast(Ne)
     Ns = comm.bcast(Ns)
     Nk = comm.bcast(Nk)
     E  = comm.bcast(E)
 
-    if comm.rank != 0:
-        e = np.empty((Nk, Ns))
+    if comm.bcast(e_given):
+        if comm.rank != 0:
+            e = np.empty((Nk, Ns))
 
-    comm.Bcast(e)
+        comm.Bcast(e)
+    else:
+        e = None
 
     return e, Ne, E
 
