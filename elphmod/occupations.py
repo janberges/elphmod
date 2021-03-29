@@ -12,6 +12,8 @@ kB = misc.kB
 
 xmax = 709.0 # approx. log([max. double] / 2 - 1)
 
+not_doc = 'sphinx' not in sys.modules
+
 def fermi_dirac(x):
     """Calculate Fermi function."""
 
@@ -35,7 +37,7 @@ def gauss(x):
 
     return 0.5 * (1 - math.erf(x))
 
-if 'sphinx' not in sys.modules:
+if not_doc:
     gauss = np.vectorize(gauss)
 
 def gauss_delta(x):
@@ -52,7 +54,7 @@ def marzari_vanderbilt(x):
 
     return (math.erf(y) + 1) / 2 + np.exp(-y * y) / np.sqrt(2 * np.pi)
 
-if 'sphinx' not in sys.modules:
+if not_doc:
     marzari_vanderbilt = np.vectorize(marzari_vanderbilt)
 
 def marzari_vanderbilt_delta(x):
@@ -118,7 +120,7 @@ def methfessel_paxton_general(x, N=0):
 
     return S, D
 
-if 'sphinx' not in sys.modules:
+if not_doc:
     methfessel_paxton_general = np.vectorize(methfessel_paxton_general)
 
 def methfessel_paxton(x):
@@ -162,7 +164,7 @@ def heaviside_delta(x):
 
     return 0.0 if x else np.inf
 
-if 'sphinx' not in sys.modules:
+if not_doc:
     heaviside_delta = np.vectorize(heaviside_delta)
 
 heaviside.delta = heaviside_delta
@@ -174,7 +176,7 @@ def fermi_dirac_matsubara(x, nmats=1000):
 
     return 0.5 + 2 * np.sum(1.0 / (inu - x)).real
 
-if 'sphinx' not in sys.modules:
+if not_doc:
     fermi_dirac_matsubara = np.vectorize(fermi_dirac_matsubara)
 
 def fermi_dirac_matsubara_delta(x, nmats=1000):
@@ -184,7 +186,7 @@ def fermi_dirac_matsubara_delta(x, nmats=1000):
 
     return -2 * np.sum(1.0 / (inu - x) ** 2).real
 
-if 'sphinx' not in sys.modules:
+if not_doc:
     fermi_dirac_matsubara_delta = np.vectorize(fermi_dirac_matsubara_delta)
 
 fermi_dirac_matsubara.delta = fermi_dirac_matsubara_delta
