@@ -251,7 +251,7 @@ def polarization(e, U, kT=0.025, eps=1e-15, subspace=None,
 
     return calculate_polarization
 
-def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15,
+def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15, omega=0.0,
         occupations=occupations.fermi_dirac, fluctuations=False, Delta=None,
         Delta_diff=False, Delta_occupations=occupations.gauss, Delta_kT=0.025,
         comm=comm):
@@ -259,10 +259,10 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15,
 
     .. math::
 
-        \Pi_{\vec q \nu} = \frac 2 N \sum_{\vec k m n}
+        \Pi_{\vec q \nu}(\omega) = \frac 2 N \sum_{\vec k m n}
             |g_{\vec q \nu \vec k m n}|^2 \frac
-                {f(\epsilon_{\vec k + \vec q m}) - f(\epsilon_{\vec k n})}
-                {\epsilon_{\vec k + \vec q m} - \epsilon_{\vec k n}}
+                {f(\epsilon_{\vec k n}) - f(\epsilon_{\vec k + \vec q m})}
+                {\epsilon_{\vec k n} - \epsilon_{\vec k + \vec q m} + \omega}
 
     Parameters
     ----------
@@ -277,6 +277,9 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15,
         Smearing temperature.
     eps : float
         Smallest allowed absolute value of divisor.
+    omega : float
+        Nonadiabatic frequency argument; shall include small imaginary
+        regulator if nonzero.
     occupations : function
         Particle distribution as a function of energy divided by `kT`.
     fluctuations : bool
@@ -344,7 +347,7 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15,
         my_Pi_k = np.empty((sizes[comm.rank], nb, nk, nk, nbnd, nbnd),
             dtype=g2.dtype)
 
-    dfde = np.empty((nk, nk, nbnd, nbnd))
+    dfde = np.empty((nk, nk, nbnd, nbnd), dtype=complex if omega else float)
 
     k1 = slice(0, nk)
     k2 = slice(0, nk)
@@ -361,10 +364,14 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15,
                 df = f[kq1, kq2, m] - f[k1, k2, n]
                 de = e[kq1, kq2, m] - e[k1, k2, n]
 
-                ok = abs(de) > eps
+                if omega:
+                    dfde[:, :, m, n] = df / (de + omega)
 
-                dfde[:, :, m, n][ ok] = df[ok] / de[ok]
-                dfde[:, :, m, n][~ok] = d[:, :, n][~ok]
+                else:
+                    ok = abs(de) > eps
+
+                    dfde[:, :, m, n][ ok] = df[ok] / de[ok]
+                    dfde[:, :, m, n][~ok] = d[:, :, n][~ok]
 
                 if Delta is not None:
                     if Delta_diff:
