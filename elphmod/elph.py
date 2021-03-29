@@ -617,7 +617,7 @@ def read_patterns(filename, q, nrep, status=True):
     return patterns
 
 def read_xml_files(filename, q, rep, bands, nbands, nk, squeeze=True, status=True,
-        angle=120, angle0=0):
+        angle=120, angle0=0, old=False):
     """Read XML files with coupling in displacement basis from QE (*nosym*)."""
 
     if not hasattr(q, '__len__'):
@@ -659,22 +659,27 @@ def read_xml_files(filename, q, rep, bands, nbands, nk, squeeze=True, status=Tru
                         if pattern in line:
                             return line
 
-                goto("<NUMBER_OF_K ")
-                if nk != int(np.sqrt(int(next(data)))):
+                def intag(tag):
+                    return tag.split('>', 1)[1].split('<', 1)[0]
+
+                tmp = goto("<NUMBER_OF_K")
+                tmp = int(np.sqrt(int(next(data) if old else intag(tmp))))
+                if nk != tmp:
                     print("Wrong number of k points!")
 
-                goto("<NUMBER_OF_BANDS ")
-                if nbands != int(next(data)):
+                tmp = goto("<NUMBER_OF_BANDS")
+                tmp = int(next(data) if old else intag(tmp))
+                if nbands != tmp:
                     print("Wrong number of bands!")
 
                 for ik in range(nk * nk):
-                    goto("<COORDINATES_XK ")
+                    goto("<COORDINATES_XK")
                     k = list(map(float, next(data).split()))[:2]
 
                     k1 = int(round(np.dot(k, a1) * nk)) % nk
                     k2 = int(round(np.dot(k, a2) * nk)) % nk
 
-                    goto("<PARTIAL_ELPH ")
+                    goto("<PARTIAL_ELPH")
 
                     for n in band_select:
                         for m in band_select:
@@ -682,7 +687,8 @@ def read_xml_files(filename, q, rep, bands, nbands, nk, squeeze=True, status=Tru
                                 next(data)
                             else:
                                 my_elph[my_iq, my_irep, k1, k2, m, n] = complex(
-                                    *list(map(float, next(data).split(","))))
+                                    *list(map(float, next(data).split(','
+                                        if old else None))))
 
     comm.Allgatherv(my_elph, (elph,
         sizes * len(rep) * nk * nk * len(bands) * len(bands)))
