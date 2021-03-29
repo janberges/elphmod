@@ -54,7 +54,10 @@ modify('LR_Modules/orthogonalize.f90', (1, 31), r'''
   kq1 = modulo(nint(nk1 * dot_product(at(:, 1), xk(:, ikq))), nk1) + 1
   kq2 = modulo(nint(nk2 * dot_product(at(:, 2), xk(:, ikq))), nk2) + 1
   kq3 = modulo(nint(nk3 * dot_product(at(:, 3), xk(:, ikq))), nk3) + 1
-''', (60, 92), r'''
+''', (60, 70), r'''
+  IF (ltetra .OR. lgauss .OR. cdfpt) THEN
+''', (72, 92), r'''
+              !
               IF (cdfpt) THEN
                  IF (any(cdfpt_subspace(:, kk1, kk2, kk3) == ibnd) .AND. &
                      any(cdfpt_subspace(:, kq1, kq2, kq3) == jbnd)) THEN
@@ -63,7 +66,20 @@ modify('LR_Modules/orthogonalize.f90', (1, 31), r'''
                  ENDIF
               ENDIF
               !
-''', (93,))
+''', (93, 112), r'''
+        ELSEIF (cdfpt) THEN
+           !
+           DO jbnd = nbnd_occ(ikq) + 1, nbnd
+              IF (all(cdfpt_subspace(:, kk1, kk2, kk3) /= ibnd) .OR. &
+                  all(cdfpt_subspace(:, kq1, kq2, kq3) /= jbnd)) THEN
+                 ps(jbnd, ibnd) = 0.0_DP
+              ENDIF
+           ENDDO
+           CYCLE
+           !
+''', (113, 187), r'''
+  IF (lgauss .OR. ltetra .OR. cdfpt) THEN
+''', (189,))
 
 modify('PHonon/PH/phq_readin.f90', (1, 68), r'''
   USE control_lr,    ONLY : lgamma, lrpa, cdfpt, cdfpt_subspace
