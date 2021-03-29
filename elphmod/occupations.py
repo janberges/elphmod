@@ -134,6 +134,7 @@ def methfessel_paxton_delta(x):
 methfessel_paxton.delta = methfessel_paxton_delta
 
 def lorentz(x):
+
     """Calculate Lorentz step function.
 
     Used to simulate the influence of a wide box-shaped hybridization function
@@ -150,6 +151,21 @@ def lorentz_delta(x):
     return 1.0 / (x * x + np.pi * np.pi)
 
 lorentz.delta = lorentz_delta
+
+def heaviside(x):
+    """Calculate (refleced) Heaviside function."""
+
+    return 0.5 - 0.5 * np.sign(x)
+
+def heaviside_delta(x):
+    """Calculate negative derivative of (refleced) Heaviside function."""
+
+    return 0.0 if x else np.inf
+
+if 'sphinx' not in sys.modules:
+    heaviside_delta = np.vectorize(heaviside_delta)
+
+heaviside.delta = heaviside_delta
 
 def fermi_dirac_matsubara(x, nmats=1000):
     """Calculate Fermi function as Matsubara sum."""
