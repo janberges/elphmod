@@ -369,7 +369,7 @@ def read_projwfc_out(projwfc_out):
 
         labels = [
             ['s'],
-            ['px', 'py', 'pz'],
+            ['pz', 'px', 'py'],
             ['dz2', 'dxz', 'dyz', 'dx2-y2', 'dxy'],
             ['fz3', 'fxz2', 'fyz2', 'fz(x2-y2)', 'fxyz', 'fx(x2-3y2)',
                 'fy(3x2-y2)'],
