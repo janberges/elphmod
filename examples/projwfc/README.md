@@ -1,6 +1,6 @@
-# Projections onto (pseudo)atomic orbitals
+# Projected band structure of graphene
 
 This example shows how to
 
-* calculate projected band structures with Quantum ESPRESSO,
+* calculate projections onto (pseudo)atomic orbitals with QE,
 * plot (and label) the data in *atomic_proj.xml* as fatbands.

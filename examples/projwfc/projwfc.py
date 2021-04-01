@@ -4,19 +4,17 @@ import elphmod
 import matplotlib.pyplot as plt
 import numpy as np
 
-colors = ['magenta', 'cyan', 'red', 'blue', 'green', 'black']
-labels = ['S-$s$', 'S-$p$', 'Ta-$s$', 'Ta-$p$', 'Ta-$d_{x z, y z}$',
-    'Ta-$d_{z^2, x^2 - y^2, x y}$']
+colors = ['red', 'blue', 'black']
+labels = ['$s$', '$p_{x, y}$', '$p_z$']
 
 x, k, eps, proj = elphmod.el.read_atomic_projections(
-    'work/TaS2.save/atomic_proj.xml', order=True)
+    'work/graphene.save/atomic_proj.xml', order=True)
 
 eps *= elphmod.misc.Ry
 
 orbitals = elphmod.el.read_projwfc_out('projwfc.out')
 
-width = 0.5 * elphmod.el.proj_sum(proj, orbitals, 'S-s', 'S-p',
-    'Ta-s', 'Ta-p', 'Ta-d{xz, yz}', 'Ta-d{z2, x2-y2, xy}')
+width = 0.5 * elphmod.el.proj_sum(proj, orbitals, 's', 'p{x, y}', 'pz')
 
 if elphmod.MPI.comm.rank != 0:
     raise SystemExit
