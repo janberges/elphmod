@@ -937,7 +937,7 @@ def Fourier_interpolation(data, angle=60, sign=-1, hr_file=None, function=True):
         with open(hr_file, 'w') as hr:
             hr.write(time.strftime(' written on %d%b%Y at %H:%M:%S\n'))
 
-            hr.write('%12d\n' % 1)
+            hr.write('%12d\n' % size)
             hr.write('%12d\n' % count)
 
             columns = 15
