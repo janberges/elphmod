@@ -361,8 +361,8 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15, omega=0.0,
 
         for m in range(nbnd):
             for n in range(nbnd):
-                df = f[kq1, kq2, m] - f[k1, k2, n]
-                de = e[kq1, kq2, m] - e[k1, k2, n]
+                df = f[k1, k2, n] - f[kq1, kq2, m]
+                de = e[k1, k2, n] - e[kq1, kq2, m]
 
                 if omega:
                     dfde[:, :, m, n] = df / (de + omega)
