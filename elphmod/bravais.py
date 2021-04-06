@@ -891,7 +891,7 @@ def Fourier_interpolation(data, angle=60, sign=-1, hr_file=None, function=True):
     --------
     linear_interpolation : Alternative interpolation routine.
     """
-    N, N = data.shape
+    N, N = data.shape[:2]
 
     # do first Fourier transform to obtain coefficients:
 
@@ -899,11 +899,11 @@ def Fourier_interpolation(data, angle=60, sign=-1, hr_file=None, function=True):
 
     transform = np.exp(sign * 2j * np.pi / N * np.outer(i, i)) / N
 
-    data = np.dot(np.dot(transform, data), transform)
+    data = np.einsum('ni,ij...,jm->nm...', transform, data, transform)
 
     # construct smooth inverse transform (formally tight-binding model):
 
-    values = np.empty((N * N * 4), dtype=complex)
+    values = np.empty((N * N * 4,) + data.shape[2:], dtype=complex)
     points = np.empty((N * N * 4, 2), dtype=int)
     counts = np.empty((N * N * 4), dtype=int)
 
@@ -929,7 +929,10 @@ def Fourier_interpolation(data, angle=60, sign=-1, hr_file=None, function=True):
     if hr_file is not None:
         import time
 
-        order = np.lexsort((points[:,1], points[:,0]))
+        size = int(np.sqrt(np.prod(data.shape[2:])))
+        H = values.reshape((count, size, size))
+
+        order = np.lexsort((points[:, 1], points[:, 0]))
 
         with open(hr_file, 'w') as hr:
             hr.write(time.strftime(' written on %d%b%Y at %H:%M:%S\n'))
@@ -948,19 +951,22 @@ def Fourier_interpolation(data, angle=60, sign=-1, hr_file=None, function=True):
             form = '%5d' * 5 + '%12.6f' * 2 + '\n'
 
             for i in order:
-                hr.write(form % (points[i, 0], points[i, 1], 0, 1, 1,
-                    values[i].real, values[i].imag))
+                for b in range(size):
+                    for a in range(size):
+                        hr.write(form % (points[i, 0], points[i, 1], 0,
+                            a + 1, b + 1, H[i, a, b].real, H[i, a, b].imag))
 
     # fix weights of interpolation coefficients:
 
-    values /= counts
+    for i in range(count):
+        values[i] /= counts[i]
 
     # define interpolation function and generalize is with respect to arrays:
 
     idphi = -sign * 2j * np.pi / N
 
     def interpolant(*point):
-        return np.dot(values, np.exp(idphi * np.dot(points, point))).real
+        return np.dot(np.exp(idphi * np.dot(points, point)), values).real
 
     if function:
         return np.vectorize(interpolant)
