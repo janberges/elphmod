@@ -9,9 +9,19 @@ import sys
 from . import MPI
 comm = MPI.comm
 
-Ry = 13.605693009 # Rydberg energy (eV)
-a0 = 0.52917721090380 # Bohr radius (AA)
-kB = 8.61733e-5 # Boltzmann constant (eV/K)
+# constants in SI units:
+cSI = 299792458.0 # speed of light (m/s)
+eVSI = 1.602176634e-19 # electronvolt (J)
+hSI = 6.62607015e-34 # Planck constant (J s)
+kBSI = 1.380649e-23 # Boltzmann constant (J/K)
+
+# constants in atomic units (eV, AA):
+Ry = 13.605693122994 # Rydberg energy (eV) [1]
+a0 = 0.529177210903 # Bohr radius (AA) [1]
+cmm1 = 100.0 * hSI * cSI / eVSI # "inverse cm" (eV)
+kB = kBSI / eVSI # Boltzmann constant (eV/K)
+
+# [1] 2018 CODATA recommended values
 
 class StatusBar(object):
     def __init__(self, count, width=60, title='progress'):
