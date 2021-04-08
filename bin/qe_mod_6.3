@@ -81,7 +81,13 @@ modify('LR_Modules/orthogonalize.f90', (1, 31), r'''
   IF (lgauss .OR. ltetra .OR. cdfpt) THEN
 ''', (189,))
 
-modify('PHonon/PH/phq_readin.f90', (1, 73), r'''
+modify('PHonon/PH/elph.f90', (1, 14), r'''
+  LOGICAL :: elph, elph_mat, elph_simple, elph_epa, elph_defpot
+''', (16,))
+
+modify('PHonon/PH/phq_readin.f90', (1, 69), r'''
+                            elph_defpot, &
+''', (70, 73), r'''
   USE control_lr,    ONLY : lgamma, lrpa, cdfpt, cdfpt_subspace
 ''', (75, 110), r'''
   CHARACTER(LEN=256) :: subspace
@@ -96,7 +102,20 @@ modify('PHonon/PH/phq_readin.f90', (1, 73), r'''
   !
   CALL mp_bcast(cdfpt, meta_ionode_id, world_comm)
   IF (cdfpt) CALL setup_subspace(cdfpt_subspace, subspace)
-''', (339, 844), r'''
+''', (339, 372), r'''
+  elph_defpot = .false.
+''', (373, 394), r'''
+  CASE( 'defpot' )
+     elph=.true.
+     elph_mat=.false.
+     elph_simple=.false.
+     elph_epa=.false.
+     elph_defpot=.true.
+''', (395, 796), r'''
+  IF (elph .AND. .NOT. (lgauss .OR. ltetra) &
+      .AND. .NOT. (elph_yambo .OR. elph_defpot)) &
+          CALL errore ('phq_readin', 'Electron-phonon only for metals', 1)
+''', (799, 844), r'''
 CONTAINS
   !
   SUBROUTINE setup_subspace(subspace, filename)
@@ -129,6 +148,12 @@ CONTAINS
      CALL bcast_integer(subspace, size(subspace), meta_ionode_id, world_comm)
   END SUBROUTINE
 ''', (845,))
+
+modify('PHonon/PH/do_phonon.f90', (1, 35), r'''
+  USE el_phon,         ONLY : elph, elph_mat, elph_simple, elph_epa, elph_defpot
+''', (37, 128), r'''
+        ELSEIF (.NOT. elph_defpot) THEN
+''', (130,))
 
 modify('EPW/src/ephwann_shuffle.f90', (1, 358), r'''
   !
