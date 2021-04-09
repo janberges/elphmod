@@ -15,9 +15,6 @@
 
     ecutwfc = 10.0
 
-    occupations = 'smearing'
-    degauss = 0.01
-
     nbnd = 13
 /
 &ELECTRONS

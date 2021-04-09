@@ -12,9 +12,6 @@
     c = 10.0
 
     ecutwfc = 10.0
-
-    occupations = 'smearing'
-    degauss = 0.01
 /
 &ELECTRONS
     conv_thr = 1e-12
