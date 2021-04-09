@@ -10,8 +10,6 @@ import matplotlib.pyplot as plt
 comm = elphmod.MPI.comm
 info = elphmod.MPI.info
 
-eV2cmm1 = 8065.54
-
 colors = ['skyblue', 'dodgerblue', 'orange']
 
 data = 'NbSe2_cDFPT'
@@ -34,7 +32,7 @@ if comm.rank == 0:
 
     print("Load reference from Quantum ESPRESSO's 'matdyn.x'..")
 
-    ref = np.loadtxt('data/%s.disp.gp' % data) / eV2cmm1 * 1e3
+    ref = np.loadtxt('data/%s.disp.gp' % data) * elphmod.misc.cmm1 * 1e3
 
     x0 = ref[:, 0] / ref[-1, 0] * x[-1]
     w0 = ref[:, 1:]
