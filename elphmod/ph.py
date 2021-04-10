@@ -18,6 +18,8 @@ class Model(object):
         File with interatomic force constants from ``q2r.x``.
     apply_asr : bool
         Apply acoustic sum rule correction to force constants?
+    apply_rsr : bool
+        Apply rotation sum rule correction to force constants?
     phid : ndarray
         Force constants if `flfrc` is omitted.
     amass : ndarray
@@ -66,26 +68,22 @@ class Model(object):
 
         return D.sum(axis=0)
 
-    def __init__(self, flfrc=None, apply_asr=False,
+    def __init__(self, flfrc=None, apply_asr=False, apply_rsr=False,
         phid=np.zeros((1, 1, 1, 1, 1, 3, 3)), amass=np.ones(1),
         at=np.eye(3), tau=np.zeros((1, 3)), atom_order=['X']):
 
-        if flfrc is None:
-            if apply_asr:
-                phid = phid.copy()
-                asr(phid)
-
-            model = phid, amass, at, tau, atom_order
-        else:
-            if comm.rank == 0:
+        if comm.rank == 0:
+            if flfrc is None:
+                model = phid.copy(), amass, at, tau, atom_order
+            else:
                 model = read_flfrc(flfrc)
 
-                # optionally, apply acoustic sum rule:
+            # optionally, apply acoustic sum rule:
 
-                if apply_asr:
-                    asr(model[0])
-            else:
-                model = None
+            if apply_asr:
+                asr(model[0])
+        else:
+            model = None
 
         model = comm.bcast(model)
 
@@ -93,6 +91,9 @@ class Model(object):
         self.R, self.data = short_range_model(*model[:-1])
         self.size = self.data.shape[1]
         self.nat = self.size // 3
+
+        if apply_rsr:
+            rsr(self)
 
 def group(n, size=3):
     """Create slice of dynamical matrix beloning to `n`-th atom."""
@@ -665,7 +666,7 @@ def polarization(e, path, angle=60):
 
     return mode
 
-def q2r(ph, D_irr, q_irr, nq, angle=60, apply_asr=True):
+def q2r(ph, D_irr, q_irr, nq, angle=60, apply_asr=False, apply_rsr=False):
     """Interpolate dynamical matrices given for irreducible wedge of q points.
 
     This function replaces `interpolate_dynamical_matrices`, which depends on
@@ -686,6 +687,8 @@ def q2r(ph, D_irr, q_irr, nq, angle=60, apply_asr=True):
         Angle between mesh axes in degrees.
     apply_asr : bool
         Enforce acoustic sum rule by overwriting self force constants?
+    apply_rsr : bool
+        Enforce rotation sum rule by overwriting self force constants?
     """
     D_full = np.empty((nq, nq, ph.size, ph.size), dtype=complex)
 
@@ -758,9 +761,12 @@ def q2r(ph, D_irr, q_irr, nq, angle=60, apply_asr=True):
 
     ph.R, ph.data = short_range_model(phid, ph.M, ph.a, ph.r)
 
+    if apply_rsr:
+        rsr(ph)
+
 def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
-        angle=120, write_fildyn0=True, apply_asr=True, qe_prefix='',
-        clean=False):
+        angle=120, write_fildyn0=True, apply_asr=False, apply_rsr=False,
+        qe_prefix='', clean=False):
     """Interpolate dynamical matrices given for irreducible wedge of q points.
 
     This function still uses the Quantum ESPRESSO executables ``q2qstar.x`` and
@@ -798,6 +804,8 @@ def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
         Write *fildyn0* needed by ``q2r.x``? Otherwise the file must be present.
     apply_asr : bool
         Enforce acoustic sum rule by overwriting self force constants?
+    apply_rsr : bool
+        Enforce rotation sum rule by overwriting self force constants?
     qe_prefix : str
         String to prepend to names of Quantum ESPRESSO executables.
     clean : bool
@@ -857,7 +865,7 @@ def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
     # clean up and return mass-sping model:
     # (no MPI barrier needed because of broadcasting in 'Model')
 
-    ph = Model(flfrc, apply_asr)
+    ph = Model(flfrc, apply_asr, apply_rsr)
 
     if clean:
         if comm.rank == 0:
