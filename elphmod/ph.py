@@ -487,6 +487,56 @@ def asr(phid):
             for m3 in range(nr3)
             if na1 != na2 or m1 or m2 or m3)
 
+def rsr(ph, eps=1e-15):
+    """Apply Born-Huang rotation sum rule correction to force constants.
+
+    Parameters
+    ----------
+    ph : object
+        Mass-spring model for the phonons.
+    eps : float
+        Tolerance and valid denominator.
+    """
+    R = np.einsum('xy,nx->ny', ph.a, ph.R)
+    C = ph.data.reshape((len(R), ph.nat, 3, ph.nat, 3))
+
+    # determine list of constraints:
+
+    c = []
+    for l in range(ph.nat):
+        for x1 in range(3):
+            for x2 in range(3):
+                for y in range(3):
+                    c.append(np.zeros_like(C))
+                    for n in range(len(R)):
+                        for k in range(ph.nat):
+                            c[-1][n, k, x1, l, y] += R[n, x2] + ph.r[k, x2]
+                            c[-1][n, k, x2, l, y] -= R[n, x1] + ph.r[k, x1]
+    c.append(C)
+
+    # orthogonalize constraints and force constants via Gram-Schmidt method:
+
+    cc = np.empty(len(c))
+    for i in range(len(c)):
+        for j in range(i):
+            if cc[j] > eps:
+                c[i] -= (c[j] * c[i]).sum() / cc[j] * c[j]
+        cc[i] = (c[i] * c[i]).sum()
+
+    # check if the sum rule is really fulfilled now:
+
+    for l in range(ph.nat):
+        for x1 in range(3):
+            for x2 in range(3):
+                for y in range(3):
+                    S = 0.0
+                    for n in range(len(R)):
+                        for k in range(ph.nat):
+                            S += C[n, k, x1, l, y] * (R[n, x2] + ph.r[k, x2])
+                            S -= C[n, k, x2, l, y] * (R[n, x1] + ph.r[k, x1])
+                    if abs(S) > eps:
+                        print('Rotation sum rule correction failed.')
+
 def short_range_model(phid, amass, at, tau, eps=1e-7):
     """Map force constants onto Wigner-Seitz cell and divide by masses."""
 
