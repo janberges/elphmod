@@ -501,6 +501,10 @@ def rsr(ph, eps=1e-15):
     R = np.einsum('xy,nx->ny', ph.a, ph.R)
     C = ph.data.reshape((len(R), ph.nat, 3, ph.nat, 3))
 
+    for na in range(ph.nat):
+        C[:, na, :, :, :] *= np.sqrt(ph.M[na])
+        C[:, :, :, na, :] *= np.sqrt(ph.M[na])
+
     # determine list of constraints:
 
     c = []
@@ -537,6 +541,10 @@ def rsr(ph, eps=1e-15):
                             S -= C[n, k, x2, l, y] * (R[n, x1] + ph.r[k, x1])
                     if abs(S) > eps:
                         print('Rotation sum rule correction failed.')
+
+    for na in range(ph.nat):
+        C[:, na, :, :, :] /= np.sqrt(ph.M[na])
+        C[:, :, :, na, :] /= np.sqrt(ph.M[na])
 
 def short_range_model(phid, amass, at, tau, eps=1e-7):
     """Map force constants onto Wigner-Seitz cell and divide by masses."""
