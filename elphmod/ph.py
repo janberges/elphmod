@@ -93,7 +93,7 @@ class Model(object):
         self.nat = self.size // 3
 
         if apply_rsr:
-            rsr(self)
+            sum_rule_correction(self, asr=False, rsr=True)
 
 def group(n, size=3):
     """Create slice of dynamical matrix beloning to `n`-th atom."""
@@ -488,13 +488,17 @@ def asr(phid):
             for m3 in range(nr3)
             if na1 != na2 or m1 or m2 or m3)
 
-def rsr(ph, eps=1e-15):
-    """Apply Born-Huang rotation sum rule correction to force constants.
+def sum_rule_correction(ph, asr=True, rsr=True, eps=1e-15):
+    """Apply sum rule correction to force constants.
 
     Parameters
     ----------
     ph : object
         Mass-spring model for the phonons.
+    asr : bool
+        Enforce acoustic sum rule?
+    rsr : bool
+        Enforce Born-Huang rotation sum rule?
     eps : float
         Tolerance and valid denominator.
     """
@@ -508,15 +512,27 @@ def rsr(ph, eps=1e-15):
     # determine list of constraints:
 
     c = []
-    for l in range(ph.nat):
-        for x1 in range(3):
-            for x2 in range(3):
+
+    if asr:
+        for l in range(ph.nat):
+            for x in range(3):
                 for y in range(3):
                     c.append(np.zeros_like(C))
                     for n in range(len(R)):
                         for k in range(ph.nat):
-                            c[-1][n, k, x1, l, y] += R[n, x2] + ph.r[k, x2]
-                            c[-1][n, k, x2, l, y] -= R[n, x1] + ph.r[k, x1]
+                            c[-1][n, k, x, l, y] += 1.0
+
+    if rsr:
+        for l in range(ph.nat):
+            for x1 in range(3):
+                for x2 in range(3):
+                    for y in range(3):
+                        c.append(np.zeros_like(C))
+                        for n in range(len(R)):
+                            for k in range(ph.nat):
+                                c[-1][n, k, x1, l, y] += R[n, x2] + ph.r[k, x2]
+                                c[-1][n, k, x2, l, y] -= R[n, x1] + ph.r[k, x1]
+
     c.append(C)
 
     # orthogonalize constraints and force constants via Gram-Schmidt method:
@@ -530,17 +546,29 @@ def rsr(ph, eps=1e-15):
 
     # check if the sum rule is really fulfilled now:
 
-    for l in range(ph.nat):
-        for x1 in range(3):
-            for x2 in range(3):
+    if asr:
+        for l in range(ph.nat):
+            for x in range(3):
                 for y in range(3):
                     S = 0.0
                     for n in range(len(R)):
                         for k in range(ph.nat):
-                            S += C[n, k, x1, l, y] * (R[n, x2] + ph.r[k, x2])
-                            S -= C[n, k, x2, l, y] * (R[n, x1] + ph.r[k, x1])
+                            S += C[n, k, x, l, y]
                     if abs(S) > eps:
-                        print('Rotation sum rule correction failed.')
+                        print('Acoustic sum rule correction failed.')
+
+    if rsr:
+        for l in range(ph.nat):
+            for x1 in range(3):
+                for x2 in range(3):
+                    for y in range(3):
+                        S = 0.0
+                        for n in range(len(R)):
+                            for k in range(ph.nat):
+                                S += C[n, k, x1, l, y] * (R[n, x2] + ph.r[k, x2])
+                                S -= C[n, k, x2, l, y] * (R[n, x1] + ph.r[k, x1])
+                        if abs(S) > eps:
+                            print('Rotation sum rule correction failed.')
 
     for na in range(ph.nat):
         C[:, na, :, :, :] /= np.sqrt(ph.M[na])
@@ -770,7 +798,7 @@ def q2r(ph, D_irr, q_irr, nq, angle=60, apply_asr=False, apply_rsr=False):
     ph.R, ph.data = short_range_model(phid, ph.M, ph.a, ph.r)
 
     if apply_rsr:
-        rsr(ph)
+        sum_rule_correction(ph, asr=False, rsr=True)
 
 def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
         angle=120, write_fildyn0=True, apply_asr=False, apply_rsr=False,
