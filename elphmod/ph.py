@@ -481,7 +481,7 @@ def asr(phid):
 
     for na1 in range(nat):
         phid[na1, na1, 0, 0, 0] = -sum(
-        phid[na1, na2, m1, m2, m3]
+        phid[na2, na1, m1, m2, m3]
             for na2 in range(nat)
             for m1 in range(nr1)
             for m2 in range(nr2)
