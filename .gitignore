@@ -1,4 +1,7 @@
+*.aux
 *.egg-info
+*.log
+*.pdf
 *.png
 *.pyc
 *.venv
