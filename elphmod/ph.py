@@ -18,6 +18,9 @@ class Model(object):
         File with interatomic force constants from ``q2r.x``.
     apply_asr : bool
         Apply acoustic sum rule correction to force constants?
+    apply_asr_simple : bool
+        Apply simple acoustic sum rule correction to force constants? This sets
+        the self force constant to minus the sum of all other force constants.
     apply_rsr : bool
         Apply rotation sum rule correction to force constants?
     phid : ndarray
@@ -68,8 +71,8 @@ class Model(object):
 
         return D.sum(axis=0)
 
-    def __init__(self, flfrc=None, apply_asr=False, apply_rsr=False,
-        phid=np.zeros((1, 1, 1, 1, 1, 3, 3)), amass=np.ones(1),
+    def __init__(self, flfrc=None, apply_asr=False, apply_asr_simple=False,
+        apply_rsr=False, phid=np.zeros((1, 1, 1, 1, 1, 3, 3)), amass=np.ones(1),
         at=np.eye(3), tau=np.zeros((1, 3)), atom_order=['X']):
 
         if comm.rank == 0:
@@ -80,7 +83,7 @@ class Model(object):
 
             # optionally, apply acoustic sum rule:
 
-            if apply_asr:
+            if apply_asr_simple:
                 asr(model[0])
         else:
             model = None
@@ -92,8 +95,8 @@ class Model(object):
         self.size = self.data.shape[1]
         self.nat = self.size // 3
 
-        if apply_rsr:
-            sum_rule_correction(self, asr=False, rsr=True)
+        if apply_asr or apply_rsr:
+            sum_rule_correction(self, asr=apply_asr, rsr=apply_rsr)
 
 def group(n, size=3):
     """Create slice of dynamical matrix beloning to `n`-th atom."""
@@ -702,7 +705,8 @@ def polarization(e, path, angle=60):
 
     return mode
 
-def q2r(ph, D_irr, q_irr, nq, angle=60, apply_asr=False, apply_rsr=False):
+def q2r(ph, D_irr, q_irr, nq, angle=60, apply_asr=False, apply_asr_simple=False,
+        apply_rsr=False):
     """Interpolate dynamical matrices given for irreducible wedge of q points.
 
     This function replaces `interpolate_dynamical_matrices`, which depends on
@@ -723,6 +727,9 @@ def q2r(ph, D_irr, q_irr, nq, angle=60, apply_asr=False, apply_rsr=False):
         Angle between mesh axes in degrees.
     apply_asr : bool
         Enforce acoustic sum rule by overwriting self force constants?
+    apply_asr_simple : bool
+        Apply simple acoustic sum rule correction to force constants? This sets
+        the self force constant to minus the sum of all other force constants.
     apply_rsr : bool
         Enforce rotation sum rule by overwriting self force constants?
     """
@@ -792,17 +799,17 @@ def q2r(ph, D_irr, q_irr, nq, angle=60, apply_asr=False, apply_rsr=False):
         phid[na, :] *= np.sqrt(ph.M[na])
         phid[:, na] *= np.sqrt(ph.M[na])
 
-    if apply_asr:
+    if apply_asr_simple:
         asr(phid)
 
     ph.R, ph.data = short_range_model(phid, ph.M, ph.a, ph.r)
 
-    if apply_rsr:
-        sum_rule_correction(ph, asr=False, rsr=True)
+    if apply_asr or apply_rsr:
+        sum_rule_correction(ph, asr=apply_asr, rsr=apply_rsr)
 
 def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
-        angle=120, write_fildyn0=True, apply_asr=False, apply_rsr=False,
-        qe_prefix='', clean=False):
+        angle=120, write_fildyn0=True, apply_asr=False, apply_asr_simple=False,
+        apply_rsr=False, qe_prefix='', clean=False):
     """Interpolate dynamical matrices given for irreducible wedge of q points.
 
     This function still uses the Quantum ESPRESSO executables ``q2qstar.x`` and
@@ -840,6 +847,9 @@ def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
         Write *fildyn0* needed by ``q2r.x``? Otherwise the file must be present.
     apply_asr : bool
         Enforce acoustic sum rule by overwriting self force constants?
+    apply_asr_simple : bool
+        Apply simple acoustic sum rule correction to force constants? This sets
+        the self force constant to minus the sum of all other force constants.
     apply_rsr : bool
         Enforce rotation sum rule by overwriting self force constants?
     qe_prefix : str
@@ -901,7 +911,8 @@ def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
     # clean up and return mass-sping model:
     # (no MPI barrier needed because of broadcasting in 'Model')
 
-    ph = Model(flfrc, apply_asr, apply_rsr)
+    ph = Model(flfrc, apply_asr=apply_asr, apply_asr_simple=apply_asr_simple,
+        apply_rsr=apply_rsr)
 
     if clean:
         if comm.rank == 0:
