@@ -505,6 +505,10 @@ def sum_rule_correction(ph, asr=True, rsr=True, eps=1e-15):
     eps : float
         Tolerance and valid denominator.
     """
+    if comm.rank != 0:
+        comm.Bcast(ph.data)
+        return
+
     R = np.einsum('xy,nx->ny', ph.a, ph.R)
     C = ph.data.reshape((len(R), ph.nat, 3, ph.nat, 3))
 
@@ -576,6 +580,8 @@ def sum_rule_correction(ph, asr=True, rsr=True, eps=1e-15):
     for na in range(ph.nat):
         C[:, na, :, :, :] /= np.sqrt(ph.M[na])
         C[:, :, :, na, :] /= np.sqrt(ph.M[na])
+
+    comm.Bcast(ph.data)
 
 def short_range_model(phid, amass, at, tau, eps=1e-7):
     """Map force constants onto Wigner-Seitz cell and divide by masses."""
