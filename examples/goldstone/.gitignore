@@ -1,0 +1,7 @@
+*.ifc
+*.out
+*.phsave
+*.tex
+*.upf
+dyn*
+work

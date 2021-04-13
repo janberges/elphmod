@@ -1,0 +1,18 @@
+N2
+&INPUTPH
+    outdir = 'work'
+    prefix = 'N2'
+
+    fildyn = 'dyn'
+    fildvscf = 'dvscf'
+
+    ldisp = .true.
+    nq1 = 1
+    nq2 = 1
+    nq3 = 1
+
+    alpha_mix = 0.3
+    tr2_ph = 1e-21
+
+    electron_phonon = 'defpot'
+/

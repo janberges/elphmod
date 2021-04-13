@@ -1,0 +1,32 @@
+&CONTROL
+    prefix = 'N2'
+    outdir = 'work'
+    pseudo_dir = '.'
+/
+&SYSTEM
+    ibrav = 6
+    ntyp = 1
+    nat = 2
+
+    a = 5.0
+    c = 6.0
+
+    ecutwfc = 30.0
+    nbnd = 9
+
+    nosym = .true.
+    noinv = .true.
+/
+&ELECTRONS
+    conv_thr = 1e-18
+/
+
+ATOMIC_SPECIES
+N 14.0 N.upf
+
+ATOMIC_POSITIONS angstrom
+N 0.0 0.0 -0.5737562413
+N 0.0 0.0  0.5737562413
+
+K_POINTS automatic
+1 1 1 0 0 0
