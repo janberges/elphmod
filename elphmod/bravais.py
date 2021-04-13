@@ -1163,19 +1163,22 @@ def read_pwi(pwi):
 
                 elif key == 'nat':
                     struct[key] = int(words[2])
-                
+
                 elif key == 'ibrav':
                     struct[key] = int(words[2])
 
                 elif key == 'atomic_positions':
                     struct['at'] = []
                     struct['r'] = np.empty((struct['nat'], 3))
-                    if len(words)==1:
+
+                    if len(words) == 1:
                         struct['coords'] = 'alat'
                     else:
                         struct['coords'] = words[1]
-                    print('Read crystal structure in %s' % (struct['coords']))
-                    
+
+                    print("Read crystal structure in units '%s'"
+                        % struct['coords'])
+
                     for n in range(struct['nat']):
                         words = next(lines).split()
 
@@ -1183,14 +1186,24 @@ def read_pwi(pwi):
 
                         for x in range(3):
                             struct['r'][n, x] = float(words[1 + x])
+
                 elif key == 'cell_parameters':
-                    struct['r_cell'] = np.empty((3,3))
+                    struct['r_cell'] = np.empty((3, 3))
+
+                    if len(words) == 1:
+                        struct['cell_units'] = 'bohr'
+                    else:
+                        struct['cell_units'] = words[1]
+
+                    print("Read cell parameters in units '%s'"
+                        % struct['cell_units'])
+
                     for n in range(3):
                         words = next(lines).split()
-                        
+
                         for x in range(3):
                             struct['r_cell'][n, x] = float(words[x])
-                        
+
     else:
         struct = None
 
@@ -1214,18 +1227,26 @@ def write_pwi(pwi, struct):
     with open(pwi, 'w') as data:
         data.write('&SYSTEM\n')
 
-        for key in 'a', 'b', 'c', 'nat':
+        for key in 'a', 'b', 'c', 'nat', 'ibrav':
             if key in struct:
                 data.write('%3s = %.10g\n' % (key, struct[key]))
 
         data.write('/\n')
 
-        data.write('ATOMIC_POSITIONS\n')
+        data.write('ATOMIC_POSITIONS %s\n' % struct['coords'])
 
         for X, (r1, r2, r3) in zip(struct['at'], struct['r']):
             data.write('%2s %12.9f %12.9f %12.9f\n' % (X, r1, r2, r3))
 
         data.write('/\n')
+
+        if 'r_cell' in struct:
+            data.write('CELL_PARAMETERS %s\n' % struct['cell_units'])
+
+            for r in struct['r_cell']:
+                data.write('%12.9f %12.9f %12.9f\n' % tuple(r))
+
+            data.write('/\n')
 
 def readPOSCAR(filename):
     """Read crystal structure from VASP input file.
