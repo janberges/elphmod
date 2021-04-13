@@ -540,6 +540,14 @@ def sum_rule_correction(ph, asr=True, rsr=True, eps=1e-15):
                                 c[-1][n, k, x1, l, y] += R[n, x2] + ph.r[k, x2]
                                 c[-1][n, k, x2, l, y] -= R[n, x1] + ph.r[k, x1]
 
+    # symmetrize constraints (the force constants must be symmetric):
+
+    minusR = [np.argmax(np.all(ph.R == -ph.R[n], axis=1))
+        for n in range(len(ph.R))]
+
+    for i in range(len(c)):
+        c[i] += c[i][minusR].transpose((0, 3, 4, 1, 2))
+
     c.append(C)
 
     # orthogonalize constraints and force constants via Gram-Schmidt method:
