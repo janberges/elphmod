@@ -481,6 +481,9 @@ def read_pwo(pw_scf_out):
                 elif 'Fermi energy' in line:
                     eF = float(line.split()[-2])
 
+                elif 'highest occupied, lowest unoccupied level' in line:
+                    eF = sum(map(float, line.split()[-2:])) / 2
+
                 elif line.startswith('!'):
                     E = float(line.split()[-2]) * misc.Ry
 
