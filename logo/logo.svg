@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <svg xmlns='http://www.w3.org/2000/svg' width='240' height='180' viewBox='0 0 12 9'>
-<g stroke-width='0.7' fill='none'>
+<g stroke-width='0.7' stroke-linejoin='miter' stroke-linecap='butt' fill='none'>
 <path stroke='#193bda' d='M1,4 H3 A1,1,0,1,0,2.707107,4.707107'/>
 <path stroke='#193bda' d='M4,1 V4 A1,1,0,0,0,5,5'/>
 <path stroke='#da193b' d='M6,5 H7 A1,1,0,0,0,7,3 H6 V7'/>

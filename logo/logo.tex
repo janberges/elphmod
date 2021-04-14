@@ -3,7 +3,7 @@
 \definecolor{myblue}{RGB}{25,59,218}
 \definecolor{unired}{RGB}{218,25,59}
 \begin{document}
-\begin{tikzpicture}[line width=7mm]
+\begin{tikzpicture}[line width=7mm, line join=miter, line cap=butt]
 \useasboundingbox (0,0) rectangle (12,9);
 \draw[myblue] (1,5)--(3,5) arc(0:315:1);
 \draw[myblue] (4,8)--(4,5) arc(180:270:1);
