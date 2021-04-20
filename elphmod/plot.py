@@ -339,6 +339,62 @@ def toBZ(data=None, points=1000, interpolation=bravais.linear_interpolation,
     else:
         return image
 
+def rectify(image, width, height, lt, rt, lb, rb, *args, **kwargs):
+    """Map skew image selection onto rectangular area.
+
+    This function could turn a photograph of a document and its surroundings,
+    taken at any unfortunate angle, into a rectangular image of the document
+    content alone (similar to common scan applications).
+
+    Parameters
+    ----------
+    image : ndarray
+        2D array with image data.
+    width : float
+        Output width in units of original image width.
+    height : float
+        Output height in units of original image height.
+    lt : tuple of float
+        Upper-left corner of rectangle as original image coordinates.
+    rt : tuple of float
+        Upper-right corner of rectangle as original image coordinates.
+    lb : tuple of float
+        Lower-left corner of rectangle as original image coordinates.
+    rb : tuple of float
+        Lower-right corner of rectangle as original image coordinates.
+    *args, **kwargs
+        Arguments passed to linear-interpolation routine.
+
+    Returns
+    -------
+    ndarray
+        Rectangular view of image selection.
+    """
+    Ny, Nx = image.shape
+
+    nx = int(round(Nx * width))
+    ny = int(round(Ny * height))
+
+    lt = np.array([Nx * lt[0], Ny * lt[1]])
+    rt = np.array([Nx * rt[0], Ny * rt[1]])
+    lb = np.array([Nx * lb[0], Ny * lb[1]])
+    rb = np.array([Nx * rb[0], Ny * rb[1]])
+
+    fun = bravais.linear_interpolation(image, *args, **kwargs)
+
+    image = np.empty((ny, nx))
+
+    for iy in range(ny):
+        l = (lb * iy + lt * (ny - iy)) / ny
+        r = (rb * iy + rt * (ny - iy)) / ny
+
+        for ix in range(nx):
+            ixf, iyf = (r * ix + l * (nx - ix)) / nx
+
+            image[iy, ix] = fun(Ny - iyf, ixf)
+
+    return image
+
 class Color(object):
     """Representation of a color.
 
