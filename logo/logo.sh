@@ -12,5 +12,5 @@ convert -density `perl -e "print 640 / ($w / $in)"` logo.pdf \
 convert -density `perl -e "print 640 / ($w / $in)"` logo.pdf \
     -background white -gravity center -extent 640x640 PNG8:logo_square.png
 
-convert -density `perl -e "print 640 / ($h / $in)"` logo.pdf \
+convert -density `perl -e "print 480 / ($h / $in)"` logo.pdf \
     -background white -gravity center -extent 1280x640 PNG8:logo_banner.png
