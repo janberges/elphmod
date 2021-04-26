@@ -341,13 +341,15 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15, omega=0.0,
 
     sizes, bounds = MPI.distribute(nQ, bounds=True, comm=comm)
 
-    my_Pi = np.empty((sizes[comm.rank], nb), dtype=g2.dtype)
+    my_Pi = np.empty((sizes[comm.rank], nb),
+        dtype=float if np.isrealobj(g2) and np.isrealobj(omega) else complex)
 
     if fluctuations:
         my_Pi_k = np.empty((sizes[comm.rank], nb, nk, nk, nbnd, nbnd),
-            dtype=g2.dtype)
+            dtype=my_Pi.dtype)
 
-    dfde = np.empty((nk, nk, nbnd, nbnd), dtype=complex if omega else float)
+    dfde = np.empty((nk, nk, nbnd, nbnd),
+        dtype=float if np.isrealobj(omega) else complex)
 
     k1 = slice(0, nk)
     k2 = slice(0, nk)
@@ -392,12 +394,12 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15, omega=0.0,
             if fluctuations:
                 my_Pi_k[my_iq, nu] = 2 * Pi_k
 
-    Pi = np.empty((nQ, nb), dtype=g2.dtype)
+    Pi = np.empty((nQ, nb), dtype=my_Pi.dtype)
 
     comm.Allgatherv(my_Pi, (Pi, sizes * nb))
 
     if fluctuations:
-        Pi_k = np.empty((nQ, nb, nk, nk, nbnd, nbnd), dtype=g2.dtype)
+        Pi_k = np.empty((nQ, nb, nk, nk, nbnd, nbnd), dtype=my_Pi_k.dtype)
 
         comm.Allgatherv(my_Pi_k, (Pi_k, sizes * nb * nk * nk * nbnd * nbnd))
 
