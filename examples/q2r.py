@@ -23,19 +23,9 @@ ph = elphmod.ph.Model('data/%s.ifc' % data, apply_asr=True)
 q = sorted(elphmod.bravais.irreducibles(nq))
 q = np.array(q, dtype=float) / nq * 2 * np.pi
 
-sizes, bounds = elphmod.MPI.distribute(len(q), bounds=True)
-
-my_D = np.empty((sizes[comm.rank], ph.size, ph.size), dtype=complex)
-
-for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
-    my_D[my_iq] = ph.D(*q[iq])
-
-D = np.empty((len(q), ph.size, ph.size), dtype=complex)
-
-comm.Allgatherv(my_D, (D, sizes * ph.size * ph.size))
+D = elphmod.dispersion.sample(ph.D, q)
 
 ph2 = copy.copy(ph)
-
 elphmod.ph.q2r(ph2, D, q, nq, apply_asr=True)
 
 plt.figure()

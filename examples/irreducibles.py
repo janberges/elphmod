@@ -13,7 +13,7 @@ N = 72
 points = dict()
 
 for n, m in elphmod.bravais.irreducibles(N, angle=60):
-    d = n * n + n * m + m * m
+    d = elphmod.bravais.squared_distance(n, m, angle=60)
 
     if d in points:
         points[d].append((n, m))
