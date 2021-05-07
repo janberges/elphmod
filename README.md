@@ -1,4 +1,4 @@
-![elphmod logo](logo/logo.svg)
+![elphmod logo](https://raw.githubusercontent.com/janberges/elphmod/master/logo/logo.svg)
 
 This is a collection of Python modules to handle electron-phonon models:
 
