@@ -23,6 +23,10 @@ To install the latest version of elphmod in a virtual environment:
     python3 -m venv elphmod.venv
     source elphmod.venv/bin/activate
     python3 -m pip install --upgrade pip setuptools wheel
+    python3 -m pip install elphmod
+
+Alternatively, to install the latest development version:
+
     python3 -m pip install git+https://github.com/janberges/elphmod
 
 elphmod can optionally be run in parallel via MPI (with shared-memory support).
