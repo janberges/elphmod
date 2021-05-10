@@ -25,4 +25,11 @@ setuptools.setup(
     packages = setuptools.find_packages(),
     python_requires = '>=2.7',
     install_requires = ['numpy'],
+    scripts = [
+        'bin/kpoints',
+        'bin/minimum',
+        'bin/ph2epw',
+        'bin/qe_mod_6.3',
+        'bin/qe_mod_6.7',
+        ],
     )
