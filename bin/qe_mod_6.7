@@ -164,29 +164,3 @@ modify('EPW/src/ephwann_shuffle.f90', (1, 376), r'''
   ENDIF
   !
 ''', (377,))
-
-modify('EPW/src/elph2.f90', (1, 20), r'''
-    bare,                    &!  Use change of external (pseudo)potential
-''', (21,))
-
-modify('EPW/src/epw_readin.f90', (1, 63), r'''
-  USE elph2,         ONLY : elph, bare, num_wannier_plot, wanplotlist, gtemp
-''', (65, 131), r'''
-       elph, bare, nq1, nq2, nq3, nk1, nk2, nk3, nbndsub,                      &
-''', (133, 395), r'''
-  bare         = .FALSE.
-''', (396,))
-
-modify('EPW/src/bcast_epw_input.f90', (1, 55), r'''
-  USE elph2,         ONLY : elph, bare
-''', (57, 82), r'''
-  CALL mp_bcast(bare            , meta_ionode_id, world_comm)
-''', (83,))
-
-modify('EPW/src/elphel2_shuffle.f90', (1, 87), r'''
-                               ng0vec, shift, gmap, g0vec_all_r, bare
-''', (89, 466), r'''
-      IF (.NOT. bare) dvpsi = dvpsi + aux3
-''', (468, 471), r'''
-      IF (.NOT. bare) CALL adddvscf2(ipert, ik)
-''', (473,))
