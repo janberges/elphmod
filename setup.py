@@ -10,7 +10,7 @@ with open('README.md', 'r', encoding='utf-8') as README:
 
 setuptools.setup(
     name = 'elphmod',
-    version = '0.1',
+    version = '0.2',
     author = 'elphmod Developers',
     author_email = '',
     description = 'Modules to handle electron-phonon models',
