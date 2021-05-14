@@ -1148,6 +1148,8 @@ def read_pwi(pwi):
     """
     struct = dict()
 
+    system_flag = False
+
     if comm.rank == 0:
         with open(pwi) as lines:
             for line in lines:
@@ -1157,15 +1159,23 @@ def read_pwi(pwi):
                     continue
 
                 key = words[0].lower()
-
-                if key in 'abc':
-                    struct[key] = float(words[2])
-
-                elif key == 'nat':
-                    struct[key] = int(words[2])
-
-                elif key == 'ibrav':
-                    struct[key] = int(words[2])
+                
+                
+                if key in '&system':
+                    system_flag = True
+                    
+                if system_flag:
+                    if key in 'abc':
+                        struct[key] = float(words[2])
+    
+                    elif key == 'nat':
+                        struct[key] = int(words[2])
+    
+                    elif key == 'ibrav':
+                        struct[key] = int(words[2])
+                        
+                    elif key == '/':
+                        system_flag = False
 
                 elif key == 'atomic_positions':
                     struct['at'] = []
@@ -1315,7 +1325,7 @@ def point_on_path(test_point, point_A, point_B, eps = 1e-14):
                 return True
 
 
-def crystal_to_cartesian(R_CRYSTAL, a1,a2,a3):
+def crystal_to_cartesian(R_CRYSTAL, a1,a2,a3=None):
     """Transform a lattice structure R_CRYSTAL from crystal coordinates to
     cartesian coordinates.
 
@@ -1332,9 +1342,13 @@ def crystal_to_cartesian(R_CRYSTAL, a1,a2,a3):
         Lattice structure in cartesian coordinates
     """
     R_CARTESIAN = np.empty(R_CRYSTAL.shape)
-
-    for ii in np.arange(R_CARTESIAN.shape[0]):
-        R_CARTESIAN[ii,:] = R_CRYSTAL[ii,0]*a1+R_CRYSTAL[ii,1]*a2+R_CRYSTAL[ii,2]*a3
+    
+    if a3 is None:
+        for ii in np.arange(R_CARTESIAN.shape[0]):
+    	    R_CARTESIAN[ii,:] = R_CRYSTAL[ii,0]*a1+R_CRYSTAL[ii,1]*a2
+    else:
+        for ii in np.arange(R_CARTESIAN.shape[0]):
+            R_CARTESIAN[ii,:] = R_CRYSTAL[ii,0]*a1+R_CRYSTAL[ii,1]*a2+R_CRYSTAL[ii,2]*a3
     return R_CARTESIAN
 
 def cartesian_to_crystal(R_CARTESIAN, a1,a2,a3):
