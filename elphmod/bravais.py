@@ -1146,11 +1146,11 @@ def read_pwi(pwi):
     dict
         Crystal structure.
     """
-    struct = dict()
-
-    system_flag = False
-
     if comm.rank == 0:
+        struct = dict()
+
+        system_flag = False
+
         with open(pwi) as lines:
             for line in lines:
                 words = line.split()
