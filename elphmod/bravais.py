@@ -1159,21 +1159,20 @@ def read_pwi(pwi):
                     continue
 
                 key = words[0].lower()
-                
-                
-                if key in '&system':
+
+                if key == '&system':
                     system_flag = True
-                    
+
                 if system_flag:
                     if key in 'abc':
                         struct[key] = float(words[2])
-    
+
                     elif key == 'nat':
                         struct[key] = int(words[2])
-    
+
                     elif key == 'ibrav':
                         struct[key] = int(words[2])
-                        
+
                     elif key == '/':
                         system_flag = False
 
@@ -1342,10 +1341,10 @@ def crystal_to_cartesian(R_CRYSTAL, a1,a2,a3=None):
         Lattice structure in cartesian coordinates
     """
     R_CARTESIAN = np.empty(R_CRYSTAL.shape)
-    
+
     if a3 is None:
         for ii in np.arange(R_CARTESIAN.shape[0]):
-    	    R_CARTESIAN[ii,:] = R_CRYSTAL[ii,0]*a1+R_CRYSTAL[ii,1]*a2
+            R_CARTESIAN[ii,:] = R_CRYSTAL[ii,0]*a1+R_CRYSTAL[ii,1]*a2
     else:
         for ii in np.arange(R_CARTESIAN.shape[0]):
             R_CARTESIAN[ii,:] = R_CRYSTAL[ii,0]*a1+R_CRYSTAL[ii,1]*a2+R_CRYSTAL[ii,2]*a3
