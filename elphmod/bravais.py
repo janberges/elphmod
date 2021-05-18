@@ -1153,7 +1153,9 @@ def read_pwi(pwi):
 
         with open(pwi) as lines:
             for line in lines:
-                words = line.split()
+                words = [word
+                    for column in line.split()
+                    for word in column.split('=') if word]
 
                 if not words:
                     continue
@@ -1165,13 +1167,13 @@ def read_pwi(pwi):
 
                 if system_flag:
                     if key in 'abc':
-                        struct[key] = float(words[2])
+                        struct[key] = float(words[1])
 
                     elif key == 'nat':
-                        struct[key] = int(words[2])
+                        struct[key] = int(words[1])
 
                     elif key == 'ibrav':
-                        struct[key] = int(words[2])
+                        struct[key] = int(words[1])
 
                     elif key == '/':
                         system_flag = False
