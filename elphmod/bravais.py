@@ -1150,6 +1150,8 @@ def read_pwi(pwi):
         struct = dict()
 
         system_flag = False
+        control_flag = False
+        electrons_flag = False
 
         with open(pwi) as lines:
             for line in lines:
@@ -1161,9 +1163,32 @@ def read_pwi(pwi):
                     continue
 
                 key = words[0].lower()
+                
+                if key == '&control':
+                    control_flag = True
 
                 if key == '&system':
                     system_flag = True
+                    
+                if key == '&electrons':
+                    electrons_flag = True
+                    
+                if control_flag:
+                    if key in 'calculation':
+                        struct[key] = words[1]
+                        
+                    elif key in 'prefix':
+                        struct[key] = words[1]
+                        
+                    elif key in 'pseudo_dir':
+                        struct[key] = words[1]
+                        
+                    elif key in 'outdir':
+                        struct[key] = words[1]
+    
+                    elif key == '/':
+                        control_flag = False
+                    
 
                 if system_flag:
                     if key in 'abc':
@@ -1174,9 +1199,53 @@ def read_pwi(pwi):
 
                     elif key == 'ibrav':
                         struct[key] = int(words[1])
+                        
+                    elif key == 'ntyp':
+                        struct[key] = int(words[1])
+    
+                    elif key == 'ecutwfc':
+                        struct[key] = float(words[1])
+                    
+                    elif key == 'ecutrho':
+                        struct[key] = float(words[1])
+                        
+                    elif key == 'degauss':
+                        struct[key] = float(words[1])
+                        
+                    elif key == 'occupations':
+                        struct[key] = words[1]
+                        
+                    elif key == 'smearing':
+                        struct[key] = words[1]
 
                     elif key == '/':
                         system_flag = False
+                        
+                if electrons_flag:
+                    if key == 'mixing_beta':
+                        struct[key] = float(words[1])
+                        
+                    elif key == 'conv_thr':
+                        struct[key] = words[1]
+                        # if 'd' in words[1]:
+                        #     words[1] = words[1].replace('d', 'e')
+                        #     struct[key] = float(words[1])
+                        
+                    elif key == '/':
+                        electrons_flag = False
+                        
+                elif key == 'atomic_species':
+                    struct['at_species'] = []
+                    struct['mass'] = []
+                    struct['pp'] = []
+                    
+                    for n in range(struct['ntyp']):
+                        words = next(lines).split()
+                        
+                        struct['at_species'].append(words[0])
+                        struct['mass'].append(float(words[1]))
+                        struct['pp'].append(words[2])
+                        
 
                 elif key == 'atomic_positions':
                     struct['at'] = []
@@ -1197,6 +1266,11 @@ def read_pwi(pwi):
 
                         for x in range(3):
                             struct['r'][n, x] = float(words[1 + x])
+                            
+                elif key == 'k_points':
+                    struct['ktyp'] = words[1]
+                    words = next(lines).split()
+                    struct[key] = words
 
                 elif key == 'cell_parameters':
                     struct['r_cell'] = np.empty((3, 3))
@@ -1236,20 +1310,58 @@ def write_pwi(pwi, struct):
         return
 
     with open(pwi, 'w') as data:
-        data.write('&SYSTEM\n')
+        data.write('&CONTROL\n')
 
-        for key in 'a', 'b', 'c', 'nat', 'ibrav':
+        for key in 'calculation', 'prefix', 'pseudo_dir', 'outdir':
             if key in struct:
-                data.write('%3s = %.10g\n' % (key, struct[key]))
+                data.write('%s = %s\n' % (key, struct[key]))
 
         data.write('/\n')
+        
+        data.write('&SYSTEM\n')
 
+        for key in ['a', 'b', 'c', 'nat', 'ibrav', 'ntyp',
+                    'ecutwfc', 'ecutrho', 'degauss']:
+            if key in struct:
+                data.write('%3s = %.12g\n' % (key, struct[key]))
+            
+        # for key in ['ecutwfc', 'ecutrho', 'degauss']: 
+        #     if key in struct:
+        #         data.write('%s = %.10g\n' % (key, struct[key]))
+                
+        for key in ['occupations', 'smearing']: 
+            if key in struct:
+                data.write('%s = %s\n' % (key, struct[key]))
+
+        data.write('/\n')
+        
+        data.write('&ELECTRONS\n')
+
+        for key in ['mixing_beta']: 
+            if key in struct:
+                data.write('%s = %.12g\n' % (key, struct[key]))
+                
+        for key in ['conv_thr']: 
+            if key in struct:
+                data.write('%s = %s\n' % (key, struct[key]))
+
+        data.write('/\n')
+        
+        data.write('ATOMIC_SPECIES \n')
+        
+        for i in range(struct['ntyp']):
+            data.write('%s %.12g %s' % (struct['at_species'][i], struct['mass'][i], struct['pp'][i]))
+
+        data.write('/\n')
+        
         data.write('ATOMIC_POSITIONS %s\n' % struct['coords'])
 
         for X, (r1, r2, r3) in zip(struct['at'], struct['r']):
             data.write('%2s %12.9f %12.9f %12.9f\n' % (X, r1, r2, r3))
-
-        data.write('/\n')
+        
+        if 'k_points' in struct:
+            data.write('K_POINTS %s\n' % struct['ktyp'])
+            data.write('%s %s %s %s %s %s' % tuple(struct['k_points']))
 
         if 'r_cell' in struct:
             data.write('CELL_PARAMETERS %s\n' % struct['cell_units'])
