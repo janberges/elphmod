@@ -1269,8 +1269,23 @@ def read_pwi(pwi):
                             
                 elif key == 'k_points':
                     struct['ktyp'] = words[1]
-                    words = next(lines).split()
-                    struct[key] = words
+                    if 'automatic' in struct['ktyp']:
+                        words = next(lines).split()
+                        struct[key] = words
+                    if 'automatic' not in struct['ktyp']:
+                        words = next(lines)
+                        nks = int(words)
+                        struct[key] = np.empty((nks, 4))
+                        
+                        for n in range(nks):
+                            words = next(lines).split()
+                            
+                            for x in range(4):
+                                struct[key][n, x] = float(words[x])
+                                
+                            
+                            
+                        
 
                 elif key == 'cell_parameters':
                     struct['r_cell'] = np.empty((3, 3))
