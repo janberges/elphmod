@@ -1274,10 +1274,10 @@ def read_pwi(pwi):
                         struct[key] = words
                     if 'automatic' not in struct['ktyp']:
                         words = next(lines)
-                        nks = int(words)
-                        struct[key] = np.empty((nks, 4))
+                        struct['nks'] = int(words)
+                        struct[key] = np.empty((struct['nks'], 4))
                         
-                        for n in range(nks):
+                        for n in range(struct['nks']):
                             words = next(lines).split()
                             
                             for x in range(4):
@@ -1375,8 +1375,17 @@ def write_pwi(pwi, struct):
             data.write('%2s %12.9f %12.9f %12.9f\n' % (X, r1, r2, r3))
         
         if 'k_points' in struct:
-            data.write('K_POINTS %s\n' % struct['ktyp'])
-            data.write('%s %s %s %s %s %s' % tuple(struct['k_points']))
+            if 'automatic' in struct['ktyp']:
+                data.write('K_POINTS %s\n' % struct['ktyp'])
+                data.write('%s %s %s %s %s %s' % tuple(struct['k_points']))
+            if 'automatic' not in struct['ktyp']:
+                data.write('K_POINTS %s\n' % struct['ktyp'])
+                data.write('%d \n' % struct['nks'])
+                
+                for (kx, ky, kz, wk) in struct['k_points']:
+                    data.write('%12.9f %12.9f %12.9f %12.9f\n' % (kx, ky, kz, wk))
+                
+            
 
         if 'r_cell' in struct:
             data.write('CELL_PARAMETERS %s\n' % struct['cell_units'])
