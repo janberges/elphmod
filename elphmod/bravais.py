@@ -1503,7 +1503,18 @@ def write_win(win, struct):
         for key in ['dis_win_min', 'dis_win_max', 'dis_froz_min', 'dis_froz_max']:
             if key in struct:
                 data.write('%3s = %.12g\n' % (key, struct[key]))
+                
+        data.write('\n')
+        
+        if struct['proj']:
+            data.write('begin projections\n')
+            proj_dict = struct['proj']
+            size = len(proj_dict)
+            proj_keys = list(proj_dict.keys())
             
+            for key in proj_keys:
+                data.write('%s:%s \n' % (key, proj_dict[key]))
+            data.write('end projections\n')
 
         
     
