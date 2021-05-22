@@ -1217,6 +1217,12 @@ def read_pwi(pwi):
                         
                     elif key == 'smearing':
                         struct[key] = words[1]
+                        
+                    elif key == 'nbnd':
+                        struct[key] = int(words[1])
+                        
+                    elif key == 'nosym':
+                        struct[key] = words[1]
 
                     elif key == '/':
                         system_flag = False
@@ -1336,7 +1342,7 @@ def write_pwi(pwi, struct):
         data.write('&SYSTEM\n')
 
         for key in ['a', 'b', 'c', 'nat', 'ibrav', 'ntyp',
-                    'ecutwfc', 'ecutrho', 'degauss']:
+                    'ecutwfc', 'ecutrho', 'degauss', 'nbnd']:
             if key in struct:
                 data.write('%3s = %.12g\n' % (key, struct[key]))
             
@@ -1344,7 +1350,7 @@ def write_pwi(pwi, struct):
         #     if key in struct:
         #         data.write('%s = %.10g\n' % (key, struct[key]))
                 
-        for key in ['occupations', 'smearing']: 
+        for key in ['occupations', 'smearing', 'nosym']: 
             if key in struct:
                 data.write('%s = %s\n' % (key, struct[key]))
 
@@ -1394,6 +1400,113 @@ def write_pwi(pwi, struct):
                 data.write('%12.9f %12.9f %12.9f\n' % tuple(r))
 
             data.write('/\n')
+            
+            
+def read_win(win):
+    """Read input data from .win file (Wannier90).
+
+    Parameters
+    ----------
+    win : str
+        File name.
+
+    Returns
+    -------
+    dict
+        Crystal structure.
+    """
+    if comm.rank == 0:
+        struct = dict()
+
+
+        with open(win) as lines:
+            for line in lines:
+                words = [word
+                    for column in line.split()
+                    for word in column.split('=') if word]
+
+                if not words:
+                    continue
+
+                key = words[0].lower()
+                
+                    
+
+                if key =='num_bands':
+                    struct[key] = int(words[1])
+                elif key =='num_wann':
+                    struct[key] = int(words[1])
+                    
+                elif key =='dis_win_min':
+                    struct[key] = float(words[1])
+                elif key =='dis_win_max':
+                    struct[key] = float(words[1])
+                elif key =='dis_froz_min':
+                    struct[key] = float(words[1])
+                elif key =='dis_froz_max':
+                    struct[key] = float(words[1])
+                    
+                elif key in 'begin projections':
+                    if words[1]=='projections':
+                        # create sub-dict for projections
+                        # complicated solution
+                        # not able to save different wannier centres
+                        proj_dict = dict()
+                        while 'end' not in words:
+                            words = next(lines)
+                            if 'end' in words:
+                                continue
+                            else:
+                                pos_x = words.find(':')
+                                
+                                # split strings into atom/pos.... : ... orbital
+                                atom_pos = words[:pos_x] 
+                                orbital  = words[pos_x+1:-1]
+                                proj_dict[atom_pos] = orbital
+                            
+
+                        struct['proj'] = proj_dict
+
+                                
+                        
+
+
+    else:
+        struct = None
+
+    struct = comm.bcast(struct)
+
+    return struct
+
+def write_win(win, struct):
+    """Write input data to .win file (Wannier90).
+
+    Parameters
+    ----------
+    win : str
+        File name.
+    struct : dict
+        Crystal structure.
+    """
+    if comm.rank != 0:
+        return
+
+    with open(win, 'w') as data:
+        
+        for key in ['num_bands', 'num_wann']:
+            if key in struct:
+                data.write('%3s = %.12g\n' % (key, struct[key]))
+                
+        data.write('\n')
+
+                
+        for key in ['dis_win_min', 'dis_win_max', 'dis_froz_min', 'dis_froz_max']:
+            if key in struct:
+                data.write('%3s = %.12g\n' % (key, struct[key]))
+            
+
+        
+    
 
 def readPOSCAR(filename):
     """Read crystal structure from VASP input file.
