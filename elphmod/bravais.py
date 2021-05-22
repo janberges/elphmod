@@ -1346,9 +1346,6 @@ def write_pwi(pwi, struct):
             if key in struct:
                 data.write('%3s = %.12g\n' % (key, struct[key]))
             
-        # for key in ['ecutwfc', 'ecutrho', 'degauss']: 
-        #     if key in struct:
-        #         data.write('%s = %.10g\n' % (key, struct[key]))
                 
         for key in ['occupations', 'smearing', 'nosym']: 
             if key in struct:
@@ -1447,6 +1444,7 @@ def read_win(win):
                     struct[key] = float(words[1])
                     
                 elif key in 'begin projections':
+                    # print(words)
                     if words[1]=='projections':
                         # create sub-dict for projections
                         # complicated solution
@@ -1466,6 +1464,27 @@ def read_win(win):
                             
 
                         struct['proj'] = proj_dict
+                        
+                    if words[1]=='kpoint_path':
+                        words = next(lines).split()
+                        
+                        struct['kpoint_path'] = []
+    
+                        while 'end'!=words[0]:
+                            struct['kpoint_path'].append(words)
+                            words = next(lines).split()
+                        
+                        
+                elif key == 'write_hr':
+                    struct[key] = words[1]
+                elif key == 'bands_plot':
+                    struct[key] = words[1]
+                elif key == 'wannier_plot':
+                    struct[key] = words[1]
+                    
+
+                        
+                    
 
                                 
                         
@@ -1509,13 +1528,29 @@ def write_win(win, struct):
         if struct['proj']:
             data.write('begin projections\n')
             proj_dict = struct['proj']
-            size = len(proj_dict)
             proj_keys = list(proj_dict.keys())
             
             for key in proj_keys:
                 data.write('%s:%s \n' % (key, proj_dict[key]))
             data.write('end projections\n')
 
+        data.write('\n')
+        
+        for key in ['write_hr', 'bands_plot']: 
+            if key in struct:
+                data.write('%s = %s\n' % (key, struct[key]))
+                
+        data.write('\n')
+        
+        if struct['kpoint_path']:
+            data.write('begin projections\n')
+            lines = len(struct['kpoint_path'])
+            for i in range(lines):
+                path_i = tuple(struct['kpoint_path'][i])
+                data.write('%s %s %s %s %s %s %s %s\n' % (path_i))
+            data.write('end projections\n')
+                
+                
         
     
 
