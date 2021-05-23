@@ -1579,12 +1579,12 @@ def write_win(win, struct):
         data.write('\n')
         
         if struct['kpoint_path']:
-            data.write('begin projections\n')
+            data.write('begin kpoint_path\n')
             lines = len(struct['kpoint_path'])
             for i in range(lines):
                 path_i = tuple(struct['kpoint_path'][i])
                 data.write('%s %s %s %s %s %s %s %s\n' % (path_i))
-            data.write('end projections\n')
+            data.write('end kpoint_path\n')
             
         data.write('\n')
         
