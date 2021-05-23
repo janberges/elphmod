@@ -1511,6 +1511,12 @@ def read_win(win):
                 elif key == 'wannier_plot':
                     struct[key] = words[1]
                     
+                elif key =='mp_grid':
+                    mp_grid = np.empty(3)
+                    for i in range(3):
+                        mp_grid[i] = words[1+i]
+                    struct[key] = mp_grid
+                    
 
                         
                     
@@ -1593,6 +1599,10 @@ def write_win(win, struct):
             data.write('%2s %12.9f %12.9f %12.9f\n' % (X, r1, r2, r3))
         data.write('end atoms_%s\n' % struct['atoms_coords'])
         
+        data.write('\n')
+
+        if 'mp_grid' in struct:
+            data.write('mp_grid: %.12g %.12g %.12g' % tuple(struct['mp_grid']))
         
                 
                 
