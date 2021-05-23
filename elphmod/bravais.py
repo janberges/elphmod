@@ -1370,7 +1370,7 @@ def write_pwi(pwi, struct):
         for i in range(struct['ntyp']):
             data.write('%s %.12g %s' % (struct['at_species'][i], struct['mass'][i], struct['pp'][i]))
 
-        data.write('/\n')
+        data.write('\n')
         
         data.write('ATOMIC_POSITIONS %s\n' % struct['coords'])
 
@@ -1473,6 +1473,18 @@ def read_win(win):
                         while 'end'!=words[0]:
                             struct['kpoint_path'].append(words)
                             words = next(lines).split()
+                            
+                    if words[1]=='unit_cell_cart':
+                        print(words)
+                        struct['unit_cell'] = np.empty((3, 3))
+                        
+                        for n in range(3):
+                            words = next(lines).split()
+    
+                            for x in range(3):
+                                struct['unit_cell'][n, x] = float(words[x])
+                        
+                        
                         
                         
                 elif key == 'write_hr':
@@ -1549,6 +1561,13 @@ def write_win(win, struct):
                 path_i = tuple(struct['kpoint_path'][i])
                 data.write('%s %s %s %s %s %s %s %s\n' % (path_i))
             data.write('end projections\n')
+            
+        data.write('\n')
+        
+        data.write('begin unit_cell_cart\n')
+        for (r1, r2, r3) in tuple(struct['unit_cell']):
+            data.write('%12.9f %12.9f %12.9f\n' % (r1, r2, r3))
+        data.write('end unit_cell_cart\n')
                 
                 
         
