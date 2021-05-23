@@ -1443,8 +1443,7 @@ def read_win(win):
                 elif key =='dis_froz_max':
                     struct[key] = float(words[1])
                     
-                elif key in 'begin projections':
-                    # print(words)
+                elif key in 'begin':
                     if words[1]=='projections':
                         # create sub-dict for projections
                         # complicated solution
@@ -1475,7 +1474,6 @@ def read_win(win):
                             words = next(lines).split()
                             
                     if words[1]=='unit_cell_cart':
-                        print(words)
                         struct['unit_cell'] = np.empty((3, 3))
                         
                         for n in range(3):
@@ -1483,6 +1481,25 @@ def read_win(win):
     
                             for x in range(3):
                                 struct['unit_cell'][n, x] = float(words[x])
+                    
+                    # read atoms_frac or atoms_cart            
+                    if words[1][:5] in 'atoms_':
+                        struct['atoms_coords'] = words[1][6:len(words[1])]
+                        words = next(lines).split()
+                        # get nat from lines
+                        tmp = []
+                        while 'end'!=words[0]:
+                            tmp.append(words)
+                            words = next(lines).split()
+                        nat = len(tmp)
+                        
+                        struct['at'] = []
+                        struct['atoms'] = np.empty((nat, 3))
+    
+                        for n in range(nat):
+                            struct['at'].append(tmp[n][0])
+                            for x in range(3):
+                                struct['atoms'][n, x] = float(tmp[n][1 + x])
                         
                         
                         
@@ -1568,6 +1585,15 @@ def write_win(win, struct):
         for (r1, r2, r3) in tuple(struct['unit_cell']):
             data.write('%12.9f %12.9f %12.9f\n' % (r1, r2, r3))
         data.write('end unit_cell_cart\n')
+        
+        data.write('\n')
+        
+        data.write('begin atoms_%s\n' % struct['atoms_coords'])
+        for X, (r1, r2, r3) in zip(struct['at'], struct['atoms']):
+            data.write('%2s %12.9f %12.9f %12.9f\n' % (X, r1, r2, r3))
+        data.write('end atoms_%s\n' % struct['atoms_coords'])
+        
+        
                 
                 
         
