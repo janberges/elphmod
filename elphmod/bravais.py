@@ -1443,6 +1443,19 @@ def read_win(win):
                 elif key =='dis_froz_max':
                     struct[key] = float(words[1])
                     
+                elif key == 'write_hr':
+                    struct[key] = words[1]
+                elif key == 'bands_plot':
+                    struct[key] = words[1]
+                elif key == 'wannier_plot':
+                    struct[key] = words[1]
+                    
+                elif key =='mp_grid':
+                    mp_grid = np.empty(3)
+                    for i in range(3):
+                        mp_grid[i] = words[1+i]
+                    struct[key] = mp_grid
+                    
                 elif key in 'begin':
                     if words[1]=='projections':
                         # create sub-dict for projections
@@ -1500,31 +1513,19 @@ def read_win(win):
                             struct['at'].append(tmp[n][0])
                             for x in range(3):
                                 struct['atoms'][n, x] = float(tmp[n][1 + x])
-                        
-                        
-                        
-                        
-                elif key == 'write_hr':
-                    struct[key] = words[1]
-                elif key == 'bands_plot':
-                    struct[key] = words[1]
-                elif key == 'wannier_plot':
-                    struct[key] = words[1]
-                    
-                elif key =='mp_grid':
-                    mp_grid = np.empty(3)
-                    for i in range(3):
-                        mp_grid[i] = words[1+i]
-                    struct[key] = mp_grid
-                    
-
-                        
-                    
-
                                 
+                    if words[1]=='kpoints':
+                        nk = int(np.prod(mp_grid))
+                        struct['kpoints'] = np.empty((nk,4))
+                                                
+                        for n in range(nk):
+                            words = next(lines).split()
+
+                            
+                            for x in range(4):
+                                struct['kpoints'][n, x] = float(words[x])
                         
-
-
+                        
     else:
         struct = None
 
@@ -1540,7 +1541,7 @@ def write_win(win, struct):
     win : str
         File name.
     struct : dict
-        Crystal structure.
+        Input data.
     """
     if comm.rank != 0:
         return
@@ -1602,12 +1603,15 @@ def write_win(win, struct):
         data.write('\n')
 
         if 'mp_grid' in struct:
-            data.write('mp_grid: %.12g %.12g %.12g' % tuple(struct['mp_grid']))
+            data.write('mp_grid: %.12g %.12g %.12g\n' % tuple(struct['mp_grid']))
+            
+        data.write('\n')
         
-                
-                
+        data.write('begin kpoints\n')
+        for (kx, ky, kz, wk) in struct['kpoints']:
+            data.write('%12.9f %12.9f %12.9f %12.9f\n' % (kx, ky, kz, wk))
+        data.write('end kpoints\n')
         
-    
 
 def readPOSCAR(filename):
     """Read crystal structure from VASP input file.
