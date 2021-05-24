@@ -3,18 +3,19 @@
 # Copyright (C) 2021 elphmod Developers
 # This program is free software under the terms of the GNU GPLv3 or later.
 
+"""Usage: qe_mod /path/to/q-e/
+
+ATTENTION: This script will modify QE sources files without backup!
+Use QE's Git repository and verify or undo changes with "git diff"!
+These changes are compatible with version "qe-6.3-backports" only!
+"""
+
 import sys
 
 if len(sys.argv) > 1:
     QE = sys.argv[1]
 else:
-    print('''Usage: qe_mod /path/to/q-e/
-
-ATTENTION: This script will modify QE sources files without backup!
-Use QE's Git repository and verify or undo changes with "git diff"!
-The changes are compatible with version "qe-6.3-backports" only!''')
-
-    raise SystemExit
+    raise SystemExit(__doc__.strip())
 
 def modify(filename, *args):
     path = '/'.join((QE, filename))
