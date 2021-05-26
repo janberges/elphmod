@@ -498,7 +498,8 @@ def read_pwo(pw_scf_out):
                             e.append([])
 
                             while len(e[-1]) < Ns:
-                                e[-1].extend(list(map(float, next(lines).split())))
+                                e[-1].extend(list(map(float,
+                                    next(lines).split())))
 
                         e_given = True
 
@@ -558,8 +559,10 @@ def read_wannier90_eig_file(seedname, num_bands, nkpts):
     return eig
 
 def eband_from_qe_pwo(pw_scf_out):
-    """The 'one-electron contribution' energy in the Quantum ESPRESSO pw_scf-output
-    is a sum of eband+deband. Here, we can calculate the eband part:
+    """Calculate ``eband`` part of one-electron energy.
+
+    The 'one-electron contribution' energy in the Quantum ESPRESSO pw_scf-output
+    is a sum of eband+deband. Here, we can calculate the eband part.
 
     To compare it with the Quantum ESPRESSO result, you need to modify
     the 'SUBROUTINE print_energies ( printout )' from 'electrons.f90'.
@@ -607,7 +610,8 @@ def eband_from_qe_pwo(pw_scf_out):
 
             line_index = ii
 
-    number, of, k, pointsequal, N_k, fermd, smearing_s, width, ryequal, smearing = lines[line_index].split()
+    (number, of, k, pointsequal, N_k, fermd, smearing_s, width, ryequal,
+        smearing) = lines[line_index].split()
 
     N_k = int(N_k)
     kT = float(smearing)
@@ -615,7 +619,8 @@ def eband_from_qe_pwo(pw_scf_out):
     k_Points = np.empty([N_k, 4])
 
     for ii in np.arange(N_k):
-        kb, einsb, eq, bra, kx, ky, kz, wk_s, eq2, wk = lines[line_index + 2 + ii].split()
+        (kb, einsb, eq, bra, kx, ky, kz, wk_s, eq2,
+            wk) = lines[line_index + 2 + ii].split()
 
         kx = float(kx)
         ky = float(ky)
@@ -664,6 +669,8 @@ def eband_from_qe_pwo(pw_scf_out):
 
         return 1.0 / (np.exp(beta * E_diff) + 1)
 
+    # to do: use occupations.fermi_dirac here
+
     Ryd2eV = misc.Ry
 
     kT *= Ryd2eV
@@ -673,7 +680,8 @@ def eband_from_qe_pwo(pw_scf_out):
     eband = np.zeros(len(Energies))
 
     for ii in np.arange(len(Energies)):
-        eband[ii] = Energies[ii] * k_weights[ii] * Fermi_Function(Energies[ii], eF, kT)
+        eband[ii] = Energies[ii] * k_weights[ii] * Fermi_Function(Energies[ii],
+            eF, kT)
 
     eband = eband.sum() / Ryd2eV
 

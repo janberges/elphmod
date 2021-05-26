@@ -322,11 +322,13 @@ def isoline(energies):
         while points:
             for point in points:
                 if contours[-1][-1] in point:
-                    contours[-1].append(point[1 - point.index(contours[-1][-1])])
+                    contours[-1].append(
+                        point[1 - point.index(contours[-1][-1])])
                     points.remove(point)
                     break
                 elif contours[-1][0] in point:
-                    contours[-1].insert(0, point[1 - point.index(contours[-1][0])])
+                    contours[-1].insert(0,
+                        point[1 - point.index(contours[-1][0])])
                     points.remove(point)
                     break
             else:

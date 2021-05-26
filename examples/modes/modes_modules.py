@@ -14,7 +14,8 @@ import matplotlib.pyplot as plt
 
 # Note: returns angle in degree
 def theta(v, w):
-    return np.arccos(v.dot(w) / (np.linalg.norm(v) * np.linalg.norm(w))) / np.pi * 180
+    return np.arccos(v.dot(w)
+        / (np.linalg.norm(v) * np.linalg.norm(w))) / np.pi * 180
 
 #Converting factors
 Bohr2Angstrom = 1 / 1.889725989
@@ -51,7 +52,9 @@ def supercell_vectors(cdw_data, N1, N2, A, a, a1, a2, a3):
                     if abs(np.linalg.norm(test_lattice_vector) - N1 * a) < eps:
                         print(n, m)
 
-                        plt.plot([0, test_lattice_vector[0]], [0, test_lattice_vector[1]], color='black', linewidth=5)
+                        plt.plot([0, test_lattice_vector[0]],
+                            [0, test_lattice_vector[1]],
+                            color='black', linewidth=5)
 
         else:
             # Lattice vectors of CDW structure:
@@ -102,14 +105,16 @@ def permutation_finder(nat, R_cdw, R_sym, at_cdw, at_sym, eps):
     return R_cdw, at_cdw
 
 def align_structures(nat, R_cdw, R_sym, A1, A2, eps):
-    #Move all atoms in the CDW structure and check if they align with SYM structure
+    # Move all atoms in the CDW structure
+    # and check if they align with SYM structure
     eps = eps
     for atom_index_sym in range(nat):
         for atom_index_cdw in range(nat):
             for m in [-1, 0, 1]:
                 for n in [-1, 0, 1]:
                     test_position = R_cdw[atom_index_cdw] + m * A1 + n * A2
-                    if np.linalg.norm(test_position - R_sym[atom_index_sym]) < eps:
+                    if (np.linalg.norm(test_position - R_sym[atom_index_sym])
+                            < eps):
                         R_cdw[atom_index_cdw] = test_position
 
     return R_cdw

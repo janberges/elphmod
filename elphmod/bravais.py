@@ -852,7 +852,8 @@ def read_wigner_file(name, old_ws=False, nat=None):
                 nrr_g, = np.fromfile(data, integer, 1)
                 irvec_g = np.fromfile(data, integer, nrr_g * 3)
                 irvec_g = irvec_g.reshape((nrr_g, 3))
-                ndegen_g = np.fromfile(data, integer, nbndsub ** 2 * nat * nrr_g)
+                ndegen_g = np.fromfile(data, integer,
+                    nbndsub ** 2 * nat * nrr_g)
                 ndegen_g = ndegen_g.reshape((nbndsub, nbndsub, nat, nrr_g))
 
         data = irvec_k, ndegen_k, irvec_g, ndegen_g
@@ -1360,7 +1361,8 @@ def write_pwi(pwi, struct):
         data.write('ATOMIC_SPECIES \n')
 
         for i in range(struct['ntyp']):
-            data.write('%s %.12g %s' % (struct['at_species'][i], struct['mass'][i], struct['pp'][i]))
+            data.write('%s %.12g %s'
+                % (struct['at_species'][i], struct['mass'][i], struct['pp'][i]))
 
         data.write('\n')
 
@@ -1378,7 +1380,8 @@ def write_pwi(pwi, struct):
                 data.write('%d \n' % struct['nks'])
 
                 for (kx, ky, kz, wk) in struct['k_points']:
-                    data.write('%12.9f %12.9f %12.9f %12.9f\n' % (kx, ky, kz, wk))
+                    data.write('%12.9f %12.9f %12.9f %12.9f\n'
+                        % (kx, ky, kz, wk))
 
         if 'r_cell' in struct:
             data.write('CELL_PARAMETERS %s\n' % struct['cell_units'])
@@ -1537,7 +1540,8 @@ def write_win(win, struct):
 
         data.write('\n')
 
-        for key in ['dis_win_min', 'dis_win_max', 'dis_froz_min', 'dis_froz_max']:
+        for key in ['dis_win_min', 'dis_win_max',
+                'dis_froz_min', 'dis_froz_max']:
             if key in struct:
                 data.write('%3s = %.12g\n' % (key, struct[key]))
 
@@ -1585,7 +1589,8 @@ def write_win(win, struct):
         data.write('\n')
 
         if 'mp_grid' in struct:
-            data.write('mp_grid: %.12g %.12g %.12g\n' % tuple(struct['mp_grid']))
+            data.write('mp_grid: %.12g %.12g %.12g\n'
+                % tuple(struct['mp_grid']))
 
         data.write('\n')
 
@@ -1652,8 +1657,8 @@ def point_on_path(test_point, point_A, point_B, eps=1e-14):
         dot = np.dot(point_B - point_A, test_point - point_A)
 
         if dot >= 0:
-
-            squared_distance = (point_B - point_A)[0] ** 2 + (point_B - point_A)[1] ** 2
+            squared_distance = (
+                (point_B - point_A)[0] ** 2 + (point_B - point_A)[1] ** 2)
 
             if dot <= squared_distance:
                 #'The test point is between A and B'
@@ -1682,7 +1687,9 @@ def crystal_to_cartesian(R_CRYSTAL, a1, a2, a3=None):
             R_CARTESIAN[ii, :] = R_CRYSTAL[ii, 0] * a1 + R_CRYSTAL[ii, 1] * a2
     else:
         for ii in np.arange(R_CARTESIAN.shape[0]):
-            R_CARTESIAN[ii, :] = R_CRYSTAL[ii, 0] * a1 + R_CRYSTAL[ii, 1] * a2 + R_CRYSTAL[ii, 2] * a3
+            R_CARTESIAN[ii, :] = (R_CRYSTAL[ii, 0] * a1 + R_CRYSTAL[ii, 1] * a2
+                + R_CRYSTAL[ii, 2] * a3)
+
     return R_CARTESIAN
 
 def cartesian_to_crystal(R_CARTESIAN, a1, a2, a3):

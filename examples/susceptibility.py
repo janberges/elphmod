@@ -25,7 +25,8 @@ e = elphmod.dispersion.dispersion_full(el.H, 100)[:, :, 0] - mu
 chi = elphmod.diagrams.susceptibility(e, kT=kT)
 chi_q = elphmod.dispersion.dispersion(chi, q, broadcast=False)
 
-chi_hyb = elphmod.diagrams.susceptibility2(e, kT=kT, hyb_width=1.0, hyb_height=0.1)
+chi_hyb = elphmod.diagrams.susceptibility2(e,
+    kT=kT, hyb_width=1.0, hyb_height=0.1)
 chi_hyb_q = elphmod.dispersion.dispersion(chi_hyb, q, broadcast=False)
 
 if elphmod.MPI.comm.rank == 0:

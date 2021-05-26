@@ -580,8 +580,10 @@ def sum_rule_correction(ph, asr=True, rsr=True, eps=1e-15):
                         S = 0.0
                         for n in range(len(R)):
                             for k in range(ph.nat):
-                                S += C[n, k, x1, l, y] * (R[n, x2] + ph.r[k, x2])
-                                S -= C[n, k, x2, l, y] * (R[n, x1] + ph.r[k, x1])
+                                S += (C[n, k, x1, l, y]
+                                    * (R[n, x2] + ph.r[k, x2]))
+                                S -= (C[n, k, x2, l, y]
+                                    * (R[n, x1] + ph.r[k, x1]))
                         if abs(S) > eps:
                             print('Rotation sum rule correction failed.')
 

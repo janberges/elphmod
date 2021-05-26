@@ -444,7 +444,8 @@ def phonon_self_energy2(q, e, g2, kT=0.025, nmats=1000, hyb_width=1.0,
     nk, nk = e.shape
     nQ, nb, nk, nk = g2.shape
 
-    if nmats * (2 * nk) ** 2 * np.dtype(complex).itemsize * comm.size > GB * 1e9:
+    if (nmats * (2 * nk) ** 2 * np.dtype(complex).itemsize * comm.size
+            > GB * 1e9):
         info('Error: Memory limit (%g GB) exceeded!' % GB)
         quit()
 
@@ -629,7 +630,8 @@ def renormalize_coupling_orbital(q, e, g, W, U, **kwargs):
 
     .. math::
 
-        \tilde g_{\vec q \nu \vec k \alpha \beta} = g_{\vec q \nu \vec k \alpha \beta}
+        \tilde g_{\vec q \nu \vec k \alpha \beta}
+            = g_{\vec q \nu \vec k \alpha \beta}
             + \frac 2 N \sum_{\vec k m n \alpha' \beta' \gamma \delta}
             W_{\vec q \alpha \beta \gamma \delta}
             U_{\vec k + \vec q \gamma m} U_{\vec k \delta n}^*

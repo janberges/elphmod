@@ -70,7 +70,8 @@ for coords_type in coords_type_QE:
             R_cdw = elphmod.bravais.crystal_to_cartesian(R_cdw, A1, A2, A3)
 
 if not flag_coords_type:
-    file.write('Did not find coordinate type in input file. Stopping program...\n')
+    file.write('Did not find coordinate type in input file. '
+        'Stopping program...\n')
     sys.exit()
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -126,10 +127,12 @@ if symmetrize:
         if at_cdw[atom_index]!=at_sym[original_atom_index]:
             distance_to_original_uc[atom_index] = 1e10
         else:
-            distance_to_original_uc[atom_index] = np.linalg.norm(R_cdw[atom_index] - R_sym[original_atom_index])
+            distance_to_original_uc[atom_index] = np.linalg.norm(
+                R_cdw[atom_index] - R_sym[original_atom_index])
 
     shift_index = np.argmin(distance_to_original_uc)
-    shift_vector = R_cdw[np.argmin(distance_to_original_uc)] - R_sym[original_atom_index]
+    shift_vector = (R_cdw[np.argmin(distance_to_original_uc)]
+        - R_sym[original_atom_index])
     R_cdw -= shift_vector
 
     # Fold structures into supercell
@@ -160,7 +163,8 @@ if symmetrize:
 
 if at_cdw!=at_sym:
     file.write('Atom order does not match. Starting permutation...\n')
-    R_cdw, at_cdw = permutation_finder(nat, R_cdw, R_sym, at_cdw, at_sym, eps=0.5 * a)
+    R_cdw, at_cdw = permutation_finder(nat, R_cdw, R_sym, at_cdw, at_sym,
+        eps=0.5 * a)
     if at_cdw!=at_sym:
         file.write('Atom order still does not match.  Stopping program...\n')
         sys.exit()
@@ -177,7 +181,8 @@ distance = np.empty((nat))
 for atom_index in range(nat):
     distance[atom_index] = np.linalg.norm(R_cdw[atom_index] - R_sym[atom_index])
 
-file.write('Maximal displacement of %s atom is %1.2f %s \n' % (at_cdw[np.argmax(distance)], np.max(distance) / a * 100, '%'))
+file.write('Maximal displacement of %s atom is %1.2f %s \n'
+    % (at_cdw[np.argmax(distance)], np.max(distance) / a * 100, '%'))
 
 file.close()
 
@@ -185,15 +190,19 @@ file.close()
 
 # for atom_index in range(nat):
 #     if at_sym[atom_index]==transition_metal:
-#         plt.plot(R_sym[atom_index,0], R_sym[atom_index,1], 'o', color='cyan', markersize=15)
+#         plt.plot(R_sym[atom_index,0], R_sym[atom_index,1], 'o',
+#             color='cyan', markersize=15)
 #     elif at_sym[atom_index]==chalcogen:
-#         plt.plot(R_sym[atom_index,0], R_sym[atom_index,1], 'o', color='orangered', markersize=15)
+#         plt.plot(R_sym[atom_index,0], R_sym[atom_index,1], 'o',
+#             color='orangered', markersize=15)
 
 # for atom_index in range(nat):
 #     if at_cdw[atom_index]==transition_metal:
-#         plt.plot(R_cdw[atom_index,0], R_cdw[atom_index,1], 'o', color='darkblue', markersize=15)
+#         plt.plot(R_cdw[atom_index,0], R_cdw[atom_index,1], 'o',
+#             color='darkblue', markersize=15)
 #     elif at_cdw[atom_index]==chalcogen:
-#         plt.plot(R_cdw[atom_index,0], R_cdw[atom_index,1], 'o', color='gold', markersize=15)
+#         plt.plot(R_cdw[atom_index,0], R_cdw[atom_index,1], 'o',
+#             color='gold', markersize=15)
 
 # Start_Pos = (0,0)
 # plt.plot([0, A1[0]], [0, A1[1]] , color='black')
@@ -201,6 +210,8 @@ file.close()
 # plt.plot([0, A1[0]], [0, A1[1]] , color='black')
 # plt.plot([0, A2[0]], [0, A2[1]],  color='black')
 
-# plt.plot([Start_Pos[0]+A2[0],Start_Pos[0]+A2[0]+A1[0]], [Start_Pos[1]+A2[1],Start_Pos[1]+A2[1]+A1[1]], color='black')
-# plt.plot([Start_Pos[0]+A1[0],Start_Pos[0]+A2[0]+A1[0]], [Start_Pos[1]+A1[1],Start_Pos[1]+A2[1]+A1[1]], color='black')
+# plt.plot([Start_Pos[0]+A2[0],Start_Pos[0]+A2[0]+A1[0]],
+#     [Start_Pos[1]+A2[1],Start_Pos[1]+A2[1]+A1[1]], color='black')
+# plt.plot([Start_Pos[0]+A1[0],Start_Pos[0]+A2[0]+A1[0]],
+#     [Start_Pos[1]+A1[1],Start_Pos[1]+A2[1]+A1[1]], color='black')
 

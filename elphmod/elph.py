@@ -477,8 +477,9 @@ def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
             for nu in range(nb):
                 for ibnd in range(bands):
                     for jbnd in range(bands):
-                        elph_complete[:, :, nu, :, :, ibnd, jbnd] = \
-                            bravais.complete_k(elph[:, nu, :, :, ibnd, jbnd], nq)
+                        elph_complete[:, :, nu, :, :, ibnd, jbnd] = (
+                            bravais.complete_k(
+                                elph[:, nu, :, :, ibnd, jbnd], nq))
 
         comm.Bcast(elph_complete)
         elph = elph_complete
@@ -616,8 +617,8 @@ def read_patterns(filename, q, nrep, status=True):
 
     return patterns
 
-def read_xml_files(filename, q, rep, bands, nbands, nk, squeeze=True, status=True,
-        angle=120, angle0=0, old=False):
+def read_xml_files(filename, q, rep, bands, nbands, nk, squeeze=True,
+        status=True, angle=120, angle0=0, old=False):
     """Read XML files with coupling in displacement basis from QE (*nosym*)."""
 
     if not hasattr(q, '__len__'):
