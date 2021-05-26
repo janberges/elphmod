@@ -1167,13 +1167,13 @@ def read_pwi(pwi):
                 if key == '&control':
                     control_flag = True
 
-                if key == '&system':
+                elif key == '&system':
                     system_flag = True
                     
-                if key == '&electrons':
+                elif key == '&electrons':
                     electrons_flag = True
                     
-                if control_flag:
+                elif control_flag:
                     if key in 'calculation':
                         struct[key] = words[1]
                         
@@ -1190,7 +1190,7 @@ def read_pwi(pwi):
                         control_flag = False
                     
 
-                if system_flag:
+                elif system_flag:
                     if key in 'abc':
                         struct[key] = float(words[1])
 
@@ -1227,7 +1227,7 @@ def read_pwi(pwi):
                     elif key == '/':
                         system_flag = False
                         
-                if electrons_flag:
+                elif electrons_flag:
                     if key == 'mixing_beta':
                         struct[key] = float(words[1])
                         
@@ -1278,7 +1278,7 @@ def read_pwi(pwi):
                     if 'automatic' in struct['ktyp']:
                         words = next(lines).split()
                         struct[key] = words
-                    if 'automatic' not in struct['ktyp']:
+                    else:
                         words = next(lines)
                         struct['nks'] = int(words)
                         struct[key] = np.empty((struct['nks'], 4))
@@ -1381,7 +1381,7 @@ def write_pwi(pwi, struct):
             if 'automatic' in struct['ktyp']:
                 data.write('K_POINTS %s\n' % struct['ktyp'])
                 data.write('%s %s %s %s %s %s' % tuple(struct['k_points']))
-            if 'automatic' not in struct['ktyp']:
+            else:
                 data.write('K_POINTS %s\n' % struct['ktyp'])
                 data.write('%d \n' % struct['nks'])
                 
@@ -1477,7 +1477,7 @@ def read_win(win):
 
                         struct['proj'] = proj_dict
                         
-                    if words[1]=='kpoint_path':
+                    elif words[1]=='kpoint_path':
                         words = next(lines).split()
                         
                         struct['kpoint_path'] = []
@@ -1486,7 +1486,7 @@ def read_win(win):
                             struct['kpoint_path'].append(words)
                             words = next(lines).split()
                             
-                    if words[1]=='unit_cell_cart':
+                    elif words[1]=='unit_cell_cart':
                         struct['unit_cell'] = np.empty((3, 3))
                         
                         for n in range(3):
@@ -1496,7 +1496,7 @@ def read_win(win):
                                 struct['unit_cell'][n, x] = float(words[x])
                     
                     # read atoms_frac or atoms_cart            
-                    if words[1][:5] in 'atoms_':
+                    elif words[1].startswith('atoms_'):
                         struct['atoms_coords'] = words[1][6:len(words[1])]
                         words = next(lines).split()
                         # get nat from lines
@@ -1514,7 +1514,7 @@ def read_win(win):
                             for x in range(3):
                                 struct['atoms'][n, x] = float(tmp[n][1 + x])
                                 
-                    if words[1]=='kpoints':
+                    elif words[1]=='kpoints':
                         nk = int(np.prod(mp_grid))
                         struct['kpoints'] = np.empty((nk,4))
                                                 
