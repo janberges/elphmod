@@ -58,7 +58,7 @@ def susceptibility(e, kT=0.025, eta=1e-10, occupations=occupations.fermi_dirac):
         q2 = int(round(q2 * scale)) % nk
 
         if q1 == q2 == 0:
-            return -prefactor * d
+            return prefactor * -d
 
         df = f[q1:q1 + nk, q2:q2 + nk] - f[:nk, :nk]
         de = e[q1:q1 + nk, q2:q2 + nk] - e[:nk, :nk]

@@ -54,7 +54,7 @@ class Model(object):
         Number of atoms.
     """
     def D(self, q1=0, q2=0, q3=0):
-        "Set up dynamical matrix for arbitrary q point."""
+        """Set up dynamical matrix for arbitrary q point."""
 
         q = np.array([q1, q2, q3])
         D = np.empty(self.data.shape, dtype=complex)

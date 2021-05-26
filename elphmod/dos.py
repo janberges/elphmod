@@ -54,7 +54,7 @@ def hexDOS(energies):
     triangles = [
         sorted([
             energies[(i + k) % N, (j + k) % N],
-            energies[(i + 1) % N,  j,        ],
+            energies[(i + 1) % N,  j         ],
             energies[ i,          (j + 1) % N],
             ])
         for i in range(N)
@@ -111,7 +111,7 @@ def hexa2F(energies, couplings):
     triangles = [
         tuple(zip(*sorted([
             ((i + k) % N, (j + k) % N),
-            ((i + 1) % N,  j,        ),
+            ((i + 1) % N,  j         ),
             ( i,          (j + 1) % N),
             ], key=lambda x: energies[x])))
         for i in range(N)

@@ -184,7 +184,7 @@ def fermi_dirac_matsubara_delta(x, nmats=1000):
 
     inu = 1j * (2 * np.arange(nmats) + 1) * np.pi
 
-    return -2 * np.sum(1.0 / (inu - x) ** 2).real
+    return 2 * np.sum(-1.0 / (inu - x) ** 2).real
 
 if not_doc:
     fermi_dirac_matsubara_delta = np.vectorize(fermi_dirac_matsubara_delta)

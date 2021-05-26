@@ -81,7 +81,7 @@ def McMillan(nq, e, w2, g2, eps=1e-10, mustar=0.0):
 
                 for (k1, k2), weight in intersections.items():
                     g2dd[iq] += weight * g2_fun(k1, k2)[:, n, m]
-                    dd  [iq] += weight
+                    dd[iq] += weight
 
     N0 = 0
 
@@ -92,7 +92,7 @@ def McMillan(nq, e, w2, g2, eps=1e-10, mustar=0.0):
 
     dangerous = np.where(w2 < eps)
 
-    w2  [dangerous] = eps
+    w2[dangerous] = eps
     g2dd[dangerous] = 0.0
 
     r2 = g2dd / w2

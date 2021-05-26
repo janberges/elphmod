@@ -1669,7 +1669,7 @@ def point_on_path(test_point, point_A, point_B, eps = 1e-14):
 
     cross = np.cross(point_B-point_A, test_point-point_A)
     if all(abs(v) < eps  for v in cross):
-        dot = np.dot((point_B-point_A), test_point-point_A)
+        dot = np.dot(point_B-point_A, test_point-point_A)
 
         if dot>=0:
 
