@@ -647,7 +647,7 @@ def save(filename, image):
     image[np.where(image >= 256)] = 255
 
     height, width, colors = image.shape
-    color = {1:0, 3:2, 4:6}[colors]
+    color = {1: 0, 3: 2, 4: 6}[colors]
 
     lines = np.empty((height, 1 + width * colors), dtype=np.uint8)
     lines[:, 0] = 0 # https://www.w3.org/TR/PNG/#4Concepts.EncodingFiltering
@@ -697,7 +697,7 @@ def load(filename):
 
             if name == b'IHDR':
                 width, height, _, color, _, _, _ = struct.unpack('!2I5B', data)
-                colors = {0:1, 2:3, 6:4}[color]
+                colors = {0: 1, 2: 3, 6: 4}[color]
 
             elif name == b'IDAT':
                 data = zlib.decompress(data)
@@ -712,41 +712,40 @@ def load(filename):
         return image
 
 def label_pie_with_TeX(stem,
+    width=7.0, # total width in cm
 
-    width = 7.0, # total width in cm
-
-    preamble = r'\usepackage[math]{iwona}',
+    preamble=r'\usepackage[math]{iwona}',
 
     # dimensions in arbitrary units:
 
-    width_L   = 5.0, # width of part left of colorbar (Brillouin zone)
-    width_R   = 1.0, # width of part right of colorbar (ticks)
-    width_C   = 0.5, # width of colorbar
-    spacing   = 0.5, # minimum spacing around Brillouin zone
-    spacing_T = 0.7, # extra spacing for title on top
+    width_L=5.0, # width of part left of colorbar (Brillouin zone)
+    width_R=1.0, # width of part right of colorbar (ticks)
+    width_C=0.5, # width of colorbar
+    spacing=0.5, # minimum spacing around Brillouin zone
+    spacing_T=0.7, # extra spacing for title on top
 
-    title = None,
-    label = None, # e.g. '(a)'
-    labels = ['Label %d' % _ for _ in range(1, 7)],
+    title=None,
+    label=None, # e.g. '(a)'
+    labels=['Label %d' % _ for _ in range(1, 7)],
 
-    upper = +1.0,
-    lower = -1.0,
+    upper=+1.0,
+    lower=-1.0,
 
-    ticks = [-1.0, 0.0, 1.0],
-    form  = lambda x: '$%g$' % x,
-    unit  = 'Unit',
+    ticks=[-1.0, 0.0, 1.0],
+    form=lambda x: '$%g$' % x,
+    unit='Unit',
 
-    nCDW = 10,
+    nCDW=10,
 
-    standalone = True,
+    standalone=True,
     ):
     """Label 'pie diagram' of different data on Brillouin zone."""
 
     radius = 0.5 * width_L
 
-    GK = radius - spacing      # Gamma to K
+    GK = radius - spacing # Gamma to K
     GM = 0.5 * np.sqrt(3) * GK # Gamma to M
-    KK = 2 * GK                # -K to K
+    KK = 2 * GK # -K to K
 
     x_max = radius + width_C + width_R
     y_max = radius
@@ -756,7 +755,7 @@ def label_pie_with_TeX(stem,
 
         y_title = radius + 0.4 * spacing_T
 
-    x_unit  = radius + width_C * 0.5
+    x_unit = radius + width_C * 0.5
     x_ticks = radius + width_C
 
     def transform(y):
@@ -929,24 +928,24 @@ def compline(x, y, composition, center=True):
         for ic in range(nc + 1):
             lines[ic] += y - lines[nc] / 2
 
-    X = np.empty(     2 * nx + 1 )
+    X = np.empty(2 * nx + 1)
     Y = np.empty((nc, 2 * nx + 1))
 
-    X[  :nx] = x
+    X[:nx] = x
     X[nx:-1] = x[::-1]
-    X[   -1] = x[0]
+    X[-1] = x[0]
 
     for ic in range(nc):
-        Y[ic,   :nx] = lines[ic]
+        Y[ic, :nx] = lines[ic]
         Y[ic, nx:-1] = lines[ic + 1, ::-1]
-        Y[ic,    -1] = lines[ic, 0]
+        Y[ic, -1] = lines[ic, 0]
 
     XY = np.empty((nc, 2, 2 * nx + 1))
 
     sgn = 1
 
     for ic in range(nc):
-        XY[ic, 0] = X[    ::sgn]
+        XY[ic, 0] = X[::sgn]
         XY[ic, 1] = Y[ic, ::sgn]
 
         sgn *= -1

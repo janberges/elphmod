@@ -9,7 +9,7 @@ import numpy as np
 
 comm = elphmod.MPI.comm
 
-t    =  1.0 # hopping parameter (eV)
+t = 1.0 # hopping parameter (eV)
 beta = -1.0 # scaling exponent
 
 # atomic positions (lattice constant a = 1):

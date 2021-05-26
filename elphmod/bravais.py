@@ -72,14 +72,14 @@ def translations(angle=120, angle0=0, two_dimensional=True):
         a1 = np.array([1.0, 0.0])
 
         a1 = rotate(a1, angle0 * deg)
-        a2 = rotate(a1, angle  * deg)
+        a2 = rotate(a1, angle * deg)
 
         return a1, a2
     else:
         a1 = np.array([1.0, 0.0, 0.0])
 
         a1 = rotate(a1, angle0 * deg, two_dimensional=False)
-        a2 = rotate(a1, angle  * deg, two_dimensional=False)
+        a2 = rotate(a1, angle * deg, two_dimensional=False)
 
         return a1, a2
 
@@ -405,7 +405,6 @@ def stack(*points, **kwargs):
 
     return min(stackings, key=np.std)
 
-
 def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
     """Perform linear interpolation on triangular or rectangular lattice.
 
@@ -506,8 +505,8 @@ def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
             if period:
                 A, B, C, D = stack(A, B, C, D, period=period)
 
-            return ((1 - dn) * (1 - dm) * A +      dn  * (1 - dm) * B
-                +        dn  *      dm  * C + (1 - dn)      * dm  * D)
+            return ((1 - dn) * (1 - dm) * A + dn * (1 - dm) * B
+                + dn * dm * C + (1 - dn) * dm * D)
 
     elif angle == 120:
         #
@@ -587,7 +586,7 @@ def resize(data, shape=None, angle=60, axes=(0, 1), period=None):
 
     for n, m in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         x = m // shape[1]
-        y = m %  shape[1]
+        y = m % shape[1]
 
         my_new_data[n] = interpolant(x * scale_x, y * scale_y)
 
@@ -621,7 +620,7 @@ def squared_distance(k1, k2, angle=60):
     number
         Squared distance of point from origin.
     """
-    sgn = { 60: 1, 90: 0, 120: -1 }[angle]
+    sgn = {60: 1, 90: 0, 120: -1}[angle]
 
     return k1 * k1 + k2 * k2 + sgn * k1 * k2
 
@@ -749,9 +748,9 @@ def wigner_seitz_x(x, nk, at=None, tau=None, epsilon=1e-8):
     elif x == 'q':
         shifts = [tau2 - tau1 for tau1 in tau for tau2 in tau]
 
-    irvec_x  = []
+    irvec_x = []
     ndegen_x = [] # list of dict
-    wslen_x  = dict()
+    wslen_x = dict()
 
     for dk in shifts:
         dk1 = np.dot(b1, dk[:2]) / a
@@ -785,7 +784,7 @@ def write_wigner_file(name, nk, nq, at=None, tau=None, epsilon=1e-8):
     """
     if comm.rank == 0:
         integer = np.int32
-        double  = np.float64
+        double = np.float64
 
         with open(name, 'wb') as data:
             for x, nx in zip('kqg', [nk, nq, nq]):
@@ -817,32 +816,32 @@ def read_wigner_file(name, old_ws=False, nat=None):
     if comm.rank == 0:
         with open(name, 'rb') as data:
             integer = np.int32
-            double  = np.float64
+            double = np.float64
 
             if old_ws:
-                nrr_k    = np.fromfile(data, integer, 1)[0]
-                irvec_k  = np.fromfile(data, integer, nrr_k * 3)
-                irvec_k  = irvec_k.reshape((nrr_k, 3))
+                nrr_k = np.fromfile(data, integer, 1)[0]
+                irvec_k = np.fromfile(data, integer, nrr_k * 3)
+                irvec_k = irvec_k.reshape((nrr_k, 3))
                 ndegen_k = np.fromfile(data, integer, nrr_k)
-                wslen_k  = np.fromfile(data, double, nrr_k)
+                wslen_k = np.fromfile(data, double, nrr_k)
 
-                nrr_q    = np.fromfile(data, integer, 1)[0]
-                irvec_q  = np.fromfile(data, integer, nrr_q * 3)
-                irvec_q  = irvec_q.reshape((nrr_q, 3))
+                nrr_q = np.fromfile(data, integer, 1)[0]
+                irvec_q = np.fromfile(data, integer, nrr_q * 3)
+                irvec_q = irvec_q.reshape((nrr_q, 3))
                 ndegen_q = np.fromfile(data, integer, nat * nat * nrr_q)
                 ndegen_q = ndegen_q.reshape((nat, nat, nrr_q))
-                wslen_q  = np.fromfile(data, double, nrr_q)
+                wslen_q = np.fromfile(data, double, nrr_q)
 
-                nrr_g    = np.fromfile(data, integer, 1)[0]
-                irvec_g  = np.fromfile(data, integer, nrr_g * 3)
-                irvec_g  = irvec_g.reshape((nrr_g, 3))
+                nrr_g = np.fromfile(data, integer, 1)[0]
+                irvec_g = np.fromfile(data, integer, nrr_g * 3)
+                irvec_g = irvec_g.reshape((nrr_g, 3))
                 ndegen_g = np.fromfile(data, integer, nat * nrr_g)
                 ndegen_g = ndegen_g.reshape((nat, nrr_g))
-                wslen_g  = np.fromfile(data, double, nrr_g)
+                wslen_g = np.fromfile(data, double, nrr_g)
 
             else:
                 nbndsub, = np.fromfile(data, integer, 1)
-                nat,     = np.fromfile(data, integer, 1)
+                nat, = np.fromfile(data, integer, 1)
 
                 nrr_k, = np.fromfile(data, integer, 1)
                 irvec_k = np.fromfile(data, integer, nrr_k * 3)
@@ -1104,8 +1103,8 @@ def GMKG(N=30, corner_indices=False, mesh=False, angle=60, straight=True,
 
     x = np.empty(N1 + N2 + N3)
 
-    x[      0:N1          ] = np.linspace(      0, L1,           N1, False)
-    x[     N1:N1 + N2     ] = np.linspace(     L1, L1 + L2,      N2, False)
+    x[0:N1] = np.linspace(0, L1, N1, False)
+    x[N1:N1 + N2] = np.linspace(L1, L1 + L2, N2, False)
     x[N2 + N1:N1 + N2 + N3] = np.linspace(L2 + L1, L1 + L2 + L3, N3, True)
 
     if corner_indices:
@@ -1163,32 +1162,31 @@ def read_pwi(pwi):
                     continue
 
                 key = words[0].lower()
-                
+
                 if key == '&control':
                     control_flag = True
 
                 elif key == '&system':
                     system_flag = True
-                    
+
                 elif key == '&electrons':
                     electrons_flag = True
-                    
+
                 elif control_flag:
                     if key in 'calculation':
                         struct[key] = words[1]
-                        
+
                     elif key in 'prefix':
                         struct[key] = words[1]
-                        
+
                     elif key in 'pseudo_dir':
                         struct[key] = words[1]
-                        
+
                     elif key in 'outdir':
                         struct[key] = words[1]
-    
+
                     elif key == '/':
                         control_flag = False
-                    
 
                 elif system_flag:
                     if key in 'abc':
@@ -1199,59 +1197,58 @@ def read_pwi(pwi):
 
                     elif key == 'ibrav':
                         struct[key] = int(words[1])
-                        
+
                     elif key == 'ntyp':
                         struct[key] = int(words[1])
-    
+
                     elif key == 'ecutwfc':
                         struct[key] = float(words[1])
-                    
+
                     elif key == 'ecutrho':
                         struct[key] = float(words[1])
-                        
+
                     elif key == 'degauss':
                         struct[key] = float(words[1])
-                        
+
                     elif key == 'occupations':
                         struct[key] = words[1]
-                        
+
                     elif key == 'smearing':
                         struct[key] = words[1]
-                        
+
                     elif key == 'nbnd':
                         struct[key] = int(words[1])
-                        
+
                     elif key == 'nosym':
                         struct[key] = words[1]
 
                     elif key == '/':
                         system_flag = False
-                        
+
                 elif electrons_flag:
                     if key == 'mixing_beta':
                         struct[key] = float(words[1])
-                        
+
                     elif key == 'conv_thr':
                         struct[key] = words[1]
                         # if 'd' in words[1]:
                         #     words[1] = words[1].replace('d', 'e')
                         #     struct[key] = float(words[1])
-                        
+
                     elif key == '/':
                         electrons_flag = False
-                        
+
                 elif key == 'atomic_species':
                     struct['at_species'] = []
                     struct['mass'] = []
                     struct['pp'] = []
-                    
+
                     for n in range(struct['ntyp']):
                         words = next(lines).split()
-                        
+
                         struct['at_species'].append(words[0])
                         struct['mass'].append(float(words[1]))
                         struct['pp'].append(words[2])
-                        
 
                 elif key == 'atomic_positions':
                     struct['at'] = []
@@ -1272,7 +1269,7 @@ def read_pwi(pwi):
 
                         for x in range(3):
                             struct['r'][n, x] = float(words[1 + x])
-                            
+
                 elif key == 'k_points':
                     struct['ktyp'] = words[1]
                     if 'automatic' in struct['ktyp']:
@@ -1282,16 +1279,12 @@ def read_pwi(pwi):
                         words = next(lines)
                         struct['nks'] = int(words)
                         struct[key] = np.empty((struct['nks'], 4))
-                        
+
                         for n in range(struct['nks']):
                             words = next(lines).split()
-                            
+
                             for x in range(4):
                                 struct[key][n, x] = float(words[x])
-                                
-                            
-                            
-                        
 
                 elif key == 'cell_parameters':
                     struct['r_cell'] = np.empty((3, 3))
@@ -1338,45 +1331,44 @@ def write_pwi(pwi, struct):
                 data.write('%s = %s\n' % (key, struct[key]))
 
         data.write('/\n')
-        
+
         data.write('&SYSTEM\n')
 
         for key in ['a', 'b', 'c', 'nat', 'ibrav', 'ntyp',
                     'ecutwfc', 'ecutrho', 'degauss', 'nbnd']:
             if key in struct:
                 data.write('%3s = %.12g\n' % (key, struct[key]))
-            
-                
-        for key in ['occupations', 'smearing', 'nosym']: 
+
+        for key in ['occupations', 'smearing', 'nosym']:
             if key in struct:
                 data.write('%s = %s\n' % (key, struct[key]))
 
         data.write('/\n')
-        
+
         data.write('&ELECTRONS\n')
 
-        for key in ['mixing_beta']: 
+        for key in ['mixing_beta']:
             if key in struct:
                 data.write('%s = %.12g\n' % (key, struct[key]))
-                
-        for key in ['conv_thr']: 
+
+        for key in ['conv_thr']:
             if key in struct:
                 data.write('%s = %s\n' % (key, struct[key]))
 
         data.write('/\n')
-        
+
         data.write('ATOMIC_SPECIES \n')
-        
+
         for i in range(struct['ntyp']):
             data.write('%s %.12g %s' % (struct['at_species'][i], struct['mass'][i], struct['pp'][i]))
 
         data.write('\n')
-        
+
         data.write('ATOMIC_POSITIONS %s\n' % struct['coords'])
 
         for X, (r1, r2, r3) in zip(struct['at'], struct['r']):
             data.write('%2s %12.9f %12.9f %12.9f\n' % (X, r1, r2, r3))
-        
+
         if 'k_points' in struct:
             if 'automatic' in struct['ktyp']:
                 data.write('K_POINTS %s\n' % struct['ktyp'])
@@ -1384,11 +1376,9 @@ def write_pwi(pwi, struct):
             else:
                 data.write('K_POINTS %s\n' % struct['ktyp'])
                 data.write('%d \n' % struct['nks'])
-                
+
                 for (kx, ky, kz, wk) in struct['k_points']:
                     data.write('%12.9f %12.9f %12.9f %12.9f\n' % (kx, ky, kz, wk))
-                
-            
 
         if 'r_cell' in struct:
             data.write('CELL_PARAMETERS %s\n' % struct['cell_units'])
@@ -1397,8 +1387,7 @@ def write_pwi(pwi, struct):
                 data.write('%12.9f %12.9f %12.9f\n' % tuple(r))
 
             data.write('/\n')
-            
-            
+
 def read_win(win):
     """Read input data from .win file (Wannier90).
 
@@ -1415,7 +1404,6 @@ def read_win(win):
     if comm.rank == 0:
         struct = dict()
 
-
         with open(win) as lines:
             for line in lines:
                 words = [word
@@ -1426,38 +1414,36 @@ def read_win(win):
                     continue
 
                 key = words[0].lower()
-                
-                    
 
-                if key =='num_bands':
+                if key == 'num_bands':
                     struct[key] = int(words[1])
-                elif key =='num_wann':
+                elif key == 'num_wann':
                     struct[key] = int(words[1])
-                    
-                elif key =='dis_win_min':
+
+                elif key == 'dis_win_min':
                     struct[key] = float(words[1])
-                elif key =='dis_win_max':
+                elif key == 'dis_win_max':
                     struct[key] = float(words[1])
-                elif key =='dis_froz_min':
+                elif key == 'dis_froz_min':
                     struct[key] = float(words[1])
-                elif key =='dis_froz_max':
+                elif key == 'dis_froz_max':
                     struct[key] = float(words[1])
-                    
+
                 elif key == 'write_hr':
                     struct[key] = words[1]
                 elif key == 'bands_plot':
                     struct[key] = words[1]
                 elif key == 'wannier_plot':
                     struct[key] = words[1]
-                    
-                elif key =='mp_grid':
+
+                elif key == 'mp_grid':
                     mp_grid = np.empty(3)
                     for i in range(3):
-                        mp_grid[i] = words[1+i]
+                        mp_grid[i] = words[1 + i]
                     struct[key] = mp_grid
-                    
+
                 elif key in 'begin':
-                    if words[1]=='projections':
+                    if words[1] == 'projections':
                         # create sub-dict for projections
                         # complicated solution
                         # not able to save different wannier centres
@@ -1468,34 +1454,33 @@ def read_win(win):
                                 continue
                             else:
                                 pos_x = words.find(':')
-                                
+
                                 # split strings into atom/pos.... : ... orbital
-                                atom_pos = words[:pos_x] 
-                                orbital  = words[pos_x+1:-1]
+                                atom_pos = words[:pos_x]
+                                orbital = words[pos_x + 1:-1]
                                 proj_dict[atom_pos] = orbital
-                            
 
                         struct['proj'] = proj_dict
-                        
-                    elif words[1]=='kpoint_path':
+
+                    elif words[1] == 'kpoint_path':
                         words = next(lines).split()
-                        
+
                         struct['kpoint_path'] = []
-    
+
                         while 'end'!=words[0]:
                             struct['kpoint_path'].append(words)
                             words = next(lines).split()
-                            
-                    elif words[1]=='unit_cell_cart':
+
+                    elif words[1] == 'unit_cell_cart':
                         struct['unit_cell'] = np.empty((3, 3))
-                        
+
                         for n in range(3):
                             words = next(lines).split()
-    
+
                             for x in range(3):
                                 struct['unit_cell'][n, x] = float(words[x])
-                    
-                    # read atoms_frac or atoms_cart            
+
+                    # read atoms_frac or atoms_cart
                     elif words[1].startswith('atoms_'):
                         struct['atoms_coords'] = words[1][6:len(words[1])]
                         words = next(lines).split()
@@ -1505,27 +1490,25 @@ def read_win(win):
                             tmp.append(words)
                             words = next(lines).split()
                         nat = len(tmp)
-                        
+
                         struct['at'] = []
                         struct['atoms'] = np.empty((nat, 3))
-    
+
                         for n in range(nat):
                             struct['at'].append(tmp[n][0])
                             for x in range(3):
                                 struct['atoms'][n, x] = float(tmp[n][1 + x])
-                                
-                    elif words[1]=='kpoints':
+
+                    elif words[1] == 'kpoints':
                         nk = int(np.prod(mp_grid))
-                        struct['kpoints'] = np.empty((nk,4))
-                                                
+                        struct['kpoints'] = np.empty((nk, 4))
+
                         for n in range(nk):
                             words = next(lines).split()
 
-                            
                             for x in range(4):
                                 struct['kpoints'][n, x] = float(words[x])
-                        
-                        
+
     else:
         struct = None
 
@@ -1547,37 +1530,36 @@ def write_win(win, struct):
         return
 
     with open(win, 'w') as data:
-        
+
         for key in ['num_bands', 'num_wann']:
             if key in struct:
                 data.write('%3s = %.12g\n' % (key, struct[key]))
-                
+
         data.write('\n')
 
-                
         for key in ['dis_win_min', 'dis_win_max', 'dis_froz_min', 'dis_froz_max']:
             if key in struct:
                 data.write('%3s = %.12g\n' % (key, struct[key]))
-                
+
         data.write('\n')
-        
+
         if struct['proj']:
             data.write('begin projections\n')
             proj_dict = struct['proj']
             proj_keys = list(proj_dict.keys())
-            
+
             for key in proj_keys:
                 data.write('%s:%s \n' % (key, proj_dict[key]))
             data.write('end projections\n')
 
         data.write('\n')
-        
-        for key in ['write_hr', 'bands_plot']: 
+
+        for key in ['write_hr', 'bands_plot']:
             if key in struct:
                 data.write('%s = %s\n' % (key, struct[key]))
-                
+
         data.write('\n')
-        
+
         if struct['kpoint_path']:
             data.write('begin kpoint_path\n')
             lines = len(struct['kpoint_path'])
@@ -1585,33 +1567,32 @@ def write_win(win, struct):
                 path_i = tuple(struct['kpoint_path'][i])
                 data.write('%s %s %s %s %s %s %s %s\n' % (path_i))
             data.write('end kpoint_path\n')
-            
+
         data.write('\n')
-        
+
         data.write('begin unit_cell_cart\n')
         for (r1, r2, r3) in tuple(struct['unit_cell']):
             data.write('%12.9f %12.9f %12.9f\n' % (r1, r2, r3))
         data.write('end unit_cell_cart\n')
-        
+
         data.write('\n')
-        
+
         data.write('begin atoms_%s\n' % struct['atoms_coords'])
         for X, (r1, r2, r3) in zip(struct['at'], struct['atoms']):
             data.write('%2s %12.9f %12.9f %12.9f\n' % (X, r1, r2, r3))
         data.write('end atoms_%s\n' % struct['atoms_coords'])
-        
+
         data.write('\n')
 
         if 'mp_grid' in struct:
             data.write('mp_grid: %.12g %.12g %.12g\n' % tuple(struct['mp_grid']))
-            
+
         data.write('\n')
-        
+
         data.write('begin kpoints\n')
         for (kx, ky, kz, wk) in struct['kpoints']:
             data.write('%12.9f %12.9f %12.9f %12.9f\n' % (kx, ky, kz, wk))
         data.write('end kpoints\n')
-        
 
 def readPOSCAR(filename):
     """Read crystal structure from VASP input file.
@@ -1652,8 +1633,7 @@ def readPOSCAR(filename):
 
     return t1, t2, t3, atoms
 
-
-def point_on_path(test_point, point_A, point_B, eps = 1e-14):
+def point_on_path(test_point, point_A, point_B, eps=1e-14):
     """Test wether a test_point is between the points A and B.
 
     Parameters
@@ -1667,20 +1647,19 @@ def point_on_path(test_point, point_A, point_B, eps = 1e-14):
         True, if the test_point is on a straight line between point A and B
     """
 
-    cross = np.cross(point_B-point_A, test_point-point_A)
-    if all(abs(v) < eps  for v in cross):
-        dot = np.dot(point_B-point_A, test_point-point_A)
+    cross = np.cross(point_B - point_A, test_point - point_A)
+    if all(abs(v) < eps for v in cross):
+        dot = np.dot(point_B - point_A, test_point - point_A)
 
-        if dot>=0:
+        if dot >= 0:
 
-            squared_distance = (point_B-point_A)[0]**2+(point_B-point_A)[1]**2
+            squared_distance = (point_B - point_A)[0] ** 2 + (point_B - point_A)[1] ** 2
 
-            if dot<=squared_distance:
+            if dot <= squared_distance:
                 #'The test point is between A and B'
                 return True
 
-
-def crystal_to_cartesian(R_CRYSTAL, a1,a2,a3=None):
+def crystal_to_cartesian(R_CRYSTAL, a1, a2, a3=None):
     """Transform a lattice structure R_CRYSTAL from crystal coordinates to
     cartesian coordinates.
 
@@ -1700,13 +1679,13 @@ def crystal_to_cartesian(R_CRYSTAL, a1,a2,a3=None):
 
     if a3 is None:
         for ii in np.arange(R_CARTESIAN.shape[0]):
-            R_CARTESIAN[ii,:] = R_CRYSTAL[ii,0]*a1+R_CRYSTAL[ii,1]*a2
+            R_CARTESIAN[ii, :] = R_CRYSTAL[ii, 0] * a1 + R_CRYSTAL[ii, 1] * a2
     else:
         for ii in np.arange(R_CARTESIAN.shape[0]):
-            R_CARTESIAN[ii,:] = R_CRYSTAL[ii,0]*a1+R_CRYSTAL[ii,1]*a2+R_CRYSTAL[ii,2]*a3
+            R_CARTESIAN[ii, :] = R_CRYSTAL[ii, 0] * a1 + R_CRYSTAL[ii, 1] * a2 + R_CRYSTAL[ii, 2] * a3
     return R_CARTESIAN
 
-def cartesian_to_crystal(R_CARTESIAN, a1,a2,a3):
+def cartesian_to_crystal(R_CARTESIAN, a1, a2, a3):
     """Transform a lattice structure R_CARTESIAN from crystal coordinates to
     cartesian coordinates.
 
@@ -1723,15 +1702,15 @@ def cartesian_to_crystal(R_CARTESIAN, a1,a2,a3):
         Lattice structure in crystal coordinates
     """
     R_CRYSTAL = np.empty(R_CARTESIAN.shape)
-    A_Matrix = np.zeros([3,3])
+    A_Matrix = np.zeros([3, 3])
 
-    A_Matrix[:,0] = a1
-    A_Matrix[:,1] = a2
-    A_Matrix[:,2] = a3
+    A_Matrix[:, 0] = a1
+    A_Matrix[:, 1] = a2
+    A_Matrix[:, 2] = a3
 
     A_Matrix_Inverse = np.linalg.inv(A_Matrix)
 
     for ii in np.arange(R_CARTESIAN.shape[0]):
-        R_CRYSTAL[ii,:] = np.dot(A_Matrix_Inverse, R_CARTESIAN[ii,:])
+        R_CRYSTAL[ii, :] = np.dot(A_Matrix_Inverse, R_CARTESIAN[ii, :])
     return R_CRYSTAL
 

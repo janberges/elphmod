@@ -14,11 +14,11 @@ colors = ['skyblue', 'dodgerblue', 'orange']
 
 data = 'NbSe2_cDFPT'
 
-info("Set up mass-spring model..")
+info('Set up mass-spring model..')
 
 ph = elphmod.ph.Model('data/%s.ifc' % data, apply_asr=True)
 
-info("Diagonalize dynamical matrix along G-M-K-G..")
+info('Diagonalize dynamical matrix along G-M-K-G..')
 
 q, x, GMKG = elphmod.bravais.GMKG(150, corner_indices=True)
 
@@ -37,7 +37,7 @@ if comm.rank == 0:
     x0 = ref[:, 0] / ref[-1, 0] * x[-1]
     w0 = ref[:, 1:]
 
-    print("Plot dispersions..")
+    print('Plot dispersions..')
 
     for nu in range(ph.size):
         fatbands = elphmod.plot.compline(x, w[:, nu], pol[:, nu])

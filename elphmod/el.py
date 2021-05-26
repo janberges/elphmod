@@ -117,7 +117,7 @@ def read_bands(filband):
         # &plot nbnd=  13, nks=  1296 /
         _, nbnd, nks = header.split('=')
         nbnd = int(nbnd[:nbnd.index(',')])
-        nks  = int( nks[: nks.index('/')])
+        nks = int(nks[:nks.index('/')])
     else:
         nbnd = nks = None
 
@@ -511,7 +511,7 @@ def read_pwo(pw_scf_out):
     Ne = comm.bcast(Ne)
     Ns = comm.bcast(Ns)
     Nk = comm.bcast(Nk)
-    E  = comm.bcast(E)
+    E = comm.bcast(E)
 
     if comm.bcast(e_given):
         if comm.rank != 0:
@@ -522,7 +522,6 @@ def read_pwo(pw_scf_out):
         e = None
 
     return e, Ne, E
-
 
 def read_wannier90_eig_file(seedname, num_bands, nkpts):
     """Read Kohn-Sham energies (eV) from the Wannier90 output seedname.eig file.
@@ -546,18 +545,17 @@ def read_wannier90_eig_file(seedname, num_bands, nkpts):
 
     eig = np.empty((num_bands, nkpts))
 
-    f=open( seedname + '.eig', "r")
-    lines=f.readlines()
+    f = open(seedname + '.eig', 'r')
+    lines = f.readlines()
 
     for lineI in range(len(lines)):
-        bandI, kI , eigI = lines[lineI].split()
+        bandI, kI, eigI = lines[lineI].split()
 
-        eig[int(bandI)-1, int(kI)-1] = np.real(eigI)
+        eig[int(bandI) - 1, int(kI) - 1] = np.real(eigI)
 
     f.close()
 
     return eig
-
 
 def eband_from_qe_pwo(pw_scf_out):
     """The 'one-electron contribution' energy in the Quantum ESPRESSO pw_scf-output
@@ -587,8 +585,6 @@ def eband_from_qe_pwo(pw_scf_out):
             /'     sum bands                 =',F17.8,' Ry' &
             /'     one-electron contribution =',F17.8,' Ry' &
 
-
-
     At some point, we should add the deband routine as well...
 
     Parameters
@@ -601,29 +597,25 @@ def eband_from_qe_pwo(pw_scf_out):
     eband: float
         The band energy
     """
-    f=open( pw_scf_out, "r")
+    f = open(pw_scf_out, 'r')
 
-
-    lines=f.readlines()
-
+    lines = f.readlines()
 
     #Read number of k points and smearing
     for ii in np.arange(len(lines)):
-        if lines[ii].find("     number of k points=")==0:
+        if lines[ii].find('     number of k points=') == 0:
 
             line_index = ii
 
-    number, of, k , pointsequal, N_k, fermd, smearing_s, width, ryequal, smearing =lines[line_index].split()
+    number, of, k, pointsequal, N_k, fermd, smearing_s, width, ryequal, smearing = lines[line_index].split()
 
     N_k = int(N_k)
     kT = float(smearing)
 
     k_Points = np.empty([N_k, 4])
 
-
-
     for ii in np.arange(N_k):
-        kb, einsb , eq, bra, kx, ky, kz, wk_s, eq2, wk = lines[line_index+2+ii].split()
+        kb, einsb, eq, bra, kx, ky, kz, wk_s, eq2, wk = lines[line_index + 2 + ii].split()
 
         kx = float(kx)
         ky = float(ky)
@@ -638,20 +630,19 @@ def eband_from_qe_pwo(pw_scf_out):
 
     #Read number of Kohn-Sham states
     for ii in np.arange(len(lines)):
-        if lines[ii].find("     number of Kohn-Sham")==0:
+        if lines[ii].find('     number of Kohn-Sham') == 0:
             KS_index = ii
 
-    number, of , KS_s, states, N_states = lines[KS_index].split()
+    number, of, KS_s, states, N_states = lines[KS_index].split()
 
     N_states = int(N_states)
-
 
     # Read all Energies for all the different k Points and Kohn-Sham States
 
     for ii in np.arange(len(lines)):
-        if lines[ii].find("     End of")==0:
+        if lines[ii].find('     End of') == 0:
 
-            state_start_index= ii+4
+            state_start_index = ii + 4
 
     Energies = []
     k_weights = []
@@ -660,21 +651,18 @@ def eband_from_qe_pwo(pw_scf_out):
     for jj in np.arange(N_k):
         for ii in np.arange(3):
 
-            List= lines[jj*(3+3)+state_start_index+ii].split()
-
+            List = lines[jj * (3 + 3) + state_start_index + ii].split()
 
             for ii in np.arange(len(List)):
                 Energies.append(float(List[ii]))
-                k_weights.append(k_Points[jj,3])
-
+                k_weights.append(k_Points[jj, 3])
 
     def Fermi_Function(E, E_F, smearing):
-        beta = 1.0/smearing
+        beta = 1.0 / smearing
 
         E_diff = (E - E_F)
 
-        return 1.0/(np.exp(beta*E_diff)+1)
-
+        return 1.0 / (np.exp(beta * E_diff) + 1)
 
     Ryd2eV = misc.Ry
 
@@ -682,12 +670,11 @@ def eband_from_qe_pwo(pw_scf_out):
 
     eF = read_Fermi_level(pw_scf_out)
 
-
     eband = np.zeros(len(Energies))
 
     for ii in np.arange(len(Energies)):
-        eband[ii] = Energies[ii]*k_weights[ii]*Fermi_Function(Energies[ii], eF, kT)
+        eband[ii] = Energies[ii] * k_weights[ii] * Fermi_Function(Energies[ii], eF, kT)
 
-    eband = eband.sum()/Ryd2eV
+    eband = eband.sum() / Ryd2eV
 
     return eband

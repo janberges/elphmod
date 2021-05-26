@@ -124,8 +124,8 @@ def read_fildyn(fildyn, divide_mass=True):
 
         ntyp, nat = map(int, headnext().split()[:2])
 
-        amass = [    float(headnext().split()[-1])     for _ in range(ntyp)]
-        amass = [amass[int(headnext().split()[1]) - 1] for _ in range(nat) ]
+        amass = [float(headnext().split()[-1]) for _ in range(ntyp)]
+        amass = [amass[int(headnext().split()[1]) - 1] for _ in range(nat)]
 
         headnext()
 
@@ -798,7 +798,7 @@ def q2r(ph, D_irr, q_irr, nq, angle=60, apply_asr=False, apply_asr_simple=False,
                 Q1 = int(round(np.dot(q, a1) * scale))
                 Q2 = int(round(np.dot(q, a2) * scale))
 
-                D_full[ Q1,  Q2] = D
+                D_full[+Q1, +Q2] = D
                 D_full[-Q1, -Q2] = D.conj()
 
     i = np.arange(nq)

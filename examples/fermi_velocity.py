@@ -15,7 +15,7 @@ points = 500
 
 cmap = elphmod.plot.colormap(
     (0, elphmod.plot.Color(255, 255, 255)),
-    (1, elphmod.plot.Color(  0,   0,   0)),
+    (1, elphmod.plot.Color(0, 0, 0)),
     )
 
 el = elphmod.el.Model('data/NbSe2_hr.dat')
@@ -33,7 +33,7 @@ image = elphmod.plot.color(dedk, cmap)
 if comm.rank == 0:
     elphmod.plot.save('fermi_velocity.png', image)
 
-info("Min./max./mean number of k-points for meV resolution:")
+info('Min./max./mean number of k-points for meV resolution:')
 
 FS = np.where(np.logical_and(~np.isnan(dedk), abs(e) < 0.1))
 

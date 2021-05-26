@@ -68,7 +68,7 @@ def McMillan(nq, e, w2, g2, eps=1e-10, mustar=0.0):
     q *= nk // nq
 
     g2dd = np.zeros((nQ, nph))
-    dd   = np.zeros(nQ)
+    dd = np.zeros(nQ)
 
     for iq, (q1, q2) in enumerate(q):
         E = np.roll(np.roll(e, shift=-q1, axis=0), shift=-q2, axis=1)

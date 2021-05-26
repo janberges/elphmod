@@ -14,11 +14,11 @@ mu = -0.1665
 
 colors = ['orange', 'skyblue', 'dodgerblue']
 
-info("Set up Wannier Hamiltonian..")
+info('Set up Wannier Hamiltonian..')
 
 el = elphmod.el.Model('data/NbSe2_hr.dat')
 
-info("Diagonalize Hamiltonian along G-M-K-G..")
+info('Diagonalize Hamiltonian along G-M-K-G..')
 
 k, x, GMKG = elphmod.bravais.GMKG(150, corner_indices=True)
 
@@ -27,11 +27,11 @@ e, U, order = elphmod.dispersion.dispersion(el.H, k,
 
 e -= mu
 
-info("Diagonalize Hamiltonian on uniform mesh..")
+info('Diagonalize Hamiltonian on uniform mesh..')
 
 E = elphmod.dispersion.dispersion_full(el.H, 72) - mu
 
-info("Calculate density of states..")
+info('Calculate density of states..')
 
 w = np.linspace(E.min(), E.max(), 150)
 
@@ -40,7 +40,7 @@ DOS = 0
 for n in range(el.size):
     DOS = DOS + elphmod.dos.hexDOS(E[:, :, n])(w)
 
-info("Plot dispersion and density of states..")
+info('Plot dispersion and density of states..')
 
 if comm.rank == 0:
     fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)

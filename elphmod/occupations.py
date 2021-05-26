@@ -199,7 +199,7 @@ if __name__ == '__main__':
     x, dx = np.linspace(a, b, 10000, retstep=True)
     y, dy = methfessel_paxton_general(x, N=1)
 
-    dy[ 0] /= 2
+    dy[0] /= 2
     dy[-1] /= 2
 
     print('int[a, b] df = %.7f' % (-dy.sum() * dx))

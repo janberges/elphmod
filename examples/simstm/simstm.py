@@ -5,10 +5,10 @@
 
 import elphmod
 
-AFMhot = elphmod.plot.colormap( # Gnuplot
-    (0.00, elphmod.plot.Color(  0,   0,   0)),
-    (0.25, elphmod.plot.Color(128,   0,   0)),
-    (0.50, elphmod.plot.Color(255, 128,   0)),
+AFMhot = elphmod.plot.colormap(# Gnuplot
+    (0.00, elphmod.plot.Color(0, 0, 0)),
+    (0.25, elphmod.plot.Color(128, 0, 0)),
+    (0.50, elphmod.plot.Color(255, 128, 0)),
     (0.75, elphmod.plot.Color(255, 255, 128)),
     (1.00, elphmod.plot.Color(255, 255, 255)),
     )

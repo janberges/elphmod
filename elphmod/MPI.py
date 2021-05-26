@@ -98,7 +98,7 @@ def matrix(size, comm=comm):
 
     sizes, cumsum = distribute(size, bounds=True, comm=comm)
 
-    col = comm.Split(comm.rank %  size, key=comm.rank)
+    col = comm.Split(comm.rank % size, key=comm.rank)
     row = comm.Split(comm.rank // size, key=comm.rank) # same col.rank
 
     return col, row
@@ -146,7 +146,7 @@ def shared_array(shape, dtype=float, shared_memory=True, single_memory=False,
     if shared_memory and MPI.COMM_TYPE_SHARED == MPI.UNDEFINED:
         # disable shared memory if it is not supported:
 
-        info("Shared memory not implemented")
+        info('Shared memory not implemented')
 
         shared_memory = False
 

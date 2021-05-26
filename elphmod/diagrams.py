@@ -134,7 +134,7 @@ def susceptibility2(e, kT=0.025, nmats=1000, hyb_width=1.0, hyb_height=0.0):
         q1 = int(round(q1 * scale)) % nk
         q2 = int(round(q2 * scale)) % nk
 
-        Gk  = G[:, :nk, :nk]
+        Gk = G[:, :nk, :nk]
         Gkq = G[:, q1:q1 + nk, q2:q2 + nk]
 
         return prefactor * np.sum(Gk * Gkq) + tail
@@ -234,7 +234,7 @@ def polarization(e, U, kT=0.025, eps=1e-15, subspace=None,
 
                 ok = abs(de) > eps
 
-                dfde[ ok] = df[ok] / de[ok]
+                dfde[ok] = df[ok] / de[ok]
                 dfde[~ok] = d[:, :, n][~ok]
 
                 if cRPA:
@@ -318,7 +318,7 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15, omega=0.0,
     d = occupations.delta(x) / (-kT)
 
     if Delta is not None:
-        x1 = ( e - Delta) / Delta_kT
+        x1 = (e - Delta) / Delta_kT
         x2 = (-e - Delta) / Delta_kT
 
         Theta = 2 - Delta_occupations(x1) - Delta_occupations(x2)
@@ -372,7 +372,7 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15, omega=0.0,
                 else:
                     ok = abs(de) > eps
 
-                    dfde[:, :, m, n][ ok] = df[ok] / de[ok]
+                    dfde[:, :, m, n][ok] = df[ok] / de[ok]
                     dfde[:, :, m, n][~ok] = d[:, :, n][~ok]
 
                 if Delta is not None:
@@ -445,7 +445,7 @@ def phonon_self_energy2(q, e, g2, kT=0.025, nmats=1000, hyb_width=1.0,
     nQ, nb, nk, nk = g2.shape
 
     if nmats * (2 * nk) ** 2 * np.dtype(complex).itemsize * comm.size > GB * 1e9:
-        info("Error: Memory limit (%g GB) exceeded!" % GB)
+        info('Error: Memory limit (%g GB) exceeded!' % GB)
         quit()
 
     e = np.tile(e, (2, 2))
@@ -473,7 +473,7 @@ def phonon_self_energy2(q, e, g2, kT=0.025, nmats=1000, hyb_width=1.0,
         q1 = int(round(q[iq, 0] * scale)) % nk
         q2 = int(round(q[iq, 1] * scale)) % nk
 
-        Gk  = G[:, :nk, :nk]
+        Gk = G[:, :nk, :nk]
         Gkq = G[:, q1:q1 + nk, q2:q2 + nk]
 
         chi = prefactor * np.sum(Gk * Gkq, axis=0).real + tail
@@ -590,7 +590,7 @@ def renormalize_coupling_band(q, e, g, W, U, kT=0.025, eps=1e-15,
 
                 ok = abs(de) > eps
 
-                dfde[:, :, m, n][ ok] = df[ok] / de[ok]
+                dfde[:, :, m, n][ok] = df[ok] / de[ok]
                 dfde[:, :, m, n][~ok] = d[:, :, n][~ok]
 
         if dd:
@@ -770,7 +770,7 @@ def Pi_g(q, e, g, U, kT=0.025, eps=1e-15,
 
                 ok = abs(de) > eps
 
-                dfde[:, :, m, n][ ok] = df[ok] / de[ok]
+                dfde[:, :, m, n][ok] = df[ok] / de[ok]
                 dfde[:, :, m, n][~ok] = d[:, :, n][~ok]
 
         if dd:
@@ -936,9 +936,9 @@ def triangle(q1, q2, q3, e, g1, g2, g3, kT=0.025, eps=1e-14,
     f = occupations(x)
     d = occupations.delta(x) / kT
 
-    e  = np.tile(e,  (2, 2, 1))
-    f  = np.tile(f,  (2, 2, 1))
-    d  = np.tile(d,  (2, 2, 1))
+    e = np.tile(e, (2, 2, 1))
+    f = np.tile(f, (2, 2, 1))
+    d = np.tile(d, (2, 2, 1))
     g1 = np.tile(g1, (2, 2, 1, 1))
     g2 = np.tile(g2, (2, 2, 1, 1))
     g3 = np.tile(g3, (2, 2, 1, 1))

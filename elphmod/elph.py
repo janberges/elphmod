@@ -141,7 +141,7 @@ class Model(object):
             # 2101       nbnd, cufkk, nbnd, czero, epmatf(:, :, imode), nbnd)
 
             if elbnd:
-                Uk  = np.linalg.eigh(self.el.H(*k))[1]
+                Uk = np.linalg.eigh(self.el.H(*k))[1]
                 Ukq = np.linalg.eigh(self.el.H(*k + q))[1]
 
                 g = np.einsum('am,xab,bn->xmn', Ukq.conj(), g, Uk)
@@ -428,7 +428,7 @@ def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
 
     for n, iq in enumerate(my_Q):
         if status:
-            print("Read data for q point %d.." % iq)
+            print('Read data for q point %d..' % iq)
 
         # TypeError: 'test' % 1
         # permitted: 'test' % np.array(1)
@@ -440,7 +440,7 @@ def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
                 if columns[0].startswith('#'):
                     continue
 
-                k1, k2         = [int(i) - 1 for i in columns[:2]]
+                k1, k2 = [int(i) - 1 for i in columns[:2]]
                 jbnd, ibnd, nu = [int(i) - 1 for i in columns[band_slice]]
 
                 ibnd -= offset
@@ -460,7 +460,7 @@ def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
     if completion:
         for n, iq in enumerate(my_Q):
             if status:
-                print("Complete data for q point %d.." % iq)
+                print('Complete data for q point %d..' % iq)
 
             for nu in range(nb):
                 for ibnd in range(bands):
@@ -565,7 +565,7 @@ def read_EPW_output(epw_out, q, nq, nb, nk, bands=1,
                                 columns[-1])
 
         if np.isnan(elph).any():
-            print("Warning: EPW output incomplete!")
+            print('Warning: EPW output incomplete!')
 
         if epf:
             elph *= 1e-3 ** 1.5 # meV^(3/2) to eV^(3/2)
@@ -593,7 +593,7 @@ def read_patterns(filename, q, nrep, status=True):
 
     for my_iq, iq in enumerate(my_q):
         if status:
-            print("Read displacement pattern for q point %d.." % (iq + 1))
+            print('Read displacement pattern for q point %d..' % (iq + 1))
 
         with open(filename % (iq + 1)) as data:
             def goto(pattern):
@@ -601,16 +601,16 @@ def read_patterns(filename, q, nrep, status=True):
                     if pattern in line:
                         return line
 
-            goto("<NUMBER_IRR_REP ")
+            goto('<NUMBER_IRR_REP ')
             if nrep != int(next(data)):
-                print("Wrong number of representations!")
+                print('Wrong number of representations!')
 
             for irep in range(nrep):
-                goto("<DISPLACEMENT_PATTERN ")
+                goto('<DISPLACEMENT_PATTERN ')
 
                 for jrep in range(nrep):
                     my_patterns[my_iq, irep, jrep] = float(
-                        next(data).split(",")[0])
+                        next(data).split(',')[0])
 
     comm.Allgatherv(my_patterns, (patterns, sizes * nrep * nrep))
 
@@ -650,7 +650,7 @@ def read_xml_files(filename, q, rep, bands, nbands, nk, squeeze=True, status=Tru
 
     for my_iq, iq in enumerate(my_q):
         if status:
-            print("Read data for q point %d.." % (iq + 1))
+            print('Read data for q point %d..' % (iq + 1))
 
         for my_irep, irep in enumerate(rep):
             with open(filename % (iq + 1, irep + 1)) as data:
@@ -662,24 +662,24 @@ def read_xml_files(filename, q, rep, bands, nbands, nk, squeeze=True, status=Tru
                 def intag(tag):
                     return tag.split('>', 1)[1].split('<', 1)[0]
 
-                tmp = goto("<NUMBER_OF_K")
+                tmp = goto('<NUMBER_OF_K')
                 tmp = int(np.sqrt(int(next(data) if old else intag(tmp))))
                 if nk != tmp:
-                    print("Wrong number of k points!")
+                    print('Wrong number of k points!')
 
-                tmp = goto("<NUMBER_OF_BANDS")
+                tmp = goto('<NUMBER_OF_BANDS')
                 tmp = int(next(data) if old else intag(tmp))
                 if nbands != tmp:
-                    print("Wrong number of bands!")
+                    print('Wrong number of bands!')
 
                 for ik in range(nk * nk):
-                    goto("<COORDINATES_XK")
+                    goto('<COORDINATES_XK')
                     k = list(map(float, next(data).split()))[:2]
 
                     k1 = int(round(np.dot(k, a1) * nk)) % nk
                     k2 = int(round(np.dot(k, a2) * nk)) % nk
 
-                    goto("<PARTIAL_ELPH")
+                    goto('<PARTIAL_ELPH')
 
                     for n in band_select:
                         for m in band_select:
@@ -795,7 +795,7 @@ def read_data(filename):
     with open(filename) as text:
         columns = text.next().split()
         shape = tuple(map(int, columns[:-1]))
-        complex_data = { 'R': False, 'C': True }[columns[-1]]
+        complex_data = {'R': False, 'C': True}[columns[-1]]
 
         data = np.empty(shape, dtype=complex if complex_data else float)
 

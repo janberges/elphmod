@@ -80,7 +80,7 @@ def read_band_Coulomb_interaction(filename, nQ, nk, binary=False, share=False):
                         for k2 in range(nk):
                             for K1 in range(nk):
                                 for K2 in range(nk):
-                                    a, b = list(map(float,next(data).split()))
+                                    a, b = list(map(float, next(data).split()))
                                     U[iQ, k1, k2, K1, K2] = a + 1j * b
 
     if share:
@@ -116,7 +116,7 @@ def orbital2band(U, H, nq, nk, band=0, status=False, share=False, dd=False):
     nqC, nqC, no, no, no, no = U.shape
 
     if nqC % nq:
-        print("Output q mesh must be subset of input q mesh!")
+        print('Output q mesh must be subset of input q mesh!')
         return
 
     # get eigenvectors of Hamiltonian:
@@ -196,9 +196,9 @@ def orbital2band(U, H, nq, nk, band=0, status=False, share=False, dd=False):
                 for b in range(no):
                     my_V[n] += (U[q1, q2, a, a, b, b]
                         * psi[Kq1, Kq2, b].conj()
-                        * psi[k1,  k2,  a].conj()
+                        * psi[k1, k2, a].conj()
                         * psi[kq1, kq2, a]
-                        * psi[K1,  K2,  b])
+                        * psi[K1, K2, b])
         else:
             for a in range(no):
                 for b in range(no):
@@ -206,9 +206,9 @@ def orbital2band(U, H, nq, nk, band=0, status=False, share=False, dd=False):
                         for d in range(no):
                             my_V[n] += (U[q1, q2, a, b, c, d]
                                 * psi[Kq1, Kq2, d].conj()
-                                * psi[k1,  k2,  b].conj()
+                                * psi[k1, k2, b].conj()
                                 * psi[kq1, kq2, a]
-                                * psi[K1,  K2,  c])
+                                * psi[K1, K2, c])
 
     if status and comm.rank == 0:
         print('Done.')

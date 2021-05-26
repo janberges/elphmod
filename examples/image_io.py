@@ -9,7 +9,7 @@ import numpy as np
 if elphmod.MPI.comm.rank != 0:
     raise SystemExit
 
-width  = 400
+width = 400
 height = 300
 
 for colors in 1, 3, 4:
