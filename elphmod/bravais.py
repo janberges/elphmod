@@ -1192,17 +1192,20 @@ def Fourier_interpolation(data, angle=60, sign=-1, hr_file=None, function=True):
 
     return dict((tuple(point), value) for point, value in zip(points, values))
 
-def path(points, b, N=30):
+def path(points, ibrav=4, N=30, **kwargs):
     """Generate arbitrary path through Brillouin zone.
 
     Parameters
     ----------
     points : ndarray
-        List of high-symmetry points in crystal coordinates.
-    b : ndarray
-        List of reciprocal lattice vectors.
+        List of high-symmetry points in crystal coordinates. Some well-known
+        labels such as ``G`` (|Ggr|), ``M``, or ``K`` may also be used.
+    ibrav : int
+        Bravais-lattice index.
     N : integer
         Number of points per :math:`2 \pi / a`.
+    **kwargs
+        Arguments passed to :func:`primitives`.
 
     Returns
     -------
@@ -1210,10 +1213,34 @@ def path(points, b, N=30):
         Points in crystal coordinates with period :math:`2 \pi`.
     ndarray
         Cumulative path distance.
-    list, optional
+    list
         Indices of corner/high-symmetry points.
+
+    See Also
+    --------
+    primitives, reciprocals
     """
-    points = np.array(points)
+    labels = {
+        2: { # cubic (fcc)
+            'X': [0.0, 0.5, 0.5],
+            'L': [0.5, 0.5, 0.5],
+            },
+        4: { # hexagonal & trigonal
+            'A': [0.0, 0.0, 0.5],
+            'M': [0.0, 0.5, 0.0],
+            'L': [0.0, 0.5, 0.5],
+            'K': [1.0 / 3.0, 1.0 / 3.0, 0.0],
+            'H': [1.0 / 3.0, 1.0 / 3.0, 0.5],
+            },
+        }[ibrav]
+
+    labels['G'] = [0.0, 0.0, 0.0]
+
+    points = np.array([labels[point] if isinstance(point, str) else point
+        for point in points])
+
+    a = primitives(ibrav, **kwargs)
+    b = reciprocals(*a)
 
     points_cart = np.einsum('kc,cx->kx', points, b)
 
