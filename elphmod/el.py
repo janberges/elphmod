@@ -669,8 +669,6 @@ def eband_from_qe_pwo(pw_scf_out):
 
         return 1.0 / (np.exp(beta * E_diff) + 1)
 
-    # to do: use occupations.fermi_dirac here
-
     Ryd2eV = misc.Ry
 
     kT *= Ryd2eV

@@ -177,8 +177,6 @@ class Model(object):
 
         if comm.rank == 0:
             with open(epmatwp) as data:
-                # To do: Check if cut off data is really empty!
-
                 for irg in range(shape[0]):
                     tmp = np.fromfile(data, dtype=np.complex128,
                         count=np.prod(shape[1:])).reshape(shape[1:])

@@ -1,0 +1,6 @@
+el.eband_from_qe_pwo():
+    Use occupations.fermi_dirac().
+dispersion.dispersion_full_nosym():
+    Reshaping fails if dispersion() returns a scalar.
+elph.__init__():
+    Check if cut off epmatwp data is really empty.

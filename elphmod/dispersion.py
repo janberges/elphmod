@@ -330,9 +330,7 @@ def dispersion_full_nosym(matrix, size, *args, **kwargs):
     """Diagonalize Hamiltonian or dynamical matrix on uniform k-point mesh.
 
     Use this routine to get eigenvectors less symmetric than the eigenvalues!
-
-    To do: The reshape part fails if :func:`dispersion` returns a scalar."""
-
+    """
     if comm.rank == 0:
         k = np.empty((size * size, 2))
 
