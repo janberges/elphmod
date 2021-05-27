@@ -242,7 +242,7 @@ def read_flfrc(flfrc):
         # see Modules/latgen.f90 of Quantum ESPRESSO:
 
         if ibrav:
-            at = bravais.primitives(ibrav, celldm=celldm)
+            at = bravais.primitives(ibrav, celldm=celldm, bohr=True)
         else: # free
             at = table(3) * celldm[0]
 

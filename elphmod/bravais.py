@@ -48,7 +48,7 @@ def rotate(vector, angle, two_dimensional=True):
         return np.dot(rotation, vector)
 
 def primitives(ibrav=8, a=1.0, b=0.0, c=0.0, cosab=0.0, cosbc=0.0, cosac=0.0,
-        celldm=None):
+        celldm=None, bohr=False):
     """Get primitive vectors of Bravais lattice as in QE.
 
     Adapted from Modules/latgen.f90 of Quantum ESPRESSO.
@@ -60,9 +60,12 @@ def primitives(ibrav=8, a=1.0, b=0.0, c=0.0, cosab=0.0, cosbc=0.0, cosac=0.0,
     ibrav : int
         Bravais-lattice index.
     a, b, c, cosab, cosbc, cosac : float
-        Traditional crystallographic constants.
+        Traditional crystallographic constants in angstrom.
     celldm : list of float
-        Alternative crystallographic constants.
+        Alternative crystallographic constants. The first element is the
+        lattice constant in Bohr; the other elements are dimensionless.
+    bohr : bool, default False
+        Return lattice vectors in angstrom or bohr?
 
     Returns
     -------
@@ -90,6 +93,9 @@ def primitives(ibrav=8, a=1.0, b=0.0, c=0.0, cosab=0.0, cosbc=0.0, cosac=0.0,
             celldm[4] = cosab
             celldm[5] = 0.0
             celldm[6] = 0.0
+
+    if not bohr:
+        celldm *= misc.a0
 
     if ibrav == 1: # cubic (sc)
         return np.eye(3) * celldm[0]
