@@ -237,181 +237,14 @@ def read_flfrc(flfrc):
 
         tmp = cells()
         ntyp, nat, ibrav = list(map(int, tmp[:3]))
-        celldim = list(map(float, tmp[3:]))
+        celldm = list(map(float, tmp[3:]))
 
         # see Modules/latgen.f90 of Quantum ESPRESSO:
 
-        if ibrav == 0: # free
-            at = table(3) * celldim[0]
-
-        elif ibrav == 1: # cubic (sc)
-            at = np.eye(3) * celldim[0]
-
-        elif ibrav == 2: # cubic (fcc)
-            at = np.array([
-                [-1.0, 0.0, 1.0],
-                [ 0.0, 1.0, 1.0],
-                [-1.0, 1.0, 0.0],
-                ]) * celldim[0] / 2
-
-        elif ibrav == 3: # cubic (bcc)
-            at = np.array([
-                [ 1.0,  1.0, 1.0],
-                [-1.0,  1.0, 1.0],
-                [-1.0, -1.0, 1.0],
-                ]) * celldim[0] / 2
-
-        elif ibrav == -3: # cubic (bcc, more symmetric axis)
-            at = np.array([
-                [-1.0,  1.0,  1.0],
-                [ 1.0, -1.0,  1.0],
-                [ 1.0,  1.0, -1.0],
-                ]) * celldim[0] / 2
-
-        elif ibrav == 4: # hexagonal & trigonal
-            at = np.array([
-                [ 1.0,              0.0,        0.0],
-                [-0.5, 0.5 * np.sqrt(3),        0.0],
-                [ 0.0,              0.0, celldim[2]],
-                ]) * celldim[0]
-
-        elif ibrav == 5: # trigonal (3-fold axis c)
-            tx = np.sqrt((1 - celldim[3]) / 2)
-            ty = np.sqrt((1 - celldim[3]) / 6)
-            tz = np.sqrt((1 + 2 * celldim[3]) / 3)
-
-            at = np.array([
-                [ tx,    -ty, tz],
-                [  0, 2 * ty, tz],
-                [-tx,    -ty, tz],
-                ]) * celldim[0]
-
-        elif ibrav == -5: # trigonal (3-fold axis <111>)
-            tx = np.sqrt((1 - celldim[3]) / 2)
-            ty = np.sqrt((1 - celldim[3]) / 6)
-            tz = np.sqrt((1 + 2 * celldim[3]) / 3)
-
-            u = tz - 2 * np.sqrt(2) * ty
-            v = tz + np.sqrt(2) * ty
-
-            at = np.array([
-                [u, v, v],
-                [v, u, v],
-                [v, v, u],
-                ]) * celldim[0] / np.sqrt(3)
-
-        elif ibrav == 6: # tetragonal (st)
-            at = np.array([
-                [ 1.0, 0.0,        0.0],
-                [ 0.0, 1.0,        0.0],
-                [ 0.0, 0.0, celldim[2]],
-                ]) * celldim[0]
-
-        elif ibrav == 7: # tetragonal (bct)
-            at = np.array([
-                [ 1.0, -1.0, celldim[2]],
-                [ 1.0,  1.0, celldim[2]],
-                [-1.0, -1.0, celldim[2]],
-                ]) * celldim[0] / 2
-
-        elif ibrav == 8: # orthorhombic
-            at = np.diag([1.0, celldim[1], celldim[2]]) * celldim[0]
-
-        elif ibrav == 9: # orthorhombic (bco)
-            at = np.array([
-                [ 0.5, 0.5 * celldim[1],        0.0],
-                [-0.5, 0.5 * celldim[1],        0.0],
-                [ 0.0,              0.0, celldim[2]],
-                ]) * celldim[0]
-
-        elif ibrav == 9: # orthorhombic (bco, alternate description)
-            at = np.array([
-                [0.5, -0.5 * celldim[1],        0.0],
-                [0.5,  0.5 * celldim[1],        0.0],
-                [0.0,               0.0, celldim[2]],
-                ]) * celldim[0]
-
-        elif ibrav == 91: # orthorhombic (A-type)
-            at = np.array([
-                [1.0,              0.0,               0.0],
-                [0.0, 0.5 * celldim[1], -0.5 * celldim[2]],
-                [0.0, 0.5 * celldim[1],  0.5 * celldim[2]],
-                ]) * celldim[0]
-
-        elif ibrav == 10: # orthorhombic (fco)
-            at = np.array([
-                [1.0,        0.0, celldim[2]],
-                [1.0, celldim[1],        0.0],
-                [0.0, celldim[1], celldim[2]],
-                ]) * celldim[0] / 2
-
-        elif ibrav == 11: # orthorhombic (bco)
-            at = np.array([
-                [ 1.0,  celldim[1], celldim[2]],
-                [-1.0,  celldim[1], celldim[2]],
-                [-1.0, -celldim[1], celldim[2]],
-                ]) * celldim[0] / 2
-
-        elif ibrav == 12: # monoclinic (unique axis c)
-            cos = celldim[3]
-            sin = np.sqrt(1.0 - cos ** 2)
-
-            at = np.array([
-                [             1.0,              0.0,        0.0],
-                [celldim[1] * cos, celldim[1] * sin,        0.0],
-                [             0.0,              0.0, celldim[2]],
-                ]) * celldim[0]
-
-        elif ibrav == -12: # monoclinic (unique axis b)
-            cos = celldim[4]
-            sin = np.sqrt(1.0 - cos ** 2)
-
-            at = np.array([
-                [             1.0,        0.0,              0.0],
-                [             0.0, celldim[1],              0.0],
-                [celldim[2] * cos,        0.0, celldim[2] * sin],
-                ]) * celldim[0]
-
-        elif ibrav == 13: # monoclinic (bcm, unique axis c)
-            cos = celldim[3]
-            sin = np.sqrt(1.0 - cos ** 2)
-
-            at = np.array([
-                [             0.5,              0.0, -0.5 * celldim[2]],
-                [celldim[1] * cos, celldim[1] * sin,               0.0],
-                [             0.5,              0.0,  0.5 * celldim[2]],
-                ]) * celldim[0]
-
-        elif ibrav == -13: # monoclinic (bcm, unique axis b)
-            cos = celldim[4]
-            sin = np.sqrt(1.0 - cos ** 2)
-
-            at = np.array([
-                [             0.5, 0.5 * celldim[1],              0.0],
-                [            -0.5, 0.5 * celldim[1],              0.0],
-                [celldim[2] * cos,              0.0, celldim[2] * sin],
-                ]) * celldim[0]
-
-        elif ibrav == 14: # triclinic
-            cosc = celldim[5]
-            sinc = np.sqrt(1.0 - cosc ** 2)
-
-            cosa = celldim[3]
-            cosb = celldim[4]
-
-            ex1 = (cosa - cosb * cosc) / sinc
-            ex2 = np.sqrt(1.0 + 2.0 * cosa * cosb * cosc
-                - cosa ** 2 - cosb ** 2 - cosc ** 2) / sinc
-
-            at = np.array([
-                [              1.0,               0.0,             0.0],
-                [celldim[1] * cosc, celldim[1] * sinc,             0.0],
-                [celldim[2] * cosb, celldim[2] * ex1, celldim[2] * ex2],
-                ]) * celldim[0]
-
-        else:
-            print('Bravais lattice unknown')
-            return
+        if ibrav:
+            at = bravais.primitives(ibrav, celldm=celldm)
+        else: # free
+            at = table(3) * celldm[0]
 
         # read palette of atomic species and masses:
 
@@ -435,7 +268,7 @@ def read_flfrc(flfrc):
             ityp[na] = int(tmp[1]) - 1
             tau[na, :] = list(map(float, tmp[2:5]))
 
-        tau *= celldim[0]
+        tau *= celldm[0]
 
         atom_order = []
 

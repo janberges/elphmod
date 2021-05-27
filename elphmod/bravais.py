@@ -8,7 +8,7 @@ from __future__ import division
 import numpy as np
 import sys
 
-from . import MPI
+from . import misc, MPI
 comm = MPI.comm
 
 deg = np.pi / 180
@@ -46,6 +46,217 @@ def rotate(vector, angle, two_dimensional=True):
             ])
 
         return np.dot(rotation, vector)
+
+def primitives(ibrav=8, a=None, b=None, c=None, cosab=None, cosbc=None,
+        cosac=None, celldm=None):
+    """Get primitive vectors of Bravais lattice as in QE.
+
+    Adapted from Modules/latgen.f90 of Quantum ESPRESSO.
+
+    For documentation, see http://www.quantum-espresso.org/Doc/INPUT_PW.html.
+
+    Parameters
+    ----------
+    ibrav : int
+        Bravais-lattice index.
+    a, b, c, cosab, cosbc, cosac : float
+        Traditional crystallographic constants.
+    celldm : list of float
+        Alternative crystallographic constants.
+
+    Returns
+    -------
+    ndarray
+        Matrix of primitive Bravais lattice vectors.
+    """
+    if celldm is None:
+        celldm = np.zeros(6)
+
+        celldm[0] = a / misc.a0
+        celldm[1] = b / a
+        celldm[2] = c / a
+
+        if ibrav in {0, 14}:
+            celldm[3] = cosbc
+            celldm[4] = cosac
+            celldm[5] = cosab
+
+        elif ibrav in {-13, -12}:
+            celldm[3] = 0.0
+            celldm[4] = cosac
+            celldm[5] = 0.0
+
+        elif ibrav in {-5, 5, 12, 13}:
+            celldm[4] = cosab
+            celldm[5] = 0.0
+            celldm[6] = 0.0
+
+    if ibrav == 1: # cubic (sc)
+        return np.eye(3) * celldm[0]
+
+    if ibrav == 2: # cubic (fcc)
+        return np.array([
+            [-1.0, 0.0, 1.0],
+            [ 0.0, 1.0, 1.0],
+            [-1.0, 1.0, 0.0],
+            ]) * celldm[0] / 2
+
+    if ibrav == 3: # cubic (bcc)
+        return np.array([
+            [ 1.0,  1.0, 1.0],
+            [-1.0,  1.0, 1.0],
+            [-1.0, -1.0, 1.0],
+            ]) * celldm[0] / 2
+
+    if ibrav == -3: # cubic (bcc, more symmetric axis)
+        return np.array([
+            [-1.0,  1.0,  1.0],
+            [ 1.0, -1.0,  1.0],
+            [ 1.0,  1.0, -1.0],
+            ]) * celldm[0] / 2
+
+    if ibrav == 4: # hexagonal & trigonal
+        return np.array([
+            [ 1.0,              0.0,       0.0],
+            [-0.5, 0.5 * np.sqrt(3),       0.0],
+            [ 0.0,              0.0, celldm[2]],
+            ]) * celldm[0]
+
+    if ibrav == 5: # trigonal (3-fold axis c)
+        tx = np.sqrt((1 - celldm[3]) / 2)
+        ty = np.sqrt((1 - celldm[3]) / 6)
+        tz = np.sqrt((1 + 2 * celldm[3]) / 3)
+
+        return np.array([
+            [ tx,    -ty, tz],
+            [  0, 2 * ty, tz],
+            [-tx,    -ty, tz],
+            ]) * celldm[0]
+
+    if ibrav == -5: # trigonal (3-fold axis <111>)
+        tx = np.sqrt((1 - celldm[3]) / 2)
+        ty = np.sqrt((1 - celldm[3]) / 6)
+        tz = np.sqrt((1 + 2 * celldm[3]) / 3)
+
+        u = tz - 2 * np.sqrt(2) * ty
+        v = tz + np.sqrt(2) * ty
+
+        return np.array([
+            [u, v, v],
+            [v, u, v],
+            [v, v, u],
+            ]) * celldm[0] / np.sqrt(3)
+
+    if ibrav == 6: # tetragonal (st)
+        return np.array([
+            [ 1.0, 0.0,       0.0],
+            [ 0.0, 1.0,       0.0],
+            [ 0.0, 0.0, celldm[2]],
+            ]) * celldm[0]
+
+    if ibrav == 7: # tetragonal (bct)
+        return np.array([
+            [ 1.0, -1.0, celldm[2]],
+            [ 1.0,  1.0, celldm[2]],
+            [-1.0, -1.0, celldm[2]],
+            ]) * celldm[0] / 2
+
+    if ibrav == 8: # orthorhombic
+        return np.diag([1.0, celldm[1], celldm[2]]) * celldm[0]
+
+    if ibrav == 9: # orthorhombic (bco)
+        return np.array([
+            [ 0.5, 0.5 * celldm[1],       0.0],
+            [-0.5, 0.5 * celldm[1],       0.0],
+            [ 0.0,             0.0, celldm[2]],
+            ]) * celldm[0]
+
+    if ibrav == 9: # orthorhombic (bco, alternate description)
+        return np.array([
+            [0.5, -0.5 * celldm[1],       0.0],
+            [0.5,  0.5 * celldm[1],       0.0],
+            [0.0,              0.0, celldm[2]],
+            ]) * celldm[0]
+
+    if ibrav == 91: # orthorhombic (A-type)
+        return np.array([
+            [1.0,             0.0,              0.0],
+            [0.0, 0.5 * celldm[1], -0.5 * celldm[2]],
+            [0.0, 0.5 * celldm[1],  0.5 * celldm[2]],
+            ]) * celldm[0]
+
+    if ibrav == 10: # orthorhombic (fco)
+        return np.array([
+            [1.0,       0.0, celldm[2]],
+            [1.0, celldm[1],       0.0],
+            [0.0, celldm[1], celldm[2]],
+            ]) * celldm[0] / 2
+
+    if ibrav == 11: # orthorhombic (bco)
+        return np.array([
+            [ 1.0,  celldm[1], celldm[2]],
+            [-1.0,  celldm[1], celldm[2]],
+            [-1.0, -celldm[1], celldm[2]],
+            ]) * celldm[0] / 2
+
+    if ibrav == 12: # monoclinic (unique axis c)
+        cos = celldm[3]
+        sin = np.sqrt(1.0 - cos ** 2)
+
+        return np.array([
+            [            1.0,             0.0,       0.0],
+            [celldm[1] * cos, celldm[1] * sin,       0.0],
+            [            0.0,             0.0, celldm[2]],
+            ]) * celldm[0]
+
+    if ibrav == -12: # monoclinic (unique axis b)
+        cos = celldm[4]
+        sin = np.sqrt(1.0 - cos ** 2)
+
+        return np.array([
+            [            1.0,       0.0,             0.0],
+            [            0.0, celldm[1],             0.0],
+            [celldm[2] * cos,       0.0, celldm[2] * sin],
+            ]) * celldm[0]
+
+    if ibrav == 13: # monoclinic (bcm, unique axis c)
+        cos = celldm[3]
+        sin = np.sqrt(1.0 - cos ** 2)
+
+        return np.array([
+            [            0.5,             0.0, -0.5 * celldm[2]],
+            [celldm[1] * cos, celldm[1] * sin,              0.0],
+            [            0.5,             0.0,  0.5 * celldm[2]],
+            ]) * celldm[0]
+
+    if ibrav == -13: # monoclinic (bcm, unique axis b)
+        cos = celldm[4]
+        sin = np.sqrt(1.0 - cos ** 2)
+
+        return np.array([
+            [            0.5, 0.5 * celldm[1],             0.0],
+            [           -0.5, 0.5 * celldm[1],             0.0],
+            [celldm[2] * cos,             0.0, celldm[2] * sin],
+            ]) * celldm[0]
+
+    if ibrav == 14: # triclinic
+        cosc = celldm[5]
+        sinc = np.sqrt(1.0 - cosc ** 2)
+
+        cosa = celldm[3]
+        cosb = celldm[4]
+
+        ex1 = (cosa - cosb * cosc) / sinc
+        ex2 = np.sqrt(1.0 + 2.0 * cosa * cosb * cosc
+            - cosa ** 2 - cosb ** 2 - cosc ** 2) / sinc
+
+        return np.array([
+            [             1.0,              0.0,            0.0],
+            [celldm[1] * cosc, celldm[1] * sinc,            0.0],
+            [celldm[2] * cosb, celldm[2] * ex1, celldm[2] * ex2],
+            ]) * celldm[0]
+
+    print('Bravais lattice unknown')
 
 def translations(angle=120, angle0=0, two_dimensional=True):
     """Generate translation vectors of Bravais lattice.
