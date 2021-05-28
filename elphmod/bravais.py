@@ -1540,7 +1540,7 @@ def read_pwi(pwi):
                 elif key == 'k_points':
                     struct['ktyp'] = words[1]
 
-                    if struct['ktyp'] == 'automatic':
+                    if 'automatic' in struct['ktyp']:
                         struct[key] = list(map(int, next(lines).split()))
                     else:
                         struct['nks'] = int(next(lines))
@@ -1636,7 +1636,7 @@ def write_pwi(pwi, struct):
         if 'k_points' in struct:
             data.write('K_POINTS %s\n' % struct['ktyp'])
 
-            if struct['ktyp'] == 'automatic':
+            if 'automatic' in struct['ktyp']:
                 data.write('%d %d %d %d %d %d\n' % tuple(struct['k_points']))
             else:
                 data.write('%d\n' % struct['nks'])
