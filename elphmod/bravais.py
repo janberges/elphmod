@@ -1456,7 +1456,13 @@ def read_pwi(pwi):
                         control_flag = False
 
                 elif system_flag:
-                    if key in 'abc':
+                    if key.startswith('celldm'):
+                        if 'celldm' not in struct:
+                            struct['celldm'] = np.zeros(6)
+
+                        struct['celldm'][int(key[7:-1]) - 1] = float(words[1])
+
+                    elif key in 'abc':
                         struct[key] = float(words[1])
 
                     elif key == 'nat':
@@ -1597,10 +1603,15 @@ def write_pwi(pwi, struct):
 
         data.write('&SYSTEM\n')
 
+        if 'celldm' in struct:
+            for i, celldm in enumerate(struct['celldm'], 1):
+                if celldm:
+                    data.write('celldm(%d) = %.12g\n' % (i, celldm))
+
         for key in ['a', 'b', 'c', 'nat', 'ibrav', 'ntyp',
                     'ecutwfc', 'ecutrho', 'degauss', 'nbnd']:
             if key in struct:
-                data.write('%3s = %.12g\n' % (key, struct[key]))
+                data.write('%s = %.12g\n' % (key, struct[key]))
 
         for key in ['occupations', 'smearing', 'nosym']:
             if key in struct:
