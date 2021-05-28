@@ -324,7 +324,7 @@ def asr(phid):
             for m3 in range(nr3)
             if na1 != na2 or m1 or m2 or m3)
 
-def sum_rule_correction(ph, asr=True, rsr=True, eps=1e-15):
+def sum_rule_correction(ph, asr=True, rsr=True, eps=1e-15, report=True):
     """Apply sum rule correction to force constants.
 
     Parameters
@@ -336,11 +336,45 @@ def sum_rule_correction(ph, asr=True, rsr=True, eps=1e-15):
     rsr : bool
         Enforce Born-Huang rotation sum rule?
     eps : float
-        Tolerance and valid denominator.
+        Smallest safe absolute value of divisor.
+    report : bool
+        Print sums before and after correction?
     """
     if comm.rank != 0:
         comm.Bcast(ph.data)
         return
+
+    # define sums that should be zero:
+
+    def acoustic_sum():
+        zero = 0.0
+        for l in range(ph.nat):
+            for x in range(3):
+                for y in range(3):
+                    S = 0.0
+                    for n in range(len(R)):
+                        for k in range(ph.nat):
+                            S += C[n, k, x, l, y]
+                    zero += abs(S)
+        return zero
+
+    def rotation_sum():
+        zero = 0.0
+        for l in range(ph.nat):
+            for x1 in range(3):
+                for x2 in range(3):
+                    for y in range(3):
+                        S = 0.0
+                        for n in range(len(R)):
+                            for k in range(ph.nat):
+                                S += (C[n, k, x1, l, y]
+                                    * (R[n, x2] + ph.r[k, x2]))
+                                S -= (C[n, k, x2, l, y]
+                                    * (R[n, x1] + ph.r[k, x1]))
+                        zero += abs(S)
+        return zero
+
+    # prepare lattice vectors and force constants:
 
     R = np.einsum('xy,nx->ny', ph.a, ph.R)
     C = ph.data.reshape((len(R), ph.nat, 3, ph.nat, 3))
@@ -348,6 +382,12 @@ def sum_rule_correction(ph, asr=True, rsr=True, eps=1e-15):
     for na in range(ph.nat):
         C[:, na, :, :, :] *= np.sqrt(ph.M[na])
         C[:, :, :, na, :] *= np.sqrt(ph.M[na])
+
+    # check if sum rules are already fulfilled (before correction):
+
+    if report:
+        print('Acoustic sum (before): %g' % acoustic_sum())
+        print('Rotation sum (before): %g' % rotation_sum())
 
     # determine list of constraints:
 
@@ -392,33 +432,13 @@ def sum_rule_correction(ph, asr=True, rsr=True, eps=1e-15):
                 c[i] -= (c[j] * c[i]).sum() / cc[j] * c[j]
         cc[i] = (c[i] * c[i]).sum()
 
-    # check if the sum rule is really fulfilled now:
+    # check if sum rules are really fulfilled now (after correction):
 
-    if asr:
-        for l in range(ph.nat):
-            for x in range(3):
-                for y in range(3):
-                    S = 0.0
-                    for n in range(len(R)):
-                        for k in range(ph.nat):
-                            S += C[n, k, x, l, y]
-                    if abs(S) > eps:
-                        print('Acoustic sum rule correction failed.')
+    if report:
+        print('Acoustic sum (after): %g' % acoustic_sum())
+        print('Rotation sum (after): %g' % rotation_sum())
 
-    if rsr:
-        for l in range(ph.nat):
-            for x1 in range(3):
-                for x2 in range(3):
-                    for y in range(3):
-                        S = 0.0
-                        for n in range(len(R)):
-                            for k in range(ph.nat):
-                                S += (C[n, k, x1, l, y]
-                                    * (R[n, x2] + ph.r[k, x2]))
-                                S -= (C[n, k, x2, l, y]
-                                    * (R[n, x1] + ph.r[k, x1]))
-                        if abs(S) > eps:
-                            print('Rotation sum rule correction failed.')
+    # redo divison by atomic masses:
 
     for na in range(ph.nat):
         C[:, na, :, :, :] /= np.sqrt(ph.M[na])
