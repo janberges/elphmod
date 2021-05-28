@@ -48,7 +48,7 @@ def rotate(vector, angle, two_dimensional=True):
         return np.dot(rotation, vector)
 
 def primitives(ibrav=8, a=1.0, b=0.0, c=0.0, cosab=0.0, cosbc=0.0, cosac=0.0,
-        celldm=None, bohr=False):
+        celldm=None, bohr=False, **ignore):
     """Get primitive vectors of Bravais lattice as in QE.
 
     Adapted from Modules/latgen.f90 of Quantum ESPRESSO.
@@ -66,6 +66,8 @@ def primitives(ibrav=8, a=1.0, b=0.0, c=0.0, cosab=0.0, cosbc=0.0, cosac=0.0,
         lattice constant in Bohr; the other elements are dimensionless.
     bohr : bool, default False
         Return lattice vectors in angstrom or bohr?
+    **ignore
+        Ignored keyword arguments, e.g., parameters from 'func'`read_pwi`.
 
     Returns
     -------
@@ -1192,7 +1194,7 @@ def Fourier_interpolation(data, angle=60, sign=-1, hr_file=None, function=True):
 
     return dict((tuple(point), value) for point, value in zip(points, values))
 
-def path(points, ibrav=4, N=30, **kwargs):
+def path(points, ibrav=4, N=30, qe=False, **kwargs):
     """Generate arbitrary path through Brillouin zone.
 
     Parameters
@@ -1204,6 +1206,8 @@ def path(points, ibrav=4, N=30, **kwargs):
         Bravais-lattice index.
     N : integer
         Number of points per :math:`2 \pi / a`.
+    qe : bool, default False
+        Also return path in QE input format?
     **kwargs
         Arguments passed to :func:`primitives`.
 
@@ -1215,6 +1219,8 @@ def path(points, ibrav=4, N=30, **kwargs):
         Cumulative path distance.
     list
         Indices of corner/high-symmetry points.
+    dict, optional
+        Path in format suitable for :func:`write_pwi`.
 
     See Also
     --------
@@ -1267,7 +1273,20 @@ def path(points, ibrav=4, N=30, **kwargs):
 
         corners.append(len(k) - 1)
 
-    return 2 * np.pi * np.array(k), np.array(x), corners
+    if qe:
+        struct = dict(ktyp='crystal_b', nks=len(corners),
+            k_points=np.empty((len(corners), 4)))
+
+        for i in range(len(corners)):
+            struct['k_points'][i, :3] = k[corners[i]]
+            try:
+                struct['k_points'][i, 3] = corners[i + 1] - corners[i]
+            except IndexError:
+                struct['k_points'][i, 3] = 0
+
+        return 2 * np.pi * np.array(k), np.array(x), corners, struct
+    else:
+        return 2 * np.pi * np.array(k), np.array(x), corners
 
 def GMKG(N=30, corner_indices=False, mesh=False, angle=60, straight=True,
         lift_degen=True):
@@ -1520,19 +1539,15 @@ def read_pwi(pwi):
 
                 elif key == 'k_points':
                     struct['ktyp'] = words[1]
-                    if 'automatic' in struct['ktyp']:
-                        words = next(lines).split()
-                        struct[key] = words
+
+                    if struct['ktyp'] == 'automatic':
+                        struct[key] = list(map(int, next(lines).split()))
                     else:
-                        words = next(lines)
-                        struct['nks'] = int(words)
+                        struct['nks'] = int(next(lines))
                         struct[key] = np.empty((struct['nks'], 4))
 
                         for n in range(struct['nks']):
-                            words = next(lines).split()
-
-                            for x in range(4):
-                                struct[key][n, x] = float(words[x])
+                            struct[key][n] = list(map(float, next(lines).split()))
 
                 elif key == 'cell_parameters':
                     struct['r_cell'] = np.empty((3, 3))
@@ -1619,16 +1634,20 @@ def write_pwi(pwi, struct):
             data.write('%2s %12.9f %12.9f %12.9f\n' % (X, r1, r2, r3))
 
         if 'k_points' in struct:
-            if 'automatic' in struct['ktyp']:
-                data.write('K_POINTS %s\n' % struct['ktyp'])
-                data.write('%s %s %s %s %s %s' % tuple(struct['k_points']))
+            data.write('K_POINTS %s\n' % struct['ktyp'])
+
+            if struct['ktyp'] == 'automatic':
+                data.write('%d %d %d %d %d %d\n' % tuple(struct['k_points']))
             else:
-                data.write('K_POINTS %s\n' % struct['ktyp'])
-                data.write('%d \n' % struct['nks'])
+                data.write('%d\n' % struct['nks'])
 
                 for (kx, ky, kz, wk) in struct['k_points']:
-                    data.write('%12.9f %12.9f %12.9f %12.9f\n'
-                        % (kx, ky, kz, wk))
+                    data.write('%12.9f %12.9f %12.9f ' % (kx, ky, kz))
+
+                    if wk == int(wk):
+                        data.write('%d\n' % wk)
+                    else:
+                        data.write('%12.9f\n' % wk)
 
         if 'r_cell' in struct:
             data.write('CELL_PARAMETERS %s\n' % struct['cell_units'])
