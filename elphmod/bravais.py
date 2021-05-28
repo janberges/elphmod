@@ -1605,7 +1605,7 @@ def write_pwi(pwi, struct):
         data.write('ATOMIC_SPECIES \n')
 
         for i in range(struct['ntyp']):
-            data.write('%s %.12g %s'
+            data.write('%s %.12g %s\n'
                 % (struct['at_species'][i], struct['mass'][i], struct['pp'][i]))
 
         data.write('\n')
