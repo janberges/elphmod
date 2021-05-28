@@ -87,14 +87,10 @@ def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosab=0.0, cosbc=0.0, cosac=0.0,
             celldm[5] = cosab
 
         elif ibrav in {-13, -12}:
-            celldm[3] = 0.0
             celldm[4] = cosac
-            celldm[5] = 0.0
 
         elif ibrav in {-5, 5, 12, 13}:
-            celldm[4] = cosab
-            celldm[5] = 0.0
-            celldm[6] = 0.0
+            celldm[3] = cosab
 
     if not bohr:
         celldm *= misc.a0
