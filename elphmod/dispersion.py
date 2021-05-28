@@ -18,8 +18,11 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
     matrix : function
         Matrix to be diagonalized as a function of k in crystal coordinates with
         period :math:`2 \pi`.
-    k : list of 2-tuples
-        k points in crystal coordinates with period :math:`2 \pi`.
+    k : ndarray
+        k points in crystal coordinates with period :math:`2 \pi`. Wave-vector
+        components are stored along the last axis; the leading axes describe
+        the mesh. The shapes of `matrix` and `k` together determine the shape
+        of the results.
     angle : float
         Angle between the axes of the reciprocal lattice.
     vectors : bool
@@ -31,7 +34,8 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
         This is experimental and supposed to support the band-order algorithm.
     order : bool
         Order/disentangle bands via their k-local character. Depending on the
-        topology of the band structure, this may not be possible.
+        topology of the band structure, this may not be possible. Adjacent
+        points in `k` must be adjacent in the Brillouin zone too.
     hermitian : bool
         Assume `matrix` to be Hermitian? Currently, only the real part of the
         eigenvalues of non-Hermitian matrices is returned.
@@ -51,10 +55,14 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
     """
     if comm.rank == 0:
         k = np.array(k)
-        points, dimens = k.shape
+        kshape = k.shape[:-1]
+        points = np.prod(kshape)
+        dimens = k.shape[-1]
+        k = np.reshape(k, (points, dimens))
     else:
-        points = dimens = None
+        kshape = points = dimens = None
 
+    kshape = comm.bcast(kshape) # k-mesh dimensions
     points = comm.bcast(points) # number of k points
     dimens = comm.bcast(dimens) # number of dimensions
 
@@ -174,6 +182,19 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
                 images.Bcast(o)
 
         node.Barrier()
+
+    # reshape results:
+
+    if broadcast or comm.rank == 0:
+        v = np.reshape(v, kshape + (bands,))
+
+        if vectors:
+            V = np.reshape(V, kshape + (bands, bands))
+
+        if order:
+            o = np.reshape(o, kshape + (bands,))
+
+    # return results:
 
     if vectors and order:
         return v, V, o
@@ -344,12 +365,7 @@ def dispersion_full_nosym(matrix, size, *args, **kwargs):
     else:
         k = None
 
-    out = list(dispersion(matrix, k, *args, **kwargs))
-
-    for n in range(len(out)):
-        out[n] = np.reshape(out[n], (size, size) + out[n].shape[1:])
-
-    return out
+    return dispersion(matrix, k, *args, **kwargs)
 
 def sample(matrix, k):
     """Calculate Hamiltonian or dynamical matrix for given k points.
