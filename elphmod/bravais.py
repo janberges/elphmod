@@ -47,7 +47,7 @@ def rotate(vector, angle, two_dimensional=True):
 
         return np.dot(rotation, vector)
 
-def primitives(ibrav=8, a=1.0, b=0.0, c=0.0, cosab=0.0, cosbc=0.0, cosac=0.0,
+def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosab=0.0, cosbc=0.0, cosac=0.0,
         celldm=None, bohr=False, **ignore):
     """Get primitive vectors of Bravais lattice as in QE.
 
