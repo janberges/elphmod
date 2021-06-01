@@ -272,9 +272,9 @@ def sample(g, q, nk=None, U=None, u=None, broadcast=True, shared_memory=False):
     q : list of tuple
         List of q points in crystal coordinates :math:`q_i \in [0, 2 \pi)`.
     nk : int or tuple of int
-        Number of k points per dimension. Different numbers of k points along
-        different axes can be specified via a tuple. Alternatively, `nk` is
-        inferred from the shape of `U`.
+        Number of k points per dimension, i.e., size of uniform mesh. Different
+        numbers of k points along different axes can be specified via a tuple.
+        Alternatively, `nk` is inferred from the shape of `U`.
     U : ndarray, optional
         Electron eigenvectors for given k mesh.
         If present, transform from orbital to band basis.

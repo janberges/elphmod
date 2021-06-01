@@ -574,13 +574,16 @@ def polarization(e, path, angle=60):
 
     return mode
 
-def q2r(ph, D_irr, q_irr, nq, angle=60, apply_asr=False, apply_asr_simple=False,
-        apply_rsr=False):
+def q2r(ph, D_irr=None, q_irr=None, nq=None, D_full=None, angle=60,
+        apply_asr=False, apply_asr_simple=False, apply_rsr=False):
     """Interpolate dynamical matrices given for irreducible wedge of q points.
 
     This function replaces `interpolate_dynamical_matrices`, which depends on
-    Quantum ESPRESSO. Currently, it only works for 2D lattices. For the square
-    lattice, the rotation symmetry (90 degrees) is currently disabled!
+    Quantum ESPRESSO. For 2D lattices, it is sufficient to provide dynamical
+    matrices `D_irr` for the irreducible q points `q_irr`. Here, for the square
+    lattice, the rotation symmetry (90 degrees) is currently disabled! In turn,
+    for 1D and 2D lattices, dynamical matrices `D_full` on the complete uniform
+    q-point mesh must be given.
 
     Parameters
     ----------
@@ -590,8 +593,12 @@ def q2r(ph, D_irr, q_irr, nq, angle=60, apply_asr=False, apply_asr_simple=False,
         Dynamical matrices for all irreducible q points.
     q_irr : list of 2-tuples
         Irreducible q points in crystal coordinates with period :math:`2 \pi`.
-    nq : int
-        Number of q points per dimension, i.e., size of uniform mesh.
+    nq : int or tuple of int
+        Number of q points per dimension, i.e., size of uniform mesh. Different
+        numbers of q points along different axes can be specified via a tuple.
+        Alternatively, `nq` is inferred from the shape of `D_full`.
+    D_full : ndarray
+        Dynamical matrices on complete uniform q-point mesh.
     angle : float
         Angle between mesh axes in degrees.
     apply_asr : bool
@@ -602,66 +609,74 @@ def q2r(ph, D_irr, q_irr, nq, angle=60, apply_asr=False, apply_asr_simple=False,
     apply_rsr : bool
         Enforce rotation sum rule by overwriting self force constants?
     """
-    D_full = np.empty((nq, nq, ph.size, ph.size), dtype=complex)
+    if D_full is None:
+        D_full = np.empty((nq, nq, ph.size, ph.size), dtype=complex)
 
-    def rotation(phi, n=1):
-        block = np.array([
-            [np.cos(phi), -np.sin(phi), 0],
-            [np.sin(phi),  np.cos(phi), 0],
-            [0,            0,           1],
-            ])
+        def rotation(phi, n=1):
+            block = np.array([
+                [np.cos(phi), -np.sin(phi), 0],
+                [np.sin(phi),  np.cos(phi), 0],
+                [0,            0,           1],
+                ])
 
-        return np.kron(np.eye(n), block)
+            return np.kron(np.eye(n), block)
 
-    def reflection(n=1):
-        return np.diag([-1, 1, 1] * n)
+        def reflection(n=1):
+            return np.diag([-1, 1, 1] * n)
 
-    def apply(A, U):
-        return np.einsum('ij,jk,kl->il', U, A, U.T.conj())
+        def apply(A, U):
+            return np.einsum('ij,jk,kl->il', U, A, U.T.conj())
 
-    a1, a2 = bravais.translations(180 - angle)
-    b1, b2 = bravais.reciprocals(a1, a2)
+        a1, a2 = bravais.translations(180 - angle)
+        b1, b2 = bravais.reciprocals(a1, a2)
 
-    r = ph.r[:, :2].T / ph.a[0, 0]
+        r = ph.r[:, :2].T / ph.a[0, 0]
 
-    scale = nq / (2 * np.pi)
+        scale = nq / (2 * np.pi)
 
-    # rotation currently disabled for square lattice:
+        # rotation currently disabled for square lattice:
 
-    angles = [0] if angle == 90 else [0, 2 * np.pi / 3, 4 * np.pi / 3]
+        angles = [0] if angle == 90 else [0, 2 * np.pi / 3, 4 * np.pi / 3]
 
-    for iq, (q1, q2) in enumerate(q_irr):
-        q0 = q1 * b1 + q2 * b2
+        for iq, (q1, q2) in enumerate(q_irr):
+            q0 = q1 * b1 + q2 * b2
 
-        for phi in angles:
-            for reflect in False, True:
-                q = np.dot(rotation(phi)[:2, :2], q0)
-                D = apply(D_irr[iq], rotation(phi, ph.nat))
+            for phi in angles:
+                for reflect in False, True:
+                    q = np.dot(rotation(phi)[:2, :2], q0)
+                    D = apply(D_irr[iq], rotation(phi, ph.nat))
 
-                if reflect:
-                    q = np.dot(reflection()[:2, :2], q)
-                    D = apply(D, reflection(ph.nat))
+                    if reflect:
+                        q = np.dot(reflection()[:2, :2], q)
+                        D = apply(D, reflection(ph.nat))
 
-                # only valid if atom is mapped onto image of itself:
+                    # only valid if atom is mapped onto image of itself:
 
-                phase = np.exp(1j * np.array(np.dot(q0 - q, r)))
+                    phase = np.exp(1j * np.array(np.dot(q0 - q, r)))
 
-                for n in range(ph.nat):
-                    D[3 * n:3 * n + 3, :] *= phase[n].conj()
-                    D[:, 3 * n:3 * n + 3] *= phase[n]
+                    for n in range(ph.nat):
+                        D[3 * n:3 * n + 3, :] *= phase[n].conj()
+                        D[:, 3 * n:3 * n + 3] *= phase[n]
 
-                Q1 = int(round(np.dot(q, a1) * scale))
-                Q2 = int(round(np.dot(q, a2) * scale))
+                    Q1 = int(round(np.dot(q, a1) * scale))
+                    Q2 = int(round(np.dot(q, a2) * scale))
 
-                D_full[+Q1, +Q2] = D
-                D_full[-Q1, -Q2] = D.conj()
+                    D_full[+Q1, +Q2] = D
+                    D_full[-Q1, -Q2] = D.conj()
 
-    i = np.arange(nq)
-    FT = np.exp(2j * np.pi / nq * np.outer(i, i)) / nq
+    if nq is None:
+        nq = D_full.shape[:-2]
+    elif not hasattr(nq, '__len__'):
+        nq = (nq,) * len(q_irr[0])
 
-    phid = np.einsum('rq,qQxy,QR->rRxy', FT, D_full, FT).real
+    nq_orig = tuple(nq)
+    nq = np.ones(3, dtype=int)
+    nq[:len(nq_orig)] = nq_orig
 
-    phid = np.reshape(phid, (nq, nq, 1, ph.nat, 3, ph.nat, 3))
+    D_full = np.reshape(D_full, (nq[0], nq[1], nq[2], ph.size, ph.size))
+
+    phid = np.fft.fftn(D_full, axes=(0, 1, 2), norm='forward').real
+    phid = np.reshape(phid, (nq[0], nq[1], nq[2], ph.nat, 3, ph.nat, 3))
     phid = np.transpose(phid, (3, 5, 0, 1, 2, 4, 6))
 
     for na in range(ph.nat):
