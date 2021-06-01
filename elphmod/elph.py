@@ -258,7 +258,7 @@ class Model(object):
         """
         return sample(g=self.g, *args, **kwargs)
 
-def sample(g, q, nk, U=None, u=None, broadcast=True, shared_memory=False):
+def sample(g, q, nk=None, U=None, u=None, broadcast=True, shared_memory=False):
     """Sample coupling for given q and k points and transform to band basis.
 
     One purpose of this routine is full control of the complex phase.
@@ -271,8 +271,10 @@ def sample(g, q, nk, U=None, u=None, broadcast=True, shared_memory=False):
         coordinates with period :math:`2 \pi`.
     q : list of 2-tuples
         q points in crystal coordinates :math:`q_1, q_2 \in [0, 2 \pi)`.
-    nk : int
-        Number of k points per dimension.
+    nk : int or tuple of int
+        Number of k points per dimension. Different numbers of k points along
+        different axes can be specified via a tuple. Alternatively, `nk` is
+        inferred from the shape of `U`.
     U : ndarray, optional
         Electron eigenvectors for given k mesh.
         If present, transform from orbital to band basis.
@@ -289,47 +291,65 @@ def sample(g, q, nk, U=None, u=None, broadcast=True, shared_memory=False):
 
     nph, nel, nel = g().shape
 
+    if nk is None:
+        nk = U.shape[:-2]
+    elif not hasattr(nk, '__len__'):
+        nk = (nk,) * len(q[0])
+
+    nk_orig = tuple(nk)
+    nk = np.ones(3, dtype=int)
+    nk[:len(nk_orig)] = nk_orig
+
+    q_orig = q
+    q = np.zeros((len(q_orig), 3))
+    q[:, :len(q_orig[0])] = q_orig
+
     if U is not None:
         nel = U.shape[-1]
+        U = np.reshape(U, (nk[0], nk[1], nk[2], -1, nel))
 
     if u is not None:
         nph = u.shape[-1]
 
-    my_g = np.empty((sizes[row.rank], nph, nk, nk, nel, nel), dtype=complex)
+    my_g = np.empty((sizes[row.rank], nph, nk[0], nk[1], nk[2], nel, nel),
+        dtype=complex)
 
-    status = misc.StatusBar(sizes[comm.rank] * nk * nk, title='sample coupling')
+    status = misc.StatusBar(sizes[comm.rank] * nk.prod(),
+        title='sample coupling')
 
     scale = 2 * np.pi / nk
 
     for my_iq, iq in enumerate(range(*bounds[row.rank:row.rank + 2])):
-        q1, q2 = q[iq]
+        q1, q2, q3 = q[iq]
+        Q1, Q2, Q3 = np.round(q[iq] / scale).astype(int)
 
-        Q1 = int(round(q1 / scale))
-        Q2 = int(round(q2 / scale))
+        for K1 in range(nk[0]):
+            KQ1 = (K1 + Q1) % nk[0]
+            k1 = K1 * scale[0]
 
-        for K1 in range(nk):
-            KQ1 = (K1 + Q1) % nk
-            k1 = K1 * scale
+            for K2 in range(nk[1]):
+                KQ2 = (K2 + Q2) % nk[1]
+                k2 = K2 * scale[1]
 
-            for K2 in range(nk):
-                KQ2 = (K2 + Q2) % nk
-                k2 = K2 * scale
+                for K3 in range(nk[2]):
+                    KQ3 = (K3 + Q3) % nk[2]
+                    k3 = K3 * scale[2]
 
-                gqk = g(q1=q1, q2=q2, k1=k1, k2=k2, broadcast=False, comm=col)
+                    gqk = g(q1, q2, q3, k1, k2, k3, broadcast=False, comm=col)
 
-                if col.rank == 0:
-                    if U is not None:
-                        gqk = np.einsum('am,xab,bn->xmn',
-                            U[KQ1, KQ2].conj(), gqk, U[K1, K2])
+                    if col.rank == 0:
+                        if U is not None:
+                            gqk = np.einsum('am,xab,bn->xmn',
+                                U[KQ1, KQ2, KQ3].conj(), gqk, U[K1, K2, K3])
 
-                    if u is not None:
-                        gqk = np.einsum('xab,xu->uab', gqk, u[iq])
+                        if u is not None:
+                            gqk = np.einsum('xab,xu->uab', gqk, u[iq])
 
-                    my_g[my_iq, :, K1, K2, :, :] = gqk
+                        my_g[my_iq, :, K1, K2, K3, :, :] = gqk
 
-                status.update()
+                    status.update()
 
-    node, images, g = MPI.shared_array((len(q), nph, nk, nk, nel, nel),
+    node, images, g = MPI.shared_array((len(q), nph) + nk_orig + (nel, nel),
         dtype=complex, shared_memory=shared_memory, single_memory=not broadcast)
 
     if col.rank == 0:
