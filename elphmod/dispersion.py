@@ -367,9 +367,13 @@ def sample(matrix, k):
     ----------
     matrix : function
         Matrix as a function of k.
-    k : list of tuples
+    k : ndarray
         k points.
     """
+    k = np.array(k)
+    kshape = k.shape[:-1]
+    k = np.reshape(k, (-1, k.shape[-1]))
+
     sizes, bounds = MPI.distribute(len(k), bounds=True)
 
     template = matrix()
@@ -380,7 +384,7 @@ def sample(matrix, k):
     for my_ik, ik in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         my_matrix[my_ik] = matrix(*k[ik])
 
-    matrix = np.empty((len(k),) + template.shape, dtype=template.dtype)
+    matrix = np.empty(kshape + template.shape, dtype=template.dtype)
 
     comm.Allgatherv(my_matrix, (matrix, sizes * template.size))
 
