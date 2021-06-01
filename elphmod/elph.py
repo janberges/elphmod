@@ -269,8 +269,8 @@ def sample(g, q, nk=None, U=None, u=None, broadcast=True, shared_memory=False):
         Electron-phonon coupling in the basis of electronic orbitals and
         Cartesian ionic displacements as a function of q and k in crystal
         coordinates with period :math:`2 \pi`.
-    q : list of 2-tuples
-        q points in crystal coordinates :math:`q_1, q_2 \in [0, 2 \pi)`.
+    q : list of tuple
+        List of q points in crystal coordinates :math:`q_i \in [0, 2 \pi)`.
     nk : int or tuple of int
         Number of k points per dimension. Different numbers of k points along
         different axes can be specified via a tuple. Alternatively, `nk` is

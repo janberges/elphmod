@@ -266,9 +266,8 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15, omega=0.0,
 
     Parameters
     ----------
-    q : list of 2-tuples
-        Considered q points defined via crystal coordinates :math:`q_1, q_2 \in
-        [0, 2 \pi)`.
+    q : list of tuple
+        List of q points in crystal coordinates :math:`q_i \in [0, 2 \pi)`.
     e : ndarray
         Electron dispersion on uniform mesh. The Fermi level must be at zero.
     g2 : ndarray
@@ -299,16 +298,23 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15, omega=0.0,
         Phonon self-energy.
     """
     nQ = len(q)
-    nk = e.shape[0]
 
-    e = np.reshape(e, (nk, nk, -1))
+    q_orig = q
+    q = np.zeros((nQ, 3))
+    q[:, :len(q_orig[0])] = q_orig
+
+    nk_orig = e.shape[:-1]
+    nk = np.ones(3, dtype=int)
+    nk[:len(nk_orig)] = nk_orig
+
     nbnd = e.shape[-1]
+    e = np.reshape(e, (nk[0], nk[1], nk[2], nbnd))
 
     if g2 is None:
         g2 = np.ones((nQ, 1))
 
     else:
-        g2 = np.reshape(g2, (nQ, -1, nk, nk, nbnd, nbnd))
+        g2 = np.reshape(g2, (nQ, -1, nk[0], nk[1], nk[2], nbnd, nbnd))
 
     nb = g2.shape[1]
 
@@ -327,17 +333,17 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15, omega=0.0,
             delta = Delta_occupations.delta(x1) + Delta_occupations.delta(x2)
             delta /= -Delta_kT
 
-    e = np.tile(e, (2, 2, 1))
-    f = np.tile(f, (2, 2, 1))
+    e = np.tile(e, (2, 2, 2, 1))
+    f = np.tile(f, (2, 2, 2, 1))
 
     if Delta is not None:
-        Theta = np.tile(Theta, (2, 2, 1))
+        Theta = np.tile(Theta, (2, 2, 2, 1))
 
         if Delta_diff:
-            delta = np.tile(delta, (2, 2, 1))
+            delta = np.tile(delta, (2, 2, 2, 1))
 
     scale = nk / (2 * np.pi)
-    prefactor = 2.0 / nk ** 2
+    prefactor = 2.0 / nk.prod()
 
     sizes, bounds = MPI.distribute(nQ, bounds=True, comm=comm)
 
@@ -345,46 +351,48 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15, omega=0.0,
         dtype=float if np.isrealobj(g2) and np.isrealobj(omega) else complex)
 
     if fluctuations:
-        my_Pi_k = np.empty((sizes[comm.rank], nb, nk, nk, nbnd, nbnd),
-            dtype=my_Pi.dtype)
+        my_Pi_k = np.empty((sizes[comm.rank],
+            nb, nk[0], nk[1], nk[2], nbnd, nbnd), dtype=my_Pi.dtype)
 
-    dfde = np.empty((nk, nk, nbnd, nbnd),
+    dfde = np.empty((nk[0], nk[1], nk[2], nbnd, nbnd),
         dtype=float if np.isrealobj(omega) else complex)
 
-    k1 = slice(0, nk)
-    k2 = slice(0, nk)
+    k1 = slice(0, nk[0])
+    k2 = slice(0, nk[1])
+    k3 = slice(0, nk[2])
 
     for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
-        q1 = int(round(q[iq, 0] * scale)) % nk
-        q2 = int(round(q[iq, 1] * scale)) % nk
+        q1, q2, q3 = np.round(q[iq] * scale).astype(int) % nk
 
-        kq1 = slice(q1, q1 + nk)
-        kq2 = slice(q2, q2 + nk)
+        kq1 = slice(q1, q1 + nk[0])
+        kq2 = slice(q2, q2 + nk[1])
+        kq3 = slice(q3, q3 + nk[2])
 
         for m in range(nbnd):
             for n in range(nbnd):
-                df = f[k1, k2, n] - f[kq1, kq2, m]
-                de = e[k1, k2, n] - e[kq1, kq2, m]
+                df = f[k1, k2, k3, n] - f[kq1, kq2, kq3, m]
+                de = e[k1, k2, k3, n] - e[kq1, kq2, kq3, m]
 
                 if omega:
-                    dfde[:, :, m, n] = df / (de + omega)
+                    dfde[..., m, n] = df / (de + omega)
 
                 else:
                     ok = abs(de) > eps
 
-                    dfde[:, :, m, n][ok] = df[ok] / de[ok]
-                    dfde[:, :, m, n][~ok] = d[:, :, n][~ok]
+                    dfde[..., m, n][ok] = df[ok] / de[ok]
+                    dfde[..., m, n][~ok] = d[..., n][~ok]
 
                 if Delta is not None:
                     if Delta_diff:
                         envelope = (
-                              Theta[kq1, kq2, m] * delta[k1, k2, n]
-                            + delta[kq1, kq2, m] * Theta[k1, k2, n]
+                              Theta[kq1, kq2, kq3, m] * delta[k1, k2, k3, n]
+                            + delta[kq1, kq2, kq3, m] * Theta[k1, k2, k3, n]
                             )
                     else:
-                        envelope = Theta[kq1, kq2, m] * Theta[k1, k2, n]
+                        envelope = (Theta[kq1, kq2, kq3, m]
+                            * Theta[k1, k2, k3, n])
 
-                    dfde[:, :, m, n] *= envelope
+                    dfde[..., m, n] *= envelope
 
         for nu in range(nb):
             Pi_k = g2[iq, nu] * dfde
@@ -399,9 +407,10 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15, omega=0.0,
     comm.Allgatherv(my_Pi, (Pi, sizes * nb))
 
     if fluctuations:
-        Pi_k = np.empty((nQ, nb, nk, nk, nbnd, nbnd), dtype=my_Pi_k.dtype)
+        Pi_k = np.empty((nQ, nb) + nk_orig + (nbnd, nbnd),
+            dtype=my_Pi_k.dtype)
 
-        comm.Allgatherv(my_Pi_k, (Pi_k, sizes * nb * nk * nk * nbnd * nbnd))
+        comm.Allgatherv(my_Pi_k, (Pi_k, sizes * nb * nk.prod() * nbnd * nbnd))
 
         return Pi, Pi_k
 
