@@ -353,15 +353,8 @@ def dispersion_full_nosym(matrix, size, *args, **kwargs):
     Use this routine to get eigenvectors less symmetric than the eigenvalues!
     """
     if comm.rank == 0:
-        k = np.empty((size * size, 2))
-
-        n = 0
-        for k1 in range(size):
-            for k2 in range(size):
-                k[n] = k1, k2
-                n += 1
-
-        k *= 2 * np.pi / size
+        k = [[(k1, k2) for k2 in range(size)] for k1 in range(size)]
+        k = 2 * np.pi * np.array(k, dtype=float) / size
     else:
         k = None
 
