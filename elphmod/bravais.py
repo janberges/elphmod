@@ -1223,6 +1223,11 @@ def path(points, ibrav=4, N=30, qe=False, **kwargs):
     primitives, reciprocals
     """
     labels = {
+        1: { # cubic (sc)
+            'M': [0.0, 0.5, 0.5],
+            'R': [0.5, 0.5, 0.5],
+            'X': [0.0, 0.0, 0.5],
+            },
         2: { # cubic (fcc)
             'X': [0.0, 0.5, 0.5],
             'L': [0.5, 0.5, 0.5],
