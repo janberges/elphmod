@@ -49,7 +49,7 @@ info('Prepare phonons')
 ph = dict()
 
 for method in 'cdfpt', 'dfpt':
-    ph[method] = elphmod.ph.Model('%s.ifc' % method)
+    ph[method] = elphmod.ph.Model('%s.ifc' % method, apply_asr=True)
 
 info('Prepare electron-phonon coupling')
 
@@ -85,7 +85,7 @@ D = elphmod.dispersion.sample(ph['cdfpt'].D, q)
 
 ph['cdfpt+pi'] = copy.copy(ph['cdfpt'])
 
-elphmod.ph.q2r(ph['cdfpt+pi'], D_full=D + Pi)
+elphmod.ph.q2r(ph['cdfpt+pi'], D_full=D + Pi, apply_asr=True)
 
 info('Plot electrons')
 

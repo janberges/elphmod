@@ -14,10 +14,10 @@ polonium
 
     proj(1) = 'Po: p'
 
-    dis_win_min = 2.0
+    dis_win_min = 3.0
     dis_win_max = 14.0
-    dis_froz_min = 2.0
-    dis_froz_max = 11.0
+    dis_froz_min = 3.0
+    dis_froz_max = 12.0
 
     num_iter = 0
     wdata(1) = 'dis_num_iter 10000'

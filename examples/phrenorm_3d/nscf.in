@@ -3,7 +3,7 @@
     outdir = 'work'
     pseudo_dir = '.'
 
-    calculation = 'bands'
+    calculation = 'nscf'
 /
 &SYSTEM
     ibrav = 1
