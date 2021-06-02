@@ -102,4 +102,4 @@ def McMillan(nq, e, w2, g2, eps=1e-10, mustar=0.0):
     wlog = np.exp(np.dot(weights, r2 * np.log(w2) / 2).sum()
         / np.dot(weights, r2).sum())
 
-    return lamda, wlog, Tc(lamda, wlog, muStar)
+    return lamda, wlog, Tc(lamda, wlog, mustar)
