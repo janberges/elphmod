@@ -1,0 +1,4 @@
+&PROJWFC
+    prefix = 'polonium'
+    outdir = 'work'
+/

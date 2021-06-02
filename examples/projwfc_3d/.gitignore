@@ -1,0 +1,5 @@
+*.out
+*.pdos_atm*
+*.pdos_tot
+*.upf
+work

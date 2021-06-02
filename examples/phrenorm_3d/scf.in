@@ -1,0 +1,29 @@
+&CONTROL
+    prefix = 'polonium'
+    outdir = 'work'
+    pseudo_dir = '.'
+/
+&SYSTEM
+    ibrav = 1
+    ntyp = 1
+    nat = 1
+
+    a = 3.36
+
+    ecutwfc = 30.0
+
+    occupations = 'smearing'
+    degauss = 0.1
+/
+&ELECTRONS
+    conv_thr = 1e-12
+/
+
+ATOMIC_SPECIES
+Po 209.0 Po.upf
+
+ATOMIC_POSITIONS crystal
+Po 0.0 0.0 0.0
+
+K_POINTS automatic
+4 4 4 0 0 0

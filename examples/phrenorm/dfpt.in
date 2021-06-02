@@ -11,8 +11,5 @@ TaS2
     nq2 = 2
     nq3 = 1
 
-    cdfpt = .false.
-    subspace = 'subspace.in'
-
     tr2_ph = 1e-12
 /

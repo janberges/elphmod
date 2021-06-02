@@ -1,6 +1,6 @@
-TaS2
+polonium
 &INPUTPH
-    prefix = 'TaS2'
+    prefix = 'polonium'
     outdir = 'work'
 
     fildyn = 'dyn'
@@ -9,7 +9,7 @@ TaS2
     ldisp = .true.
     nq1 = 2
     nq2 = 2
-    nq3 = 1
+    nq3 = 2
 
     tr2_ph = 1e-12
 

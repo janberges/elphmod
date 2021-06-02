@@ -12,6 +12,7 @@ comm = elphmod.MPI.comm
 info = elphmod.MPI.info
 
 kT = 0.005 * elphmod.misc.Ry
+f = elphmod.occupations.fermi_dirac
 
 nk = 4
 nq = 2
@@ -67,9 +68,7 @@ comm.Bcast(g2)
 
 info('Calculate phonon self-energy')
 
-Pi = elphmod.diagrams.phonon_self_energy(q, e, g2, kT=kT,
-    occupations=elphmod.occupations.fermi_dirac)
-
+Pi = elphmod.diagrams.phonon_self_energy(q, e, g2, kT=kT, occupations=f)
 Pi = np.reshape(Pi, (len(q), nph, nph))
 Pi /= elphmod.misc.Ry ** 2
 
