@@ -33,7 +33,7 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
         Align (phonon) eigenvectors with wave vector k via in-plane rotation.
         This is experimental and supposed to support the band-order algorithm.
     order : bool
-        Order/disentangle bands via their k-local character. Depending on the
+        Order/disentangle bands via their k-local character? Depending on the
         topology of the band structure, this may not be possible. Adjacent
         points in `k` must be adjacent in the Brillouin zone too.
     hermitian : bool
