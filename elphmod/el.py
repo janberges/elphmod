@@ -202,7 +202,7 @@ def read_symmetry_points(bandsout):
     return points
 
 def read_atomic_projections(atomic_proj_xml, order=False, from_fermi=True,
-        **order_kwargs):
+        other=False, **order_kwargs):
     """Read projected bands from *outdir/prefix.save/atomic_proj.xml*."""
 
     if comm.rank == 0:
@@ -227,9 +227,11 @@ def read_atomic_projections(atomic_proj_xml, order=False, from_fermi=True,
     x = np.empty(nk)
     k = np.empty((nk, 3))
     eps = np.empty((nk, bands))
-    proj = np.empty((nk, bands, no), dtype=complex)
+    proj2 = np.empty((nk, bands, no + 1 if other else no))
 
     if comm.rank == 0:
+        proj = np.empty((nk, bands, no), dtype=complex)
+
         next(data)
 
         for ik in range(nk):
@@ -274,12 +276,17 @@ def read_atomic_projections(atomic_proj_xml, order=False, from_fermi=True,
                 for a in range(no):
                     proj[ik, :, a] = proj[ik, o[ik], a]
 
+        proj2[:, :, :no] = abs(proj) ** 2
+
+        if other:
+            proj2[:, :, no] = 1.0 - proj2[:, :, :no].sum(axis=2)
+
     comm.Bcast(x)
     comm.Bcast(k)
     comm.Bcast(eps)
-    comm.Bcast(proj)
+    comm.Bcast(proj2)
 
-    return x, k, eps, abs(proj) ** 2
+    return x, k, eps, proj2
 
 def read_atomic_projections_old(atomic_proj_xml, order=False, from_fermi=True,
         **order_kwargs):
@@ -402,6 +409,8 @@ def read_projwfc_out(projwfc_out):
 
                     for m, n in enumerate(duplicates, 1):
                         orbitals[n] = orbitals[n].replace('-', '%d-' % m, 1)
+
+            orbitals.append('X-x')
     else:
         orbitals = None
 
@@ -423,7 +432,7 @@ def proj_sum(proj, orbitals, *groups):
     import re
 
     def info(orbital):
-        return re.match('(?:([A-Z][a-z]?)(\d*))?-?(\d*)(?:([spdf])(\S*))?',
+        return re.match('(?:([A-Z][a-z]?)(\d*))?-?(\d*)(?:([spdfx])(\S*))?',
             orbital.strip()).groups()
 
     summed = np.empty(proj.shape[:2] + (len(groups),))
