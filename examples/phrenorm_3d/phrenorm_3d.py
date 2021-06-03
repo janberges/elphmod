@@ -17,9 +17,6 @@ f = elphmod.occupations.gauss
 nk = 4
 nq = 2
 
-nel = 3
-nph = 3
-
 info('Prepare wave vectors')
 
 k = 2 * np.pi * np.array([[[(k1, k2, k3)
@@ -69,14 +66,15 @@ if comm.rank == 0:
     g2 /= 2
 
 else:
-    g2 = np.empty((len(q_flat), nph, nph, nk, nk, nk, nel, nel), dtype=complex)
+    g2 = np.empty((len(q_flat), ph['cdfpt'].size, ph['cdfpt'].size,
+        nk, nk, nk, el.size, el.size), dtype=complex)
 
 comm.Bcast(g2)
 
 info('Calculate phonon self-energy')
 
 Pi = elphmod.diagrams.phonon_self_energy(q_flat, e, g2, kT=kT, occupations=f)
-Pi = np.reshape(Pi, (nq, nq, nq, nph, nph))
+Pi = np.reshape(Pi, (nq, nq, nq, ph['cdfpt'].size, ph['cdfpt'].size))
 Pi /= elphmod.misc.Ry ** 2
 
 info('Renormalize phonons')
