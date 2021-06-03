@@ -34,6 +34,7 @@ def modify(filename, *args):
                 new.write(arg.lstrip('\n'))
 
 modify('LR_Modules/lrcom.f90', (1, 66), r'''
+  LOGICAL  :: bare           ! if .TRUE. calculate fully bare phonons
   LOGICAL  :: cdfpt          ! if .TRUE. applies cDFPT
   INTEGER, ALLOCATABLE :: cdfpt_subspace(:, :, :, :)
 ''', (67,))
@@ -89,18 +90,20 @@ modify('PHonon/PH/elph.f90', (1, 14), r'''
 modify('PHonon/PH/phq_readin.f90', (1, 64), r'''
                             elph_defpot, &
 ''', (65, 68), r'''
-  USE control_lr,    ONLY : lgamma, lrpa, cdfpt, cdfpt_subspace
+  USE control_lr,    ONLY : lgamma, lrpa, bare, cdfpt, cdfpt_subspace
 ''', (70, 112), r'''
   CHARACTER(LEN=256) :: subspace
   !
 ''', (113, 128), r'''
-                       skip_upperfan, cdfpt, subspace
+                       skip_upperfan, bare, cdfpt, subspace
 ''', (130, 341), r'''
+  bare = .false.
   cdfpt = .false.
   subspace = 'subspace.dat'
   !
 ''', (342, 388), r'''
   !
+  CALL mp_bcast(bare, meta_ionode_id, world_comm)
   CALL mp_bcast(cdfpt, meta_ionode_id, world_comm)
   IF (cdfpt) CALL setup_subspace(cdfpt_subspace, subspace)
 ''', (389, 422), r'''
@@ -153,6 +156,16 @@ modify('PHonon/PH/do_phonon.f90', (1, 35), r'''
 ''', (37, 141), r'''
         ELSEIF (.NOT. elph_defpot) THEN
 ''', (143,))
+
+modify('PHonon/PH/solve_linter.f90', (1, 81), r'''
+  USE control_lr,           ONLY : nbnd_occ, lgamma, bare
+''', (83, 455), r'''
+              IF (.NOT. bare) THEN
+                 call cgsolve_all (ch_psi_all, cg_psi, et(1,ikmk), dvpsi, dpsi, &
+                      h_diag, npwx, npwq, thresh, ik, lter, conv_root, &
+                      anorm, nbnd_occ(ikk), npol )
+              ENDIF
+''', (459,))
 
 modify('EPW/src/ephwann_shuffle.f90', (1, 376), r'''
   !
