@@ -62,7 +62,7 @@ for method in sorted(ph):
     g[method] = elph.sample(q=q_flat, U=U, u=None, broadcast=False)
 
 if comm.rank == 0:
-    g2 = np.einsum('qixyzmn,qjxyzmn->qijxyzmn', g['cdfpt'].conj(), g['cdfpt'])
+    g2 = np.einsum('qixyzmn,qjxyzmn->qijxyzmn', g['cdfpt'].conj(), g['dfpt'])
     g2 *= elphmod.misc.Ry ** 3
 
     g2 += np.einsum('qijxyzmn->qjixyzmn', g2.conj())
