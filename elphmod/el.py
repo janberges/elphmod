@@ -59,7 +59,10 @@ class Model(object):
 
         try:
             supvecs = read_wsvecdat(hrdat.replace('_hr.dat', '_wsvec.dat'))
+        except FileNotFoundError:
+            supvecs = None
 
+        if supvecs is not None:
             if comm.rank == 0:
                 const = dict()
 
@@ -94,9 +97,6 @@ class Model(object):
 
             comm.Bcast(self.R)
             comm.Bcast(self.data)
-
-        except FileNotFoundError:
-            pass
 
 def read_hrdat(hrdat, divide_ndegen=True):
     """Read *_hr.dat* file from Wannier90."""
