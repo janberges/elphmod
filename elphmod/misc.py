@@ -61,7 +61,7 @@ class StatusBar(object):
 def hello():
     if verbosity:
         MPI.info('This is elphmod (version %s) running on %d processors.'
-            % (__version__, MPI.comm.size))
+            % (__version__, comm.size))
         MPI.info('To suppress all output, set elphmod.misc.verbosity = 0.')
 
 def group(points, eps=1e-7):
