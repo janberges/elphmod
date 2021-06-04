@@ -769,6 +769,30 @@ def read_decayH(file):
 
 
 def decayH(file, **kwargs):
+    """Calculate the decay of the Hamiltonian.
+    This function should yield the same data as read_decayH().
+
+    Parameters
+    ----------
+    file: string
+    The name of the seedname_hr.dat output from Wannier90
+    
+    **kwargs:
+        Arguments for bravais.primitives():
+        Choose the right bravais lattice with ibrav
+        and the lattice constants (a,b,c...) in Angstrom.
+        For a simple cubic lattice:
+            decayH(file, ibrav=1, a=a)
+        
+    Returns
+    -------
+    R : ndarray
+        The distance of every Wigner-Seitz grid point
+        measured from the center in Angstrom.
+    H : ndarray
+        The maximum and absolute value of the Hamiltonian matrix 
+        in Rydberg: max |H(m,n)| [Ry]
+    """
     bravais_vectors = bravais.primitives(**kwargs)
     el = Model(file)
     
