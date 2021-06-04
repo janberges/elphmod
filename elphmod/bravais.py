@@ -91,6 +91,8 @@ def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosab=0.0, cosbc=0.0, cosac=0.0,
 
         elif ibrav in {-5, 5, 12, 13}:
             celldm[3] = cosab
+    else:
+        celldm = np.array(celldm)
 
     if not bohr:
         celldm *= misc.a0
@@ -330,6 +332,27 @@ def reciprocals(a1, a2, a3=None):
         b3 /= np.dot(a3, b3)
 
         return b1, b2, b3
+
+def volume(a1, a2=None, a3=None):
+    """Calculate unit-cell volume/area/length.
+
+    Parameters
+    ----------
+    a1, a2, a3 : ndarray
+        Primite lattice vectors.
+
+    Returns
+    -------
+    float
+        Unit-cell volume/area/length.
+    """
+    if a2 is None and a3 is None:
+        return a1[0]
+
+    if a3 is None:
+        return abs(a1[0] * a2[1] - a1[1] * a2[0])
+
+    return abs(np.dot(a1, np.cross(a2, a3)))
 
 def images(k1, k2, nk, angle=60):
     """Generate symmetry-equivalent k points.
