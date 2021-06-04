@@ -6,8 +6,10 @@
 import numpy as np
 import sys
 
-from . import MPI
+from . import __version__, MPI
 comm = MPI.comm
+
+verbosity = 1
 
 # constants in SI units:
 cSI = 299792458.0 # speed of light (m/s)
@@ -55,6 +57,12 @@ class StatusBar(object):
 
         if self.counter == self.count:
             sys.stdout.write('\n')
+
+def hello():
+    if verbosity:
+        MPI.info('This is elphmod (version %s) running on %d processors.'
+            % (__version__, MPI.comm.size))
+        MPI.info('To suppress all output, set elphmod.misc.verbosity = 0.')
 
 def group(points, eps=1e-7):
     """Group points into neighborhoods.
