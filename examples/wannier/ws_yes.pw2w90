@@ -1,0 +1,5 @@
+&INPUTPP
+    prefix = 'TaS2'
+    outdir = 'work'
+    seedname = 'ws_yes'
+/

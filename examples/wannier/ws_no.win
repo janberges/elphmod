@@ -1,0 +1,58 @@
+num_wann 3
+num_bands 13
+
+begin projections
+Ta: dz2; dx2-y2; dxy
+end projections
+
+use_ws_distance false
+
+dis_win_min 1.0
+dis_win_max 8.0
+dis_froz_min 2.0
+dis_froz_max 4.0
+
+dis_num_iter 10000
+num_iter 0
+
+write_hr true
+bands_plot true
+
+begin kpoint_path
+G 0.000000000 0.000000000 0 M 0.000000000 0.500000000 0
+M 0.000000000 0.500000000 0 K 0.333333333 0.333333333 0
+K 0.333333333 0.333333333 0 G 0.000000000 0.000000000 0
+end kpoint_path
+
+begin unit_cell_cart
+ 3.370  0.000000000  0.0
+-1.685  2.918505611  0.0
+ 0.000  0.000000000 10.0
+end unit_cell_cart
+
+begin atoms_frac
+S   0.333333333  0.666666667  0.160998168
+Ta  0.000000000  0.000000000  0.000000000
+S   0.333333333  0.666666667 -0.160998168
+end atoms_frac
+
+mp_grid 4 4 1
+
+begin kpoints
+0.00 0.00 0.00
+0.00 0.25 0.00
+0.00 0.50 0.00
+0.00 0.75 0.00
+0.25 0.00 0.00
+0.25 0.25 0.00
+0.25 0.50 0.00
+0.25 0.75 0.00
+0.50 0.00 0.00
+0.50 0.25 0.00
+0.50 0.50 0.00
+0.50 0.75 0.00
+0.75 0.00 0.00
+0.75 0.25 0.00
+0.75 0.50 0.00
+0.75 0.75 0.00
+end kpoints
