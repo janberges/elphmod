@@ -18,6 +18,10 @@ class Model(object):
         Wannier90. If a corresponding *seedname_wsvec.dat* file with
         superlattice vectors is found, it is used to correct the hopping
         parameters automatically.
+    divide_ndegen : bool
+        Divide hoppings by degeneracy of Wigner-Seitz grid point? This must be
+        ``True`` to obtain reasonable band structures. ``False`` should only be
+        used in combination with :func:`decayH`.
 
     Attributes
     ----------
@@ -49,8 +53,8 @@ class Model(object):
 
         return H.sum(axis=0)
 
-    def __init__(self, hrdat):
-        self.R, self.data = read_hrdat(hrdat)
+    def __init__(self, hrdat, divide_ndegen=True):
+        self.R, self.data = read_hrdat(hrdat, divide_ndegen)
         self.size = self.data.shape[1]
 
         try:
@@ -94,7 +98,7 @@ class Model(object):
         except FileNotFoundError:
             pass
 
-def read_hrdat(hrdat):
+def read_hrdat(hrdat, divide_ndegen=True):
     """Read *_hr.dat* file from Wannier90."""
 
     if comm.rank == 0:
@@ -116,10 +120,13 @@ def read_hrdat(hrdat):
 
         # read degeneracies of Wigner-Seitz grid points:
 
-        degeneracy = []
+        ndegen = []
 
-        while len(degeneracy) < nrpts:
-            degeneracy.extend(map(float, cols()))
+        while len(ndegen) < nrpts:
+            ndegen.extend(map(float, cols()))
+
+        if not divide_ndegen:
+            ndegen = [1] * len(ndegen)
     else:
         num_wann = nrpts = None
 
@@ -139,7 +146,7 @@ def read_hrdat(hrdat):
                 tmp = cols()
 
                 const[n, int(tmp[3]) - 1, int(tmp[4]) - 1] = (
-                    float(tmp[5]) + 1j * float(tmp[6])) / degeneracy[n]
+                    float(tmp[5]) + 1j * float(tmp[6])) / ndegen[n]
 
             cells[n] = list(map(int, tmp[:3]))
 
@@ -857,7 +864,7 @@ def decayH(file, **kwargs):
         rydberg.
     """
     bravais_vectors = bravais.primitives(**kwargs)
-    el = Model(file)
+    el = Model(file, divide_ndegen=False)
 
     R = np.empty((len(el.R)))
     H = np.empty((len(el.R)))
