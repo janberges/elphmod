@@ -710,7 +710,8 @@ def eband_from_qe_pwo(pw_scf_out):
 
     lines = f.readlines()
 
-    #Read number of k points and smearing
+    # read number of k points and smearing:
+
     for ii in np.arange(len(lines)):
         if lines[ii].find('     number of k points=') == 0:
 
@@ -739,7 +740,8 @@ def eband_from_qe_pwo(pw_scf_out):
         k_Points[ii, 2] = kz
         k_Points[ii, 3] = wk
 
-    #Read number of Kohn-Sham states
+    # read number of Kohn-Sham states:
+
     for ii in np.arange(len(lines)):
         if lines[ii].find('     number of Kohn-Sham') == 0:
             KS_index = ii
@@ -748,7 +750,7 @@ def eband_from_qe_pwo(pw_scf_out):
 
     N_states = int(N_states)
 
-    # Read all Energies for all the different k Points and Kohn-Sham States
+    # read all Energies for all the different k points and Kohn-Sham States:
 
     for ii in np.arange(len(lines)):
         if lines[ii].find('     End of') == 0:
@@ -791,86 +793,84 @@ def eband_from_qe_pwo(pw_scf_out):
 
     return eband
 
-
 def read_decayH(file):
-    """Read decay.H output from EPW.
+    """Read *decay.H* output from EPW.
 
     Parameters
     ----------
-    file: string
-    The name of the decay.H output from EPW
+    file : string
+        The name of the *decay.H* output from EPW.
 
     Returns
     -------
     R : ndarray
-        The distance of every Wigner-Seitz grid point
-        measured from the center in Angstrom.
+        The distance of every Wigner-Seitz grid point measured from the center
+        in angstrom.
     H : ndarray
-        The maximum and absolute value of the Hamiltonian matrix 
-        in Rydberg: max |H(m,n)| [Ry]
+        The maximum absolute value of the elements of the Hamiltonian matrix in
+        rydberg.
     """
-    
-    f_decay=open(file, "r")
-    lines=f_decay.readlines()
+
+    f_decay = open(file, 'r')
+    lines = f_decay.readlines()
     f_decay.close()
-        
+
     R_list = []
     H_list = []
-    
-    # read in lines with 2 entries
+
+    # read in lines with 2 entries:
     for line in range(len(lines)):
-        if len(lines[line].split())==2:
+        if len(lines[line].split()) == 2:
             R_str, H_str = lines[line].split()
             R_list.append(float(R_str))
             H_list.append(float(H_str))
 
-    # convert list to numpy array
+    # convert list to NumPy array:
     R = np.asarray(R_list)
     H = np.asarray(H_list)
 
     return R, H
 
-
 def decayH(file, **kwargs):
     """Calculate the decay of the Hamiltonian.
-    This function should yield the same data as read_decayH().
+
+    This function should yield the same data as :func:`read_decayH`.
 
     Parameters
     ----------
-    file: string
-    The name of the seedname_hr.dat output from Wannier90
-    
-    **kwargs:
-        Arguments for bravais.primitives():
-        Choose the right bravais lattice with ibrav
-        and the lattice constants (a,b,c...) in Angstrom.
-        For a simple cubic lattice:
-            decayH(file, ibrav=1, a=a)
-        
+    file : str
+        The name of the *seedname_hr.dat* output from Wannier90.
+
+    **kwargs
+        Arguments for :func:`bravais.primitives`: Choose the right Bravais
+        lattice (``ibrav``) and lattice constants (``a, b, c, ...``).
+
+        For a simple cubic lattice: ``decayH(file, ibrav=1, a=a)``.
+
     Returns
     -------
     R : ndarray
-        The distance of every Wigner-Seitz grid point
-        measured from the center in Angstrom.
+        The distance of every Wigner-Seitz grid point measured from the center
+        in angstrom.
     H : ndarray
-        The maximum and absolute value of the Hamiltonian matrix 
-        in Rydberg: max |H(m,n)| [Ry]
+        The maximum absolute value of the elements of the Hamiltonian matrix in
+        rydberg.
     """
     bravais_vectors = bravais.primitives(**kwargs)
     el = Model(file)
-    
+
     R = np.empty((len(el.R)))
-    H= np.empty((len(el.R)))
-    
+    H = np.empty((len(el.R)))
+
     # loop over all Wigner-seitz grid points
     for ii in range(len(el.R)):
-    
-        distance = np.empty((3,3))
+
+        distance = np.empty((3, 3))
         for xi in range(3):
-            distance[xi,:] = el.R[ii][xi]*bravais_vectors[xi,:]
+            distance[xi, :] = el.R[ii][xi] * bravais_vectors[xi, :]
         distance = distance.sum(axis=0)
-    
+
         R[ii] = np.linalg.norm(distance)
-        H[ii] = np.max(abs(el.data[ii]))/misc.Ry
-    
-    return R, H 
+        H[ii] = np.max(abs(el.data[ii])) / misc.Ry
+
+    return R, H

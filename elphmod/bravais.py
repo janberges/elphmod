@@ -1577,7 +1577,8 @@ def read_pwi(pwi):
                         struct[key] = np.empty((struct['nks'], 4))
 
                         for n in range(struct['nks']):
-                            struct[key][n] = list(map(float, next(lines).split()))
+                            struct[key][n] = list(map(float,
+                                next(lines).split()))
 
                 elif key == 'cell_parameters':
                     struct['r_cell'] = np.empty((3, 3))
