@@ -7,6 +7,7 @@ import numpy as np
 
 from . import bravais, dispersion, misc, MPI
 comm = MPI.comm
+info = MPI.info
 
 class Model(object):
     """Tight-binding model for the electrons.
@@ -57,10 +58,14 @@ class Model(object):
         self.R, self.data = read_hrdat(hrdat, divide_ndegen)
         self.size = self.data.shape[1]
 
+        wsvecdat = hrdat.replace('_hr.dat', '_wsvec.dat')
+
         try:
-            supvecs = read_wsvecdat(hrdat.replace('_hr.dat', '_wsvec.dat'))
+            supvecs = read_wsvecdat(wsvecdat)
         except FileNotFoundError:
             supvecs = None
+            info('Warning: File "%s" not found!' % wsvecdat)
+            info('Bands may be inaccurate if "use_ws_distance" was true.')
 
         if supvecs is not None and divide_ndegen:
             if comm.rank == 0:
