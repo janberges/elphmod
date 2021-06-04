@@ -14,7 +14,10 @@ class Model(object):
     Parameters
     ----------
     hrdat : str
-        File with Hamiltonian in Wannier basis from Wannier90.
+        *seedname_hr.dat* file with Hamiltonian in Wannier basis from
+        Wannier90. If a corresponding *seedname_wsvec.dat* file with
+        superlattice vectors is found, it is used to correct the hopping
+        parameters automatically.
 
     Attributes
     ----------
@@ -49,6 +52,47 @@ class Model(object):
     def __init__(self, hrdat):
         self.R, self.data = read_hrdat(hrdat)
         self.size = self.data.shape[1]
+
+        try:
+            supvecs = read_wsvecdat(hrdat.replace('_hr.dat', '_wsvec.dat'))
+
+            if comm.rank == 0:
+                const = dict()
+
+                for n, (i, j, k) in enumerate(self.R):
+                    for a in range(self.size):
+                        for b in range(self.size):
+                            key = i, j, k, a, b
+                            t = self.data[n, a, b] / len(supvecs[key])
+
+                            for I, J, K in supvecs[key]:
+                                R = i + I, j + J, k + K
+
+                                if R not in const:
+                                    const[R] = np.zeros((self.size, self.size),
+                                        dtype=complex)
+
+                                const[R][a, b] += t
+
+                count = len(const)
+
+                self.R = np.array(list(const.keys()), dtype=int)
+                self.data = np.array(list(const.values()))
+            else:
+                count = None
+
+            count = comm.bcast(count)
+
+            if comm.rank != 0:
+                self.R = np.empty((count, 3), dtype=int)
+                self.data = np.empty((count, self.size, self.size),
+                    dtype=complex)
+
+            comm.Bcast(self.R)
+            comm.Bcast(self.data)
+
+        except FileNotFoundError:
+            pass
 
 def read_hrdat(hrdat):
     """Read *_hr.dat* file from Wannier90."""
@@ -105,6 +149,25 @@ def read_hrdat(hrdat):
     comm.Bcast(const)
 
     return cells, const
+
+def read_wsvecdat(wsvecdat):
+    """Read *_wsvec.dat* file from Wannier90."""
+
+    supvecs = dict()
+
+    if comm.rank == 0:
+        with open(wsvecdat) as data:
+            next(data)
+
+            for line in data:
+                i, j, k, a, b = tuple(map(int, line.split()))
+
+                supvecs[i, j, k, a - 1, b - 1] = [list(map(int,
+                    next(data).split())) for _ in range(int(next(data)))]
+
+    supvecs = comm.bcast(supvecs)
+
+    return supvecs
 
 def read_bands(filband):
     """Read bands from *filband* just like Quantum ESRESSO's ``plotband.x``."""
