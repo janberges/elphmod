@@ -5,7 +5,7 @@
 
 import numpy as np
 
-from . import dispersion, misc, MPI
+from . import bravais, dispersion, misc, MPI
 comm = MPI.comm
 
 class Model(object):
@@ -727,3 +727,63 @@ def eband_from_qe_pwo(pw_scf_out):
     eband = eband.sum() / Ryd2eV
 
     return eband
+
+
+def read_decayH(file):
+    """Read decay.H output from EPW.
+
+    Parameters
+    ----------
+    file: string
+    The name of the decay.H output from EPW
+
+    Returns
+    -------
+    R : ndarray
+        The distance of every Wigner-Seitz grid point
+        measured from the center in Angstrom.
+    H : ndarray
+        The maximum and absolute value of the Hamiltonian matrix 
+        in Rydberg: max |H(m,n)| [Ry]
+    """
+    
+    f_decay=open(file, "r")
+    lines=f_decay.readlines()
+    f_decay.close()
+        
+    R_list = []
+    H_list = []
+    
+    # read in lines with 2 entries
+    for line in range(len(lines)):
+        if len(lines[line].split())==2:
+            R_str, H_str = lines[line].split()
+            R_list.append(float(R_str))
+            H_list.append(float(H_str))
+
+    # convert list to numpy array
+    R = np.asarray(R_list)
+    H = np.asarray(H_list)
+
+    return R, H
+
+
+def decayH(file, **kwargs):
+    bravais_vectors = bravais.primitives(**kwargs)
+    el = Model(file)
+    
+    R = np.empty((len(el.R)))
+    H= np.empty((len(el.R)))
+    
+    # loop over all Wigner-seitz grid points
+    for ii in range(len(el.R)):
+    
+        distance = np.empty((3,3))
+        for xi in range(3):
+            distance[xi,:] = el.R[ii][xi]*bravais_vectors[xi,:]
+        distance = distance.sum(axis=0)
+    
+        R[ii] = np.linalg.norm(distance)
+        H[ii] = np.max(abs(el.data[ii]))/misc.Ry
+    
+    return R, H 
