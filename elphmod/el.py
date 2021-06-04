@@ -19,9 +19,9 @@ class Model(object):
         superlattice vectors is found, it is used to correct the hopping
         parameters automatically.
     divide_ndegen : bool
-        Divide hoppings by degeneracy of Wigner-Seitz grid point? This must be
-        ``True`` to obtain reasonable band structures. ``False`` should only be
-        used in combination with :func:`decayH`.
+        Divide hopping by degeneracy of Wigner-Seitz point and apply the
+        abovementioned correction? Only ``True`` yields correct bands.
+        ``False`` is only used in combination with :func:`decayH`.
 
     Attributes
     ----------
@@ -62,7 +62,7 @@ class Model(object):
         except FileNotFoundError:
             supvecs = None
 
-        if supvecs is not None:
+        if supvecs is not None and divide_ndegen:
             if comm.rank == 0:
                 const = dict()
 
