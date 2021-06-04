@@ -11,3 +11,8 @@ use the Python script `bin/qe_mod_6.x` to apply the required changes.
 
 The results obtained in this example are very far from converged! In return,
 the ab initio part takes less than a minute on a laptop with only two cores.
+
+After the main calculation, two further scripts show how to
+
+* extract the deformation potential from the output of the EPW code,
+* check if the hopping parameters from Wannier90 decay appropriately.

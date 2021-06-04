@@ -16,6 +16,7 @@
 *_hr.dat
 *_wsvec.dat
 decay.*
+!decay.py
 dyn*
 ifc
 save
