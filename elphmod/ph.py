@@ -675,7 +675,7 @@ def q2r(ph, D_irr=None, q_irr=None, nq=None, D_full=None, angle=60,
 
     D_full = np.reshape(D_full, (nq[0], nq[1], nq[2], ph.size, ph.size))
 
-    phid = np.fft.fftn(D_full, axes=(0, 1, 2), norm='forward').real
+    phid = np.fft.ifftn(D_full, axes=(0, 1, 2)).real
     phid = np.reshape(phid, (nq[0], nq[1], nq[2], ph.nat, 3, ph.nat, 3))
     phid = np.transpose(phid, (3, 5, 0, 1, 2, 4, 6))
 
