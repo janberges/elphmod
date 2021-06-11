@@ -58,14 +58,7 @@ class Model(object):
         self.R, self.data = read_hrdat(hrdat, divide_ndegen)
         self.size = self.data.shape[1]
 
-        wsvecdat = hrdat.replace('_hr.dat', '_wsvec.dat')
-
-        try:
-            supvecs = read_wsvecdat(wsvecdat)
-        except FileNotFoundError:
-            supvecs = None
-            info('Warning: File "%s" not found!' % wsvecdat)
-            info('Bands may be inaccurate if "use_ws_distance" was true.')
+        supvecs = read_wsvecdat(hrdat.replace('_hr.dat', '_wsvec.dat'))
 
         if supvecs is not None and divide_ndegen:
             if comm.rank == 0:
@@ -168,14 +161,20 @@ def read_wsvecdat(wsvecdat):
     supvecs = dict()
 
     if comm.rank == 0:
-        with open(wsvecdat) as data:
-            next(data)
+        try:
+            with open(wsvecdat) as data:
+                next(data)
 
-            for line in data:
-                i, j, k, a, b = tuple(map(int, line.split()))
+                for line in data:
+                    i, j, k, a, b = tuple(map(int, line.split()))
 
-                supvecs[i, j, k, a - 1, b - 1] = [list(map(int,
-                    next(data).split())) for _ in range(int(next(data)))]
+                    supvecs[i, j, k, a - 1, b - 1] = [list(map(int,
+                        next(data).split())) for _ in range(int(next(data)))]
+
+        except FileNotFoundError:
+            supvecs = None
+            print('Warning: File "%s" not found!' % wsvecdat)
+            print('Bands may be inaccurate if "use_ws_distance" was true.')
 
     supvecs = comm.bcast(supvecs)
 
