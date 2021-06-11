@@ -20,13 +20,13 @@ This is a collection of Python modules to handle electron-phonon models:
 
 To install the latest version of elphmod in a virtual environment:
 
-    python3 -m venv elphmod.venv
-    source elphmod.venv/bin/activate
-    python3 -m pip install --upgrade pip setuptools wheel
+    python3 -m venv venv
+    source venv/bin/activate
     python3 -m pip install elphmod
 
 Alternatively, to install the latest development version:
 
+    python3 -m pip install --upgrade pip setuptools wheel
     python3 -m pip install git+https://github.com/janberges/elphmod
 
 elphmod can optionally be run in parallel via MPI (with shared-memory support).
@@ -36,23 +36,19 @@ Using APT and pip, you can install the corresponding dependencies as follows:
     python3 -m pip install mpi4py --no-binary=mpi4py
 
 If you plan to work on elphmod itself, we recommend to download the complete
-repository and install all requirements (including those of documentation and
-examples) and a link to the repository in your home directory:
+repository and also install the requirements of examples and documentation:
 
     git clone https://github.com/janberges/elphmod
-    python3 -m pip install --user -r elphmod/requirements.txt
-    python3 -m pip install --user -e elphmod
+    python3 -m pip install -r elphmod/requirements.txt
 
-Please note that scripts are still copied rather than linked. To circumvent
-this, you can alternatively install elphmod by prepending the absolute paths to
-`elphmod/elphmod` and `elphmod/bin` to the environment variables `PYTHONPATH`
-and `PATH`, respectively.
+Also consider adding the absolute paths to `elphmod/elphmod` and `elphmod/bin`
+to the environment variables `PYTHONPATH` and `PATH`, respectively.
 
 ## Documentation
 
-All functions are documented directly in the source files using NumPy-style
-docstrings. You can generate an automatic documentation in HTML format using
-Sphinx:
+The documentation can be found at <https://janberges.github.io/elphmod>. It has
+been automatically generated from the NumPy-style docstrings in the source code
+using Sphinx:
 
     cd doc
     make html
@@ -62,7 +58,6 @@ Please also have a look at the examples:
 
     cd examples
     mpirun python3 electrons.py
-    mpirun python3 phonons.py
 
 ## Licence
 
