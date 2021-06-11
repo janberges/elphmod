@@ -20,7 +20,7 @@ def hexDOS(energies):
         \rho(E) = \frac 1 V \int_{W(k) = E} \frac{\D k}{|\vec \nabla W(k)|},
 
     where :math:`V` is the volume of a reciprocal unit cell, :math:`W(k)` is
-    the dispersion relation and the integral is over an iso-energy surface/line
+    the dispersion relation and the integral is over an energy isosurface/line
     in k space.
 
     In the following, consider a two dimensional reciprocal unit cell which can
@@ -90,7 +90,7 @@ def hexDOS(energies):
     return np.vectorize(DOS)
 
 def hexa2F(energies, couplings):
-    r"""Calculate a2F from energies and coupling.
+    r"""Calculate :math:`\alpha^2 F` from energies and coupling.
 
     Integration over all energies yields the arithmetic mean of the coupling.
 
@@ -171,7 +171,7 @@ def double_delta(x, y, f=None, eps=1e-7):
     function : float -> dict
         Intersection points of :math:`x, y = z` isolines and corresponding
         weights as a function of :math:`z`. The above double-delta integral
-        :math:`I(z)` can be calulated as:
+        :math:`I(z)` can be calculated as:
 
         .. code-block:: python
 

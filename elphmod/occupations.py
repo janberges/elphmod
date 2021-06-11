@@ -155,12 +155,12 @@ def lorentz_delta(x):
 lorentz.delta = lorentz_delta
 
 def heaviside(x):
-    """Calculate (refleced) Heaviside function."""
+    """Calculate (reflected) Heaviside function."""
 
     return 0.5 - 0.5 * np.sign(x)
 
 def heaviside_delta(x):
-    """Calculate negative derivative of (refleced) Heaviside function."""
+    """Calculate negative derivative of (reflected) Heaviside function."""
 
     return 0.0 if x else np.inf
 

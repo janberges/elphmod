@@ -68,7 +68,7 @@ def susceptibility(e, kT=0.025, eta=1e-10, occupations=occupations.fermi_dirac):
     return calculate_susceptibility
 
 def susceptibility2(e, kT=0.025, nmats=1000, hyb_width=1.0, hyb_height=0.0):
-    r"""Calculate the Lindhardt bubble using the Green's functions explicitly.
+    r"""Calculate the Lindhard bubble using the Green's functions explicitly.
 
     .. math::
 

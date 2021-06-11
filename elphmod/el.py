@@ -29,7 +29,7 @@ class Model(object):
     R : ndarray
         Lattice vectors of Wigner-Seitz supercell.
     data : ndarray
-        Corresponding onsite energies and hoppings.
+        Corresponding on-site energies and hoppings.
     size : int
         Number of Wannier functions/bands.
     """
@@ -647,18 +647,18 @@ def read_wannier90_eig_file(seedname, num_bands, nkpts):
 
     Parameters
     ----------
-    seedname: string
-        For example 'tas2', if the file is named 'tas2.eig'
-    num_bands: integer
-        Number of bands in your pseudopotential
-    nkpts: integer
+    seedname : str
+        For example 'tas2', if the file is named 'tas2.eig'.
+    num_bands : int
+        Number of bands in your pseudopotential.
+    nkpts : int
         Number of k-points in your Wannier90 calculations.
-        For example 1296 for 36x36x1
+        For example 1296 for 36x36x1.
 
     Returns
     -------
     ndarray
-        Kohn-Sham energies: eig[num_bands, nkpts]
+        Kohn-Sham energies: ``eig[num_bands, nkpts]``.
 
     """
 
@@ -679,44 +679,44 @@ def read_wannier90_eig_file(seedname, num_bands, nkpts):
 def eband_from_qe_pwo(pw_scf_out):
     """Calculate ``eband`` part of one-electron energy.
 
-    The 'one-electron contribution' energy in the Quantum ESPRESSO pw_scf-output
-    is a sum of eband+deband. Here, we can calculate the eband part.
+    The 'one-electron contribution' energy in the Quantum ESPRESSO PWscf output
+    is a sum ``eband + deband``. Here, we can calculate the ``eband`` part.
 
     To compare it with the Quantum ESPRESSO result, you need to modify
-    the 'SUBROUTINE print_energies ( printout )' from 'electrons.f90'.
+    the ``SUBROUTINE print_energies ( printout )`` from *electrons.f90*.
 
-    CHANGE:
+    Change::
 
-    'WRITE( stdout, 9060 ) &
-        ( eband + deband ), ehart, ( etxc - etxcc ), ewld'
+        WRITE( stdout, 9060 ) &
+            ( eband + deband ), ehart, ( etxc - etxcc ), ewld
 
-    TO
+    to::
 
-    'WRITE( stdout, 9060 ) &
-        eband, ( eband + deband ), ehart, ( etxc - etxcc ), ewld'
+        WRITE( stdout, 9060 ) &
+            eband, ( eband + deband ), ehart, ( etxc - etxcc ), ewld
 
-    AND
+    and::
 
-    9060 FORMAT(/'     The total energy is the sum of the following terms:',/,&
-            /'     one-electron contribution =',F17.8,' Ry' &
+        9060 FORMAT(/'     The total energy is the sum of the following terms:',/,&
+                /'     one-electron contribution =',F17.8,' Ry' &
 
-    TO
+    to::
 
-    9060 FORMAT(/'     The total energy is the sum of the following terms:',/,&
-            /'     sum bands                 =',F17.8,' Ry' &
-            /'     one-electron contribution =',F17.8,' Ry' &
+        9060 FORMAT(/'     The total energy is the sum of the following terms:',/,&
+                /'     sum bands                 =',F17.8,' Ry' &
+                /'     one-electron contribution =',F17.8,' Ry' &
 
-    At some point, we should add the deband routine as well...
+    At some point, we should add the ``deband`` routine as well...
 
     Parameters
     ----------
-    pw_scf_out: string
-    The name of the output file (typically 'pw.out')
+    pw_scf_out : str
+        The name of the output file (typically 'pw.out').
 
     Returns
     -------
-    eband: float
-        The band energy
+    eband : float
+        The band energy.
     """
     f = open(pw_scf_out, 'r')
 
@@ -810,7 +810,7 @@ def read_decayH(file):
 
     Parameters
     ----------
-    file : string
+    file : str
         The name of the *decay.H* output from EPW.
 
     Returns

@@ -183,7 +183,7 @@ def shared_array(shape, dtype=float, shared_memory=True, single_memory=False,
 
         array = np.empty(shape, dtype=dtype)
 
-    # From Gilles reply to StackOverflow question:
+    # From Gilles reply to Stack Overflow question:
     # 'get Nodes with MPI program in C'
 
     images = comm.Split(node.rank, key=comm.rank) # same node.rank

@@ -452,7 +452,7 @@ def symmetries(data, epsilon=0.0, unity=True, angle=60):
     data : ndarray
         Data on uniform k mesh.
     epsilon : float
-        Maxmium absolute difference of "equal" floats.
+        Maximum absolute difference of "equal" floats.
     unity : bool
         Return identity as first symmetry?
     angle : float
@@ -480,7 +480,7 @@ def symmetries(data, epsilon=0.0, unity=True, angle=60):
 
         for k1 in range(nk):
             for k2 in range(nk):
-                # rotation in cartesian coordinates:
+                # rotation in Cartesian coordinates:
 
                 K = rotate(k1 * b1 + k2 * b2, angle * deg)
 
@@ -654,13 +654,13 @@ def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
         Data on uniform triangular or rectangular lattice.
     angle : number
         Angle between lattice vectors in degrees.
-    axes : 2-tuple of ints
+    axes : 2-tuple of int
         Axes of `data` along which to interpolate (lattice vectors).
     period : number
         If the values of `data` are defined on a periodic axis (i.e., only with
         respect to the modulo operation), the period of this axis. This is used
         in combination with `stack` to always interpolate across the shortest
-        distance of two neighbording points.
+        distance of two neighboring points.
 
     Returns
     -------
@@ -671,8 +671,8 @@ def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
 
     See Also
     --------
-    stack : Condese point cloud on periodic axis.
-    resize : Compress or strech data via linear interpolation.
+    stack : Condense point cloud on periodic axis.
+    resize : Compress or stretch data via linear interpolation.
     Fourier_interpolation : Alternative interpolation routine.
     """
     # move lattice axes to the front:
@@ -784,7 +784,7 @@ def resize(data, shape=None, angle=60, axes=(0, 1), period=None):
 
     Parameters
     ----------
-    shape : 2-tuple of ints
+    shape : 2-tuple of int
         New lattice shape. Defaults to the original shape.
     shape, angle, axes, period
         Parameters for :func:`linear_interpolation`.
@@ -848,7 +848,7 @@ def squared_distance(k1, k2, angle=60):
 
     Parameters
     ----------
-    k1, k2 : integer
+    k1, k2 : int
         Point in lattice coordinates (crystal coordinates, mesh-indices, ...).
     angle : number
         Angle between lattice axes.
@@ -869,7 +869,7 @@ def to_Voronoi(k1, k2, nk, angle=60, dk1=0, dk2=0, epsilon=0.0):
 
     Parameters
     ----------
-    k1, k2 : integer
+    k1, k2 : int
         Mesh-point indices.
     nk : int
         Number of points per dimension.
@@ -878,7 +878,7 @@ def to_Voronoi(k1, k2, nk, angle=60, dk1=0, dk2=0, epsilon=0.0):
     dk1, dk2 : number
         Shift of Voronoi cell.
     epsilon : float
-        Maxmium absolute difference of "equal" floats.
+        Maximum absolute difference of "equal" floats.
 
     Returns
     -------
@@ -913,7 +913,7 @@ def wigner_seitz(nk, angle=120, dk1=0.0, dk2=0.0, epsilon=0.0):
     dk1, dk2 : float
         Shift of Wigner-Seitz cell.
     epsilon : float
-        Maxmium absolute difference of "equal" floats.
+        Maximum absolute difference of "equal" floats.
 
     Returns
     -------
@@ -957,7 +957,7 @@ def wigner_seitz_x(x, nk, at=None, tau=None, epsilon=1e-8):
     at, tau : ndarray
         Geometry as returned by :func:`ph.read_flfrc` and :func:`ph.model`.
     epsilon : float
-        Maxmium absolute difference of "equal" floats.
+        Maximum absolute difference of "equal" floats.
 
     Returns
     -------
@@ -1223,7 +1223,7 @@ def path(points, ibrav=4, N=30, qe=False, **kwargs):
         labels such as ``G`` (|Ggr|), ``M``, or ``K`` may also be used.
     ibrav : int
         Bravais-lattice index.
-    N : integer
+    N : int
         Number of points per :math:`2 \pi / a`.
     qe : bool, default False
         Also return path in QE input format?
@@ -1322,7 +1322,7 @@ def GMKG(N=30, corner_indices=False, mesh=False, angle=60, straight=True,
 
     Parameters
     ----------
-    N : integer
+    N : int
         Number of mesh points per dimension if `mesh` is ``True`` and `N` is a
         multiple of 6. Otherwise the number of points per :math:`2 \pi / a`.
     corner_indices : bool
@@ -1941,17 +1941,17 @@ def readPOSCAR(filename):
     return t1, t2, t3, atoms
 
 def point_on_path(test_point, point_A, point_B, eps=1e-14):
-    """Test wether a test_point is between the points A and B.
+    """Test whether a `test_point` is between the points A and B.
 
     Parameters
     ----------
-    eps: float
-    Numerical parameter, in case the the cross product is not exactly 0.
+    eps : float
+        Numerical parameter, in case the cross product is not exactly 0.
 
     Returns
     -------
     bool
-        True, if the test_point is on a straight line between point A and B
+        Is the test_point on a straight line between point A and B?
     """
 
     cross = np.cross(point_B - point_A, test_point - point_A)
@@ -1967,20 +1967,19 @@ def point_on_path(test_point, point_A, point_B, eps=1e-14):
                 return True
 
 def crystal_to_cartesian(R_CRYSTAL, a1, a2, a3=None):
-    """Transform a lattice structure R_CRYSTAL from crystal coordinates to
-    cartesian coordinates.
+    """Transform a lattice structure from crystal to Cartesian coordinates.
 
     Parameters
     ----------
-    R_CRYSTAL: ndarray
-        Lattice structure in crystal coordinates
-    a1,a2,a3: ndarray
-        Lattice vectors
+    R_CRYSTAL : ndarray
+        Lattice structure in crystal coordinates.
+    a1, a2, a3 : ndarray
+        Lattice vectors.
 
     Returns
     -------
-    R_CARTESIAN: ndarray
-        Lattice structure in cartesian coordinates
+    R_CARTESIAN : ndarray
+        Lattice structure in Cartesian coordinates.
     """
     R_CARTESIAN = np.empty(R_CRYSTAL.shape)
 
@@ -1995,20 +1994,19 @@ def crystal_to_cartesian(R_CRYSTAL, a1, a2, a3=None):
     return R_CARTESIAN
 
 def cartesian_to_crystal(R_CARTESIAN, a1, a2, a3):
-    """Transform a lattice structure R_CARTESIAN from crystal coordinates to
-    cartesian coordinates.
+    """Transform a lattice structure from crystal to Cartesian coordinates.
 
     Parameters
     ----------
-    R_CARTESIAN: ndarray
-        Lattice structure in cartesian coordinates
-    a1,a2,a3: ndarray
-        Lattice vectors
+    R_CARTESIAN : ndarray
+        Lattice structure in Cartesian coordinates.
+    a1, a2, a3 : ndarray
+        Lattice vectors.
 
     Returns
     -------
     R_CRYSTAL: ndarray
-        Lattice structure in crystal coordinates
+        Lattice structure in crystal coordinates.
     """
     R_CRYSTAL = np.empty(R_CARTESIAN.shape)
     A_Matrix = np.zeros([3, 3])

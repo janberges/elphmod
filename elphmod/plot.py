@@ -20,7 +20,7 @@ def choose_backend():
 def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
         interpolation=bravais.linear_interpolation, angle=60, return_k=False,
         broadcast=True):
-    """Plot in cartesian reciprocal coordinates."""
+    """Plot in Cartesian reciprocal coordinates."""
 
     nk, nk = mesh.shape
 
@@ -242,7 +242,7 @@ def toBZ(data=None, points=1000, interpolation=bravais.linear_interpolation,
 
     Parameters
     ----------
-    angle : integer
+    angle : int
         Angle between first and second Bravais-lattice vector in degrees.
     angle0 : float
         Angle between x axis and first Bravais-lattice vector in degrees.
@@ -496,7 +496,7 @@ def colormap(*args):
 
     Colors can be defined for an arbitrary number of points in the interval. In
     between, colors are interpolated linearly. The color for the point ``None``
-    is used for NaNs and beyond the outmost points where colors have been
+    is used for NaNs and beyond the outermost points where colors have been
     defined.
 
     Examples:
@@ -817,7 +817,7 @@ def label_pie_with_TeX(stem,
 \begin{{document}}
 '''.format(**X))
 
-        # write ebmedded LaTeX code:
+        # write embedded LaTeX code:
 
         TeX.write(r'''\begingroup%
 \let\unit\relax%

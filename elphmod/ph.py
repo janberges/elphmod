@@ -99,7 +99,7 @@ class Model(object):
             sum_rule_correction(self, asr=apply_asr, rsr=apply_rsr)
 
 def group(n, size=3):
-    """Create slice of dynamical matrix beloning to `n`-th atom."""
+    """Create slice of dynamical matrix belonging to `n`-th atom."""
 
     return slice(n * size, (n + 1) * size)
 
@@ -438,7 +438,7 @@ def sum_rule_correction(ph, asr=True, rsr=True, eps=1e-15, report=True):
         print('Acoustic sum (after): %g' % acoustic_sum())
         print('Rotation sum (after): %g' % rotation_sum())
 
-    # redo divison by atomic masses:
+    # redo division by atomic masses:
 
     for na in range(ph.nat):
         C[:, na, :, :, :] /= np.sqrt(ph.M[na])
@@ -746,7 +746,7 @@ def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
     function
         Fourier-interpolant (via force constants) for dynamical matrices.
     """
-    # transform q points from crystal to cartesian coordinates:
+    # transform q points from crystal to Cartesian coordinates:
 
     a1, a2 = bravais.translations(angle)
     b1, b2 = bravais.reciprocals(a1, a2)
@@ -792,7 +792,7 @@ def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
         os.system("""echo "&INPUT fildyn='{1}' flfrc='{2}' /" """
             '| {0}q2r.x > /dev/null'.format(qe_prefix, fildyn, flfrc))
 
-    # clean up and return mass-sping model:
+    # clean up and return mass-spring model:
     # (no MPI barrier needed because of broadcasting in 'Model')
 
     ph = Model(flfrc, apply_asr=apply_asr, apply_asr_simple=apply_asr_simple,

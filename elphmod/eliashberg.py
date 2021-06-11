@@ -30,11 +30,11 @@ def Tc(lamda, wlog, mustar=0.1):
         / (lamda - 0.62 * lamda * mustar - mustar))
 
 def McMillan(nq, e, w2, g2, eps=1e-10, mustar=0.0):
-    """Calculate parameters and result of McMillan's formula.
+    r"""Calculate parameters and result of McMillan's formula.
 
     Parameters
     ----------
-    nq : integer
+    nq : int
         Number of q points per dimension.
     e : ndarray
         Electron dispersion on uniform mesh. The Fermi level must be at zero.
@@ -51,9 +51,9 @@ def McMillan(nq, e, w2, g2, eps=1e-10, mustar=0.0):
     Returns
     -------
     float
-        Effective electron-phonon coupling strength lamda.
+        Effective electron-phonon coupling strength :math:`\lambda`.
     float
-        Effective phonon frequency <omega>.
+        Effective phonon frequency :math:`\langle \omega \rangle`.
     float
         Estimated critical temperature of superconductivity.
     """
