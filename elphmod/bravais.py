@@ -1669,6 +1669,8 @@ def write_pwi(pwi, struct):
         for X, (r1, r2, r3) in zip(struct['at'], struct['r']):
             data.write('%2s %12.9f %12.9f %12.9f\n' % (X, r1, r2, r3))
 
+        data.write('\n')
+
         if 'k_points' in struct:
             data.write('K_POINTS %s\n' % struct['ktyp'])
 
@@ -1685,13 +1687,15 @@ def write_pwi(pwi, struct):
                     else:
                         data.write('%12.9f\n' % wk)
 
+        data.write('\n')
+
         if 'r_cell' in struct:
             data.write('CELL_PARAMETERS %s\n' % struct['cell_units'])
 
             for r in struct['r_cell']:
                 data.write('%12.9f %12.9f %12.9f\n' % tuple(r))
 
-            data.write('/\n')
+            data.write('\n')
 
 def read_win(win):
     """Read input data from .win file (Wannier90).
