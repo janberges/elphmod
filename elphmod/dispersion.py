@@ -4,7 +4,6 @@
 # This program is free software under the terms of the GNU GPLv3 or later.
 
 import numpy as np
-import numpy.linalg
 
 from . import bravais, misc, MPI
 comm = MPI.comm

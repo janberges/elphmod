@@ -5,7 +5,7 @@
 
 import numpy as np
 
-from . import bravais, misc, MPI, occupations
+from . import bravais, misc, MPI
 comm = MPI.comm
 
 def hexDOS(energies):

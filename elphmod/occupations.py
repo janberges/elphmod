@@ -7,9 +7,6 @@ import math
 import numpy as np
 import sys
 
-from . import misc
-kB = misc.kB
-
 xmax = 709.0 # approx. log([max. double] / 2 - 1)
 
 not_doc = 'sphinx' not in sys.modules

@@ -8,6 +8,7 @@ import sys
 
 from . import __version__, MPI
 comm = MPI.comm
+info = MPI.info
 
 verbosity = 1
 
@@ -60,9 +61,9 @@ class StatusBar(object):
 
 def hello():
     if verbosity:
-        MPI.info('This is elphmod (version %s) running on %d processors.'
+        info('This is elphmod (version %s) running on %d processors.'
             % (__version__, comm.size))
-        MPI.info('To suppress all output, set elphmod.misc.verbosity = 0.')
+        info('To suppress all output, set elphmod.misc.verbosity = 0.')
 
 def group(points, eps=1e-7):
     """Group points into neighborhoods.

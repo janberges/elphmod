@@ -8,7 +8,7 @@
 
 import numpy as np
 
-from . import bravais, dispersion, el, misc, MPI, ph
+from . import bravais, misc, MPI
 comm = MPI.comm
 
 class Model(object):

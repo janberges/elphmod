@@ -2,7 +2,6 @@
 
 import elphmod
 import matplotlib.pyplot as plt
-import numpy as np
 
 colors = ['red', 'blue', 'green', 'gray']
 labels = ['$s$', '$p$', '$d$', 'other']

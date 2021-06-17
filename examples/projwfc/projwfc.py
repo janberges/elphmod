@@ -5,7 +5,6 @@
 
 import elphmod
 import matplotlib.pyplot as plt
-import numpy as np
 
 colors = ['red', 'blue', 'black']
 labels = ['$s$', '$p_{x, y}$', '$p_z$']

@@ -7,7 +7,6 @@ import numpy as np
 
 from . import bravais, dispersion, misc, MPI
 comm = MPI.comm
-info = MPI.info
 
 class Model(object):
     """Tight-binding model for the electrons.

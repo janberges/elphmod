@@ -5,7 +5,6 @@
 
 import elphmod
 import matplotlib.pyplot as plt
-import numpy as np
 
 comm = elphmod.MPI.comm
 

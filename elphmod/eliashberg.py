@@ -5,9 +5,7 @@
 
 import numpy as np
 
-from . import MPI, bravais, dos, occupations
-comm = MPI.comm
-info = MPI.info
+from . import bravais, dos, occupations
 
 def Tc(lamda, wlog, mustar=0.1):
     """Calculate critical temperature using McMillan's formula.

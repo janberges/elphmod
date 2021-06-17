@@ -3,7 +3,6 @@
 # Copyright (C) 2021 elphmod Developers
 # This program is free software under the terms of the GNU GPLv3 or later.
 
-import os
 import numpy as np
 
 from . import bravais, MPI
@@ -746,6 +745,8 @@ def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
     function
         Fourier-interpolant (via force constants) for dynamical matrices.
     """
+    import os
+
     # transform q points from crystal to Cartesian coordinates:
 
     a1, a2 = bravais.translations(angle)
