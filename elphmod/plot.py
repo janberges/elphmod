@@ -905,12 +905,12 @@ def plot_pie_with_TeX(filename, data, points=1000, angle=60, standalone=True,
             lower=data.min(), upper=data.max(), standalone=standalone, **kwargs)
 
         if standalone and pdf:
-            import os
+            import subprocess
 
-            os.system('pdflatex --interaction=batchmode %s' % stem)
+            subprocess.call(['pdflatex', '--interaction=batchmode', stem])
 
             for suffix in 'aux', 'log':
-                os.system('rm %s.%s' % (stem, suffix))
+                os.remove('%s.%s' % (stem, suffix))
 
 def compline(x, y, composition, center=True):
     """Plot composition along line."""
@@ -951,14 +951,3 @@ def compline(x, y, composition, center=True):
         sgn *= -1
 
     return XY
-
-if __name__ == '__main__':
-    import os
-
-    os.system('mkdir -p plot_test')
-    os.chdir('plot_test')
-
-    label_pie_with_TeX('pie_plot.tex')
-
-    os.system('pdflatex pie_plot')
-    os.chdir('..')
