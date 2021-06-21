@@ -10,7 +10,7 @@ import numpy as np
 comm = elphmod.MPI.comm
 info = elphmod.MPI.info
 
-el = elphmod.el.Model('TaS2_hr.dat')
+el = elphmod.el.Model('TaS2')
 mu = elphmod.el.read_Fermi_level('pw.out')
 ph = elphmod.ph.Model('ifc', apply_asr=True)
 elph = elphmod.elph.Model('work/TaS2.epmatwp', 'wigner.dat', el, ph,

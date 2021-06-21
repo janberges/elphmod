@@ -14,7 +14,7 @@ nk = 24
 a1, a2 = elphmod.bravais.translations()
 b1, b2 = elphmod.bravais.reciprocals(a1, a2)
 
-el = elphmod.el.Model('data/NbSe2_hr.dat')
+el = elphmod.el.Model('data/NbSe2')
 
 e = elphmod.dispersion.dispersion_full(el.H, nk)[:, :, 0]
 

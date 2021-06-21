@@ -16,7 +16,7 @@ if elphmod.MPI.comm.rank != 0:
 R, H = elphmod.el.read_decayH('decay.H')
 plt.plot(R, H, 'o', color='blue', markersize=10, label='EPW output')
 
-R, H = elphmod.el.decayH('TaS2_hr.dat', **pwi)
+R, H = elphmod.el.decayH('TaS2', **pwi)
 plt.plot(R, H, 'o', color='orange', label='calculated from Wannier90 data')
 
 plt.xlabel = 'Distance (angstrom)'

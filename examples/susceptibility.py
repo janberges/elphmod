@@ -18,7 +18,7 @@ cmap = elphmod.plot.colormap(
 
 q, x, GMKG = elphmod.bravais.GMKG(30, corner_indices=True)
 
-el = elphmod.el.Model('data/NbSe2_hr.dat')
+el = elphmod.el.Model('data/NbSe2')
 
 e = elphmod.dispersion.dispersion_full(el.H, 100)[:, :, 0] - mu
 

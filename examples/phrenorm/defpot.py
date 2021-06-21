@@ -10,7 +10,7 @@ import numpy as np
 nu = 8 # ionic displacement
 a = 0 # electronic orbital
 
-el = elphmod.el.Model('TaS2_hr.dat')
+el = elphmod.el.Model('TaS2')
 ph = elphmod.ph.Model('dfpt.ifc', apply_asr=True)
 elph = elphmod.elph.Model('dfpt.epmatwp', 'wigner.dat', el, ph,
     divide_mass=False)

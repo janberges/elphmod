@@ -16,7 +16,7 @@ k, x, GMKG = elphmod.bravais.path('GMKG', **pwi, N=100 * np.sqrt(3) * pwi['a'])
 x *= 2 * np.pi
 
 for seedname, ref, res in ('ws_yes', 'm', 'k--'), ('ws_no', 'g', 'k:'):
-    el = elphmod.el.Model('%s_hr.dat' % seedname)
+    el = elphmod.el.Model(seedname)
     e = elphmod.dispersion.dispersion(el.H, k)
 
     X, E = elphmod.el.read_bands_plot('%s_band.dat' % seedname, bands=el.size)

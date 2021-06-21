@@ -16,7 +16,7 @@ colors = ['orange', 'skyblue', 'dodgerblue']
 
 info('Set up Wannier Hamiltonian..')
 
-el = elphmod.el.Model('data/NbSe2_hr.dat')
+el = elphmod.el.Model('data/NbSe2')
 
 info('Diagonalize Hamiltonian along G-M-K-G..')
 

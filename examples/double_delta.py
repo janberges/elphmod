@@ -21,7 +21,7 @@ cmap = elphmod.plot.colormap(
     (0.0, elphmod.plot.Color(0.0, 1, 255, model='PSV')),
     (1.0, elphmod.plot.Color(5.5, 1, 255, model='PSV')))
 
-el = elphmod.el.Model('data/NbSe2_hr.dat')
+el = elphmod.el.Model('data/NbSe2')
 
 ekk = elphmod.dispersion.dispersion_full(el.H, nk)[:, :, 0] - mu
 Ekk = ekk[::dk, ::dk]

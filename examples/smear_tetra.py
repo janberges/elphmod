@@ -17,7 +17,7 @@ kT = np.linspace(0.1, 0.0, 1000, endpoint=False)
 q1 = 0.0
 q2 = 0.5
 
-el = elphmod.el.Model('data/NbSe2_hr.dat')
+el = elphmod.el.Model('data/NbSe2')
 
 ekk = elphmod.dispersion.dispersion_full(el.H, nk)[:, :, 0] - mu
 

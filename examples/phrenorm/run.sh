@@ -27,3 +27,4 @@ done
 
 mpirun python3 phrenorm.py
 mpirun python3 defpot.py
+mpirun python3 decay.py

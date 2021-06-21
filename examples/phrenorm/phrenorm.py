@@ -29,7 +29,7 @@ k, x, GMKG = elphmod.bravais.GMKG(100, corner_indices=True)
 
 info('Prepare electrons')
 
-el = elphmod.el.Model('TaS2_hr.dat')
+el = elphmod.el.Model('TaS2')
 mu = elphmod.el.read_Fermi_level('scf.out')
 
 e, U = elphmod.dispersion.dispersion_full_nosym(el.H, nk, vectors=True)

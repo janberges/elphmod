@@ -35,7 +35,7 @@ path, x, GXRMG = elphmod.bravais.path('GXRMG', ibrav=1)
 
 info('Prepare electrons')
 
-el = elphmod.el.Model('polonium_hr.dat')
+el = elphmod.el.Model('polonium')
 mu = elphmod.el.read_Fermi_level('scf.out')
 
 e, U = elphmod.dispersion.dispersion(el.H, k, vectors=True)

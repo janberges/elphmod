@@ -13,11 +13,10 @@ class Model(object):
 
     Parameters
     ----------
-    hrdat : str
-        *seedname_hr.dat* file with Hamiltonian in Wannier basis from
-        Wannier90. If a corresponding *seedname_wsvec.dat* file with
-        superlattice vectors is found, it is used to correct the hopping
-        parameters automatically.
+    seedname : str
+        Common prefix of Wannier90 output files: *seedname_hr.dat* with the
+        Hamiltonian in the Wannier basis and, optionally, *seedname_wsvec.dat*
+        with superlattice vectors used to symmetrize the long-range hopping.
     divide_ndegen : bool
         Divide hopping by degeneracy of Wigner-Seitz point and apply the
         abovementioned correction? Only ``True`` yields correct bands.
@@ -53,11 +52,14 @@ class Model(object):
 
         return H.sum(axis=0)
 
-    def __init__(self, hrdat, divide_ndegen=True):
-        self.R, self.data = read_hrdat(hrdat, divide_ndegen)
+    def __init__(self, seedname, divide_ndegen=True):
+        if seedname.endswith('_hr.dat'):
+            seedname = seedname[:-7]
+
+        self.R, self.data = read_hrdat('%s_hr.dat' % seedname, divide_ndegen)
         self.size = self.data.shape[1]
 
-        supvecs = read_wsvecdat(hrdat.replace('_hr.dat', '_wsvec.dat'))
+        supvecs = read_wsvecdat('%s_wsvec.dat' % seedname)
 
         if supvecs is not None and divide_ndegen:
             if comm.rank == 0:
@@ -173,7 +175,6 @@ def read_wsvecdat(wsvecdat):
         except FileNotFoundError:
             supvecs = None
             print('Warning: File "%s" not found!' % wsvecdat)
-            print('Bands may be inaccurate if "use_ws_distance" was true.')
 
     supvecs = comm.bcast(supvecs)
 
@@ -821,9 +822,8 @@ def read_decayH(file):
         rydberg.
     """
 
-    f_decay = open(file, 'r')
-    lines = f_decay.readlines()
-    f_decay.close()
+    with open(file) as f_decay:
+        lines = f_decay.readlines()
 
     R_list = []
     H_list = []
@@ -841,21 +841,21 @@ def read_decayH(file):
 
     return R, H
 
-def decayH(file, **kwargs):
+def decayH(seedname, **kwargs):
     """Calculate the decay of the Hamiltonian.
 
     This function should yield the same data as :func:`read_decayH`.
 
     Parameters
     ----------
-    file : str
-        The name of the *seedname_hr.dat* output from Wannier90.
+    seedname : str
+        Prefix of Wannier90 output file.
 
     **kwargs
         Arguments for :func:`bravais.primitives`: Choose the right Bravais
         lattice (``ibrav``) and lattice constants (``a, b, c, ...``).
 
-        For a simple cubic lattice: ``decayH(file, ibrav=1, a=a)``.
+        For a simple cubic lattice: ``decayH(seedname, ibrav=1, a=a)``.
 
     Returns
     -------
@@ -867,7 +867,7 @@ def decayH(file, **kwargs):
         rydberg.
     """
     bravais_vectors = bravais.primitives(**kwargs)
-    el = Model(file, divide_ndegen=False)
+    el = Model(seedname, divide_ndegen=False)
 
     R = np.empty((len(el.R)))
     H = np.empty((len(el.R)))
