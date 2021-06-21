@@ -1222,7 +1222,7 @@ def path(points, ibrav=4, N=30, qe=False, **kwargs):
         labels such as ``G`` (|Ggr|), ``M``, or ``K`` may also be used.
     ibrav : int
         Bravais-lattice index.
-    N : int
+    N : float
         Number of points per :math:`2 \pi / a`.
     qe : bool, default False
         Also return path in QE input format?

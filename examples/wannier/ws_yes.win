@@ -17,6 +17,7 @@ num_iter 0
 
 write_hr true
 bands_plot true
+bands_num_points 100
 
 begin kpoint_path
 G 0.000000000 0.000000000 0 M 0.000000000 0.500000000 0
