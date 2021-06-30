@@ -3,5 +3,6 @@ el.eband_from_qe_pwo():
 elph.__init__():
     Check if cut off epmatwp data is really empty.
 Drop Python-2 support in favor of things like (nq, nph, *nk, nel, nel)?
-Replace status arguments etc. by global elphmod(.misc).verbosity
+Replace status arguments etc. by global elphmod(.misc).verbosity.
 Speed up calculation of Methfessel-Paxton smearing?
+Add nonanalytic term from effective charges to phonons in polar materials.

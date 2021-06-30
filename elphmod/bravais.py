@@ -778,8 +778,8 @@ def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
 
     return np.vectorize(interpolant)
 
-def resize(data, shape=None, angle=60, axes=(0, 1), period=None):
-    """Resize array via linear interpolation along two periodic axes.
+def resize(data, shape=None, angle=60, axes=(0, 1), period=None, periodic=True):
+    """Resize array via linear interpolation along two axes.
 
     Parameters
     ----------
@@ -787,6 +787,8 @@ def resize(data, shape=None, angle=60, axes=(0, 1), period=None):
         New lattice shape. Defaults to the original shape.
     shape, angle, axes, period
         Parameters for :func:`linear_interpolation`.
+    periodic : bool, default True
+        Interpolate between last and first data point of each axis?
 
     Returns
     -------
@@ -818,8 +820,12 @@ def resize(data, shape=None, angle=60, axes=(0, 1), period=None):
     my_new_data = np.empty((sizes[comm.rank],) + data.shape[2:],
         dtype=data.dtype)
 
-    scale_x = data.shape[0] / shape[0]
-    scale_y = data.shape[1] / shape[1]
+    if periodic:
+        scale_x = data.shape[0] / shape[0]
+        scale_y = data.shape[1] / shape[1]
+    else:
+        scale_x = (data.shape[0] - 1) / (shape[0] - 1)
+        scale_y = (data.shape[1] - 1) / (shape[1] - 1)
 
     for n, m in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         x = m // shape[1]
