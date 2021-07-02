@@ -23,6 +23,6 @@ The example also shows how to calculate exact DFPT phonon self-energies for
 gapped systems (i.e., without any electronic occupation smearing).
 
 For the (c)DFPT part, you need a modified version of Quantum ESPRESSO. You can
-use the Python script `bin/qe_mod_6.x` to apply the required changes.
+use the provided [patches](../patches) to apply the required changes.
 
 The results obtained in this example are far from converged!
