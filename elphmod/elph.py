@@ -156,11 +156,15 @@ class Model(object):
 
         return g
 
-    def __init__(self, epmatwp, wigner, el, ph, old_ws=False, divide_mass=True,
-            shared_memory=False):
+    def __init__(self, epmatwp=None, wigner=None, el=None, ph=None,
+            old_ws=False, divide_mass=True, shared_memory=False):
 
         self.el = el
         self.ph = ph
+        self.q = None
+
+        if epmatwp is None:
+            return
 
         # read lattice vectors within Wigner-Seitz cell:
 
@@ -245,7 +249,6 @@ class Model(object):
 
         self.data = g
 
-        self.q = None
         self.gq = np.empty((ph.size, len(self.Rk), el.size, el.size),
             dtype=complex)
 
@@ -257,6 +260,104 @@ class Model(object):
         sample
         """
         return sample(g=self.g, *args, **kwargs)
+
+    def supercell(self, N1=1, N2=1, N3=1):
+        """Map localized model for electron-phonon coupling onto supercell.
+
+        Parameters
+        ----------
+        N1, N2, N3 : int, default 1
+            Supercell dimensions in units of primitive lattice vectors.
+
+        Returns
+        -------
+        object
+            Localized model for electron-phonon coupling for supercell.
+        """
+        elph = Model(
+            el=self.el.supercell(N1, N2, N3),
+            ph=self.ph.supercell(N1, N2, N3))
+
+        if comm.rank == 0:
+            const = dict()
+
+            for n in range(len(self.Rg)):
+                for n1 in range(N1):
+                    R1, r1 = divmod(self.Rg[n, 0] + n1, N1)
+
+                    for n2 in range(N2):
+                        R2, r2 = divmod(self.Rg[n, 1] + n2, N2)
+
+                        for n3 in range(N3):
+                            R3, r3 = divmod(self.Rg[n, 2] + n3, N3)
+
+                            Rg = R1, R2, R3
+
+                            A = (r1 * N2 * N3 + r2 * N3 + r3) * self.ph.size
+
+                            if Rg not in const:
+                                const[Rg] = np.zeros((elph.ph.size,
+                                    len(self.Rk), self.el.size, self.el.size),
+                                        dtype=complex)
+
+                            const[Rg][A:A + self.ph.size] = self.data[n]
+
+            elph.Rg = np.array(list(const.keys()), dtype=int)
+            elph.data = np.array(list(const.values()))
+
+            countg = len(const)
+            const.clear()
+
+            for n in range(len(self.Rk)):
+                for n1 in range(N1):
+                    R1, r1 = divmod(self.Rk[n, 0] + n1, N1)
+
+                    for n2 in range(N2):
+                        R2, r2 = divmod(self.Rk[n, 1] + n2, N2)
+
+                        for n3 in range(N3):
+                            R3, r3 = divmod(self.Rk[n, 2] + n3, N3)
+
+                            Rk = R1, R2, R3
+
+                            A = (n1 * N2 * N3 + n2 * N3 + n3) * self.el.size
+                            B = (r1 * N2 * N3 + r2 * N3 + r3) * self.el.size
+
+                            if Rk not in const:
+                                const[Rk] = np.zeros((len(elph.Rg),
+                                    elph.ph.size, elph.el.size, elph.el.size),
+                                        dtype=complex)
+
+                            const[Rk][:, :,
+                                A:A + self.el.size,
+                                B:B + self.el.size] = elph.data[:, :, n]
+
+            elph.Rk = np.array(list(const.keys()), dtype=int)
+            elph.data = np.array(list(const.values()))
+            elph.data = np.transpose(elph.data, (1, 2, 0, 3, 4)).copy()
+
+            countk = len(const)
+            const.clear()
+        else:
+            countg = countk = None
+
+        countg = comm.bcast(countg)
+        countk = comm.bcast(countk)
+
+        if comm.rank != 0:
+            elph.Rg = np.empty((countg, 3), dtype=int)
+            elph.Rk = np.empty((countk, 3), dtype=int)
+            elph.data = np.empty((countg, elph.ph.size, countk,
+                elph.el.size, elph.el.size), dtype=complex)
+
+        comm.Bcast(elph.Rg)
+        comm.Bcast(elph.Rk)
+        comm.Bcast(elph.data)
+
+        elph.gq = np.empty((elph.ph.size, len(elph.Rk),
+            elph.el.size, elph.el.size), dtype=complex)
+
+        return elph
 
 def sample(g, q, nk=None, U=None, u=None, broadcast=True, shared_memory=False):
     """Sample coupling for given q and k points and transform to band basis.

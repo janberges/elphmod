@@ -151,10 +151,11 @@ class Model(object):
                                 A:A + self.size,
                                 B:B + self.size] = self.data[n]
 
-            count = len(const)
-
             ph.R = np.array(list(const.keys()), dtype=int)
             ph.data = np.array(list(const.values()))
+
+            count = len(const)
+            const.clear()
         else:
             count = None
 
