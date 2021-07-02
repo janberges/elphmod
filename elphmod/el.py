@@ -52,7 +52,10 @@ class Model(object):
 
         return H.sum(axis=0)
 
-    def __init__(self, seedname, divide_ndegen=True):
+    def __init__(self, seedname=None, divide_ndegen=True):
+        if seedname is None:
+            return
+
         if seedname.endswith('_hr.dat'):
             seedname = seedname[:-7]
 
@@ -96,6 +99,66 @@ class Model(object):
 
             comm.Bcast(self.R)
             comm.Bcast(self.data)
+
+    def supercell(self, N1=1, N2=1, N3=1):
+        """Map tight-binding model onto supercell.
+
+        Parameters
+        ----------
+        N1, N2, N3 : int, default 1
+            Supercell dimensions in units of primitive lattice vectors.
+
+        Returns
+        -------
+        object
+            Tight-binding model for supercell.
+        """
+        el = Model()
+        el.size = N1 * N2 * N3 * self.size
+
+        if comm.rank == 0:
+            const = dict()
+
+            for n in range(len(self.R)):
+                for n1 in range(N1):
+                    R1, r1 = divmod(self.R[n, 0] + n1, N1)
+
+                    for n2 in range(N2):
+                        R2, r2 = divmod(self.R[n, 1] + n2, N2)
+
+                        for n3 in range(N3):
+                            R3, r3 = divmod(self.R[n, 2] + n3, N3)
+
+                            R = R1, R2, R3
+
+                            A = (n1 * N2 * N3 + n2 * N3 + n3) * self.size
+                            B = (r1 * N2 * N3 + r2 * N3 + r3) * self.size
+
+                            if R not in const:
+                                const[R] = np.zeros((el.size, el.size),
+                                    dtype=complex)
+
+                            const[R][
+                                A:A + self.size,
+                                B:B + self.size] = self.data[n]
+
+            count = len(const)
+
+            el.R = np.array(list(const.keys()), dtype=int)
+            el.data = np.array(list(const.values()))
+        else:
+            count = None
+
+        count = comm.bcast(count)
+
+        if comm.rank != 0:
+            el.R = np.empty((count, 3), dtype=int)
+            el.data = np.empty((count, el.size, el.size), dtype=complex)
+
+        comm.Bcast(el.R)
+        comm.Bcast(el.data)
+
+        return el
 
 def read_hrdat(hrdat, divide_ndegen=True):
     """Read *_hr.dat* file from Wannier90."""
