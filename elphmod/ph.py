@@ -116,11 +116,11 @@ class Model(object):
         ph.M = np.tile(self.M, factor)
         ph.a = np.array([self.a[0] * N1, self.a[1] * N2, self.a[2] * N3])
 
-        ph.r = [self.a[n1] + self.a[n2] + self.a[n3] + self.r[na]
+        ph.r = np.array([self.a[n1] + self.a[n2] + self.a[n3] + self.r[na]
             for n1 in range(N1)
             for n2 in range(N2)
             for n3 in range(N3)
-            for na in range(self.nat)]
+            for na in range(self.nat)])
 
         ph.atom_order = list(self.atom_order) * factor
         ph.size = self.size * factor

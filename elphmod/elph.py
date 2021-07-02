@@ -279,83 +279,75 @@ class Model(object):
             ph=self.ph.supercell(N1, N2, N3))
 
         if comm.rank == 0:
+            Rg = set()
+            Rk = set()
             const = dict()
 
-            for n in range(len(self.Rg)):
-                for n1 in range(N1):
-                    R1, r1 = divmod(self.Rg[n, 0] + n1, N1)
+            for g in range(len(self.Rg)):
+                for k in range(len(self.Rk)):
+                    for n1 in range(N1):
+                        G1, g1 = divmod(self.Rg[g, 0] + n1, N1)
+                        K1, k1 = divmod(self.Rk[k, 0] + n1, N1)
 
-                    for n2 in range(N2):
-                        R2, r2 = divmod(self.Rg[n, 1] + n2, N2)
+                        for n2 in range(N2):
+                            G2, g2 = divmod(self.Rg[g, 1] + n2, N2)
+                            K2, k2 = divmod(self.Rk[k, 1] + n2, N2)
 
-                        for n3 in range(N3):
-                            R3, r3 = divmod(self.Rg[n, 2] + n3, N3)
+                            for n3 in range(N3):
+                                G3, g3 = divmod(self.Rg[g, 2] + n3, N3)
+                                K3, k3 = divmod(self.Rk[k, 2] + n3, N3)
 
-                            Rg = R1, R2, R3
+                                Rg.add((G1, G2, G3))
+                                Rk.add((K1, K2, K3))
 
-                            A = (r1 * N2 * N3 + r2 * N3 + r3) * self.ph.size
+                                R = G1, G2, G3, K1, K2, K3
 
-                            if Rg not in const:
-                                const[Rg] = np.zeros((elph.ph.size,
-                                    len(self.Rk), self.el.size, self.el.size),
-                                        dtype=complex)
+                                A = (g1 * N2 * N3 + g2 * N3 + g3) * self.ph.size
+                                B = (n1 * N2 * N3 + n2 * N3 + n3) * self.el.size
+                                C = (k1 * N2 * N3 + k2 * N3 + k3) * self.el.size
 
-                            const[Rg][A:A + self.ph.size] = self.data[n]
+                                if R not in const:
+                                    const[R] = np.zeros((elph.ph.size,
+                                        elph.el.size, elph.el.size),
+                                            dtype=complex)
 
-            elph.Rg = np.array(list(const.keys()), dtype=int)
-            elph.data = np.array(list(const.values()))
-
-            countg = len(const)
-            const.clear()
-
-            for n in range(len(self.Rk)):
-                for n1 in range(N1):
-                    R1, r1 = divmod(self.Rk[n, 0] + n1, N1)
-
-                    for n2 in range(N2):
-                        R2, r2 = divmod(self.Rk[n, 1] + n2, N2)
-
-                        for n3 in range(N3):
-                            R3, r3 = divmod(self.Rk[n, 2] + n3, N3)
-
-                            Rk = R1, R2, R3
-
-                            A = (n1 * N2 * N3 + n2 * N3 + n3) * self.el.size
-                            B = (r1 * N2 * N3 + r2 * N3 + r3) * self.el.size
-
-                            if Rk not in const:
-                                const[Rk] = np.zeros((len(elph.Rg),
-                                    elph.ph.size, elph.el.size, elph.el.size),
-                                        dtype=complex)
-
-                            const[Rk][:, :,
-                                A:A + self.el.size,
-                                B:B + self.el.size] = elph.data[:, :, n]
-
-            elph.Rk = np.array(list(const.keys()), dtype=int)
-            elph.data = np.array(list(const.values()))
-            elph.data = np.transpose(elph.data, (1, 2, 0, 3, 4)).copy()
-
-            countk = len(const)
-            const.clear()
+                                const[R][
+                                    A:A + self.ph.size,
+                                    B:B + self.el.size,
+                                    C:C + self.el.size] = self.data[g, :, k]
+            countg = len(Rg)
+            countk = len(Rk)
         else:
             countg = countk = None
 
         countg = comm.bcast(countg)
         countk = comm.bcast(countk)
 
-        if comm.rank != 0:
-            elph.Rg = np.empty((countg, 3), dtype=int)
-            elph.Rk = np.empty((countk, 3), dtype=int)
-            elph.data = np.empty((countg, elph.ph.size, countk,
-                elph.el.size, elph.el.size), dtype=complex)
+        elph.Rg = np.empty((countg, 3), dtype=int)
+        elph.Rk = np.empty((countk, 3), dtype=int)
+
+        elph.data = np.empty((countg, elph.ph.size, countk,
+            elph.el.size, elph.el.size), dtype=complex)
+
+        elph.gq = np.empty((elph.ph.size, len(elph.Rk),
+            elph.el.size, elph.el.size), dtype=complex)
+
+        if comm.rank == 0:
+            Rg = sorted(Rg)
+            Rk = sorted(Rk)
+
+            elph.Rg[...] = Rg
+            elph.Rk[...] = Rk
+
+            for g, (G1, G2, G3) in enumerate(Rg):
+                for k, (K1, K2, K3) in enumerate(Rk):
+                    R = G1, G2, G3, K1, K2, K3
+                    if R in const:
+                        elph.data[g, :, k] = const[R]
 
         comm.Bcast(elph.Rg)
         comm.Bcast(elph.Rk)
         comm.Bcast(elph.data)
-
-        elph.gq = np.empty((elph.ph.size, len(elph.Rk),
-            elph.el.size, elph.el.size), dtype=complex)
 
         return elph
 
