@@ -36,8 +36,7 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
         topology of the band structure, this may not be possible. Adjacent
         points in `k` must be adjacent in the Brillouin zone too.
     hermitian : bool
-        Assume `matrix` to be Hermitian? Currently, only the real part of the
-        eigenvalues of non-Hermitian matrices is returned.
+        Assume `matrix` to be Hermitian, i.e., calculate real eigenvalues?
     broadcast : bool
         Broadcast result from rank 0 to all processes?
     shared_memory : bool
@@ -74,7 +73,8 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
     # initialize local lists of k points, eigenvalues and eigenvectors:
 
     my_k = np.empty((my_points[comm.rank], dimens))
-    my_v = np.empty((my_points[comm.rank], bands))
+    my_v = np.empty((my_points[comm.rank], bands),
+        dtype=float if hermitian else complex)
 
     if order or vectors:
         my_V = np.empty((my_points[comm.rank], bands, bands), dtype=complex)
@@ -96,17 +96,17 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
 
         if order or vectors:
             if bands == 1:
-                my_v[point], my_V[point] = matrix_k.real, 1
+                my_v[point] = matrix_k.real if hermitian else matrix_k
+                my_V[point] = 1.0
             elif hermitian:
                 my_v[point], my_V[point] = np.linalg.eigh(matrix_k)
             else:
-                tmp, my_V[point] = np.linalg.eig(matrix_k)
-                my_v[point] = tmp.real
+                my_v[point], my_V[point] = np.linalg.eig(matrix_k)
 
-                tmp = np.argsort(my_v[point])
+                my_order = np.argsort(my_v[point])
 
-                my_v[point] = my_v[point][tmp]
-                my_V[point] = my_V[point][:, tmp]
+                my_v[point] = my_v[point][my_order]
+                my_V[point] = my_V[point][:, my_order]
 
             if gauge:
                 for band in range(bands):
@@ -130,11 +130,12 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
                         my_V[xy] = bravais.rotate(my_V[xy], -phi)
         else:
             if bands == 1:
-                my_v[point] = matrix_k.real
+                my_v[point] = matrix_k.real if hermitian else matrix_k
             elif hermitian:
                 my_v[point] = np.linalg.eigvalsh(matrix_k)
             else:
-                my_v[point] = np.linalg.eigvals(matrix_k).real.sort()
+                my_v[point] = np.linalg.eigvals(matrix_k)
+                my_v[point].sort()
 
         status.update()
 
@@ -142,7 +143,8 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
 
     memory = dict(shared_memory=shared_memory, single_memory=not broadcast)
 
-    node, images, v = MPI.shared_array((points, bands), **memory)
+    node, images, v = MPI.shared_array((points, bands), dtype=my_v.dtype,
+        **memory)
 
     comm.Gatherv(my_v, (v, my_points * bands))
 
@@ -298,7 +300,8 @@ def dispersion_full(matrix, size, angle=60, vectors=False, gauge=False,
 
     memory = dict(shared_memory=shared_memory, single_memory=not broadcast)
 
-    node, images, v_mesh = MPI.shared_array((size, size, bands), **memory)
+    node, images, v_mesh = MPI.shared_array((size, size, bands), dtype=v.dtype,
+        **memory)
 
     if vectors:
         node, images, V_mesh = MPI.shared_array((size, size, bands, bands),
