@@ -97,6 +97,78 @@ class Model(object):
         if apply_asr or apply_rsr:
             sum_rule_correction(self, asr=apply_asr, rsr=apply_rsr)
 
+    def supercell(self, N1=1, N2=1, N3=1):
+        """Map mass-spring model onto supercell.
+
+        Parameters
+        ----------
+        N1, N2, N3 : int, default 1
+            Supercell dimensions in units of primitive lattice vectors.
+
+        Returns
+        -------
+        object
+            Mass-spring model for supercell.
+        """
+        ph = Model()
+
+        factor = N1 * N2 * N3
+        ph.M = np.tile(self.M, factor)
+        ph.a = np.array([self.a[0] * N1, self.a[1] * N2, self.a[2] * N3])
+
+        ph.r = [self.a[n1] + self.a[n2] + self.a[n3] + self.r[na]
+            for n1 in range(N1)
+            for n2 in range(N2)
+            for n3 in range(N3)
+            for na in range(self.nat)]
+
+        ph.atom_order = list(self.atom_order) * factor
+        ph.size = self.size * factor
+        ph.nat = self.nat * factor
+
+        if comm.rank == 0:
+            const = dict()
+
+            for n in range(len(self.R)):
+                for n1 in range(N1):
+                    R1, r1 = divmod(self.R[n, 0] + n1, N1)
+
+                    for n2 in range(N2):
+                        R2, r2 = divmod(self.R[n, 1] + n2, N2)
+
+                        for n3 in range(N3):
+                            R3, r3 = divmod(self.R[n, 2] + n3, N3)
+
+                            R = R1, R2, R3
+
+                            A = (n1 * N2 * N3 + n2 * N3 + n3) * self.size
+                            B = (r1 * N2 * N3 + r2 * N3 + r3) * self.size
+
+                            if R not in const:
+                                const[R] = np.zeros((ph.size, ph.size))
+
+                            const[R][
+                                A:A + self.size,
+                                B:B + self.size] = self.data[n]
+
+            count = len(const)
+
+            ph.R = np.array(list(const.keys()), dtype=int)
+            ph.data = np.array(list(const.values()))
+        else:
+            count = None
+
+        count = comm.bcast(count)
+
+        if comm.rank != 0:
+            ph.R = np.empty((count, 3), dtype=int)
+            ph.data = np.empty((count, ph.size, ph.size))
+
+        comm.Bcast(ph.R)
+        comm.Bcast(ph.data)
+
+        return ph
+
 def group(n, size=3):
     """Create slice of dynamical matrix belonging to `n`-th atom."""
 
