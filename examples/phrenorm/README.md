@@ -12,7 +12,8 @@ use the provided [patches](../../patches) to apply the required changes.
 The results obtained in this example are very far from converged! In return,
 the ab initio part takes less than a minute on a laptop with only two cores.
 
-After the main calculation, two further scripts show how to
+After the main calculation, three further scripts show how to
 
 * extract the deformation potential from the output of the EPW code,
+* map the electron-phonon coupling from the unit cell to a supercell,
 * check if the hopping parameters from Wannier90 decay appropriately.

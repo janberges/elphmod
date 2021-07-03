@@ -329,7 +329,7 @@ class Model(object):
         elph.data = np.empty((countg, elph.ph.size, countk,
             elph.el.size, elph.el.size), dtype=complex)
 
-        elph.gq = np.empty((elph.ph.size, len(elph.Rk),
+        elph.gq = np.empty((elph.ph.size, countk,
             elph.el.size, elph.el.size), dtype=complex)
 
         if comm.rank == 0:
@@ -338,6 +338,7 @@ class Model(object):
 
             elph.Rg[...] = Rg
             elph.Rk[...] = Rk
+            elph.data[...] = 0.0
 
             for g, (G1, G2, G3) in enumerate(Rg):
                 for k, (K1, K2, K3) in enumerate(Rk):
