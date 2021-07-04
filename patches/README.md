@@ -10,4 +10,4 @@ and run, e.g., the following commands:
     ./configure
     make pw pp ph epw
 
-The patch files have been created using `git diff -U0`.
+The patch files have been created using `git diff -U1`.

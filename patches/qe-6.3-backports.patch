@@ -2,7 +2,8 @@ diff --git a/EPW/src/ephwann_shuffle.f90 b/EPW/src/ephwann_shuffle.f90
 index 1b0148f48..c552a0224 100644
 --- a/EPW/src/ephwann_shuffle.f90
 +++ b/EPW/src/ephwann_shuffle.f90
-@@ -359,0 +360,8 @@
+@@ -359,2 +359,10 @@
+   !
 +  IF (ionode) THEN
 +    OPEN (13, file='wigner.dat', action='write', status='replace', access='stream')
 +    WRITE (13) nrr_k, irvec_k, ndegen_k, wslen_k
@@ -11,30 +12,40 @@ index 1b0148f48..c552a0224 100644
 +    CLOSE (13)
 +  ENDIF
 +  !
+ #ifndef __MPI  
 diff --git a/LR_Modules/lrcom.f90 b/LR_Modules/lrcom.f90
 index 6bb9b457b..e8c09ae56 100644
 --- a/LR_Modules/lrcom.f90
 +++ b/LR_Modules/lrcom.f90
-@@ -49,0 +50,3 @@ MODULE control_lr
+@@ -49,2 +49,5 @@ MODULE control_lr
+   LOGICAL  :: lrpa           ! if .TRUE. uses the Random Phace Approximation
 +  LOGICAL  :: bare           ! if .TRUE. calculate fully bare phonons
 +  LOGICAL  :: cdfpt          ! if .TRUE. applies cDFPT
 +  INTEGER, ALLOCATABLE :: cdfpt_subspace(:, :, :, :)
+   !
 diff --git a/LR_Modules/orthogonalize.f90 b/LR_Modules/orthogonalize.f90
 index 9b7bdcf43..95806c126 100644
 --- a/LR_Modules/orthogonalize.f90
 +++ b/LR_Modules/orthogonalize.f90
-@@ -32 +32,3 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
+@@ -31,3 +31,5 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
+   USE kinds,            ONLY : DP
 -  USE klist,            ONLY : lgauss, degauss, ngauss, ltetra, wk
 +  USE klist,            ONLY : lgauss, degauss, ngauss, ltetra, wk, xk
 +  USE start_k,          ONLY : nk1, nk2, nk3
 +  USE cell_base,        ONLY : at
-@@ -43 +45 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
+   USE noncollin_module, ONLY : noncolin, npol
+@@ -42,3 +44,3 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
+   USE gvect,            ONLY : gstart
 -  USE control_lr,       ONLY : alpha_pv, nbnd_occ
 +  USE control_lr,       ONLY : alpha_pv, nbnd_occ, cdfpt, cdfpt_subspace
-@@ -56 +58 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
+   USE dfpt_tetra_mod,   ONLY : dfpt_tetra_beta
+@@ -55,3 +57,3 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
+   REAL(DP), ALLOCATABLE    :: ps_r(:,:)
 -  INTEGER :: ibnd, jbnd, nbnd_eff, n_start, n_end
 +  INTEGER :: ibnd, jbnd, nbnd_eff, n_start, n_end, kk1, kk2, kk3, kq1, kq2, kq3
-@@ -60,0 +63,8 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
+   REAL(DP) :: wg1, w0g, wgp, wwg, deltae, theta
+@@ -60,2 +62,10 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
+   !
 +  kk1 = modulo(nint(nk1 * dot_product(at(:, 1), xk(:, ikk))), nk1) + 1
 +  kk2 = modulo(nint(nk2 * dot_product(at(:, 2), xk(:, ikk))), nk2) + 1
 +  kk3 = modulo(nint(nk3 * dot_product(at(:, 3), xk(:, ikk))), nk3) + 1
@@ -43,10 +54,14 @@ index 9b7bdcf43..95806c126 100644
 +  kq2 = modulo(nint(nk2 * dot_product(at(:, 2), xk(:, ikq))), nk2) + 1
 +  kq3 = modulo(nint(nk3 * dot_product(at(:, 3), xk(:, ikq))), nk3) + 1
 +  !
-@@ -71 +81 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
+   CALL start_clock ('ortho')
+@@ -70,3 +80,3 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
+   !
 -  IF (ltetra .OR. lgauss) THEN
 +  IF (ltetra .OR. lgauss .OR. cdfpt) THEN
-@@ -92,0 +103,9 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
+      !
+@@ -92,2 +102,11 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
+            DO jbnd = 1, nbnd
 +              !
 +              IF (cdfpt) THEN
 +                 IF (any(cdfpt_subspace(:, kk1, kk2, kk3) == ibnd) .AND. &
@@ -56,7 +71,9 @@ index 9b7bdcf43..95806c126 100644
 +                 ENDIF
 +              ENDIF
 +              !
-@@ -112,0 +132,10 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
+               wgp = wgauss ( (ef - et (jbnd, ikq) ) / degauss, ngauss)
+@@ -112,2 +131,12 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
+            !
 +        ELSEIF (cdfpt) THEN
 +           !
 +           DO jbnd = nbnd_occ(ikq) + 1, nbnd
@@ -67,67 +84,95 @@ index 9b7bdcf43..95806c126 100644
 +           ENDDO
 +           CYCLE
 +           !
-@@ -188 +217 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
+         ELSE
+@@ -187,3 +216,3 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
+   !
 -  IF (lgauss .OR. ltetra ) THEN
 +  IF (lgauss .OR. ltetra .OR. cdfpt) THEN
+      !
 diff --git a/PHonon/PH/do_phonon.f90 b/PHonon/PH/do_phonon.f90
 index f1c86a103..f8ec383bf 100644
 --- a/PHonon/PH/do_phonon.f90
 +++ b/PHonon/PH/do_phonon.f90
-@@ -36 +36 @@ SUBROUTINE do_phonon(auxdyn)
+@@ -35,3 +35,3 @@ SUBROUTINE do_phonon(auxdyn)
+                               only_wfc, rec_code, where_rec
 -  USE el_phon,         ONLY : elph, elph_mat, elph_simple, elph_epa
 +  USE el_phon,         ONLY : elph, elph_mat, elph_simple, elph_epa, elph_defpot
-@@ -129 +129 @@ SUBROUTINE do_phonon(auxdyn)
+   !
+@@ -128,3 +128,3 @@ SUBROUTINE do_phonon(auxdyn)
+            CALL elph_scdft()
 -        ELSE 
 +        ELSEIF (.NOT. elph_defpot) THEN
+            CALL elphsum()
 diff --git a/PHonon/PH/elph.f90 b/PHonon/PH/elph.f90
 index 183b11c3a..f02ce0204 100644
 --- a/PHonon/PH/elph.f90
 +++ b/PHonon/PH/elph.f90
-@@ -15 +15 @@ MODULE el_phon
+@@ -14,3 +14,3 @@ MODULE el_phon
+   !
 -  LOGICAL :: elph, elph_mat, elph_simple, elph_epa
 +  LOGICAL :: elph, elph_mat, elph_simple, elph_epa, elph_defpot
+   INTEGER :: elph_nbnd_min, elph_nbnd_max
 diff --git a/PHonon/PH/phq_readin.f90 b/PHonon/PH/phq_readin.f90
 index 3f9712a98..188e6e1db 100644
 --- a/PHonon/PH/phq_readin.f90
 +++ b/PHonon/PH/phq_readin.f90
-@@ -69,0 +70 @@ SUBROUTINE phq_readin()
+@@ -69,2 +69,3 @@ SUBROUTINE phq_readin()
+   USE el_phon,       ONLY : elph,elph_mat,elph_simple,elph_epa,elph_nbnd_min, elph_nbnd_max, &
 +                            elph_defpot, &
-@@ -74 +75 @@ SUBROUTINE phq_readin()
+                             el_ph_sigma, el_ph_nsigma, el_ph_ngauss,auxdvscf
+@@ -73,3 +74,3 @@ SUBROUTINE phq_readin()
+   USE qpoint,        ONLY : nksq, xq
 -  USE control_lr,    ONLY : lgamma, lrpa
 +  USE control_lr,    ONLY : lgamma, lrpa, bare, cdfpt, cdfpt_subspace
-@@ -110,0 +112,2 @@ SUBROUTINE phq_readin()
+ 
+@@ -110,2 +111,4 @@ SUBROUTINE phq_readin()
+   !
 +  CHARACTER(LEN=256) :: subspace
 +  !
-@@ -124 +127 @@ SUBROUTINE phq_readin()
+   NAMELIST / INPUTPH / tr2_ph, amass, alpha_mix, niter_ph, nmix_ph,  &
+@@ -123,3 +126,3 @@ SUBROUTINE phq_readin()
+                        q_in_band_form, q2d, qplot, low_directory_check, &
 -                       lshift_q
 +                       lshift_q, bare, cdfpt, subspace
-@@ -302,0 +306,4 @@ SUBROUTINE phq_readin()
+ 
+@@ -302,2 +305,6 @@ SUBROUTINE phq_readin()
+   !
 +  bare = .false.
 +  cdfpt = .false.
 +  subspace = 'subspace.dat'
 +  !
-@@ -339,0 +347,4 @@ SUBROUTINE phq_readin()
+   ! ...  reading the namelist inputph
+@@ -339,2 +346,6 @@ SUBROUTINE phq_readin()
+   !
 +  CALL mp_bcast(bare, meta_ionode_id, world_comm)
 +  CALL mp_bcast(cdfpt, meta_ionode_id, world_comm)
 +  IF (cdfpt) CALL setup_subspace(cdfpt_subspace, subspace)
 +  !
-@@ -372,0 +384 @@ SUBROUTINE phq_readin()
+   drho_star%dir=trimcheck(drho_star%dir)
+@@ -372,2 +383,3 @@ SUBROUTINE phq_readin()
+   elph_tetra = 0
 +  elph_defpot = .false.
-@@ -394,0 +407,6 @@ SUBROUTINE phq_readin()
+   SELECT CASE( trim( electron_phonon ) )
+@@ -394,2 +406,8 @@ SUBROUTINE phq_readin()
+      elph_epa=.false.
 +  CASE( 'defpot' )
 +     elph=.true.
 +     elph_mat=.false.
 +     elph_simple=.false.
 +     elph_epa=.false.
 +     elph_defpot=.true.
-@@ -797,2 +815,3 @@ SUBROUTINE phq_readin()
+   ! YAMBO >
+@@ -796,4 +814,5 @@ SUBROUTINE phq_readin()
+   !YAMBO >
 -  IF (elph.AND..NOT.(lgauss .or. ltetra).and..NOT.elph_yambo) CALL errore ('phq_readin', 'Electron-&
 -       &phonon only for metals', 1)
 +  IF (elph .AND. .NOT. (lgauss .OR. ltetra) &
 +      .AND. .NOT. (elph_yambo .OR. elph_defpot)) &
 +          CALL errore ('phq_readin', 'Electron-phonon only for metals', 1)
-@@ -844,0 +864,31 @@ SUBROUTINE phq_readin()
+   !YAMBO <
+@@ -844,2 +863,33 @@ SUBROUTINE phq_readin()
+   !
 +CONTAINS
 +  !
 +  SUBROUTINE setup_subspace(subspace, filename)
@@ -159,14 +204,18 @@ index 3f9712a98..188e6e1db 100644
 +     !
 +     CALL bcast_integer(subspace, size(subspace), meta_ionode_id, world_comm)
 +  END SUBROUTINE
+ END SUBROUTINE phq_readin
 diff --git a/PHonon/PH/solve_linter.f90 b/PHonon/PH/solve_linter.f90
 index 861942da9..5f4b41b81 100644
 --- a/PHonon/PH/solve_linter.f90
 +++ b/PHonon/PH/solve_linter.f90
-@@ -74 +74 @@ SUBROUTINE solve_linter (irr, imode0, npe, drhoscf)
+@@ -73,3 +73,3 @@ SUBROUTINE solve_linter (irr, imode0, npe, drhoscf)
+   USE qpoint,       ONLY : xq, nksq, ikks, ikqs
 -  USE control_lr,   ONLY : alpha_pv, nbnd_occ, lgamma
 +  USE control_lr,   ONLY : alpha_pv, nbnd_occ, lgamma, bare
-@@ -363,3 +363,5 @@ SUBROUTINE solve_linter (irr, imode0, npe, drhoscf)
+   USE dv_of_drho_lr
+@@ -362,5 +362,7 @@ SUBROUTINE solve_linter (irr, imode0, npe, drhoscf)
+ 
 -           call cgsolve_all (ch_psi_all, cg_psi, et(1,ikk), dvpsi, dpsi, &
 -                             h_diag, npwx, npwq, thresh, ik, lter, conv_root, &
 -                             anorm, nbnd_occ(ikk), npol )
@@ -175,3 +224,4 @@ index 861942da9..5f4b41b81 100644
 +                                h_diag, npwx, npwq, thresh, ik, lter, conv_root, &
 +                                anorm, nbnd_occ(ikk), npol )
 +           ENDIF
+ 
