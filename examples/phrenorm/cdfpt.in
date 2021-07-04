@@ -13,6 +13,5 @@ TaS2
 
     tr2_ph = 1e-12
 
-    cdfpt = .true.
-    subspace = 'subspace.in'
+    cdfpt_bnd(1) = 9
 /

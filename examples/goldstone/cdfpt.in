@@ -16,6 +16,5 @@ N2
 
     electron_phonon = 'defpot'
 
-    cdfpt = .true.
-    subspace = 'subspace.in'
+    cdfpt_bnd(1:9) = 1,2,3,4,5,6,7,8,9
 /

@@ -16,8 +16,6 @@ mpirun pw.x -nk $nk < scf.in | tee scf.out
 mpirun pw.x -nk $nk < nscf.in | tee nscf.out
 mpirun projwfc.x -nk $nk < projwfc.in | tee projwfc.out
 
-mpirun python3 subspace.py
-
 for method in dfpt cdfpt
 do
     mpirun pw.x -nk $nk < scf.in | tee scf.out

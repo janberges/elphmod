@@ -1,3 +1,17 @@
+diff --git a/EPW/src/Makefile b/EPW/src/Makefile
+index c54db1ac6..18d037afa 100644
+--- a/EPW/src/Makefile
++++ b/EPW/src/Makefile
+@@ -11,2 +11,3 @@ MODFLAGS= $(BASEMOD_FLAGS) \
+           $(MOD_FLAG)../../PW/src \
++          $(MOD_FLAG)../../PP/src \
+           $(MOD_FLAG)../../PHonon/PH \
+@@ -83,3 +84,4 @@ PWOBJS = ../../PW/src/libpw.a
+ QEMODS = ../../Modules/libqemod.a ../../KS_Solvers/libks_solvers.a \
+-         ../../upflib/libupf.a ../../FFTXlib/libqefft.a ../../dft-d3/libdftd3qe.a
++         ../../upflib/libupf.a ../../FFTXlib/libqefft.a ../../dft-d3/libdftd3qe.a \
++         ../../PP/src/libpp.a
+ LIBOBJS =../../LAXlib/libqela.a ../../UtilXlib/libutil.a ../../clib/clib.a
 diff --git a/EPW/src/ephwann_shuffle.f90 b/EPW/src/ephwann_shuffle.f90
 index ea6825c88..7ce218a0d 100644
 --- a/EPW/src/ephwann_shuffle.f90
@@ -14,83 +28,236 @@ index ea6825c88..7ce218a0d 100644
 +  ENDIF
 +  !
    IF (use_ws) THEN
-diff --git a/LR_Modules/lrcom.f90 b/LR_Modules/lrcom.f90
-index 68675bfe4..ddfb8d0fa 100644
---- a/LR_Modules/lrcom.f90
-+++ b/LR_Modules/lrcom.f90
-@@ -66,2 +66,5 @@ MODULE control_lr
-   LOGICAL  :: lrpa           ! if .TRUE. uses the Random Phace Approximation
-+  LOGICAL  :: bare           ! if .TRUE. calculate fully bare phonons
-+  LOGICAL  :: cdfpt          ! if .TRUE. applies cDFPT
-+  INTEGER, ALLOCATABLE :: cdfpt_subspace(:, :, :, :)
-   REAL(DP) :: ethr_nscf      ! convergence threshol for KS eigenvalues in the
+diff --git a/LR_Modules/Makefile b/LR_Modules/Makefile
+index 7cddef733..e9a1b8bfc 100644
+--- a/LR_Modules/Makefile
++++ b/LR_Modules/Makefile
+@@ -5,3 +5,3 @@ include ../make.inc
+ # location of needed modules and included files (if any)
+-MODFLAGS=$(BASEMOD_FLAGS) $(MOD_FLAG)$(TOPDIR)/PW/src
++MODFLAGS=$(BASEMOD_FLAGS) $(MOD_FLAG)$(TOPDIR)/PW/src $(MOD_FLAG)$(TOPDIR)/PP/src
+ 
+@@ -20,2 +20,3 @@ cg_psi.o \
+ ccg_psi.o \
++cdfpt.o \
+ ch_psi_all.o \
+diff --git a/LR_Modules/cdfpt.f90 b/LR_Modules/cdfpt.f90
+new file mode 100644
+index 000000000..fa2e8594f
+--- /dev/null
++++ b/LR_Modules/cdfpt.f90
+@@ -0,0 +1,156 @@
++!
++! Copyright (C) 2001-2016 Quantum ESPRESSO group
++! This file is distributed under the terms of the
++! GNU General Public License. See the file `License'
++! in the root directory of the present distribution,
++! or http://www.gnu.org/copyleft/gpl.txt .
++!
++!-----------------------------------------------------------------------
++MODULE cdfpt
++  !---------------------------------------------------------------------
++  !
++  ! This module provides routines to define an "active subspace" to be
++  ! used in constrained density-functional perturbation theory (cDFPT).
++  ! cDFPT has been introduced by Nomura & Arita, PRB 92, 245108 (2015).
++  !
++  USE kinds, ONLY : DP
++  !
++  USE cell_base, ONLY : at
++  USE io_files, ONLY : postfix, prefix, wfc_dir
++  USE io_global, ONLY : meta_ionode, meta_ionode_id, stdout
++  USE klist, ONLY : xk
++  USE mp_world, ONLY : world_comm
++  USE read_proj, ONLY : read_xml_proj
++  USE start_k, ONLY : nk1, nk2, nk3
++  USE wvfct, ONLY : nbnd
++  !
++  IMPLICIT NONE
++  PRIVATE
++  SAVE
++  !
++  PUBLIC :: lcdfpt, cdfpt_bnd, cdfpt_orb, bare
++  PUBLIC :: setup_cdfpt_subspace, in_cdfpt_subspace
++  !
++  LOGICAL :: lcdfpt, bare
++  INTEGER :: cdfpt_bnd(100), cdfpt_orb(100)
++  !
++  LOGICAL, ALLOCATABLE :: subspace(:, :, :, :)
++  !
++  CONTAINS
++  !
++  !---------------------------------------------------------------------
++  SUBROUTINE setup_cdfpt_subspace
++     !------------------------------------------------------------------
++     !
++     CHARACTER(256) :: filename
++     INTEGER :: ierr, natomwfc, nbnd_proj, nkstot, nspin
++     REAL(DP) :: nelec, ef
++     REAL(DP), ALLOCATABLE :: xk_proj(:, :), wk(:), et(:, :)
++     COMPLEX(DP), ALLOCATABLE :: projs(:, :, :)
++     !
++     LOGICAL :: lbnd, lorb
++     INTEGER :: ik, k1, k2, k3, ibnd, iorb
++     REAL(DP) :: weight
++     REAL(DP), ALLOCATABLE :: weights(:, :,:)
++     !
++     lbnd = ANY(cdfpt_bnd > 0)
++     lorb = ANY(cdfpt_orb > 0)
++     lcdfpt = lbnd .OR. lorb
++     !
++     IF (.NOT. lcdfpt) RETURN
++     !
++     filename = TRIM(wfc_dir) // TRIM(prefix) // postfix &
++        // 'atomic_proj.xml'
++     !
++     ALLOCATE(subspace(nbnd, nk1, nk2, nk3))
++     !
++     IF (meta_ionode) THEN
++        WRITE (stdout, "(/, 5x, 'cDFPT active subspace:')")
++        !
++        subspace = .FALSE.
++        !
++        IF (lbnd) THEN
++           DO ibnd = 1, SIZE(cdfpt_bnd)
++              IF (cdfpt_bnd(ibnd) > 0) THEN
++                 subspace(cdfpt_bnd(ibnd), :, :, :) = .TRUE.
++              ENDIF
++           ENDDO
++        ENDIF
++        !
++        IF (lorb) THEN
++           CALL read_xml_proj(filename, ierr, natomwfc, nbnd_proj, &
++              nkstot, nspin, nelec, ef, xk_proj, wk, et, projs)
++           !
++           IF (ierr /= 0) THEN
++              CALL errore('setup_cdfpt_subspace', &
++                 'unable to read file ' // filename, 1)
++           ELSEIF (nkstot /= nk1 * nk2 * nk3) THEN
++              CALL errore('setup_cdfpt_subspace', &
++                 'wrong number of k points in ' // filename, 1)
++           ELSEIF (nbnd /= nbnd_proj) THEN
++              CALL errore('setup_cdfpt_subspace', &
++                 'wrong number of bands in ' // filename, 1)
++           ENDIF
++           !
++           weights = ABS(projs) ** 2
++           !
++           DO ik = 1, nkstot
++              CALL expand_k_index(ik, xk_proj(:, ik), k1, k2, k3)
++              !
++              DO ibnd = 1, nbnd
++                 weight = 0.D0
++                 DO iorb = 1, SIZE(cdfpt_orb)
++                    IF (cdfpt_orb(iorb) > 0) weight = weight &
++                       + weights(cdfpt_orb(iorb), ibnd, ik)
++                 ENDDO
++                 !
++                 IF (weight > 0.5D0) subspace(ibnd, k1, k2, k3) = .TRUE.
++              ENDDO
++           ENDDO
++        ENDIF
++        !
++        DO ibnd = 1, nbnd
++           IF (ALL(subspace(ibnd, :, :, :))) THEN
++              WRITE (stdout, "(5x, 'Complete band ', I0)") ibnd
++           ELSEIF (ANY(subspace(ibnd, :, :, :))) THEN
++              WRITE (stdout, "(5x, 'Parts of band ', I0)") ibnd
++           ENDIF
++        ENDDO
++     ENDIF
++     !
++     CALL bcast_logical(subspace, &
++        size(subspace), meta_ionode_id, world_comm)
++     !
++  END SUBROUTINE setup_cdfpt_subspace
++  !
++  !---------------------------------------------------------------------
++  LOGICAL FUNCTION in_cdfpt_subspace(ikk, ikq, ibnd, jbnd)
++     !------------------------------------------------------------------
++     !
++     INTEGER, INTENT(IN) :: ikk, ikq, ibnd, jbnd
++     !
++     INTEGER :: kk1, kk2, kk3, kq1, kq2, kq3
++     !
++     CALL expand_k_index(ikk, xk(:, ikk), kk1, kk2, kk3)
++     CALL expand_k_index(ikq, xk(:, ikq), kq1, kq2, kq3)
++     !
++     in_cdfpt_subspace = subspace(ibnd, kk1, kk2, kk3) &
++        .AND. subspace(jbnd, kq1, kq2, kq3)
++     !
++  END FUNCTION in_cdfpt_subspace
++  !
++  !---------------------------------------------------------------------
++  SUBROUTINE expand_k_index(ik, xki, k1, k2, k3)
++     !------------------------------------------------------------------
++     !
++     INTEGER, INTENT(IN) :: ik
++     REAL(DP), INTENT(IN) :: xki(3)
++     INTEGER, INTENT(OUT) :: k1, k2, k3
++     !
++     k1 = modulo(nint(nk1 * dot_product(at(:, 1), xki)), nk1) + 1
++     k2 = modulo(nint(nk2 * dot_product(at(:, 2), xki)), nk2) + 1
++     k3 = modulo(nint(nk3 * dot_product(at(:, 3), xki)), nk3) + 1
++     !
++  END SUBROUTINE expand_k_index
++  !
++END MODULE cdfpt
 diff --git a/LR_Modules/orthogonalize.f90 b/LR_Modules/orthogonalize.f90
-index 9b7bdcf43..95806c126 100644
+index 9b7bdcf43..d3be8ed5b 100644
 --- a/LR_Modules/orthogonalize.f90
 +++ b/LR_Modules/orthogonalize.f90
-@@ -31,3 +31,5 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
-   USE kinds,            ONLY : DP
--  USE klist,            ONLY : lgauss, degauss, ngauss, ltetra, wk
-+  USE klist,            ONLY : lgauss, degauss, ngauss, ltetra, wk, xk
-+  USE start_k,          ONLY : nk1, nk2, nk3
-+  USE cell_base,        ONLY : at
-   USE noncollin_module, ONLY : noncolin, npol
-@@ -42,3 +44,3 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
-   USE gvect,            ONLY : gstart
--  USE control_lr,       ONLY : alpha_pv, nbnd_occ
-+  USE control_lr,       ONLY : alpha_pv, nbnd_occ, cdfpt, cdfpt_subspace
+@@ -44,2 +44,3 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
    USE dfpt_tetra_mod,   ONLY : dfpt_tetra_beta
-@@ -55,3 +57,3 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
-   REAL(DP), ALLOCATABLE    :: ps_r(:,:)
--  INTEGER :: ibnd, jbnd, nbnd_eff, n_start, n_end
-+  INTEGER :: ibnd, jbnd, nbnd_eff, n_start, n_end, kk1, kk2, kk3, kq1, kq2, kq3
-   REAL(DP) :: wg1, w0g, wgp, wwg, deltae, theta
-@@ -60,2 +62,10 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
++  USE cdfpt,            ONLY : lcdfpt, in_cdfpt_subspace
    !
-+  kk1 = modulo(nint(nk1 * dot_product(at(:, 1), xk(:, ikk))), nk1) + 1
-+  kk2 = modulo(nint(nk2 * dot_product(at(:, 2), xk(:, ikk))), nk2) + 1
-+  kk3 = modulo(nint(nk3 * dot_product(at(:, 3), xk(:, ikk))), nk3) + 1
-+  !
-+  kq1 = modulo(nint(nk1 * dot_product(at(:, 1), xk(:, ikq))), nk1) + 1
-+  kq2 = modulo(nint(nk2 * dot_product(at(:, 2), xk(:, ikq))), nk2) + 1
-+  kq3 = modulo(nint(nk3 * dot_product(at(:, 3), xk(:, ikq))), nk3) + 1
-+  !
-   CALL start_clock ('ortho')
-@@ -70,3 +80,3 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
+@@ -70,3 +71,3 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
    !
 -  IF (ltetra .OR. lgauss) THEN
-+  IF (ltetra .OR. lgauss .OR. cdfpt) THEN
++  IF (ltetra .OR. lgauss .OR. lcdfpt) THEN
       !
-@@ -92,2 +102,11 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
+@@ -92,2 +93,10 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
             DO jbnd = 1, nbnd
 +              !
-+              IF (cdfpt) THEN
-+                 IF (any(cdfpt_subspace(:, kk1, kk2, kk3) == ibnd) .AND. &
-+                     any(cdfpt_subspace(:, kq1, kq2, kq3) == jbnd)) THEN
++              IF (lcdfpt) THEN
++                 IF (in_cdfpt_subspace(ikk, ikq, ibnd, jbnd)) THEN
 +                    ps(jbnd, ibnd) = wg1 * ps(jbnd, ibnd)
 +                    CYCLE
 +                 ENDIF
 +              ENDIF
 +              !
                wgp = wgauss ( (ef - et (jbnd, ikq) ) / degauss, ngauss)
-@@ -112,2 +131,12 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
+@@ -112,2 +121,11 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
             !
-+        ELSEIF (cdfpt) THEN
++        ELSEIF (lcdfpt) THEN
 +           !
 +           DO jbnd = nbnd_occ(ikq) + 1, nbnd
-+              IF (all(cdfpt_subspace(:, kk1, kk2, kk3) /= ibnd) .OR. &
-+                  all(cdfpt_subspace(:, kq1, kq2, kq3) /= jbnd)) THEN
++              IF (.NOT. in_cdfpt_subspace(ikk, ikq, ibnd, jbnd)) THEN
 +                 ps(jbnd, ibnd) = 0.0_DP
 +              ENDIF
 +           ENDDO
 +           CYCLE
 +           !
          ELSE
-@@ -187,3 +216,3 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
+@@ -187,3 +205,3 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
    !
 -  IF (lgauss .OR. ltetra ) THEN
-+  IF (lgauss .OR. ltetra .OR. cdfpt) THEN
++  IF (lgauss .OR. ltetra .OR. lcdfpt) THEN
       !
+diff --git a/PHonon/PH/Makefile b/PHonon/PH/Makefile
+index bbf812df1..eca0c7590 100644
+--- a/PHonon/PH/Makefile
++++ b/PHonon/PH/Makefile
+@@ -7,2 +7,3 @@ MODFLAGS= $(BASEMOD_FLAGS) \
+           $(MOD_FLAG)../../PW/src \
++          $(MOD_FLAG)../../PP/src \
+           $(MOD_FLAG)../../dft-d3 \
+@@ -203,3 +204,4 @@ PWOBJS = ../../PW/src/libpw.a
+ QEMODS = ../../Modules/libqemod.a ../../KS_Solvers/libks_solvers.a ../../upflib/libupf.a \
+-         ../../FFTXlib/libqefft.a ../../LAXlib/libqela.a ../../UtilXlib/libutil.a ../../dft-d3/libdftd3qe.a
++         ../../FFTXlib/libqefft.a ../../LAXlib/libqela.a ../../UtilXlib/libutil.a \
++         ../../dft-d3/libdftd3qe.a ../../PP/src/libpp.a
+ TLDEPS= phlibs
 diff --git a/PHonon/PH/do_phonon.f90 b/PHonon/PH/do_phonon.f90
 index c05807b81..539ebf188 100644
 --- a/PHonon/PH/do_phonon.f90
@@ -115,47 +282,41 @@ index 183b11c3a..f02ce0204 100644
 +  LOGICAL :: elph, elph_mat, elph_simple, elph_epa, elph_defpot
    INTEGER :: elph_nbnd_min, elph_nbnd_max
 diff --git a/PHonon/PH/phq_readin.f90 b/PHonon/PH/phq_readin.f90
-index 59d22f45a..a3fd77d64 100644
+index 59d22f45a..aaf86c145 100644
 --- a/PHonon/PH/phq_readin.f90
 +++ b/PHonon/PH/phq_readin.f90
 @@ -64,2 +64,3 @@ SUBROUTINE phq_readin()
    USE el_phon,       ONLY : elph,elph_mat,elph_simple,elph_epa,elph_nbnd_min, elph_nbnd_max, &
 +                            elph_defpot, &
                              el_ph_sigma, el_ph_nsigma, el_ph_ngauss,auxdvscf
-@@ -68,3 +69,3 @@ SUBROUTINE phq_readin()
+@@ -68,2 +69,3 @@ SUBROUTINE phq_readin()
    USE qpoint,        ONLY : nksq, xq
--  USE control_lr,    ONLY : lgamma, lrpa
-+  USE control_lr,    ONLY : lgamma, lrpa, bare, cdfpt, cdfpt_subspace
-   ! YAMBO >
-@@ -112,2 +113,4 @@ SUBROUTINE phq_readin()
-   !
-+  CHARACTER(LEN=256) :: subspace
-+  !
-   NAMELIST / INPUTPH / tr2_ph, amass, alpha_mix, niter_ph, nmix_ph,  &
-@@ -128,3 +131,3 @@ SUBROUTINE phq_readin()
++  USE cdfpt,         ONLY : lcdfpt, cdfpt_bnd, cdfpt_orb, setup_cdfpt_subspace, bare
+   USE control_lr,    ONLY : lgamma, lrpa
+@@ -128,3 +130,3 @@ SUBROUTINE phq_readin()
                         wpot_dir, ahc_dir, ahc_nbnd, ahc_nbndskip, &
 -                       skip_upperfan
-+                       skip_upperfan, bare, cdfpt, subspace
++                       skip_upperfan, cdfpt_bnd, cdfpt_orb, bare
  
-@@ -341,2 +344,6 @@ SUBROUTINE phq_readin()
+@@ -341,2 +343,6 @@ SUBROUTINE phq_readin()
    !
-+  bare = .false.
-+  cdfpt = .false.
-+  subspace = 'subspace.dat'
++  cdfpt_bnd = 0
++  cdfpt_orb = 0
++  bare = .FALSE.
 +  !
    ! ...  reading the namelist inputph
-@@ -389,2 +396,6 @@ SUBROUTINE phq_readin()
+@@ -389,2 +395,6 @@ SUBROUTINE phq_readin()
    !
++  CALL mp_bcast(cdfpt_bnd, meta_ionode_id, world_comm)
++  CALL mp_bcast(cdfpt_orb, meta_ionode_id, world_comm)
 +  CALL mp_bcast(bare, meta_ionode_id, world_comm)
-+  CALL mp_bcast(cdfpt, meta_ionode_id, world_comm)
-+  IF (cdfpt) CALL setup_subspace(cdfpt_subspace, subspace)
 +  !
    drho_star%dir=trimcheck(drho_star%dir)
-@@ -422,2 +433,3 @@ SUBROUTINE phq_readin()
+@@ -422,2 +432,3 @@ SUBROUTINE phq_readin()
    elph_tetra = 0
 +  elph_defpot = .false.
    SELECT CASE( trim( electron_phonon ) )
-@@ -444,2 +456,8 @@ SUBROUTINE phq_readin()
+@@ -444,2 +455,8 @@ SUBROUTINE phq_readin()
       elph_epa=.false.
 +  CASE( 'defpot' )
 +     elph=.true.
@@ -164,55 +325,25 @@ index 59d22f45a..a3fd77d64 100644
 +     elph_epa=.false.
 +     elph_defpot=.true.
    ! YAMBO >
-@@ -909,3 +927,3 @@ SUBROUTINE phq_readin()
+@@ -909,3 +926,3 @@ SUBROUTINE phq_readin()
    IF (elph .AND. .NOT.(lgauss .OR. ltetra) &
 -      .AND. .NOT. (elph_yambo .OR. elph_ahc)) &
 +      .AND. .NOT. (elph_yambo .OR. elph_ahc .OR. elph_defpot)) &
            CALL errore ('phq_readin', 'Electron-phonon only for metals', 1)
-@@ -961,2 +979,33 @@ SUBROUTINE phq_readin()
+@@ -959,2 +976,4 @@ SUBROUTINE phq_readin()
    !
-+CONTAINS
++  CALL setup_cdfpt_subspace
 +  !
-+  SUBROUTINE setup_subspace(subspace, filename)
-+     INTEGER, ALLOCATABLE, INTENT(OUT) :: subspace(:, :, :, :)
-+     CHARACTER(LEN=256), INTENT(IN) :: filename
-+     !
-+     INTEGER, EXTERNAL :: find_free_unit
-+     INTEGER :: id, nk(3), bands, band, offset
-+     !
-+     id = find_free_unit()
-+     !
-+     IF (meta_ionode) THEN
-+        OPEN (id, file=filename, action='read', status='old')
-+        READ (id, *) nk, bands, offset
-+     ENDIF
-+     !
-+     CALL mp_bcast(nk, meta_ionode_id, world_comm)
-+     CALL mp_bcast(bands, meta_ionode_id, world_comm)
-+     !
-+     ALLOCATE(subspace(bands, nk(1), nk(2), nk(3)))
-+     !
-+     IF (meta_ionode) THEN
-+        DO band = 1, bands
-+           READ (id, *) subspace(band, :, :, :)
-+        ENDDO
-+        CLOSE (id)
-+        subspace(:, :, :, :) = subspace + offset
-+     ENDIF
-+     !
-+     CALL bcast_integer(subspace, size(subspace), meta_ionode_id, world_comm)
-+  END SUBROUTINE
- END SUBROUTINE phq_readin
+   RETURN
 diff --git a/PHonon/PH/solve_linter.f90 b/PHonon/PH/solve_linter.f90
-index 97d69aa28..525b62171 100644
+index 97d69aa28..255d83dfb 100644
 --- a/PHonon/PH/solve_linter.f90
 +++ b/PHonon/PH/solve_linter.f90
-@@ -81,3 +81,3 @@ SUBROUTINE solve_linter (irr, imode0, npe, drhoscf)
+@@ -81,2 +81,3 @@ SUBROUTINE solve_linter (irr, imode0, npe, drhoscf)
    USE qpoint_aux,           ONLY : ikmks, ikmkmqs, becpt, alphapt
--  USE control_lr,           ONLY : nbnd_occ, lgamma
-+  USE control_lr,           ONLY : nbnd_occ, lgamma, bare
-   USE dv_of_drho_lr,        ONLY : dv_of_drho
-@@ -455,5 +455,7 @@ SUBROUTINE solve_linter (irr, imode0, npe, drhoscf)
++  USE cdfpt,                ONLY : bare
+   USE control_lr,           ONLY : nbnd_occ, lgamma
+@@ -455,5 +456,7 @@ SUBROUTINE solve_linter (irr, imode0, npe, drhoscf)
                
 -              call cgsolve_all (ch_psi_all, cg_psi, et(1,ikmk), dvpsi, dpsi, &
 -                   h_diag, npwx, npwq, thresh, ik, lter, conv_root, &
