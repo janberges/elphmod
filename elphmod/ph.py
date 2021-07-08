@@ -98,7 +98,8 @@ class Model(object):
         self.nat = self.size // 3
 
         if apply_asr or apply_rsr:
-            sum_rule_correction(self, asr=apply_asr, rsr=apply_rsr)
+            sum_rule_correction(self, asr=apply_asr, rsr=apply_rsr,
+                divide_mass=divide_mass)
 
     def supercell(self, N1=1, N2=1, N3=1):
         """Map mass-spring model onto supercell.
@@ -399,7 +400,8 @@ def asr(phid):
             for m3 in range(nr3)
             if na1 != na2 or m1 or m2 or m3)
 
-def sum_rule_correction(ph, asr=True, rsr=True, eps=1e-15, report=True):
+def sum_rule_correction(ph, asr=True, rsr=True, eps=1e-15, report=True,
+        divide_mass=True):
     """Apply sum rule correction to force constants.
 
     Parameters
@@ -414,6 +416,8 @@ def sum_rule_correction(ph, asr=True, rsr=True, eps=1e-15, report=True):
         Smallest safe absolute value of divisor.
     report : bool
         Print sums before and after correction?
+    divide_mass : bool
+        Have the force constants of `ph` been divided by atomic masses?
     """
     if comm.rank != 0:
         comm.Bcast(ph.data)
@@ -454,9 +458,10 @@ def sum_rule_correction(ph, asr=True, rsr=True, eps=1e-15, report=True):
     R = np.einsum('xy,nx->ny', ph.a, ph.R)
     C = ph.data.reshape((len(R), ph.nat, 3, ph.nat, 3))
 
-    for na in range(ph.nat):
-        C[:, na, :, :, :] *= np.sqrt(ph.M[na])
-        C[:, :, :, na, :] *= np.sqrt(ph.M[na])
+    if divide_mass:
+        for na in range(ph.nat):
+            C[:, na, :, :, :] *= np.sqrt(ph.M[na])
+            C[:, :, :, na, :] *= np.sqrt(ph.M[na])
 
     # check if sum rules are already fulfilled (before correction):
 
@@ -515,9 +520,10 @@ def sum_rule_correction(ph, asr=True, rsr=True, eps=1e-15, report=True):
 
     # redo division by atomic masses:
 
-    for na in range(ph.nat):
-        C[:, na, :, :, :] /= np.sqrt(ph.M[na])
-        C[:, :, :, na, :] /= np.sqrt(ph.M[na])
+    if divide_mass:
+        for na in range(ph.nat):
+            C[:, na, :, :, :] /= np.sqrt(ph.M[na])
+            C[:, :, :, na, :] /= np.sqrt(ph.M[na])
 
     comm.Bcast(ph.data)
 
