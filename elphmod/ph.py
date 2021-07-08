@@ -32,6 +32,8 @@ class Model(object):
         Positions of basis atoms if `flfrc` is omitted.
     atom_order : list of str
         Ordered list of atoms if `flfrc` is omitted.
+    divide_mass : bool
+        Divide force constants by atomic masses?
 
     Attributes
     ----------
@@ -72,7 +74,7 @@ class Model(object):
 
     def __init__(self, flfrc=None, apply_asr=False, apply_asr_simple=False,
         apply_rsr=False, phid=np.zeros((1, 1, 1, 1, 1, 3, 3)), amass=np.ones(1),
-        at=np.eye(3), tau=np.zeros((1, 3)), atom_order=['X']):
+        at=np.eye(3), tau=np.zeros((1, 3)), atom_order=['X'], divide_mass=True):
 
         if comm.rank == 0:
             if flfrc is None:
@@ -90,7 +92,8 @@ class Model(object):
         model = comm.bcast(model)
 
         self.M, self.a, self.r, self.atom_order = model[1:]
-        self.R, self.data = short_range_model(*model[:-1])
+        self.R, self.data = short_range_model(*model[:-1],
+            divide_mass=divide_mass)
         self.size = self.data.shape[1]
         self.nat = self.size // 3
 
@@ -518,7 +521,7 @@ def sum_rule_correction(ph, asr=True, rsr=True, eps=1e-15, report=True):
 
     comm.Bcast(ph.data)
 
-def short_range_model(phid, amass, at, tau, eps=1e-7):
+def short_range_model(phid, amass, at, tau, eps=1e-7, divide_mass=True):
     """Map force constants onto Wigner-Seitz cell and divide by masses."""
 
     nat, nr1, nr2, nr3 = phid.shape[1:5]
@@ -565,8 +568,10 @@ def short_range_model(phid, amass, at, tau, eps=1e-7):
 
                         # undo supercell double counting and divide by masses:
 
-                        C = phid[na1, na2, m1, m2, m3] / (
-                            len(selected) * np.sqrt(amass[na1] * amass[na2]))
+                        C = phid[na1, na2, m1, m2, m3] / len(selected)
+
+                        if divide_mass:
+                            C /= np.sqrt(amass[na1] * amass[na2])
 
                         # save data for dynamical matrix calculation:
 
