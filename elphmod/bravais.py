@@ -1218,7 +1218,7 @@ def Fourier_interpolation(data, angle=60, sign=-1, hr_file=None, function=True):
 
     return dict((tuple(point), value) for point, value in zip(points, values))
 
-def path(points, ibrav=4, N=30, qe=False, **kwargs):
+def path(points, ibrav=4, N=30, recvec=None, qe=False, **kwargs):
     """Generate arbitrary path through Brillouin zone.
 
     Parameters
@@ -1230,6 +1230,8 @@ def path(points, ibrav=4, N=30, qe=False, **kwargs):
         Bravais-lattice index.
     N : float
         Number of points per :math:`2 \pi / a`.
+    recvec : ndarray, optional
+        List of reciprocal lattice vectors.
     qe : bool, default False
         Also return path in QE input format?
     **kwargs
@@ -1270,15 +1272,18 @@ def path(points, ibrav=4, N=30, qe=False, **kwargs):
             'K': [1.0 / 3.0, 1.0 / 3.0, 0.0],
             'H': [1.0 / 3.0, 1.0 / 3.0, 0.5],
             },
-        }[ibrav]
+        }.get(ibrav, {})
 
     labels['G'] = [0.0, 0.0, 0.0]
 
     points = np.array([labels[point] if isinstance(point, str) else point
         for point in points])
 
-    a = primitives(ibrav, **kwargs)
-    b = reciprocals(*a)
+    if recvec is None:
+        a = primitives(ibrav, **kwargs)
+        b = reciprocals(*a)
+    else:
+        b = recvec
 
     points_cart = np.einsum('kc,cx->kx', points, b)
 
