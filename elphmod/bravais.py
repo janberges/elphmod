@@ -94,7 +94,7 @@ def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosab=0.0, cosbc=0.0, cosac=0.0,
         celldm = np.array(celldm)
 
     if not bohr:
-        celldm *= misc.a0
+        celldm[0] *= misc.a0
 
     if ibrav == 1: # cubic (sc)
         return np.eye(3) * celldm[0]
