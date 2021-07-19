@@ -28,25 +28,25 @@ except ImportError:
             return data
 
         def Gatherv(self, send, recv):
-            recv[0][...] = send
+            recv[0][...] = send.reshape(recv[0].shape)
 
         def Allgatherv(self, send, recv):
-            recv[0][...] = send
+            recv[0][...] = send.reshape(recv[0].shape)
 
         def allgather(self, send):
             return [send]
 
         def Reduce(self, send, recv):
-            recv[...] = send
+            recv[...] = send.reshape(recv.shape)
 
         def Allreduce(self, send, recv):
-            recv[...] = send
+            recv[...] = send.reshape(recv.shape)
 
         def allreduce(self, send):
             return send
 
         def Scatterv(self, send, recv):
-            recv[...] = send[0]
+            recv[...] = send[0].reshape(recv.shape)
 
         def Split(self, color, key=None):
             return self
