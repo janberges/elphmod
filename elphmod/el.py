@@ -5,7 +5,7 @@
 
 import numpy as np
 
-from . import bravais, dispersion, misc, MPI
+from . import bravais, dispersion, misc, MPI, occupations
 comm = MPI.comm
 
 class Model(object):
@@ -836,6 +836,7 @@ def eband_from_qe_pwo(pw_scf_out):
     k_weights = []
 
     print('Number of k Points: ', N_k)
+
     for jj in np.arange(N_k):
         for ii in np.arange(3):
 
@@ -845,26 +846,17 @@ def eband_from_qe_pwo(pw_scf_out):
                 Energies.append(float(List[ii]))
                 k_weights.append(k_Points[jj, 3])
 
-    def Fermi_Function(E, E_F, smearing):
-        beta = 1.0 / smearing
-
-        E_diff = (E - E_F)
-
-        return 1.0 / (np.exp(beta * E_diff) + 1)
-
-    Ryd2eV = misc.Ry
-
-    kT *= Ryd2eV
+    kT *= misc.Ry
 
     eF = read_Fermi_level(pw_scf_out)
 
     eband = np.zeros(len(Energies))
 
     for ii in np.arange(len(Energies)):
-        eband[ii] = Energies[ii] * k_weights[ii] * Fermi_Function(Energies[ii],
-            eF, kT)
+        eband[ii] = (Energies[ii] * k_weights[ii]
+            * occupations.fermi_dirac((Energies[ii] - eF) / kT))
 
-    eband = eband.sum() / Ryd2eV
+    eband = eband.sum() / misc.Ry
 
     return eband
 

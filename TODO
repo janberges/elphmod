@@ -1,5 +1,3 @@
-el.eband_from_qe_pwo():
-    Use occupations.fermi_dirac().
 elph.__init__():
     Check if cut off epmatwp data is really empty.
 Drop Python-2 support in favor of things like (nq, nph, *nk, nel, nel)?
