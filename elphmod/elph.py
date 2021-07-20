@@ -192,6 +192,9 @@ class Model(object):
                     # after read-in: R, x, R', b, a
                     # after transp.: R, x, R', a, b
 
+                if np.fromfile(data).size:
+                    print('Warning: File "%s" larger than expected!' % epmatwp)
+
             block = [slice(3 * na, 3 * (na + 1)) for na in range(ph.nat)]
 
             # undo supercell double counting:
