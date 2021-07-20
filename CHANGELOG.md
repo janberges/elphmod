@@ -1,5 +1,9 @@
 # Changes
 
+## v0.5
+
+* Examples run successfully without `mpi4py`
+
 ## v0.4
 
 * New QE input parameters `cdfpt_bnd` and `cdfpt_orb`
