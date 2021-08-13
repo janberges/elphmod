@@ -2,6 +2,8 @@
     prefix = 'graphene'
     outdir = 'work'
     pseudo_dir = '.'
+
+    calculation = 'bands'
 /
 &SYSTEM
     ibrav = 4
@@ -15,9 +17,11 @@
 
     occupations = 'smearing'
     degauss = 0.01
+
+    nbnd = 10
 /
 &ELECTRONS
-    conv_thr = 1e-12
+    conv_thr = 1e-10
 /
 
 ATOMIC_SPECIES
@@ -27,5 +31,9 @@ ATOMIC_POSITIONS crystal
 C 0.333333333 0.666666667 0.0
 C 0.666666667 0.333333333 0.0
 
-K_POINTS automatic
-6 6 1 0 0 0
+K_POINTS crystal_b
+4
+0.000000000  0.000000000  0.000000000  17
+0.000000000  0.500000000  0.000000000  10
+0.333333333  0.333333333  0.000000000  20
+1.000000000  0.000000000  0.000000000   0

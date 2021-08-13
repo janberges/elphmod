@@ -18,11 +18,18 @@ orbitals = elphmod.el.read_projwfc_out('projwfc.out')
 
 width = 0.5 * elphmod.el.proj_sum(proj, orbitals, 's', 'p{x, y}', 'pz')
 
+pwi = elphmod.bravais.read_pwi('scf.in')
+mu = elphmod.el.read_Fermi_level('scf.out')
+
+K, X, GMKG = elphmod.bravais.path('GMKG', N=100, **pwi)
+X *= x[-1] / X[-1]
+
+el = elphmod.el.Model('graphene')
+E, order = elphmod.dispersion.dispersion(el.H, K, order=True)
+E -= mu
+
 if elphmod.MPI.comm.rank != 0:
     raise SystemExit
-
-K, X, GMKG = elphmod.bravais.GMKG(6, mesh=True, corner_indices=True)
-X *= x[-1] / X[-1]
 
 plt.xticks(X[GMKG], 'GMKG')
 plt.xlabel('wave vector')
@@ -34,6 +41,9 @@ for n in range(eps.shape[1]):
     for fatband, color, label in zip(fatbands, colors, labels):
         plt.fill(*fatband, color=color, linewidth=0.0,
             label=None if n else label)
+
+for n in range(el.size):
+    plt.plot(X, E[:, n], 'y:', label=None if n else 'W90')
 
 plt.legend()
 plt.show()

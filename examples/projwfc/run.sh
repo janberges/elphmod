@@ -13,7 +13,13 @@ test -e $pp || (wget $url/$pp.gz && gunzip $pp)
 nk=2
 
 mpirun pw.x -nk $nk < scf.in | tee scf.out
-mpirun pw.x -nk $nk < nscf.in | tee nscf.out
+
+mpirun pw.x -nk $nk < bands.in | tee bands.out
 mpirun projwfc.x -nk $nk < projwfc.in | tee projwfc.out
+
+mpirun pw.x -nk $nk < nscf.in | tee nscf.out
+mpirun -n 1 wannier90.x -pp graphene
+mpirun pw2wannier90.x < pw2w90.in | tee pw2w90.out
+mpirun -n 1 wannier90.x graphene
 
 mpirun python3 projwfc.py
