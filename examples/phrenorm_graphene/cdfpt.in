@@ -1,0 +1,17 @@
+graphene
+&INPUTPH
+    prefix = 'graphene'
+    outdir = 'work'
+
+    fildyn = 'dyn'
+    fildvscf = 'dvscf'
+
+    ldisp = .true.
+    nq1 = 2
+    nq2 = 2
+    nq3 = 1
+
+    tr2_ph = 1e-12
+
+    cdfpt_orb(1:2) = 2,6
+/

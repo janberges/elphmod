@@ -1,0 +1,32 @@
+graphene
+&INPUTEPW
+    prefix = 'graphene'
+    outdir = 'work/'
+    dvscf_dir = 'save'
+
+    wannierize = .true.
+    elph = .true.
+    use_ws = .true.
+    epwwrite = .true.
+
+    nbndsub = 5
+
+    proj(1) = 'C: pz'
+    proj(2) = 'f=0.0,0.5,0.0: s'
+    proj(3) = 'f=0.5,0.5,0.0: s'
+    proj(4) = 'f=0.5,1.0,0.0: s'
+
+    dis_win_min = -20.0
+    dis_win_max = 20.0
+    dis_froz_min = -20.0
+    dis_froz_max = 4.0
+
+    num_iter = 0
+    wdata(1) = 'dis_num_iter 10000'
+
+    nk1 = 6, nk2 = 6, nk3 = 1
+    nq1 = 2, nq2 = 2, nq3 = 1
+
+    nkf1 = 6, nkf2 = 6, nkf3 = 1
+    nqf1 = 2, nqf2 = 2, nqf3 = 1
+/

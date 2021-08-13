@@ -1,0 +1,4 @@
+&PROJWFC
+    prefix = 'graphene'
+    outdir = 'work'
+/
