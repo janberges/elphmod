@@ -287,7 +287,8 @@ def dispersion_full(matrix, size, angle=60, vectors=False, gauge=False,
                     v[m] = v[m, o[m]]
 
                     if vectors:
-                        V[m] = V[m, :, o[m]]
+                        for band in range(bands):
+                            V[m, band] = V[m, band, o[m]]
 
                     status.update()
 
