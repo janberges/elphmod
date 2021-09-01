@@ -158,7 +158,7 @@ def shared_array(shape, dtype=float, shared_memory=True, single_memory=False,
         if comm.rank == 0:
             array = np.empty(shape, dtype=dtype)
         else:
-            array = None
+            array = np.empty(0, dtype=dtype)
 
     elif shared_memory:
         # From article from Intel Developer Zone:
