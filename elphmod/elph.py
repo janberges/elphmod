@@ -28,6 +28,10 @@ class Model(object):
         Use previous definition of Wigner-Seitz cells?
     divide_mass : bool
         Divide electron-phonon coupling by square root of atomic masses?
+    divide_ndegen : bool
+        Divide real-space coupling by degeneracy of Wigner-Seitz point? Only
+        ``True`` yields correct couplings. ``False`` should only be used for
+        debugging.
     shared_memory : bool
         Read coupling from EPW into shared memory?
 
@@ -157,7 +161,8 @@ class Model(object):
         return g
 
     def __init__(self, epmatwp=None, wigner=None, el=None, ph=None,
-            old_ws=False, divide_mass=True, shared_memory=False):
+            old_ws=False, divide_mass=True, divide_ndegen=True,
+            shared_memory=False):
 
         self.el = el
         self.ph = ph
@@ -199,45 +204,46 @@ class Model(object):
 
             # undo supercell double counting:
 
-            if old_ws:
-                for irk in range(len(self.Rk)):
-                    g[:, :, irk] /= ndegen_k[irk]
+            if divide_ndegen:
+                if old_ws:
+                    for irk in range(len(self.Rk)):
+                        g[:, :, irk] /= ndegen_k[irk]
 
-            elif ndegen_k.size == len(self.Rk):
-                for irk in range(len(self.Rk)):
-                    g[:, :, irk, :, :] /= ndegen_k[0, 0, irk]
+                elif ndegen_k.size == len(self.Rk):
+                    for irk in range(len(self.Rk)):
+                        g[:, :, irk, :, :] /= ndegen_k[0, 0, irk]
 
-            else: # "use_ws"
-                for irk in range(len(self.Rk)):
-                    for m in range(el.size):
-                        for n in range(el.size):
-                            if ndegen_k[n, m, irk]:
-                                g[:, :, irk, m, n] /= ndegen_k[n, m, irk]
-                            else:
-                                g[:, :, irk, m, n] = 0.0
-
-            if old_ws:
-                for irg in range(len(self.Rg)):
-                    for na in range(ph.nat):
-                        if ndegen_g[na, irg]:
-                            g[irg, block[na]] /= ndegen_g[na, irg]
-                        else:
-                            g[irg, block[na]] = 0.0
-
-            elif ndegen_g.size == len(self.Rg):
-                for irg in range(len(self.Rg)):
-                    g[irg, :, :, :, :] /= ndegen_g[0, 0, 0, irg]
-
-            else: # "use_ws"
-                for irg in range(len(self.Rg)):
-                    for na in range(ph.nat):
+                else: # "use_ws"
+                    for irk in range(len(self.Rk)):
                         for m in range(el.size):
                             for n in range(el.size):
-                                if ndegen_g[n, m, na, irg]:
-                                    g[irg, block[na], :, m, n] \
-                                        /= ndegen_g[n, m, na, irg]
+                                if ndegen_k[n, m, irk]:
+                                    g[:, :, irk, m, n] /= ndegen_k[n, m, irk]
                                 else:
-                                    g[irg, block[na], :, m, n] = 0.0
+                                    g[:, :, irk, m, n] = 0.0
+
+                if old_ws:
+                    for irg in range(len(self.Rg)):
+                        for na in range(ph.nat):
+                            if ndegen_g[na, irg]:
+                                g[irg, block[na]] /= ndegen_g[na, irg]
+                            else:
+                                g[irg, block[na]] = 0.0
+
+                elif ndegen_g.size == len(self.Rg):
+                    for irg in range(len(self.Rg)):
+                        g[irg, :, :, :, :] /= ndegen_g[0, 0, 0, irg]
+
+                else: # "use_ws"
+                    for irg in range(len(self.Rg)):
+                        for na in range(ph.nat):
+                            for m in range(el.size):
+                                for n in range(el.size):
+                                    if ndegen_g[n, m, na, irg]:
+                                        g[irg, block[na], :, m, n] \
+                                            /= ndegen_g[n, m, na, irg]
+                                    else:
+                                        g[irg, block[na], :, m, n] = 0.0
 
             # divide by square root of atomic masses:
 
