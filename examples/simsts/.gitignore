@@ -1,0 +1,11 @@
+*.amn
+*.chk
+*.eig
+*.mmn
+*.nnkp
+*.out
+*.upf
+*.wout
+*_hr.dat
+*_wsvec.dat
+work
