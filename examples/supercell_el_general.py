@@ -18,7 +18,7 @@ b = elphmod.bravais.reciprocals(*a)
 A = np.dot(N, a)
 
 el = elphmod.el.Model('data/NbSe2')
-El, R = el.supercell_general(*N)
+El = el.supercell_general(*N)
 
 k, x, GMKG = elphmod.bravais.path('GMKG', ibrav=4, N=150)
 K = np.dot(np.dot(k, b), A.T)
@@ -27,7 +27,7 @@ e, u = elphmod.dispersion.dispersion(el.H, k, vectors=True)
 E, U = elphmod.dispersion.dispersion(El.H, K, vectors=True)
 
 w = np.ones(e.shape)
-W = elphmod.dispersion.unfolding_weights(k, R, u, U)
+W = elphmod.dispersion.unfolding_weights(k, El.cells, u, U)
 
 linewidth = 0.1
 

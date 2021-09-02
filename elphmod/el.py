@@ -30,6 +30,8 @@ class Model(object):
         Corresponding on-site energies and hoppings.
     size : int
         Number of Wannier functions/bands.
+    cells : list of tuple of int, optional
+        Lattice vectors of unit cells if the model describes a supercell.
     """
     def H(self, k1=0, k2=0, k3=0):
         """Set up Hamilton operator for arbitrary k point."""
@@ -196,24 +198,23 @@ class Model(object):
 
         el = Model()
         el.size = N * self.size
+        el.cells = []
 
         if comm.rank == 0:
-            cells = []
-
             for n1 in range(N):
                 for n2 in range(N):
                     for n3 in range(N):
                         indices = n1 * N1 + n2 * N2 + n3 * N3
 
                         if np.all(indices % N == 0):
-                            cells.append(tuple(indices // N))
+                            el.cells.append(tuple(indices // N))
 
-            assert len(cells) == N
+            assert len(el.cells) == N
 
             const = dict()
 
             for n in range(len(self.R)):
-                for i, cell in enumerate(cells):
+                for i, cell in enumerate(el.cells):
                     R = self.R[n] + np.array(cell)
 
                     R1, r1 = divmod(np.dot(R, B1), N)
@@ -223,7 +224,7 @@ class Model(object):
                     R = R1, R2, R3
 
                     indices = r1 * N1 + r2 * N2 + r3 * N3
-                    j = cells.index(tuple(indices // N))
+                    j = el.cells.index(tuple(indices // N))
 
                     A = i * self.size
                     B = j * self.size
@@ -246,14 +247,13 @@ class Model(object):
         if comm.rank != 0:
             el.R = np.empty((count, 3), dtype=int)
             el.data = np.empty((count, el.size, el.size), dtype=complex)
-            cells = None
 
         comm.Bcast(el.R)
         comm.Bcast(el.data)
 
-        cells = comm.bcast(cells)
+        el.cells = comm.bcast(el.cells)
 
-        return el, cells
+        return el
 
 def read_hrdat(hrdat, divide_ndegen=True):
     """Read *_hr.dat* file from Wannier90."""
