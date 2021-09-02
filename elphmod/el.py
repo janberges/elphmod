@@ -101,7 +101,7 @@ class Model(object):
             comm.Bcast(self.data)
 
     def supercell(self, N1=1, N2=1, N3=1):
-        """Map tight-binding model onto supercell.
+        """Map tight-binding model onto supercell of same orientation.
 
         Parameters
         ----------
@@ -112,6 +112,10 @@ class Model(object):
         -------
         object
             Tight-binding model for supercell.
+
+        See Also
+        --------
+        supercell_general
         """
         el = Model()
         el.size = N1 * N2 * N3 * self.size
@@ -160,6 +164,96 @@ class Model(object):
         comm.Bcast(el.data)
 
         return el
+
+    def supercell_general(self, N1=(1, 0, 0), N2=(0, 1, 0), N3=(0, 0, 1)):
+        """Map tight-binding model onto supercell of arbitrary orientation.
+
+        Parameters
+        ----------
+        N1, N2, N3 : tuple of int
+            Supercell lattice vectors in units of primitive lattice vectors.
+
+        Returns
+        -------
+        object
+            Tight-binding model for supercell.
+        list of tuple
+            Unit cells in supercell ordered as in Hamiltonian.
+
+        See Also
+        --------
+        supercell
+        """
+        N1 = np.array(N1)
+        N2 = np.array(N2)
+        N3 = np.array(N3)
+
+        N = np.dot(N1, np.cross(N2, N3))
+
+        B1 = np.cross(N2, N3)
+        B2 = np.cross(N3, N1)
+        B3 = np.cross(N1, N2)
+
+        el = Model()
+        el.size = N * self.size
+
+        if comm.rank == 0:
+            cells = []
+
+            for n1 in range(N):
+                for n2 in range(N):
+                    for n3 in range(N):
+                        indices = n1 * N1 + n2 * N2 + n3 * N3
+
+                        if np.all(indices % N == 0):
+                            cells.append(tuple(indices // N))
+
+            assert len(cells) == N
+
+            const = dict()
+
+            for n in range(len(self.R)):
+                for i, cell in enumerate(cells):
+                    R = self.R[n] + np.array(cell)
+
+                    R1, r1 = divmod(np.dot(R, B1), N)
+                    R2, r2 = divmod(np.dot(R, B2), N)
+                    R3, r3 = divmod(np.dot(R, B3), N)
+
+                    R = R1, R2, R3
+
+                    indices = r1 * N1 + r2 * N2 + r3 * N3
+                    j = cells.index(tuple(indices // N))
+
+                    A = i * self.size
+                    B = j * self.size
+
+                    if R not in const:
+                        const[R] = np.zeros((el.size, el.size), dtype=complex)
+
+                    const[R][A:A + self.size, B:B + self.size] = self.data[n]
+
+            el.R = np.array(list(const.keys()), dtype=int)
+            el.data = np.array(list(const.values()))
+
+            count = len(const)
+            const.clear()
+        else:
+            count = None
+
+        count = comm.bcast(count)
+
+        if comm.rank != 0:
+            el.R = np.empty((count, 3), dtype=int)
+            el.data = np.empty((count, el.size, el.size), dtype=complex)
+            cells = None
+
+        comm.Bcast(el.R)
+        comm.Bcast(el.data)
+
+        cells = comm.bcast(cells)
+
+        return el, cells
 
 def read_hrdat(hrdat, divide_ndegen=True):
     """Read *_hr.dat* file from Wannier90."""
