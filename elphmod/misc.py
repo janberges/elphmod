@@ -146,6 +146,68 @@ def read_cube(cube):
 
     return a, X, r, data
 
+def read_xsf(xsf):
+    """Read file in XCrySDen format."""
+
+    if comm.rank == 0:
+        lines = open(xsf)
+
+        while next(lines).strip() != 'PRIMCOORD':
+            pass
+
+        nat = int(next(lines).split()[0])
+    else:
+        nat = None
+
+    nat = comm.bcast(nat)
+
+    n = np.empty(3, dtype=int)
+    r0 = np.empty(3, dtype=float)
+    a = np.empty((3, 3), dtype=float)
+    X = ['X'] * nat
+    r = np.empty((nat, 3), dtype=float)
+
+    if comm.rank == 0:
+        for i in range(nat):
+            cols = next(lines).split()
+            X[i] = cols[0]
+            r[i] = list(map(float, cols[1:4]))
+
+        while next(lines).strip() != 'BEGIN_DATAGRID_3D_UNKNOWN':
+            pass
+
+        n[:] = list(map(int, next(lines).split()))
+        r0[:] = list(map(float, next(lines).split()))
+
+        for i in range(3):
+            a[i] = list(map(float, next(lines).split()))
+
+    comm.Bcast(n)
+    comm.Bcast(r0)
+    comm.Bcast(a)
+    X = comm.bcast(X)
+    comm.Bcast(r)
+
+    if comm.rank == 0:
+        data = np.empty(np.prod(n))
+
+        i = 0
+        while i < data.size:
+            for number in next(lines).split():
+                data[i] = float(number)
+                i += 1
+
+        data = np.reshape(data, n[::-1])
+        data = np.transpose(data)
+
+        lines.close()
+    else:
+        data = np.empty(n, dtype=float)
+
+    comm.Bcast(data)
+
+    return r0, a, X, r, data
+
 def split(expr, sd=',', od='{', cd='}'):
     """Split expression with separators and brackets using distributive law.
 

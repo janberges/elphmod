@@ -2,4 +2,5 @@
     prefix = 'graphene'
     outdir = 'work'
     seedname = 'graphene'
+    write_unk = .true.
 /

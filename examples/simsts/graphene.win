@@ -16,6 +16,9 @@ dis_froz_max 4.0
 dis_num_iter 10000
 num_iter 0
 
+wannier_plot true
+wannier_plot_supercell 3
+
 write_hr true
 use_ws_distance true
 

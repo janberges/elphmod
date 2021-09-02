@@ -6,6 +6,8 @@
 *.out
 *.upf
 *.wout
+*.xsf
 *_hr.dat
 *_wsvec.dat
+UNK*
 work
