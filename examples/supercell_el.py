@@ -21,19 +21,17 @@ e, u = elphmod.dispersion.dispersion(el.H, k, vectors=True)
 E, U = elphmod.dispersion.dispersion(El.H, K, vectors=True)
 
 R = []
-blocks0 = []
 blocks = []
 
 for n1 in range(N1):
     for n2 in range(N2):
         for n3 in range(N3):
             R.append((n1, n2, n3))
-            blocks0.append(slice(el.size))
             offset = (n1 * N2 * N3 + n2 * N3 + n3) * el.size
             blocks.append(slice(offset, offset + el.size))
 
 w = np.ones(e.shape)
-W = elphmod.dispersion.unfolding_weights(k, R, u, U, blocks0, blocks)
+W = elphmod.dispersion.unfolding_weights(k, R, u, U, blocks=blocks)
 
 linewidth = 0.1
 

@@ -457,7 +457,7 @@ def map_dispersions(V1, V2):
 
     return np.reshape(mapping, shape[:-1])
 
-def unfolding_weights(k, R, U0, U, blocks0, blocks, sgn=-1):
+def unfolding_weights(k, R, U0, U, blocks0=None, blocks=None, sgn=-1):
     """Calculate weights for "unfolding" of supercell dispersions.
 
     Parameters
@@ -474,10 +474,14 @@ def unfolding_weights(k, R, U0, U, blocks0, blocks, sgn=-1):
         Eigenvectors of the symmetric system.
     U: ndarray
         Eigenvectors of the supercell system.
-    blocks0 : list of indexing objects
-        Mapping from indices of `R` to slices of `U0`.
-    blocks : list of indexing objects
-        Mapping from indices of `R` to slices of `U`.
+    blocks0 : list of indexing objects, optional
+        Mapping from indices of `R` to slices of `U0`. By default, all orbitals
+        are selected.
+    blocks : list of indexing objects, optional
+        Mapping from indices of `R` to slices of `U`. By default, it is assumed
+        that the orbitals are grouped into blocks corresponding to unit cells.
+        Within the blocks, the order of the orbitals is as in `U0`. The order
+        of the blocks is as in `R`.
     sgn : int
         Sign convention for Fourier transform in tight-binding model.
         The default sign ``-1`` is suitable for data from Wannier90 as provided
@@ -491,6 +495,13 @@ def unfolding_weights(k, R, U0, U, blocks0, blocks, sgn=-1):
     """
     bands0 = U0.shape[-1]
     bands = U.shape[-1]
+
+    if blocks0 is None:
+        blocks0 = [slice(U0.shape[1])] * len(R)
+
+    if blocks is None:
+        blocks = [slice(ir * U0.shape[1], (ir + 1) * U0.shape[1])
+            for ir in range(len(R))]
 
     U0 = U0 / np.sqrt(bands / bands0)
 

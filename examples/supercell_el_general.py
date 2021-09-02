@@ -26,11 +26,8 @@ K = np.dot(np.dot(k, b), A.T)
 e, u = elphmod.dispersion.dispersion(el.H, k, vectors=True)
 E, U = elphmod.dispersion.dispersion(El.H, K, vectors=True)
 
-blocks0 = [slice(el.size)] * len(R)
-blocks = [slice(i * el.size, (i + 1) * el.size) for i in range(len(R))]
-
 w = np.ones(e.shape)
-W = elphmod.dispersion.unfolding_weights(k, R, u, U, blocks0, blocks)
+W = elphmod.dispersion.unfolding_weights(k, R, u, U)
 
 linewidth = 0.1
 
