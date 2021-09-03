@@ -7,37 +7,64 @@ import elphmod
 import matplotlib.pyplot as plt
 import numpy as np
 
-nu = 8 # ionic displacement
-N = [2, 2, 1]
+nu = 8 # displacement direction
+u0 = 1.0 # displacement amplitude (angstrom)
+
+N = [
+    [ 4, 1, 0],
+    [-1, 3, 0],
+    [ 0, 0, 1],
+    ]
 
 a = elphmod.bravais.primitives(ibrav=4)
 b = elphmod.bravais.reciprocals(*a)
-A = np.dot(np.diag(N), a)
+A = np.dot(N, a)
 
 el = elphmod.el.Model('TaS2')
 ph = elphmod.ph.Model('dfpt.ifc', apply_asr=True)
 elph = elphmod.elph.Model('dfpt.epmatwp', 'wigner.dat', el, ph,
     divide_mass=False)
+elph.data *= elphmod.misc.Ry / elphmod.misc.a0
+
 ElPh = elph.supercell_general(*N)
 
 k, x, GMKG = elphmod.bravais.path('GMKG', ibrav=4, N=300)
 K = np.dot(np.dot(k, b), A.T)
 
-g = np.empty((len(k), elph.el.size), dtype=complex)
-G = np.empty((len(K), ElPh.el.size), dtype=complex)
+I = elphmod.MPI.comm.Split(elphmod.MPI.comm.rank)
 
-for ik, ((k1, k2, k3), (K1, K2, K3)) in enumerate(zip(k, K)):
-    g[ik] = np.linalg.eigvals(elph.g(k1=k1, k2=k3, k3=k3)[nu])
-    G[ik] = np.linalg.eigvals(ElPh.g(k1=K1, k2=K3, k3=K3)[nu::ph.size].sum(0))
-    g[ik].sort()
-    G[ik].sort()
+def h(k1=0.0, k2=0.0, k3=0.0):
+    h0 = el.H(k1=k1, k2=k2, k3=k3)
+    g = elph.g(q1=0.0, q2=0.0, q3=0.0, k1=k1, k2=k2, k3=k3,
+        comm=I)[nu]
+    return h0 + u0 * g
 
-g *= elphmod.misc.Ry / elphmod.misc.a0
-G *= elphmod.misc.Ry / elphmod.misc.a0
+def H(K1=0.0, K2=0.0, K3=0.0):
+    H0 = ElPh.el.H(k1=K1, k2=K2, k3=K3)
+    G = ElPh.g(q1=0.0, q2=0.0, q3=0.0, k1=K1, k2=K2, k3=K3,
+        comm=I)[nu::ph.size].sum(axis=0)
+    return H0 + u0 * G
+
+e, u = elphmod.dispersion.dispersion(h, k, vectors=True)
+E, U = elphmod.dispersion.dispersion(H, K, vectors=True)
+
+w = np.ones(e.shape)
+W = elphmod.dispersion.unfolding_weights(k, ElPh.cells, u, U)
+
+linewidth = 0.1
 
 if elphmod.MPI.comm.rank == 0:
+    for n in range(e.shape[1]):
+        fatband, = elphmod.plot.compline(x, e[:, n], linewidth * w[:, n])
+
+        plt.fill(*fatband, linewidth=0.0, color='skyblue')
+
+    for n in range(E.shape[1]):
+        fatband, = elphmod.plot.compline(x, E[:, n], linewidth * W[:, n])
+
+        plt.fill(*fatband, linewidth=0.0, color='dodgerblue')
+
+    plt.ylabel('electron energy (eV)')
+    plt.xlabel('wave vector')
     plt.xticks(x[GMKG], 'GMKG')
-    plt.ylabel(r'$\partial V / \partial z_{\mathrm{S}}$ ($\mathrm{eV/\AA}$)')
-    plt.plot(x, g.real, 'k')
-    plt.plot(x, G.real, 'y:')
     plt.show()
