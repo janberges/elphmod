@@ -57,6 +57,8 @@ class Model(object):
         Number of displacement directions/bands.
     nat : int
         Number of atoms.
+    cells : list of tuple of int, optional
+        Lattice vectors of unit cells if the model describes a supercell.
     """
     def D(self, q1=0, q2=0, q3=0):
         """Set up dynamical matrix for arbitrary q point."""
@@ -196,8 +198,6 @@ class Model(object):
         -------
         object
             Mass-spring model for supercell.
-        list of tuple
-            Unit cells in supercell ordered as in dynamical matrix.
 
         See Also
         --------

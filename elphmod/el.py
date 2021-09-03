@@ -179,8 +179,6 @@ class Model(object):
         -------
         object
             Tight-binding model for supercell.
-        list of tuple
-            Unit cells in supercell ordered as in Hamiltonian.
 
         See Also
         --------

@@ -47,6 +47,8 @@ class Model(object):
         Previously sampled q point, if any.
     gq : ndarray
         Rk-dependent coupling for above q point for possible reuse.
+    cells : list of tuple of int, optional
+        Lattice vectors of unit cells if the model describes a supercell.
     """
     def g(self, q1=0, q2=0, q3=0, k1=0, k2=0, k3=0, elbnd=False, phbnd=False,
             broadcast=True, comm=comm):
@@ -370,7 +372,8 @@ class Model(object):
     def supercell_general(self, N1=(1, 0, 0), N2=(0, 1, 0), N3=(0, 0, 1)):
         """Map localized model for electron-phonon coupling onto supercell.
 
-        This function works for arbitrary orientations of the supercell.
+        This function is supposed to work for arbitrary orientations of the
+        supercell but currently it can only reproduce :meth:`supercell`.
 
         Parameters
         ----------
@@ -381,8 +384,6 @@ class Model(object):
         -------
         object
             Localized model for electron-phonon coupling for supercell.
-        list of tuple
-            Unit cells in supercell ordered as in electron-phonon coupling.
 
         See Also
         --------
