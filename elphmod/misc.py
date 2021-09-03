@@ -198,7 +198,7 @@ def read_xsf(xsf):
                 i += 1
 
         data = np.reshape(data, n[::-1])
-        data = np.transpose(data)
+        data = np.transpose(data).copy()
 
         lines.close()
     else:
