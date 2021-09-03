@@ -372,8 +372,7 @@ class Model(object):
     def supercell_general(self, N1=(1, 0, 0), N2=(0, 1, 0), N3=(0, 0, 1)):
         """Map localized model for electron-phonon coupling onto supercell.
 
-        This function is supposed to work for arbitrary orientations of the
-        supercell but currently it can only reproduce :meth:`supercell`.
+        This function works for arbitrary orientations of the supercell.
 
         Parameters
         ----------
