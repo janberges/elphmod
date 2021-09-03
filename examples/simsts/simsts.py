@@ -40,21 +40,17 @@ dV = V / data.size
 
 info('Sample real space..')
 
-x, y, z = [np.linspace(0.0, 1.0, points) for points in data.shape]
-x, y, z = np.meshgrid(x, y, z, indexing='ij')
+if comm.rank == 0:
+    x, y, z = [np.linspace(0.0, 1.0, points) for points in data.shape]
+    x, y, z = np.meshgrid(x, y, z, indexing='ij')
 
-r = np.zeros(data.shape + (3,))
-r += np.einsum('xyz,i->xyzi', x, a[0])
-r += np.einsum('xyz,i->xyzi', y, a[1])
-r += np.einsum('xyz,i->xyzi', z, a[2])
-r += r0
+    r = np.zeros(data.shape + (3,))
+    r += np.einsum('xyz,i->xyzi', x, a[0])
+    r += np.einsum('xyz,i->xyzi', y, a[1])
+    r += np.einsum('xyz,i->xyzi', z, a[2])
+    r += r0
 
 info('Probe density of states..')
-
-sigma = 0.25
-sigma *= np.sqrt(2)
-
-shifts = [-1, 0, 1]
 
 position1 = np.array([0.0, 0.0, 0.5]) + (tau[0] + tau[1]) / 2
 position2 = np.array([0.0, 0.0, 0.5]) + tau[0]
@@ -63,28 +59,39 @@ for position, label in (position1, 'bond'), (position2, 'atom'):
     label = '$%g\,\mathrm{\AA}$ above %s' % (position[2], label)
     info('Position tip %s..' % label)
 
-    tip = np.zeros(data.shape)
+    if comm.rank == 0:
+        tip = np.zeros(data.shape)
 
-    for d1 in shifts:
-        for d2 in shifts:
-            for d3 in shifts:
-                shift = d1 * a1 + d2 * a2 + d3 * a3
+        sigma = 0.25
+        sigma *= np.sqrt(2)
 
-                d = np.linalg.norm(position + shift - r, axis=3)
+        shifts = [-1, 0, 1]
 
-                tip += elphmod.occupations.gauss.delta(d / sigma) / sigma
+        for d1 in shifts:
+            for d2 in shifts:
+                for d3 in shifts:
+                    shift = d1 * a1 + d2 * a2 + d3 * a3
+
+                    d = np.linalg.norm(position + shift - r, axis=3)
+
+                    tip += elphmod.occupations.gauss.delta(d / sigma) / sigma
 
     info('Calculate weight of orbitals..')
 
-    weight = (U.conj() * U).real
+    if comm.rank == 0:
+        weight = (U.conj() * U).real
 
-    for n in range(el.size):
-        factor = np.sum(tip * W[n]) ** 2 * dV
-        weight[:, :, n, :] *= factor
+        for n in range(el.size):
+            factor = np.sum(tip * W[n]) ** 2 * dV
+            weight[:, :, n, :] *= factor
 
-        info('%2d %9.3f' % (n + 1, factor))
+            print('%2d %9.3f' % (n + 1, factor))
 
-    weight = weight.sum(axis=2)
+        weight = weight.sum(axis=2)
+    else:
+        weight = np.empty(e.shape)
+
+    comm.Bcast(weight)
 
     info('Calculate weighted density of states..')
 
