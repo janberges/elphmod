@@ -103,86 +103,19 @@ class Model(object):
             comm.Bcast(self.data)
 
     def supercell(self, N1=1, N2=1, N3=1):
-        """Map tight-binding model onto supercell of same orientation.
+        """Map tight-binding model onto supercell.
 
         Parameters
         ----------
-        N1, N2, N3 : int, default 1
-            Supercell dimensions in units of primitive lattice vectors.
-
-        Returns
-        -------
-        object
-            Tight-binding model for supercell.
-
-        See Also
-        --------
-        supercell_general
-        """
-        el = Model()
-        el.size = N1 * N2 * N3 * self.size
-
-        if comm.rank == 0:
-            const = dict()
-
-            for n in range(len(self.R)):
-                for n1 in range(N1):
-                    R1, r1 = divmod(self.R[n, 0] + n1, N1)
-
-                    for n2 in range(N2):
-                        R2, r2 = divmod(self.R[n, 1] + n2, N2)
-
-                        for n3 in range(N3):
-                            R3, r3 = divmod(self.R[n, 2] + n3, N3)
-
-                            R = R1, R2, R3
-
-                            A = (n1 * N2 * N3 + n2 * N3 + n3) * self.size
-                            B = (r1 * N2 * N3 + r2 * N3 + r3) * self.size
-
-                            if R not in const:
-                                const[R] = np.zeros((el.size, el.size),
-                                    dtype=complex)
-
-                            const[R][
-                                A:A + self.size,
-                                B:B + self.size] = self.data[n]
-
-            el.R = np.array(list(const.keys()), dtype=int)
-            el.data = np.array(list(const.values()))
-
-            count = len(const)
-            const.clear()
-        else:
-            count = None
-
-        count = comm.bcast(count)
-
-        if comm.rank != 0:
-            el.R = np.empty((count, 3), dtype=int)
-            el.data = np.empty((count, el.size, el.size), dtype=complex)
-
-        comm.Bcast(el.R)
-        comm.Bcast(el.data)
-
-        return el
-
-    def supercell_general(self, N1=(1, 0, 0), N2=(0, 1, 0), N3=(0, 0, 1)):
-        """Map tight-binding model onto supercell of arbitrary orientation.
-
-        Parameters
-        ----------
-        N1, N2, N3 : tuple of int or int
+        N1, N2, N3 : tuple of int or int, default 1
             Supercell lattice vectors in units of primitive lattice vectors.
+            Multiples of single primitive vector can be defined via a scalar
+            integer, linear combinations via a 3-tuple of integers.
 
         Returns
         -------
         object
             Tight-binding model for supercell.
-
-        See Also
-        --------
-        supercell
         """
         if not hasattr(N1, '__len__'): N1 = (N1, 0, 0)
         if not hasattr(N2, '__len__'): N2 = (0, N2, 0)

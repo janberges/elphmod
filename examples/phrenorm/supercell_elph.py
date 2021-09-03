@@ -9,20 +9,26 @@ import numpy as np
 
 nu = 8 # displacement direction
 
-N1 = 2
-N2 = 2
-N3 = 1
+N = [ # 3 x 3 (60 degrees instead of 120 degrees)
+    [3, 0, 0],
+    [3, 3, 0],
+    [0, 0, 1],
+    ]
+
+a = elphmod.bravais.primitives(ibrav=4)
+b = elphmod.bravais.reciprocals(*a)
+A = np.dot(N, a)
 
 el = elphmod.el.Model('TaS2')
-ph = elphmod.ph.Model('dfpt.ifc', apply_asr=True)
+ph = elphmod.ph.Model('dfpt.ifc', apply_asr_simple=True)
 elph = elphmod.elph.Model('dfpt.epmatwp', 'wigner.dat', el, ph,
     divide_mass=False)
 elph.data *= elphmod.misc.Ry / elphmod.misc.a0
 
-ElPh = elph.supercell(N1, N2, N3)
+ElPh = elph.supercell(*N)
 
 k, x, GMKG = elphmod.bravais.path('GMKG', ibrav=4, N=300)
-K = np.array([N1, N2, N3]) * k
+K = np.dot(np.dot(k, b), A.T)
 
 I = elphmod.MPI.comm.Split(elphmod.MPI.comm.rank)
 
@@ -37,18 +43,8 @@ def G(K1=0.0, K2=0.0, K3=0.0):
 g, u = elphmod.dispersion.dispersion(g, k, vectors=True)
 G, U = elphmod.dispersion.dispersion(G, K, vectors=True)
 
-R = []
-blocks = []
-
-for n1 in range(N1):
-    for n2 in range(N2):
-        for n3 in range(N3):
-            R.append((n1, n2, n3))
-            offset = (n1 * N2 * N3 + n2 * N3 + n3) * el.size
-            blocks.append(slice(offset, offset + el.size))
-
 w = np.ones(g.shape)
-W = elphmod.dispersion.unfolding_weights(k, R, u, U, blocks=blocks)
+W = elphmod.dispersion.unfolding_weights(k, ElPh.cells, u, U)
 
 linewidth = 0.1
 

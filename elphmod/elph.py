@@ -275,118 +275,17 @@ class Model(object):
     def supercell(self, N1=1, N2=1, N3=1):
         """Map localized model for electron-phonon coupling onto supercell.
 
-        This function works for non-rotated supercells only.
-
         Parameters
         ----------
-        N1, N2, N3 : int, default 1
-            Supercell dimensions in units of primitive lattice vectors.
-
-        Returns
-        -------
-        object
-            Localized model for electron-phonon coupling for supercell.
-
-        See Also
-        --------
-        supercell_general
-        """
-        elph = Model(
-            el=self.el.supercell(N1, N2, N3),
-            ph=self.ph.supercell(N1, N2, N3))
-
-        if comm.rank == 0:
-            Rg = set()
-            Rk = set()
-            const = dict()
-
-            for g in range(len(self.Rg)):
-                for k in range(len(self.Rk)):
-                    for n1 in range(N1):
-                        G1, g1 = divmod(self.Rg[g, 0] + n1, N1)
-                        K1, k1 = divmod(self.Rk[k, 0] + n1, N1)
-
-                        for n2 in range(N2):
-                            G2, g2 = divmod(self.Rg[g, 1] + n2, N2)
-                            K2, k2 = divmod(self.Rk[k, 1] + n2, N2)
-
-                            for n3 in range(N3):
-                                G3, g3 = divmod(self.Rg[g, 2] + n3, N3)
-                                K3, k3 = divmod(self.Rk[k, 2] + n3, N3)
-
-                                Rg.add((G1, G2, G3))
-                                Rk.add((K1, K2, K3))
-
-                                R = G1, G2, G3, K1, K2, K3
-
-                                A = (g1 * N2 * N3 + g2 * N3 + g3) * self.ph.size
-                                B = (n1 * N2 * N3 + n2 * N3 + n3) * self.el.size
-                                C = (k1 * N2 * N3 + k2 * N3 + k3) * self.el.size
-
-                                if R not in const:
-                                    const[R] = np.zeros((elph.ph.size,
-                                        elph.el.size, elph.el.size),
-                                            dtype=complex)
-
-                                const[R][
-                                    A:A + self.ph.size,
-                                    B:B + self.el.size,
-                                    C:C + self.el.size] = self.data[g, :, k]
-            countg = len(Rg)
-            countk = len(Rk)
-        else:
-            countg = countk = None
-
-        countg = comm.bcast(countg)
-        countk = comm.bcast(countk)
-
-        elph.Rg = np.empty((countg, 3), dtype=int)
-        elph.Rk = np.empty((countk, 3), dtype=int)
-
-        elph.data = np.empty((countg, elph.ph.size, countk,
-            elph.el.size, elph.el.size), dtype=complex)
-
-        elph.gq = np.empty((elph.ph.size, countk,
-            elph.el.size, elph.el.size), dtype=complex)
-
-        if comm.rank == 0:
-            Rg = sorted(Rg)
-            Rk = sorted(Rk)
-
-            elph.Rg[...] = Rg
-            elph.Rk[...] = Rk
-            elph.data[...] = 0.0
-
-            for g, (G1, G2, G3) in enumerate(Rg):
-                for k, (K1, K2, K3) in enumerate(Rk):
-                    R = G1, G2, G3, K1, K2, K3
-                    if R in const:
-                        elph.data[g, :, k] = const[R]
-
-        comm.Bcast(elph.Rg)
-        comm.Bcast(elph.Rk)
-        comm.Bcast(elph.data)
-
-        return elph
-
-    def supercell_general(self, N1=(1, 0, 0), N2=(0, 1, 0), N3=(0, 0, 1)):
-        """Map localized model for electron-phonon coupling onto supercell.
-
-        This function works for arbitrary orientations of the supercell.
-
-        Parameters
-        ----------
-        N1, N2, N3 : tuple of int or int
+        N1, N2, N3 : tuple of int or int, default 1
             Supercell lattice vectors in units of primitive lattice vectors.
+            Multiples of single primitive vector can be defined via a scalar
+            integer, linear combinations via a 3-tuple of integers.
 
         Returns
         -------
         object
             Localized model for electron-phonon coupling for supercell.
-
-        See Also
-        --------
-        supercell
         """
         if not hasattr(N1, '__len__'): N1 = (N1, 0, 0)
         if not hasattr(N2, '__len__'): N2 = (0, N2, 0)
@@ -403,8 +302,8 @@ class Model(object):
         B3 = np.cross(N1, N2)
 
         elph = Model(
-            el=self.el.supercell_general(N1, N2, N3),
-            ph=self.ph.supercell_general(N1, N2, N3))
+            el=self.el.supercell(N1, N2, N3),
+            ph=self.ph.supercell(N1, N2, N3))
 
         elph.cells = elph.el.cells
 
@@ -442,8 +341,7 @@ class Model(object):
 
                         if R not in const:
                             const[R] = np.zeros((elph.ph.size,
-                                elph.el.size, elph.el.size),
-                                    dtype=complex)
+                                elph.el.size, elph.el.size), dtype=complex)
 
                         const[R][
                             A:A + self.ph.size,

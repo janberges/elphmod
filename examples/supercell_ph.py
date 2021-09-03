@@ -7,31 +7,27 @@ import elphmod
 import matplotlib.pyplot as plt
 import numpy as np
 
-N1 = 3
-N2 = 3
-N3 = 1
+N = [ # 3 x 3 (60 degrees instead of 120 degrees)
+    [3, 0, 0],
+    [3, 3, 0],
+    [0, 0, 1],
+    ]
+
+a = elphmod.bravais.primitives(ibrav=4)
+b = elphmod.bravais.reciprocals(*a)
+A = np.dot(N, a)
 
 ph = elphmod.ph.Model('data/NbSe2_cDFPT.ifc', apply_asr_simple=True)
-Ph = ph.supercell(N1, N2, N3)
+Ph = ph.supercell(*N)
 
 q, x, GMKG = elphmod.bravais.path('GMKG', ibrav=4, N=150)
-Q = np.array([N1, N2, N3]) * q
+Q = np.dot(np.dot(q, b), A.T)
 
 w2, u = elphmod.dispersion.dispersion(ph.D, q, vectors=True)
 W2, U = elphmod.dispersion.dispersion(Ph.D, Q, vectors=True)
 
-R = []
-blocks = []
-
-for n1 in range(N1):
-    for n2 in range(N2):
-        for n3 in range(N3):
-            R.append((n1, n2, n3))
-            offset = (n1 * N2 * N3 + n2 * N3 + n3) * ph.size
-            blocks.append(slice(offset, offset + ph.size))
-
 w = np.ones(w2.shape)
-W = elphmod.dispersion.unfolding_weights(q, R, u, U, blocks=blocks, sgn=+1)
+W = elphmod.dispersion.unfolding_weights(q, Ph.cells, u, U, sgn=+1)
 
 linewidth = 1.0
 

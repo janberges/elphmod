@@ -109,99 +109,19 @@ class Model(object):
                 divide_mass=divide_mass)
 
     def supercell(self, N1=1, N2=1, N3=1):
-        """Map mass-spring model onto supercell of same orientation.
+        """Map mass-spring model onto supercell.
 
         Parameters
         ----------
-        N1, N2, N3 : int, default 1
-            Supercell dimensions in units of primitive lattice vectors.
-
-        Returns
-        -------
-        object
-            Mass-spring model for supercell.
-
-        See Also
-        --------
-        supercell_general
-        """
-        ph = Model()
-
-        factor = N1 * N2 * N3
-        ph.M = np.tile(self.M, factor)
-        ph.a = np.array([self.a[0] * N1, self.a[1] * N2, self.a[2] * N3])
-
-        ph.r = np.array([
-            n1 * self.a[0] + n2 * self.a[1] + n3 * self.a[2] + self.r[na]
-            for n1 in range(N1)
-            for n2 in range(N2)
-            for n3 in range(N3)
-            for na in range(self.nat)])
-
-        ph.atom_order = list(self.atom_order) * factor
-        ph.size = self.size * factor
-        ph.nat = self.nat * factor
-
-        if comm.rank == 0:
-            const = dict()
-
-            for n in range(len(self.R)):
-                for n1 in range(N1):
-                    R1, r1 = divmod(self.R[n, 0] + n1, N1)
-
-                    for n2 in range(N2):
-                        R2, r2 = divmod(self.R[n, 1] + n2, N2)
-
-                        for n3 in range(N3):
-                            R3, r3 = divmod(self.R[n, 2] + n3, N3)
-
-                            R = R1, R2, R3
-
-                            A = (n1 * N2 * N3 + n2 * N3 + n3) * self.size
-                            B = (r1 * N2 * N3 + r2 * N3 + r3) * self.size
-
-                            if R not in const:
-                                const[R] = np.zeros((ph.size, ph.size))
-
-                            const[R][
-                                A:A + self.size,
-                                B:B + self.size] = self.data[n]
-
-            ph.R = np.array(list(const.keys()), dtype=int)
-            ph.data = np.array(list(const.values()))
-
-            count = len(const)
-            const.clear()
-        else:
-            count = None
-
-        count = comm.bcast(count)
-
-        if comm.rank != 0:
-            ph.R = np.empty((count, 3), dtype=int)
-            ph.data = np.empty((count, ph.size, ph.size))
-
-        comm.Bcast(ph.R)
-        comm.Bcast(ph.data)
-
-        return ph
-
-    def supercell_general(self, N1=(1, 0, 0), N2=(0, 1, 0), N3=(0, 0, 1)):
-        """Map mass-spring model onto supercell of arbitrary orientation.
-
-        Parameters
-        ----------
-        N1, N2, N3 : tuple of int or int
+        N1, N2, N3 : tuple of int or int, default 1
             Supercell lattice vectors in units of primitive lattice vectors.
+            Multiples of single primitive vector can be defined via a scalar
+            integer, linear combinations via a 3-tuple of integers.
 
         Returns
         -------
         object
             Mass-spring model for supercell.
-
-        See Also
-        --------
-        supercell
         """
         if not hasattr(N1, '__len__'): N1 = (N1, 0, 0)
         if not hasattr(N2, '__len__'): N2 = (0, N2, 0)
@@ -219,7 +139,7 @@ class Model(object):
 
         ph = Model()
         ph.M = np.tile(self.M, N)
-        ph.a = np.dot(N, self.a)
+        ph.a = np.dot(np.array([N1, N2, N3]), self.a)
         ph.atom_order = list(self.atom_order) * N
         ph.size = self.size * N
         ph.nat = self.nat * N
@@ -239,7 +159,7 @@ class Model(object):
         ph.cells = comm.bcast(ph.cells)
 
         ph.r = np.array([
-            n1 * self.a[0] + n2 * n2 * self.a[1] + n3 * self.a[2] + self.r[na]
+            n1 * self.a[0] + n2 * self.a[1] + n3 * self.a[2] + self.r[na]
             for n1, n2, n3 in ph.cells
             for na in range(self.nat)])
 
@@ -265,9 +185,7 @@ class Model(object):
                     if R not in const:
                         const[R] = np.zeros((ph.size, ph.size))
 
-                    const[R][
-                        A:A + self.size,
-                        B:B + self.size] = self.data[n]
+                    const[R][A:A + self.size, B:B + self.size] = self.data[n]
 
             ph.R = np.array(list(const.keys()), dtype=int)
             ph.data = np.array(list(const.values()))
