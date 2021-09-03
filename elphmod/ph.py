@@ -107,7 +107,7 @@ class Model(object):
                 divide_mass=divide_mass)
 
     def supercell(self, N1=1, N2=1, N3=1):
-        """Map mass-spring model onto supercell.
+        """Map mass-spring model onto supercell of same orientation.
 
         Parameters
         ----------
@@ -118,6 +118,10 @@ class Model(object):
         -------
         object
             Mass-spring model for supercell.
+
+        See Also
+        --------
+        supercell_general
         """
         ph = Model()
 
@@ -160,6 +164,106 @@ class Model(object):
                             const[R][
                                 A:A + self.size,
                                 B:B + self.size] = self.data[n]
+
+            ph.R = np.array(list(const.keys()), dtype=int)
+            ph.data = np.array(list(const.values()))
+
+            count = len(const)
+            const.clear()
+        else:
+            count = None
+
+        count = comm.bcast(count)
+
+        if comm.rank != 0:
+            ph.R = np.empty((count, 3), dtype=int)
+            ph.data = np.empty((count, ph.size, ph.size))
+
+        comm.Bcast(ph.R)
+        comm.Bcast(ph.data)
+
+        return ph
+
+    def supercell_general(self, N1=(1, 0, 0), N2=(0, 1, 0), N3=(0, 0, 1)):
+        """Map mass-spring model onto supercell of arbitrary orientation.
+
+        Parameters
+        ----------
+        N1, N2, N3 : tuple of int
+            Supercell lattice vectors in units of primitive lattice vectors.
+
+        Returns
+        -------
+        object
+            Mass-spring model for supercell.
+        list of tuple
+            Unit cells in supercell ordered as in dynamical matrix.
+
+        See Also
+        --------
+        supercell
+        """
+        N1 = np.array(N1)
+        N2 = np.array(N2)
+        N3 = np.array(N3)
+
+        N = np.dot(N1, np.cross(N2, N3))
+
+        B1 = np.cross(N2, N3)
+        B2 = np.cross(N3, N1)
+        B3 = np.cross(N1, N2)
+
+        ph = Model()
+        ph.M = np.tile(self.M, N)
+        ph.a = np.dot(N, self.a)
+        ph.atom_order = list(self.atom_order) * N
+        ph.size = self.size * N
+        ph.nat = self.nat * N
+        ph.cells = []
+
+        if comm.rank == 0:
+            for n1 in range(N):
+                for n2 in range(N):
+                    for n3 in range(N):
+                        indices = n1 * N1 + n2 * N2 + n3 * N3
+
+                        if np.all(indices % N == 0):
+                            ph.cells.append(tuple(indices // N))
+
+            assert len(ph.cells) == N
+
+        ph.cells = comm.bcast(ph.cells)
+
+        ph.r = np.array([
+            n1 * self.a[0] + n2 * n2 * self.a[1] + n3 * self.a[2] + self.r[na]
+            for n1, n2, n3 in ph.cells
+            for na in range(self.nat)])
+
+        if comm.rank == 0:
+            const = dict()
+
+            for n in range(len(self.R)):
+                for i, cell in enumerate(ph.cells):
+                    R = self.R[n] + np.array(cell)
+
+                    R1, r1 = divmod(np.dot(R, B1), N)
+                    R2, r2 = divmod(np.dot(R, B2), N)
+                    R3, r3 = divmod(np.dot(R, B3), N)
+
+                    R = R1, R2, R3
+
+                    indices = r1 * N1 + r2 * N2 + r3 * N3
+                    j = ph.cells.index(tuple(indices // N))
+
+                    A = i * self.size
+                    B = j * self.size
+
+                    if R not in const:
+                        const[R] = np.zeros((ph.size, ph.size))
+
+                    const[R][
+                        A:A + self.size,
+                        B:B + self.size] = self.data[n]
 
             ph.R = np.array(list(const.keys()), dtype=int)
             ph.data = np.array(list(const.values()))
