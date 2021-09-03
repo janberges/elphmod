@@ -273,6 +273,8 @@ class Model(object):
     def supercell(self, N1=1, N2=1, N3=1):
         """Map localized model for electron-phonon coupling onto supercell.
 
+        This function works for non-rotated supercells only.
+
         Parameters
         ----------
         N1, N2, N3 : int, default 1
@@ -282,6 +284,10 @@ class Model(object):
         -------
         object
             Localized model for electron-phonon coupling for supercell.
+
+        See Also
+        --------
+        supercell_general
         """
         elph = Model(
             el=self.el.supercell(N1, N2, N3),
@@ -324,6 +330,122 @@ class Model(object):
                                     A:A + self.ph.size,
                                     B:B + self.el.size,
                                     C:C + self.el.size] = self.data[g, :, k]
+            countg = len(Rg)
+            countk = len(Rk)
+        else:
+            countg = countk = None
+
+        countg = comm.bcast(countg)
+        countk = comm.bcast(countk)
+
+        elph.Rg = np.empty((countg, 3), dtype=int)
+        elph.Rk = np.empty((countk, 3), dtype=int)
+
+        elph.data = np.empty((countg, elph.ph.size, countk,
+            elph.el.size, elph.el.size), dtype=complex)
+
+        elph.gq = np.empty((elph.ph.size, countk,
+            elph.el.size, elph.el.size), dtype=complex)
+
+        if comm.rank == 0:
+            Rg = sorted(Rg)
+            Rk = sorted(Rk)
+
+            elph.Rg[...] = Rg
+            elph.Rk[...] = Rk
+            elph.data[...] = 0.0
+
+            for g, (G1, G2, G3) in enumerate(Rg):
+                for k, (K1, K2, K3) in enumerate(Rk):
+                    R = G1, G2, G3, K1, K2, K3
+                    if R in const:
+                        elph.data[g, :, k] = const[R]
+
+        comm.Bcast(elph.Rg)
+        comm.Bcast(elph.Rk)
+        comm.Bcast(elph.data)
+
+        return elph
+
+    def supercell_general(self, N1=(1, 0, 0), N2=(0, 1, 0), N3=(0, 0, 1)):
+        """Map localized model for electron-phonon coupling onto supercell.
+
+        This function works for arbitrary orientations of the supercell.
+
+        Parameters
+        ----------
+        N1, N2, N3 : tuple of int
+            Supercell lattice vectors in units of primitive lattice vectors.
+
+        Returns
+        -------
+        object
+            Localized model for electron-phonon coupling for supercell.
+        list of tuple
+            Unit cells in supercell ordered as in electron-phonon coupling.
+
+        See Also
+        --------
+        supercell
+        """
+        N1 = np.array(N1)
+        N2 = np.array(N2)
+        N3 = np.array(N3)
+
+        N = np.dot(N1, np.cross(N2, N3))
+
+        B1 = np.cross(N2, N3)
+        B2 = np.cross(N3, N1)
+        B3 = np.cross(N1, N2)
+
+        elph = Model(
+            el=self.el.supercell_general(N1, N2, N3),
+            ph=self.ph.supercell_general(N1, N2, N3))
+
+        elph.cells = elph.el.cells
+
+        if comm.rank == 0:
+            Rg = set()
+            Rk = set()
+            const = dict()
+
+            for g in range(len(self.Rg)):
+                for k in range(len(self.Rk)):
+                    for i, cell in enumerate(elph.cells):
+                        G = self.Rg[g] + np.array(cell)
+                        K = self.Rk[k] + np.array(cell)
+
+                        G1, g1 = divmod(np.dot(G, B1), N)
+                        G2, g2 = divmod(np.dot(G, B2), N)
+                        G3, g3 = divmod(np.dot(G, B3), N)
+                        K1, k1 = divmod(np.dot(K, B1), N)
+                        K2, k2 = divmod(np.dot(K, B2), N)
+                        K3, k3 = divmod(np.dot(K, B3), N)
+
+                        Rg.add((G1, G2, G3))
+                        Rk.add((K1, K2, K3))
+
+                        R = G1, G2, G3, K1, K2, K3
+
+                        indices = g1 * N1 + g2 * N2 + g3 * N3
+                        n = elph.cells.index(tuple(indices // N))
+                        indices = k1 * N1 + k2 * N2 + k3 * N3
+                        j = elph.cells.index(tuple(indices // N))
+
+                        A = n * self.ph.size
+                        B = i * self.el.size
+                        C = j * self.el.size
+
+                        if R not in const:
+                            const[R] = np.zeros((elph.ph.size,
+                                elph.el.size, elph.el.size),
+                                    dtype=complex)
+
+                        const[R][
+                            A:A + self.ph.size,
+                            B:B + self.el.size,
+                            C:C + self.el.size] = self.data[g, :, k]
+
             countg = len(Rg)
             countk = len(Rk)
         else:
