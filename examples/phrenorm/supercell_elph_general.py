@@ -8,15 +8,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 nu = 8 # ionic displacement
-N = [
-    [ 2, 0, 0],
-    [ 0, 2, 0],
-    [ 0, 0, 1],
-    ]
+N = [2, 2, 1]
 
 a = elphmod.bravais.primitives(ibrav=4)
 b = elphmod.bravais.reciprocals(*a)
-A = np.dot(N, a)
+A = np.dot(np.diag(N), a)
 
 el = elphmod.el.Model('TaS2')
 ph = elphmod.ph.Model('dfpt.ifc', apply_asr=True)

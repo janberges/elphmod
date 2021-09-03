@@ -377,7 +377,7 @@ class Model(object):
 
         Parameters
         ----------
-        N1, N2, N3 : tuple of int
+        N1, N2, N3 : tuple of int or int
             Supercell lattice vectors in units of primitive lattice vectors.
 
         Returns
@@ -389,6 +389,10 @@ class Model(object):
         --------
         supercell
         """
+        if not hasattr(N1, '__len__'): N1 = (N1, 0, 0)
+        if not hasattr(N2, '__len__'): N2 = (0, N2, 0)
+        if not hasattr(N3, '__len__'): N3 = (0, 0, N3)
+
         N1 = np.array(N1)
         N2 = np.array(N2)
         N3 = np.array(N3)
