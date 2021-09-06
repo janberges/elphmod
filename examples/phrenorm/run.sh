@@ -28,5 +28,4 @@ done
 mpirun python3 phrenorm.py
 mpirun python3 defpot.py
 mpirun python3 supercell_elph.py
-mpirun python3 supercell_elph_general.py
 mpirun python3 decay.py
