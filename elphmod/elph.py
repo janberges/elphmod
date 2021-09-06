@@ -272,7 +272,7 @@ class Model(object):
         """
         return sample(g=self.g, *args, **kwargs)
 
-    def supercell(self, N1=1, N2=1, N3=1):
+    def supercell(self, N1=1, N2=1, N3=1, shared_memory=False):
         """Map localized model for electron-phonon coupling onto supercell.
 
         Parameters
@@ -281,6 +281,8 @@ class Model(object):
             Supercell lattice vectors in units of primitive lattice vectors.
             Multiples of single primitive vector can be defined via a scalar
             integer, linear combinations via a 3-tuple of integers.
+        shared_memory : bool, default False
+            Store mapped coupling in shared memory?
 
         Returns
         -------
@@ -359,8 +361,9 @@ class Model(object):
         elph.Rg = np.empty((countg, 3), dtype=int)
         elph.Rk = np.empty((countk, 3), dtype=int)
 
-        elph.data = np.empty((countg, elph.ph.size, countk,
-            elph.el.size, elph.el.size), dtype=complex)
+        node, images, elph.data = MPI.shared_array((countg, elph.ph.size,
+            countk, elph.el.size, elph.el.size), dtype=complex,
+            shared_memory=shared_memory)
 
         elph.gq = np.empty((elph.ph.size, countk,
             elph.el.size, elph.el.size), dtype=complex)
@@ -381,7 +384,9 @@ class Model(object):
 
         comm.Bcast(elph.Rg)
         comm.Bcast(elph.Rk)
-        comm.Bcast(elph.data)
+
+        if node.rank == 0:
+            images.Bcast(elph.data)
 
         return elph
 
