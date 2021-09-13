@@ -19,7 +19,7 @@ do
     ../../bin/ph2epw
 
     mpirun pw.x -nk $nk < nscf.in | tee nscf.out
-    mpirun -n 1 epw.x -nk 1 < epw.in | tee epw.out
+    mpirun -n $nk epw.x -nk $nk < epw.in | tee epw.out
 
     mv ifc $method.ifc
     mv work/TaS2.epmatwp $method.epmatwp

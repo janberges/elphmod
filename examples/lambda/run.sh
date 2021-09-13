@@ -17,6 +17,6 @@ mpirun q2r.x < q2r.in | tee q2r.out
 ../../bin/ph2epw
 
 mpirun pw.x -nk $nk < nscf.in | tee nscf.out
-mpirun -n 1 epw.x -nk 1 < epw.in | tee epw.out
+mpirun -n $nk epw.x -nk $nk < epw.in | tee epw.out
 
 mpirun python3 lambda.py
