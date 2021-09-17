@@ -1,5 +1,11 @@
 # Changes
 
+## v0.6
+
+* Mapping of all models to arbitrary commensurate supercells
+* New functions to read and write input of QE phonon codes
+* Fixed ordering of eigenvectors calculated on 2D mesh
+
 ## v0.5
 
 * Examples run successfully without `mpi4py`
