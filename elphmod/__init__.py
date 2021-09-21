@@ -5,7 +5,7 @@
 
 """Load all modules at package import."""
 
-__version__ = '0.5'
+__version__ = '0.6'
 
 from . import MPI
 from . import bravais

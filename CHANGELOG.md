@@ -4,6 +4,7 @@
 
 * Mapping of all models to arbitrary commensurate supercells
 * New functions to read and write input of QE phonon codes
+* New Bash script to prevent NumPy's auto-parallelization
 * Fixed ordering of eigenvectors calculated on 2D mesh
 
 ## v0.5
