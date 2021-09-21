@@ -14,7 +14,6 @@ polonium
 
     proj(1) = 'Po: p'
 
-    dis_win_min = 3.0
     dis_win_max = 14.0
     dis_froz_min = 3.0
     dis_froz_max = 12.0
