@@ -10,11 +10,13 @@ import numpy as np
 comm = elphmod.MPI.comm
 info = elphmod.MPI.info
 
+nk = 72
+
 info('Set up and diagonalize Wannier Hamiltonian..')
 
 el = elphmod.el.Model('graphene')
 
-e, U, order = elphmod.dispersion.dispersion_full(el.H, 72,
+e, U, order = elphmod.dispersion.dispersion_full(el.H, nk,
     vectors=True, order=True)
 
 e -= elphmod.el.read_Fermi_level('scf.out')
@@ -35,8 +37,20 @@ for n in range(el.size):
 
 W = np.array(W)
 
-V = np.dot(np.cross(a[0], a[1]), a[2])
+info('Normalize Wannier functions..')
+
+V = abs(np.dot(np.cross(a[0], a[1]), a[2]))
 dV = V / data.size
+
+for n in range(el.size):
+    W[n] /= np.sqrt(np.sum(W[n] ** 2) * dV)
+
+info('Check if Wannier functions are orthonormal..')
+
+if comm.rank == 0:
+    for m in range(el.size):
+        for n in range(el.size):
+            print('%2d %2d %7.4f' % (m, n, np.sum(W[m] * W[n]) * dV))
 
 info('Sample real space..')
 
@@ -50,10 +64,19 @@ if comm.rank == 0:
     r += np.einsum('xyz,i->xyzi', z, a[2])
     r += r0
 
-info('Probe density of states..')
+info('Calculate density of states..')
 
-position1 = np.array([0.0, 0.0, 0.5]) + (tau[0] + tau[1]) / 2
-position2 = np.array([0.0, 0.0, 0.5]) + tau[0]
+w, dw = np.linspace(e.min(), e.max(), 300, retstep=True)
+
+DOS = sum(elphmod.dos.hexDOS(e[:, :, n])(w) for n in range(el.size))
+
+if comm.rank == 0:
+    plt.plot(w, DOS, label='DOS')
+
+info('Calculate scanning-tunneling spectrum..')
+
+position1 = np.array([0.0, 0.0, 3.0]) + (tau[0] + tau[1]) / 2
+position2 = np.array([0.0, 0.0, 3.0]) + tau[0]
 
 for position, label in (position1, 'bond'), (position2, 'atom'):
     label = '$%g\,\mathrm{\AA}$ above %s' % (position[2], label)
@@ -62,32 +85,44 @@ for position, label in (position1, 'bond'), (position2, 'atom'):
     if comm.rank == 0:
         tip = np.zeros(data.shape)
 
-        sigma = 0.25
-        sigma *= np.sqrt(2)
+        NN = 3
+        R = np.array([(n1, n2, 0)
+            for n1 in range(-NN, NN + 1)
+            for n2 in range(-NN, NN + 1)])
 
-        shifts = [-1, 0, 1]
+        overlap = np.empty((len(R), el.size))
 
-        for d1 in shifts:
-            for d2 in shifts:
-                for d3 in shifts:
-                    shift = d1 * a1 + d2 * a2 + d3 * a3
+        norm = np.sqrt(np.pi * elphmod.misc.a0 ** 3)
 
-                    d = np.linalg.norm(position + shift - r, axis=3)
+        for iR, (n1, n2, n3) in enumerate(R):
+            shift = n1 * a1 + n2 * a2 + n3 * a3
 
-                    tip += elphmod.occupations.gauss.delta(d / sigma) / sigma
+            d = np.linalg.norm(position - shift - r, axis=3)
+
+            s = np.exp(-d / elphmod.misc.a0) / norm
+
+            for a in range(el.size):
+                overlap[iR, a] = np.sum(s * W[a]) * dV
 
     info('Calculate weight of orbitals..')
 
     if comm.rank == 0:
-        weight = (U.conj() * U).real
+        weight = np.zeros(e.shape, dtype=complex)
 
-        for n in range(el.size):
-            factor = np.sum(tip * W[n]) ** 2 * dV
-            weight[:, :, n, :] *= factor
+        scale = 2 * np.pi / nk
 
-            print('%2d %9.3f' % (n + 1, factor))
+        for k1, k2 in sorted(elphmod.bravais.irreducibles(nk)):
+            tmp = 0.0
+            for iR, (n1, n2, n3) in enumerate(R):
+                tmp += np.dot(overlap[iR], U[k1, k2]) * np.exp(-1j
+                    * (k1 * n1 + k2 * n2) * scale)
 
-        weight = weight.sum(axis=2)
+            for K1, K2 in elphmod.bravais.images(k1, k2, nk):
+                weight[K1, K2] = tmp
+
+        weight /= nk
+
+        weight = abs(weight) ** 2
     else:
         weight = np.empty(e.shape)
 
@@ -95,17 +130,16 @@ for position, label in (position1, 'bond'), (position2, 'atom'):
 
     info('Calculate weighted density of states..')
 
-    w = np.linspace(e.min(), e.max(), 150)
+    STS = sum(elphmod.dos.hexa2F(e[:, :, n], weight[:, :, n])(w)
+        for n in range(el.size))
 
-    DOS = 0
-
-    for n in range(el.size):
-        DOS = DOS + elphmod.dos.hexa2F(e[:, :, n], weight[:, :, n])(w)
+    STS *= el.size / (np.sum(STS) * dw)
 
     if comm.rank == 0:
-        plt.plot(w, DOS, label=label)
+        plt.plot(w, STS, label=label)
 
 if comm.rank == 0:
+    plt.grid()
     plt.xlabel('energy (eV)')
     plt.ylabel('density of states (1/eV)')
     plt.legend()
