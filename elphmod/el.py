@@ -23,7 +23,14 @@ class Model(object):
         ``False`` is only used in combination with :func:`decayH`.
     read_xsf : bool, default False
         Read Wannier functions in position representation in the XCrySDen
-        structure format?
+        structure format (XSF)?
+    normalize_wf : bool, default False
+        Normalize Wannier functions? This is only recommended if a single and
+        complete image of each Wannier function is contained in the supercell
+        written to the XSF file. This may not be the case for a small number of
+        k points along one direction (e.g., a single k point in the out-of-plane
+        direction in the case of 2D materials), especially in combination with a
+        large supercell.
 
     Attributes
     ----------
@@ -67,7 +74,9 @@ class Model(object):
 
         return H.sum(axis=0)
 
-    def __init__(self, seedname=None, divide_ndegen=True, read_xsf=False):
+    def __init__(self, seedname=None, divide_ndegen=True, read_xsf=False,
+            normalize_wf=False):
+
         if seedname is None:
             return
 
@@ -139,7 +148,8 @@ class Model(object):
                 my_W[my_n] = misc.read_xsf('%s_%05d.xsf' % (seedname, n + 1),
                     comm=MPI.I)[-1]
 
-                my_W[my_n] /= np.sqrt(np.sum(my_W[my_n] ** 2) * self.dV)
+                if normalize_wf:
+                    my_W[my_n] /= np.sqrt(np.sum(my_W[my_n] ** 2) * self.dV)
 
             comm.Allgatherv(my_W, (self.W, sizes * np.prod(shape)))
 
