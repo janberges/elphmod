@@ -16,8 +16,14 @@ info('Set up and diagonalize Wannier Hamiltonian..')
 
 el = elphmod.el.Model('graphene', read_xsf=True)
 
-e, U, order = elphmod.dispersion.dispersion_full(el.H, nk,
-    vectors=True, order=True)
+_, order = elphmod.dispersion.dispersion_full(el.H, nk, order=True)
+e, U = elphmod.dispersion.dispersion_full_nosym(el.H, nk, vectors=True)
+
+for k1 in range(nk):
+    for k2 in range(nk):
+        e[k1, k2] = e[k1, k2, order[k1, k2]]
+        for n in range(el.size):
+            U[k1, k2, n] = U[k1, k2, n, order[k1, k2]]
 
 e -= elphmod.el.read_Fermi_level('scf.out')
 
@@ -73,15 +79,13 @@ for position, label in (position1, 'bond'), (position2, 'atom'):
     if comm.rank == 0:
         scale = 2 * np.pi / nk
 
-        for k1, k2 in sorted(elphmod.bravais.irreducibles(nk)):
-            tmp = 0.0
-            for iR in range(len(R)):
-                tmp += np.dot(overlap[iR], U[k1, k2]) * np.exp(-1j
-                    * (k1 * R[iR, 0] + k2 * R[iR, 1]) * scale)
-            tmp = (abs(tmp) / nk) ** 2
-
-            for K1, K2 in elphmod.bravais.images(k1, k2, nk):
-                weight[K1, K2] = tmp
+        for k1 in range(nk):
+            for k2 in range(nk):
+                tmp = 0.0
+                for iR in range(len(R)):
+                    tmp += np.dot(overlap[iR], U[k1, k2]) * np.exp(-1j
+                        * (k1 * R[iR, 0] + k2 * R[iR, 1]) * scale)
+                weight[k1, k2] = (abs(tmp) / nk) ** 2
 
     comm.Bcast(weight)
 
