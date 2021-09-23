@@ -146,7 +146,7 @@ def read_cube(cube):
 
     return a, X, r, data
 
-def read_xsf(xsf):
+def read_xsf(xsf, only_header=False, comm=comm):
     """Read file in XCrySDen format."""
 
     if comm.rank == 0:
@@ -187,6 +187,9 @@ def read_xsf(xsf):
     comm.Bcast(a)
     X = comm.bcast(X)
     comm.Bcast(r)
+
+    if only_header:
+        return r0, a, X, r, tuple(n)
 
     if comm.rank == 0:
         data = np.empty(np.prod(n))

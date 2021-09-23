@@ -17,10 +17,13 @@ class Model(object):
         Common prefix of Wannier90 output files: *seedname_hr.dat* with the
         Hamiltonian in the Wannier basis and, optionally, *seedname_wsvec.dat*
         with superlattice vectors used to symmetrize the long-range hopping.
-    divide_ndegen : bool
+    divide_ndegen : bool, default True
         Divide hopping by degeneracy of Wigner-Seitz point and apply the
         abovementioned correction? Only ``True`` yields correct bands.
         ``False`` is only used in combination with :func:`decayH`.
+    read_xsf : bool, default False
+        Read Wannier functions in position representation in the XCrySDen
+        structure format?
 
     Attributes
     ----------
@@ -32,6 +35,16 @@ class Model(object):
         Number of Wannier functions/bands.
     cells : list of tuple of int, optional
         Lattice vectors of unit cells if the model describes a supercell.
+    W : ndarray
+        Wannier functions in position representation if `read_xsf`.
+    r : ndarray
+        Cartesian positions belonging to Wannier functions if `read_xsf`.
+    tau : ndarray
+        Positions of basis atoms if `read_xsf`.
+    atom_order : list of str
+        Ordered list of atoms if `read_xsf`.
+    dV : float
+        Volume element/voxel volume belonging to `r` if `read_xsf`.
     """
     def H(self, k1=0, k2=0, k3=0):
         """Set up Hamilton operator for arbitrary k point."""
@@ -54,7 +67,7 @@ class Model(object):
 
         return H.sum(axis=0)
 
-    def __init__(self, seedname=None, divide_ndegen=True):
+    def __init__(self, seedname=None, divide_ndegen=True, read_xsf=False):
         if seedname is None:
             return
 
@@ -101,6 +114,34 @@ class Model(object):
 
             comm.Bcast(self.R)
             comm.Bcast(self.data)
+
+        if read_xsf:
+            r0, a, self.atom_order, self.tau, shape = misc.read_xsf(
+                '%s_%05d.xsf' % (seedname, 1), only_header=True)
+
+            self.dV = abs(np.dot(np.cross(a[0], a[1]), a[2])) / np.prod(shape)
+
+            self.r = np.empty(shape + (3,))
+
+            if comm.rank == 0:
+                axes = [np.linspace(0.0, 1.0, num) for num in shape]
+                axes = np.meshgrid(*axes, indexing='ij')
+                self.r[...] = r0 + np.einsum('nijk,nx->ijkx', axes, a)
+
+            comm.Bcast(self.r)
+
+            sizes, bounds = MPI.distribute(self.size, bounds=True)
+
+            my_W = np.empty((sizes[comm.rank],) + shape)
+            self.W = np.empty((self.size,) + shape)
+
+            for my_n, n in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
+                my_W[my_n] = misc.read_xsf('%s_%05d.xsf' % (seedname, n + 1),
+                    comm=MPI.I)[-1]
+
+                my_W[my_n] /= np.sqrt(np.sum(my_W[my_n] ** 2) * self.dV)
+
+            comm.Allgatherv(my_W, (self.W, sizes * np.prod(shape)))
 
     def supercell(self, N1=1, N2=1, N3=1):
         """Map tight-binding model onto supercell.

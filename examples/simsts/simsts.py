@@ -14,7 +14,7 @@ nk = 72
 
 info('Set up and diagonalize Wannier Hamiltonian..')
 
-el = elphmod.el.Model('graphene')
+el = elphmod.el.Model('graphene', read_xsf=True)
 
 e, U, order = elphmod.dispersion.dispersion_full(el.H, nk,
     vectors=True, order=True)
@@ -24,45 +24,14 @@ e -= elphmod.el.read_Fermi_level('scf.out')
 info('Set up Bravais lattice vectors..')
 
 pwi = elphmod.bravais.read_pwi('scf.in')
-
-a1, a2, a3 = elphmod.bravais.primitives(**pwi)
-
-info('Read Wannier functions..')
-
-W = []
-
-for n in range(el.size):
-    r0, a, X, tau, data = elphmod.misc.read_xsf('graphene_%05d.xsf' % (n + 1))
-    W.append(data)
-
-W = np.array(W)
-
-info('Normalize Wannier functions..')
-
-V = abs(np.dot(np.cross(a[0], a[1]), a[2]))
-dV = V / data.size
-
-for n in range(el.size):
-    W[n] /= np.sqrt(np.sum(W[n] ** 2) * dV)
+a = elphmod.bravais.primitives(**pwi)
 
 info('Check if Wannier functions are orthonormal..')
 
 if comm.rank == 0:
     for m in range(el.size):
         for n in range(el.size):
-            print('%2d %2d %7.4f' % (m, n, np.sum(W[m] * W[n]) * dV))
-
-info('Sample real space..')
-
-if comm.rank == 0:
-    x, y, z = [np.linspace(0.0, 1.0, points) for points in data.shape]
-    x, y, z = np.meshgrid(x, y, z, indexing='ij')
-
-    r = np.zeros(data.shape + (3,))
-    r += np.einsum('xyz,i->xyzi', x, a[0])
-    r += np.einsum('xyz,i->xyzi', y, a[1])
-    r += np.einsum('xyz,i->xyzi', z, a[2])
-    r += r0
+            print('%2d %2d %7.4f' % (m, n, np.sum(el.W[m] * el.W[n]) * el.dV))
 
 info('Calculate density of states..')
 
@@ -75,56 +44,44 @@ if comm.rank == 0:
 
 info('Calculate scanning-tunneling spectrum..')
 
-position1 = np.array([0.0, 0.0, 3.0]) + (tau[0] + tau[1]) / 2
-position2 = np.array([0.0, 0.0, 3.0]) + tau[0]
+position1 = np.array([0.0, 0.0, 3.0]) + (el.tau[0] + el.tau[1]) / 2
+position2 = np.array([0.0, 0.0, 3.0]) + el.tau[0]
 
 for position, label in (position1, 'bond'), (position2, 'atom'):
     label = '$%g\,\mathrm{\AA}$ above %s' % (position[2], label)
     info('Position tip %s..' % label)
 
     if comm.rank == 0:
-        tip = np.zeros(data.shape)
-
-        NN = 3
-        R = np.array([(n1, n2, 0)
-            for n1 in range(-NN, NN + 1)
-            for n2 in range(-NN, NN + 1)])
+        cells = range(-3, 4)
+        R = np.array([(n1, n2, 0) for n1 in cells for n2 in cells])
 
         overlap = np.empty((len(R), el.size))
-
         norm = np.sqrt(np.pi * elphmod.misc.a0 ** 3)
 
-        for iR, (n1, n2, n3) in enumerate(R):
-            shift = n1 * a1 + n2 * a2 + n3 * a3
-
-            d = np.linalg.norm(position - shift - r, axis=3)
-
+        for iR in range(len(R)):
+            shift = np.dot(R[iR], a)
+            d = np.linalg.norm(position - shift - el.r, axis=3)
             s = np.exp(-d / elphmod.misc.a0) / norm
 
-            for a in range(el.size):
-                overlap[iR, a] = np.sum(s * W[a]) * dV
+            for n in range(el.size):
+                overlap[iR, n] = np.sum(s * el.W[n]) * el.dV
 
     info('Calculate weight of orbitals..')
 
-    if comm.rank == 0:
-        weight = np.zeros(e.shape, dtype=complex)
+    weight = np.empty(e.shape)
 
+    if comm.rank == 0:
         scale = 2 * np.pi / nk
 
         for k1, k2 in sorted(elphmod.bravais.irreducibles(nk)):
             tmp = 0.0
-            for iR, (n1, n2, n3) in enumerate(R):
+            for iR in range(len(R)):
                 tmp += np.dot(overlap[iR], U[k1, k2]) * np.exp(-1j
-                    * (k1 * n1 + k2 * n2) * scale)
+                    * (k1 * R[iR, 0] + k2 * R[iR, 1]) * scale)
+            tmp = (abs(tmp) / nk) ** 2
 
             for K1, K2 in elphmod.bravais.images(k1, k2, nk):
                 weight[K1, K2] = tmp
-
-        weight /= nk
-
-        weight = abs(weight) ** 2
-    else:
-        weight = np.empty(e.shape)
 
     comm.Bcast(weight)
 
