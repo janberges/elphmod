@@ -64,6 +64,8 @@ except ImportError:
 
 comm = MPI.COMM_WORLD
 
+I = comm.Split(comm.rank)
+
 def distribute(size, bounds=False, comm=comm, chunks=None):
     """Distribute work among processes."""
 
@@ -179,7 +181,7 @@ def shared_array(shape, dtype=float, shared_memory=True, single_memory=False,
     else:
         # pretend that each processor is on separate node:
 
-        node = comm.Split(comm.rank) # same core
+        node = I # same core
 
         array = np.empty(shape, dtype=dtype)
 
