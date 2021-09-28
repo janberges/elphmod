@@ -14,7 +14,7 @@ nk = 72
 
 info('Set up and diagonalize Wannier Hamiltonian..')
 
-el = elphmod.el.Model('graphene', read_xsf=True)
+el = elphmod.el.Model('graphene', read_xsf=True, normalize_wf=True)
 
 _, order = elphmod.dispersion.dispersion_full(el.H, nk, order=True)
 e, U = elphmod.dispersion.dispersion_full_nosym(el.H, nk, vectors=True)
