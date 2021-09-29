@@ -254,7 +254,7 @@ class Model(object):
                     g[:, block[na]] /= np.sqrt(ph.M[na])
 
         if node.rank == 0:
-            images.Bcast(g)
+            images.Bcast(g.view(dtype=float))
 
         comm.Barrier()
 
@@ -386,7 +386,7 @@ class Model(object):
         comm.Bcast(elph.Rk)
 
         if node.rank == 0:
-            images.Bcast(elph.data)
+            images.Bcast(elph.data.view(dtype=float))
 
         return elph
 
@@ -490,7 +490,7 @@ def sample(g, q, nk=None, U=None, u=None, broadcast=True, shared_memory=False):
     col.Barrier() # should not be necessary
 
     if node.rank == 0:
-        images.Bcast(g)
+        images.Bcast(g.view(dtype=float))
 
     node.Barrier()
 
@@ -544,7 +544,7 @@ def transform(g, q, nk, U=None, u=None, broadcast=True, shared_memory=False):
     comm.Gatherv(my_g, (g, comm.gather(my_g.size)))
 
     if node.rank == 0:
-        images.Bcast(g)
+        images.Bcast(g.view(dtype=float))
 
     node.Barrier()
 

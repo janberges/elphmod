@@ -25,7 +25,7 @@ elph = elphmod.elph.Model('dfpt.epmatwp', 'wigner.dat', el, ph,
     divide_mass=False)
 elph.data *= elphmod.misc.Ry / elphmod.misc.a0
 
-ElPh = elph.supercell(*N)
+ElPh = elph.supercell(*N, shared_memory=False)
 
 k, x, GMKG = elphmod.bravais.path('GMKG', ibrav=4, N=300)
 K = np.dot(np.dot(k, b), A.T)
