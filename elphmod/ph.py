@@ -630,21 +630,19 @@ def short_range_model(phid, amass, at, tau, eps=1e-7, divide_mass=True,
 
     # convert dictionary into arrays:
 
-    n = len(const)
-
     cells = np.array(list(const.keys()), dtype=np.int8)
     const = np.array(list(const.values()))
 
     # gather data of all processes:
 
-    dims = np.array(comm.allgather(n))
+    dims = np.array(comm.allgather(len(const)))
     dim = dims.sum()
 
     allcells = np.empty((dim, 3), dtype=np.int8)
     allconst = np.empty((dim, 3 * nat, 3 * nat))
 
-    comm.Allgatherv(cells[:n], (allcells, dims * 3))
-    comm.Allgatherv(const[:n], (allconst, dims * (3 * nat) ** 2))
+    comm.Allgatherv(cells, (allcells, dims * 3))
+    comm.Allgatherv(const, (allconst, dims * (3 * nat) ** 2))
 
     # (see cdef _p_message message_vector in mpi4py/src/mpi4py/MPI/msgbuffer.pxi
     # for possible formats of second argument 'recvbuf')
