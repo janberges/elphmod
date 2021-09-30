@@ -309,84 +309,79 @@ class Model(object):
 
         elph.cells = elph.el.cells
 
-        if comm.rank == 0:
-            Rg = set()
-            Rk = set()
-            const = dict()
+        Rg = set()
+        Rk = set()
+        const = dict()
 
-            for g in range(len(self.Rg)):
-                for k in range(len(self.Rk)):
-                    for i, cell in enumerate(elph.cells):
-                        G = self.Rg[g] + np.array(cell)
-                        K = self.Rk[k] + np.array(cell)
+        counter = 0 # counter for parallelization
 
-                        G1, g1 = divmod(np.dot(G, B1), N)
-                        G2, g2 = divmod(np.dot(G, B2), N)
-                        G3, g3 = divmod(np.dot(G, B3), N)
-                        K1, k1 = divmod(np.dot(K, B1), N)
-                        K2, k2 = divmod(np.dot(K, B2), N)
-                        K3, k3 = divmod(np.dot(K, B3), N)
+        for g in range(len(self.Rg)):
+            for k in range(len(self.Rk)):
+                for i, cell in enumerate(elph.cells):
+                    counter += 1
 
-                        Rg.add((G1, G2, G3))
-                        Rk.add((K1, K2, K3))
+                    if counter % comm.size != comm.rank:
+                        continue
 
-                        R = G1, G2, G3, K1, K2, K3
+                    G = self.Rg[g] + np.array(cell)
+                    K = self.Rk[k] + np.array(cell)
 
-                        indices = g1 * N1 + g2 * N2 + g3 * N3
-                        n = elph.cells.index(tuple(indices // N))
-                        indices = k1 * N1 + k2 * N2 + k3 * N3
-                        j = elph.cells.index(tuple(indices // N))
+                    G1, g1 = divmod(np.dot(G, B1), N)
+                    G2, g2 = divmod(np.dot(G, B2), N)
+                    G3, g3 = divmod(np.dot(G, B3), N)
+                    K1, k1 = divmod(np.dot(K, B1), N)
+                    K2, k2 = divmod(np.dot(K, B2), N)
+                    K3, k3 = divmod(np.dot(K, B3), N)
 
-                        A = n * self.ph.size
-                        B = i * self.el.size
-                        C = j * self.el.size
+                    Rg.add((G1, G2, G3))
+                    Rk.add((K1, K2, K3))
 
-                        if R not in const:
-                            const[R] = np.zeros((elph.ph.size,
-                                elph.el.size, elph.el.size), dtype=complex)
+                    R = G1, G2, G3, K1, K2, K3
 
-                        const[R][
-                            A:A + self.ph.size,
-                            B:B + self.el.size,
-                            C:C + self.el.size] = self.data[g, :, k]
+                    indices = g1 * N1 + g2 * N2 + g3 * N3
+                    n = elph.cells.index(tuple(indices // N))
+                    indices = k1 * N1 + k2 * N2 + k3 * N3
+                    j = elph.cells.index(tuple(indices // N))
 
-            countg = len(Rg)
-            countk = len(Rk)
-        else:
-            countg = countk = None
+                    A = n * self.ph.size
+                    B = i * self.el.size
+                    C = j * self.el.size
 
-        countg = comm.bcast(countg)
-        countk = comm.bcast(countk)
+                    if R not in const:
+                        const[R] = np.zeros((elph.ph.size,
+                            elph.el.size, elph.el.size), dtype=complex)
 
-        elph.Rg = np.empty((countg, 3), dtype=int)
-        elph.Rk = np.empty((countk, 3), dtype=int)
+                    const[R][
+                        A:A + self.ph.size,
+                        B:B + self.el.size,
+                        C:C + self.el.size] = self.data[g, :, k]
 
-        node, images, elph.data = MPI.shared_array((countg, elph.ph.size,
-            countk, elph.el.size, elph.el.size), dtype=complex,
+        elph.Rg = np.array(sorted(set().union(*comm.allgather(Rg))))
+        elph.Rk = np.array(sorted(set().union(*comm.allgather(Rk))))
+
+        node, images, elph.data = MPI.shared_array((len(elph.Rg), elph.ph.size,
+            len(elph.Rk), elph.el.size, elph.el.size), dtype=complex,
             shared_memory=shared_memory)
 
-        elph.gq = np.empty((elph.ph.size, countk,
+        elph.gq = np.empty((elph.ph.size, len(elph.Rk),
             elph.el.size, elph.el.size), dtype=complex)
 
-        if comm.rank == 0:
-            Rg = sorted(Rg)
-            Rk = sorted(Rk)
-
-            elph.Rg[...] = Rg
-            elph.Rk[...] = Rk
+        if node.rank == 0:
             elph.data[...] = 0.0
 
-            for g, (G1, G2, G3) in enumerate(Rg):
-                for k, (K1, K2, K3) in enumerate(Rk):
-                    R = G1, G2, G3, K1, K2, K3
-                    if R in const:
-                        elph.data[g, :, k] = const[R]
+        for g, (G1, G2, G3) in enumerate(elph.Rg):
+            for k, (K1, K2, K3) in enumerate(elph.Rk):
+                R = G1, G2, G3, K1, K2, K3
 
-        comm.Bcast(elph.Rg)
-        comm.Bcast(elph.Rk)
+                for rank in range(node.size):
+                    if node.rank == rank:
+                        if R in const:
+                            elph.data[g, :, k] += const[R]
+
+                    node.Barrier()
 
         if node.rank == 0:
-            images.Bcast(elph.data.view(dtype=float))
+            images.Allreduce(MPI.MPI.IN_PLACE, elph.data.view(dtype=float))
 
         return elph
 
