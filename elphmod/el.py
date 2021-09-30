@@ -199,6 +199,9 @@ class Model(object):
 
             const = dict()
 
+            status = misc.StatusBar(len(self.R),
+                title='map hoppings onto supercell')
+
             for n in range(len(self.R)):
                 for i, cell in enumerate(el.cells):
                     R = self.R[n] + np.array(cell)
@@ -219,6 +222,8 @@ class Model(object):
                         const[R] = np.zeros((el.size, el.size), dtype=complex)
 
                     const[R][A:A + self.size, B:B + self.size] = self.data[n]
+
+                status.update()
 
             el.R = np.array(list(const.keys()), dtype=int)
             el.data = np.array(list(const.values()))

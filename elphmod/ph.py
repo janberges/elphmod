@@ -5,7 +5,7 @@
 
 import numpy as np
 
-from . import bravais, MPI
+from . import bravais, misc, MPI
 comm = MPI.comm
 
 class Model(object):
@@ -166,6 +166,9 @@ class Model(object):
         if comm.rank == 0:
             const = dict()
 
+            status = misc.StatusBar(len(self.R),
+                title='map force constants onto supercell')
+
             for n in range(len(self.R)):
                 for i, cell in enumerate(ph.cells):
                     R = self.R[n] + np.array(cell)
@@ -186,6 +189,8 @@ class Model(object):
                         const[R] = np.zeros((ph.size, ph.size))
 
                     const[R][A:A + self.size, B:B + self.size] = self.data[n]
+
+                status.update()
 
             ph.R = np.array(list(const.keys()), dtype=int)
             ph.data = np.array(list(const.values()))

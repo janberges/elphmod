@@ -384,8 +384,12 @@ def sample(matrix, k):
     my_matrix = np.empty((sizes[comm.rank],) + template.shape,
         dtype=template.dtype)
 
+    status = misc.StatusBar(sizes[comm.rank], title='sample something')
+
     for my_ik, ik in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         my_matrix[my_ik] = matrix(*k[ik])
+
+        status.update()
 
     matrix = np.empty(kshape + template.shape, dtype=template.dtype)
 

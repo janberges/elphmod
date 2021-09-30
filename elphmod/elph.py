@@ -315,6 +315,9 @@ class Model(object):
 
         counter = 0 # counter for parallelization
 
+        status = misc.StatusBar(len(self.Rg) * len(self.Rk),
+            title='map coupling onto supercell')
+
         for g in range(len(self.Rg)):
             for k in range(len(self.Rk)):
                 for i, cell in enumerate(elph.cells):
@@ -355,6 +358,8 @@ class Model(object):
                         A:A + self.ph.size,
                         B:B + self.el.size,
                         C:C + self.el.size] = self.data[g, :, k]
+
+                status.update()
 
         elph.Rg = np.array(sorted(set().union(*comm.allgather(Rg))))
         elph.Rk = np.array(sorted(set().union(*comm.allgather(Rk))))
