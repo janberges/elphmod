@@ -40,7 +40,8 @@ except ImportError:
             recv[...] = send.reshape(recv.shape)
 
         def Allreduce(self, send, recv):
-            recv[...] = send.reshape(recv.shape)
+            if send is not MPI.IN_PLACE:
+                recv[...] = send.reshape(recv.shape)
 
         def allreduce(self, send):
             return send
@@ -59,6 +60,7 @@ except ImportError:
             self.COMM_WORLD = Communicator()
             self.UNDEFINED = 0
             self.COMM_TYPE_SHARED = self.UNDEFINED
+            self.IN_PLACE = 1
 
     MPI = Interface()
 
