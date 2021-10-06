@@ -37,6 +37,8 @@ class Model(object):
         reading the XSF files is slow, this can save a lot of time for large
         systems. Make sure to delete the binary files *seedname_wf.npy* and
         *seedname_xyz.npy* whensoever the XSF files change.
+    shared_memory : bool, default False
+        Store Wannier functions in shared memory?
 
     Attributes
     ----------
@@ -81,7 +83,7 @@ class Model(object):
         return H.sum(axis=0)
 
     def __init__(self, seedname=None, divide_ndegen=True, read_xsf=False,
-            normalize_wf=False, buffer_wf=False):
+            normalize_wf=False, buffer_wf=False, shared_memory=False):
 
         if seedname is None:
             return
@@ -137,25 +139,30 @@ class Model(object):
             self.dV = abs(np.dot(np.cross(a[0], a[1]), a[2])) / np.prod(shape)
 
             if buffer_wf:
-                self.W = MPI.load('%s_wf.npy' % seedname)
-                self.r = MPI.load('%s_xyz.npy' % seedname)
+                self.W = MPI.load('%s_wf.npy' % seedname, shared_memory)
+                self.r = MPI.load('%s_xyz.npy' % seedname, shared_memory)
 
                 if self.W.size and self.r.size:
                     return
 
-            self.r = np.empty(shape + (3,))
+            node, images, self.r = MPI.shared_array(shape + (3,),
+                shared_memory=shared_memory)
 
             if comm.rank == 0:
                 axes = [np.linspace(0.0, 1.0, num) for num in shape]
                 axes = np.meshgrid(*axes, indexing='ij')
                 self.r[...] = r0 + np.einsum('nijk,nx->ijkx', axes, a)
 
-            comm.Bcast(self.r)
+            if node.rank == 0:
+                images.Bcast(self.r)
+
+            comm.Barrier()
 
             sizes, bounds = MPI.distribute(self.size, bounds=True)
 
             my_W = np.empty((sizes[comm.rank],) + shape)
-            self.W = np.empty((self.size,) + shape)
+            node, images, self.W = MPI.shared_array((self.size,) + shape,
+                shared_memory=shared_memory)
 
             for my_n, n in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
                 my_W[my_n] = misc.read_xsf('%s_%05d.xsf' % (seedname, n + 1),
@@ -164,7 +171,12 @@ class Model(object):
                 if normalize_wf:
                     my_W[my_n] /= np.sqrt(np.sum(my_W[my_n] ** 2) * self.dV)
 
-            comm.Allgatherv(my_W, (self.W, sizes * np.prod(shape)))
+            comm.Gatherv(my_W, (self.W, sizes * np.prod(shape)))
+
+            if node.rank == 0:
+                images.Bcast(self.W)
+
+            comm.Barrier()
 
             if buffer_wf and comm.rank == 0:
                 np.save('%s_wf.npy' % seedname, self.W)
