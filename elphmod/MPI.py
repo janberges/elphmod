@@ -198,7 +198,10 @@ def load(filename, shared_memory=False, comm=comm):
     """Read and broadcast NumPy data."""
 
     if comm.rank == 0:
-        data = np.load(filename, mmap_mode='r' if shared_memory else None)
+        try:
+            data = np.load(filename, mmap_mode='r' if shared_memory else None)
+        except IOError:
+            data = np.empty(0)
 
         shape = data.shape
         dtype = data.dtype

@@ -31,6 +31,12 @@ class Model(object):
         k points along one direction (e.g., a single k point in the out-of-plane
         direction in the case of 2D materials), especially in combination with a
         large supercell.
+    buffer_wf : bool, default False
+        After reading XSF files, store Wannier functions and corresponding
+        real-space mesh in binary files, which will be read next time? Since
+        reading the XSF files is slow, this can save a lot of time for large
+        systems. Make sure to delete the binary files *seedname_wf.npy* and
+        *seedname_xyz.npy* whensoever the XSF files change.
 
     Attributes
     ----------
@@ -75,7 +81,7 @@ class Model(object):
         return H.sum(axis=0)
 
     def __init__(self, seedname=None, divide_ndegen=True, read_xsf=False,
-            normalize_wf=False):
+            normalize_wf=False, buffer_wf=False):
 
         if seedname is None:
             return
@@ -130,6 +136,13 @@ class Model(object):
 
             self.dV = abs(np.dot(np.cross(a[0], a[1]), a[2])) / np.prod(shape)
 
+            if buffer_wf:
+                self.W = MPI.load('%s_wf.npy' % seedname)
+                self.r = MPI.load('%s_xyz.npy' % seedname)
+
+                if self.W.size and self.r.size:
+                    return
+
             self.r = np.empty(shape + (3,))
 
             if comm.rank == 0:
@@ -152,6 +165,10 @@ class Model(object):
                     my_W[my_n] /= np.sqrt(np.sum(my_W[my_n] ** 2) * self.dV)
 
             comm.Allgatherv(my_W, (self.W, sizes * np.prod(shape)))
+
+            if buffer_wf and comm.rank == 0:
+                np.save('%s_wf.npy' % seedname, self.W)
+                np.save('%s_xyz.npy' % seedname, self.r)
 
     def supercell(self, N1=1, N2=1, N3=1):
         """Map tight-binding model onto supercell.
