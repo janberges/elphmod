@@ -7,6 +7,7 @@ import numpy as np
 
 from . import bravais, dispersion, misc, MPI, occupations
 comm = MPI.comm
+info = MPI.info
 
 class Model(object):
     """Tight-binding model for the electrons.
@@ -37,6 +38,8 @@ class Model(object):
         reading the XSF files is slow, this can save a lot of time for large
         systems. Make sure to delete the binary files *seedname_wf.npy* and
         *seedname_xyz.npy* whensoever the XSF files change.
+    check_ortho : bool, default False
+        Check if Wannier functions are orthogonal?
     shared_memory : bool, default False
         Store Wannier functions in shared memory?
 
@@ -83,7 +86,8 @@ class Model(object):
         return H.sum(axis=0)
 
     def __init__(self, seedname=None, divide_ndegen=True, read_xsf=False,
-            normalize_wf=False, buffer_wf=False, shared_memory=False):
+            normalize_wf=False, buffer_wf=False, check_ortho=True,
+            shared_memory=False):
 
         if seedname is None:
             return
@@ -177,6 +181,14 @@ class Model(object):
                 images.Bcast(self.W)
 
             comm.Barrier()
+
+            if check_ortho:
+                info('Check if Wannier functions are orthogonal:')
+                for m in range(self.size):
+                    for n in range(self.size):
+                        if (m * self.size + n) % comm.size == comm.rank:
+                            print('%3d %3d %12.4f' % (m, n,
+                                np.sum(self.W[m] * self.W[n]) * self.dV))
 
             if buffer_wf and comm.rank == 0:
                 np.save('%s_wf.npy' % seedname, self.W)

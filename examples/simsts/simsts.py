@@ -32,13 +32,6 @@ info('Set up Bravais lattice vectors..')
 pwi = elphmod.bravais.read_pwi('scf.in')
 a = elphmod.bravais.primitives(**pwi)
 
-info('Check if Wannier functions are orthonormal..')
-
-if comm.rank == 0:
-    for m in range(el.size):
-        for n in range(el.size):
-            print('%2d %2d %7.4f' % (m, n, np.sum(el.W[m] * el.W[n]) * el.dV))
-
 info('Calculate density of states..')
 
 w, dw = np.linspace(e.min(), e.max(), 300, retstep=True)
@@ -97,7 +90,7 @@ for position, label in (position1, 'bond'), (position2, 'atom'):
     STS *= el.size / (np.sum(STS) * dw)
 
     if comm.rank == 0:
-        plt.plot(w, STS, label=label)
+        plt.plot(w, STS, label='STS %s' % label)
 
 if comm.rank == 0:
     plt.grid()
