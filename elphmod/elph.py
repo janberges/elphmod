@@ -202,56 +202,36 @@ class Model(object):
                 if np.fromfile(data).size:
                     print('Warning: File "%s" larger than expected!' % epmatwp)
 
-            block = [slice(3 * na, 3 * (na + 1)) for na in range(ph.nat)]
-
             # undo supercell double counting:
 
             if divide_ndegen:
-                if old_ws:
-                    for irk in range(len(self.Rk)):
-                        g[:, :, irk] /= ndegen_k[irk]
-
-                elif ndegen_k.size == len(self.Rk):
-                    for irk in range(len(self.Rk)):
-                        g[:, :, irk, :, :] /= ndegen_k[0, 0, irk]
-
-                else: # "use_ws"
-                    for irk in range(len(self.Rk)):
-                        for m in range(el.size):
-                            for n in range(el.size):
-                                if ndegen_k[n, m, irk]:
-                                    g[:, :, irk, m, n] /= ndegen_k[n, m, irk]
-                                else:
-                                    g[:, :, irk, m, n] = 0.0
-
-                if old_ws:
-                    for irg in range(len(self.Rg)):
-                        for na in range(ph.nat):
-                            if ndegen_g[na, irg]:
-                                g[irg, block[na]] /= ndegen_g[na, irg]
+                for irk in range(len(self.Rk)):
+                    for m in range(el.size):
+                        M = m if ndegen_k.shape[1] > 1 else 0
+                        for n in range(el.size):
+                            N = n if ndegen_k.shape[0] > 1 else 0
+                            if ndegen_k[N, M, irk]:
+                                g[:, :, irk, m, n] /= ndegen_k[N, M, irk]
                             else:
-                                g[irg, block[na]] = 0.0
+                                g[:, :, irk, m, n] = 0.0
 
-                elif ndegen_g.size == len(self.Rg):
-                    for irg in range(len(self.Rg)):
-                        g[irg, :, :, :, :] /= ndegen_g[0, 0, 0, irg]
-
-                else: # "use_ws"
-                    for irg in range(len(self.Rg)):
-                        for na in range(ph.nat):
-                            for m in range(el.size):
-                                for n in range(el.size):
-                                    if ndegen_g[n, m, na, irg]:
-                                        g[irg, block[na], :, m, n] \
-                                            /= ndegen_g[n, m, na, irg]
-                                    else:
-                                        g[irg, block[na], :, m, n] = 0.0
+                for irg in range(len(self.Rg)):
+                    for x in range(ph.size):
+                        X = x // 3 if ndegen_g.shape[2] > 1 else 0
+                        for m in range(el.size):
+                            M = m if ndegen_g.shape[1] > 1 else 0
+                            for n in range(el.size):
+                                N = n if ndegen_g.shape[0] > 1 else 0
+                                if ndegen_g[N, M, X, irg]:
+                                    g[irg, x, :, m, n] /= ndegen_g[N, M, X, irg]
+                                else:
+                                    g[irg, x, :, m, n] = 0.0
 
             # divide by square root of atomic masses:
 
             if divide_mass:
-                for na in range(ph.nat):
-                    g[:, block[na]] /= np.sqrt(ph.M[na])
+                for x in range(ph.size):
+                    g[:, x] /= np.sqrt(ph.M[x // 3])
 
         if node.rank == 0:
             images.Bcast(g.view(dtype=float))

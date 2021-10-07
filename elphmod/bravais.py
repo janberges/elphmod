@@ -1062,42 +1062,42 @@ def read_wigner_file(name, old_ws=False, nat=None):
             double = np.float64
 
             if old_ws:
-                nrr_k = np.fromfile(data, integer, 1)[0]
-                irvec_k = np.fromfile(data, integer, nrr_k * 3)
-                irvec_k = irvec_k.reshape((nrr_k, 3))
-                ndegen_k = np.fromfile(data, integer, nrr_k)
-                wslen_k = np.fromfile(data, double, nrr_k)
+                dims = 1
+                dims2 = nat
+            else:
+                dims, = np.fromfile(data, integer, 1)
+                dims2, = np.fromfile(data, integer, 1)
 
-                nrr_q = np.fromfile(data, integer, 1)[0]
+            nrr_k, = np.fromfile(data, integer, 1)
+            irvec_k = np.fromfile(data, integer, nrr_k * 3)
+            irvec_k = irvec_k.reshape((nrr_k, 3))
+            ndegen_k = np.fromfile(data, integer, dims ** 2 * nrr_k)
+            ndegen_k = ndegen_k.reshape((dims, dims, nrr_k))
+
+            if old_ws:
+                wslen_k = np.fromfile(data, double, nrr_k)
+                nrr_q, = np.fromfile(data, integer, 1)
                 irvec_q = np.fromfile(data, integer, nrr_q * 3)
                 irvec_q = irvec_q.reshape((nrr_q, 3))
-                ndegen_q = np.fromfile(data, integer, nat * nat * nrr_q)
-                ndegen_q = ndegen_q.reshape((nat, nat, nrr_q))
+                ndegen_q = np.fromfile(data, integer, dims2 * dims2 * nrr_q)
+                ndegen_q = ndegen_q.reshape((dims2, dims2, nrr_q))
                 wslen_q = np.fromfile(data, double, nrr_q)
 
-                nrr_g = np.fromfile(data, integer, 1)[0]
-                irvec_g = np.fromfile(data, integer, nrr_g * 3)
-                irvec_g = irvec_g.reshape((nrr_g, 3))
-                ndegen_g = np.fromfile(data, integer, nat * nrr_g)
-                ndegen_g = ndegen_g.reshape((nat, nrr_g))
+            nrr_g, = np.fromfile(data, integer, 1)
+            irvec_g = np.fromfile(data, integer, nrr_g * 3)
+            irvec_g = irvec_g.reshape((nrr_g, 3))
+
+            if old_ws:
+                ndegen_g = np.fromfile(data, integer, dims2 * nrr_g)
                 wslen_g = np.fromfile(data, double, nrr_g)
-
             else:
-                nbndsub, = np.fromfile(data, integer, 1)
-                nat, = np.fromfile(data, integer, 1)
+                ndegen_g = np.fromfile(data, integer)
 
-                nrr_k, = np.fromfile(data, integer, 1)
-                irvec_k = np.fromfile(data, integer, nrr_k * 3)
-                irvec_k = irvec_k.reshape((nrr_k, 3))
-                ndegen_k = np.fromfile(data, integer, nbndsub ** 2 * nrr_k)
-                ndegen_k = ndegen_k.reshape((nbndsub, nbndsub, nrr_k))
-
-                nrr_g, = np.fromfile(data, integer, 1)
-                irvec_g = np.fromfile(data, integer, nrr_g * 3)
-                irvec_g = irvec_g.reshape((nrr_g, 3))
-                ndegen_g = np.fromfile(data, integer,
-                    nbndsub ** 2 * nat * nrr_g)
-                ndegen_g = ndegen_g.reshape((nbndsub, nbndsub, nat, nrr_g))
+            try:
+                ndegen_g = ndegen_g.reshape((dims, dims, dims2, nrr_g))
+            except ValueError: # since QE 6.8
+                ndegen_g = ndegen_g.reshape((dims2, nrr_g, 1, dims))
+                ndegen_g = ndegen_g.transpose((2, 3, 0, 1))
 
         data = irvec_k, ndegen_k, irvec_g, ndegen_g
     else:
