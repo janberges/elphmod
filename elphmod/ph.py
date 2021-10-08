@@ -188,7 +188,7 @@ class Model(object):
                     if R not in const:
                         const[R] = np.zeros((ph.size, ph.size))
 
-                    const[R][A:A + self.size, B:B + self.size] = self.data[n]
+                    const[R][B:B + self.size, A:A + self.size] = self.data[n]
 
                 status.update()
 

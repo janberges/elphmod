@@ -27,7 +27,7 @@ w2, u = elphmod.dispersion.dispersion(ph.D, q, vectors=True)
 W2, U = elphmod.dispersion.dispersion(Ph.D, Q, vectors=True)
 
 w = np.ones(w2.shape)
-W = elphmod.dispersion.unfolding_weights(q, Ph.cells, u, U, sgn=+1)
+W = elphmod.dispersion.unfolding_weights(q, Ph.cells, u, U)
 
 linewidth = 1.0
 
