@@ -296,7 +296,7 @@ class Model(object):
         counter = 0 # counter for parallelization
 
         status = misc.StatusBar(len(self.Rg) * len(self.Rk),
-            title='map coupling onto supercell')
+            title='map coupling onto supercell (1/2)')
 
         for g in range(len(self.Rg)):
             for k in range(len(self.Rk)):
@@ -354,6 +354,9 @@ class Model(object):
         if node.rank == 0:
             elph.data[...] = 0.0
 
+        status = misc.StatusBar(len(elph.Rg) * len(elph.Rk),
+            title='map coupling onto supercell (2/2)')
+
         for g, (G1, G2, G3) in enumerate(elph.Rg):
             for k, (K1, K2, K3) in enumerate(elph.Rk):
                 R = G1, G2, G3, K1, K2, K3
@@ -364,6 +367,8 @@ class Model(object):
                             elph.data[g, :, k] += const[R]
 
                     node.Barrier()
+
+                status.update()
 
         if node.rank == 0:
             images.Allreduce(MPI.MPI.IN_PLACE, elph.data.view(dtype=float))

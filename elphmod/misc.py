@@ -11,6 +11,10 @@ comm = MPI.comm
 info = MPI.info
 
 verbosity = 1
+# 0: suppress all output
+# 1: only print warnings
+# 2: print info messages
+# 3: display status bars
 
 # constants in SI units:
 cSI = 299792458.0 # speed of light (m/s)
