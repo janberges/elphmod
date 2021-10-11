@@ -76,7 +76,7 @@ for position, label in (position1, 'bond'), (position2, 'atom'):
             for k2 in range(nk):
                 tmp = 0.0
                 for iR in range(len(R)):
-                    tmp += np.dot(overlap[iR], U[k1, k2]) * np.exp(-1j
+                    tmp += np.dot(overlap[iR], U[k1, k2]) * np.exp(1j
                         * (k1 * R[iR, 0] + k2 * R[iR, 1]) * scale)
                 weight[k1, k2] = (abs(tmp) / nk) ** 2
 
