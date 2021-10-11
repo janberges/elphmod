@@ -12,6 +12,8 @@ info = elphmod.MPI.info
 
 nk = 72
 
+tip = np.array([0.0, 0.0, 3.0]) # tip position
+
 info('Set up and diagonalize Wannier Hamiltonian..')
 
 el = elphmod.el.Model('graphene', read_xsf=True, normalize_wf=True)
@@ -38,62 +40,51 @@ w, dw = np.linspace(e.min(), e.max(), 300, retstep=True)
 
 DOS = sum(elphmod.dos.hexDOS(e[:, :, n])(w) for n in range(el.size))
 
+info('Calculate overlap of tip and Wannier orbitals..')
+
 if comm.rank == 0:
-    plt.plot(w, DOS, label='DOS')
+    cells = range(-3, 4)
+    R = np.array([(n1, n2, 0) for n1 in cells for n2 in cells])
 
-info('Calculate scanning-tunneling spectrum..')
+    overlap = np.empty((len(R), el.size))
+    norm = np.sqrt(np.pi * elphmod.misc.a0 ** 3)
 
-position1 = np.array([0.0, 0.0, 3.0]) + (el.tau[0] + el.tau[1]) / 2
-position2 = np.array([0.0, 0.0, 3.0]) + el.tau[0]
+    for iR in range(len(R)):
+        shift = np.dot(R[iR], a)
+        d = np.linalg.norm(tip - shift - el.r, axis=3)
+        s = np.exp(-d / elphmod.misc.a0) / norm
 
-for position, label in (position1, 'bond'), (position2, 'atom'):
-    label = '$%g\,\mathrm{\AA}$ above %s' % (position[2], label)
-    info('Position tip %s..' % label)
+        for n in range(el.size):
+            overlap[iR, n] = np.sum(s * el.W[n]) * el.dV
 
-    if comm.rank == 0:
-        cells = range(-3, 4)
-        R = np.array([(n1, n2, 0) for n1 in cells for n2 in cells])
+info('Calculate weights of electronic eigenstates..')
 
-        overlap = np.empty((len(R), el.size))
-        norm = np.sqrt(np.pi * elphmod.misc.a0 ** 3)
+weight = np.empty(e.shape)
 
-        for iR in range(len(R)):
-            shift = np.dot(R[iR], a)
-            d = np.linalg.norm(position - shift - el.r, axis=3)
-            s = np.exp(-d / elphmod.misc.a0) / norm
+if comm.rank == 0:
+    scale = 2 * np.pi / nk
 
-            for n in range(el.size):
-                overlap[iR, n] = np.sum(s * el.W[n]) * el.dV
+    for k1 in range(nk):
+        for k2 in range(nk):
+            tmp = 0.0
+            for iR in range(len(R)):
+                tmp += np.dot(overlap[iR], U[k1, k2]) * np.exp(1j
+                    * (k1 * R[iR, 0] + k2 * R[iR, 1]) * scale)
+            weight[k1, k2] = (abs(tmp) / nk) ** 2
 
-    info('Calculate weight of orbitals..')
+comm.Bcast(weight)
 
-    weight = np.empty(e.shape)
+info('Calculate scanning-tunnelling spectrum..')
 
-    if comm.rank == 0:
-        scale = 2 * np.pi / nk
+STS = sum(elphmod.dos.hexa2F(e[:, :, n], weight[:, :, n])(w)
+    for n in range(el.size))
 
-        for k1 in range(nk):
-            for k2 in range(nk):
-                tmp = 0.0
-                for iR in range(len(R)):
-                    tmp += np.dot(overlap[iR], U[k1, k2]) * np.exp(1j
-                        * (k1 * R[iR, 0] + k2 * R[iR, 1]) * scale)
-                weight[k1, k2] = (abs(tmp) / nk) ** 2
-
-    comm.Bcast(weight)
-
-    info('Calculate weighted density of states..')
-
-    STS = sum(elphmod.dos.hexa2F(e[:, :, n], weight[:, :, n])(w)
-        for n in range(el.size))
-
-    STS *= el.size / (np.sum(STS) * dw)
-
-    if comm.rank == 0:
-        plt.plot(w, STS, label='STS %s' % label)
+STS *= el.size / (np.sum(STS) * dw)
 
 if comm.rank == 0:
     plt.grid()
+    plt.plot(w, DOS, label='DOS')
+    plt.plot(w, STS, label='STS')
     plt.xlabel('energy (eV)')
     plt.ylabel('density of states (1/eV)')
     plt.legend()
