@@ -86,7 +86,7 @@ class Model(object):
         return H.sum(axis=0)
 
     def __init__(self, seedname=None, divide_ndegen=True, read_xsf=False,
-            normalize_wf=False, buffer_wf=False, check_ortho=True,
+            normalize_wf=False, buffer_wf=False, check_ortho=False,
             shared_memory=False):
 
         if seedname is None:
@@ -146,41 +146,45 @@ class Model(object):
                 self.W = MPI.load('%s_wf.npy' % seedname, shared_memory)
                 self.r = MPI.load('%s_xyz.npy' % seedname, shared_memory)
 
-                if self.W.size and self.r.size:
-                    return
+            if not buffer_wf or self.W.size == 0 or self.r.size == 0:
+                node, images, self.r = MPI.shared_array(shape + (3,),
+                    shared_memory=shared_memory)
 
-            node, images, self.r = MPI.shared_array(shape + (3,),
-                shared_memory=shared_memory)
+                if comm.rank == 0:
+                    axes = [np.linspace(0.0, 1.0, num) for num in shape]
+                    axes = np.meshgrid(*axes, indexing='ij')
+                    self.r[...] = r0 + np.einsum('nijk,nx->ijkx', axes, a)
 
-            if comm.rank == 0:
-                axes = [np.linspace(0.0, 1.0, num) for num in shape]
-                axes = np.meshgrid(*axes, indexing='ij')
-                self.r[...] = r0 + np.einsum('nijk,nx->ijkx', axes, a)
+                if node.rank == 0:
+                    images.Bcast(self.r)
 
-            if node.rank == 0:
-                images.Bcast(self.r)
+                comm.Barrier()
 
-            comm.Barrier()
+                sizes, bounds = MPI.distribute(self.size, bounds=True)
 
-            sizes, bounds = MPI.distribute(self.size, bounds=True)
+                my_W = np.empty((sizes[comm.rank],) + shape)
+                node, images, self.W = MPI.shared_array((self.size,) + shape,
+                    shared_memory=shared_memory)
 
-            my_W = np.empty((sizes[comm.rank],) + shape)
-            node, images, self.W = MPI.shared_array((self.size,) + shape,
-                shared_memory=shared_memory)
+                for my_n, n in enumerate(range(
+                        *bounds[comm.rank:comm.rank + 2])):
 
-            for my_n, n in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
-                my_W[my_n] = misc.read_xsf('%s_%05d.xsf' % (seedname, n + 1),
-                    comm=MPI.I)[-1]
+                    my_W[my_n] = misc.read_xsf('%s_%05d.xsf'
+                        % (seedname, n + 1), comm=MPI.I)[-1]
 
-                if normalize_wf:
-                    my_W[my_n] /= np.sqrt(np.sum(my_W[my_n] ** 2) * self.dV)
+                    if normalize_wf:
+                        my_W[my_n] /= np.sqrt(np.sum(my_W[my_n] ** 2) * self.dV)
 
-            comm.Gatherv(my_W, (self.W, sizes * np.prod(shape)))
+                comm.Gatherv(my_W, (self.W, sizes * np.prod(shape)))
 
-            if node.rank == 0:
-                images.Bcast(self.W)
+                if node.rank == 0:
+                    images.Bcast(self.W)
 
-            comm.Barrier()
+                comm.Barrier()
+
+                if buffer_wf and comm.rank == 0:
+                    np.save('%s_wf.npy' % seedname, self.W)
+                    np.save('%s_xyz.npy' % seedname, self.r)
 
             if check_ortho:
                 info('Check if Wannier functions are orthogonal:')
@@ -189,10 +193,6 @@ class Model(object):
                         if (m * self.size + n) % comm.size == comm.rank:
                             print('%3d %3d %12.4f' % (m, n,
                                 np.sum(self.W[m] * self.W[n]) * self.dV))
-
-            if buffer_wf and comm.rank == 0:
-                np.save('%s_wf.npy' % seedname, self.W)
-                np.save('%s_xyz.npy' % seedname, self.r)
 
     def supercell(self, N1=1, N2=1, N3=1):
         """Map tight-binding model onto supercell.
