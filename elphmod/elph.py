@@ -99,39 +99,36 @@ class Model(object):
         if comm.allreduce(self.q is None or np.any(q != self.q)):
             self.q = q
 
-            sizes, bounds = MPI.distribute(nRq, bounds=True, comm=comm)
+            Rl, Ru = MPI.distribute(nRq, bounds=True,
+                comm=comm)[1][comm.rank:comm.rank + 2]
 
-            my_g = np.empty((sizes[comm.rank], nph, nRk, nel, nel),
-                dtype=complex)
-
-            for my_n, n in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
-                my_g[my_n] = self.data[n] * np.exp(1j * np.dot(self.Rg[n], q))
-
-                # Sign convention in bloch2wan.f90 of EPW:
-                # 1222  cfac = EXP(-ci * rdotk) / DBLE(nq)
-                # 1223  epmatwp(:, :, :, :, ir) = epmatwp(:, :, :, :, ir)
-                #           + cfac * epmatwe(:, :, :, :, iq)
-
-            comm.Allreduce(my_g.sum(axis=0), self.gq)
-
-        sizes, bounds = MPI.distribute(nRk, bounds=True, comm=comm)
-
-        my_g = np.empty((sizes[comm.rank], nph, nel, nel), dtype=complex)
-
-        for my_n, n in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
-            my_g[my_n] = self.gq[:, n] * np.exp(1j * np.dot(self.Rk[n], k))
+            my_g = np.einsum('Rxrab,R->xrab',
+                self.data[Rl:Ru], np.exp(1j * self.Rg[Rl:Ru].dot(q)))
 
             # Sign convention in bloch2wan.f90 of EPW:
-            # 1120  cfac = EXP(-ci * rdotk) / DBLE(nkstot)
-            # 1121  epmatw( :, :, ir) = epmatw( :, :, ir)
-            #           + cfac * epmats(:, :, ik)
+            # 1222  cfac = EXP(-ci * rdotk) / DBLE(nq)
+            # 1223  epmatwp(:, :, :, :, ir) = epmatwp(:, :, :, :, ir)
+            #           + cfac * epmatwe(:, :, :, :, iq)
+
+            comm.Allreduce(my_g, self.gq)
+
+        Rl, Ru = MPI.distribute(nRk, bounds=True,
+            comm=comm)[1][comm.rank:comm.rank + 2]
+
+        my_g = np.einsum('xRab,R->xab',
+            self.gq[:, Rl:Ru], np.exp(1j * self.Rk[Rl:Ru].dot(k)))
+
+        # Sign convention in bloch2wan.f90 of EPW:
+        # 1120  cfac = EXP(-ci * rdotk) / DBLE(nkstot)
+        # 1121  epmatw( :, :, ir) = epmatw( :, :, ir)
+        #           + cfac * epmats(:, :, ik)
 
         if broadcast or comm.rank == 0:
             g = np.empty((nph, nel, nel), dtype=complex)
         else:
             g = None
 
-        comm.Reduce(my_g.sum(axis=0), g)
+        comm.Reduce(my_g, g)
 
         if comm.rank == 0:
             # Eigenvector convention in wan2bloch.f90 of EPW:

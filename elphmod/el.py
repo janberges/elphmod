@@ -68,22 +68,18 @@ class Model(object):
         """Set up Hamilton operator for arbitrary k point."""
 
         k = np.array([k1, k2, k3])
-        H = np.empty(self.data.shape, dtype=complex)
 
-        for n in range(H.shape[0]):
-            H[n] = self.data[n] * np.exp(1j * np.dot(self.R[n], k))
+        # Sign convention in hamiltonian.f90 of Wannier90:
+        # 295  fac=exp(-cmplx_i*rdotk)/real(num_kpts,dp)
+        # 296  ham_r(:,:,irpt)=ham_r(:,:,irpt)+fac*ham_k(:,:,loop_kpt)
 
-            # Sign convention in hamiltonian.f90 of Wannier90:
-            # 295  fac=exp(-cmplx_i*rdotk)/real(num_kpts,dp)
-            # 296  ham_r(:,:,irpt)=ham_r(:,:,irpt)+fac*ham_k(:,:,loop_kpt)
+        # Note that the data from Wannier90 can be interpreted like this:
+        # self.data[self.R == R - R', a, b] = <R' a|H|R b> = <R b|H|R' a>
 
-            # Note that the data from Wannier90 can be interpreted like this:
-            # self.data[self.R == R - R', a, b] = <R' a|H|R b> = <R b|H|R' a>
+        # Compare this convention [doi:10.26092/elib/250, Eq. 2.35a]:
+        # t(R - R', a, b) = <R a|H|R' b> = <R' b|H|R a>
 
-            # Compare this convention [doi:10.26092/elib/250, Eq. 2.35a]:
-            # t(R - R', a, b) = <R a|H|R' b> = <R' b|H|R a>
-
-        return H.sum(axis=0)
+        return np.einsum('Rab,R->ab', self.data, np.exp(1j * self.R.dot(k)))
 
     def __init__(self, seedname=None, divide_ndegen=True, read_xsf=False,
             normalize_wf=False, buffer_wf=False, check_ortho=False,

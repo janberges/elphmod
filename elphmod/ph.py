@@ -64,19 +64,15 @@ class Model(object):
         """Set up dynamical matrix for arbitrary q point."""
 
         q = np.array([q1, q2, q3])
-        D = np.empty(self.data.shape, dtype=complex)
 
-        for n in range(D.shape[0]):
-            D[n] = self.data[n] * np.exp(-1j * np.dot(self.R[n], q))
+        # Sign convention in do_q3r.f90 of QE:
+        # 231  CALL cfft3d ( phid (:,j1,j2,na1,na2), &
+        # 232       nr1,nr2,nr3, nr1,nr2,nr3, 1, 1 )
+        # 233  phid(:,j1,j2,na1,na2) = &
+        # 234       phid(:,j1,j2,na1,na2) / DBLE(nr1*nr2*nr3)
+        # The last argument of cfft3d is the sign (+1).
 
-            # Sign convention in do_q3r.f90 of QE:
-            # 231  CALL cfft3d ( phid (:,j1,j2,na1,na2), &
-            # 232       nr1,nr2,nr3, nr1,nr2,nr3, 1, 1 )
-            # 233  phid(:,j1,j2,na1,na2) = &
-            # 234       phid(:,j1,j2,na1,na2) / DBLE(nr1*nr2*nr3)
-            # The last argument of cfft3d is the sign (+1).
-
-        return D.sum(axis=0)
+        return np.einsum('Rxy,R->xy', self.data, np.exp(-1j * self.R.dot(q)))
 
     def __init__(self, flfrc=None, apply_asr=False, apply_asr_simple=False,
         apply_rsr=False, phid=np.zeros((1, 1, 1, 1, 1, 3, 3)), amass=np.ones(1),
