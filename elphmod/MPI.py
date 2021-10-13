@@ -154,7 +154,7 @@ def shared_array(shape, dtype=float, shared_memory=True, single_memory=False,
 
         shared_memory = False
 
-    if single_memory:
+    if single_memory or comm.size == 1:
         # pretend that all processors are on same node:
 
         node = comm # same machine
