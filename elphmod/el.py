@@ -53,15 +53,17 @@ class Model(object):
         Number of Wannier functions/bands.
     cells : list of tuple of int, optional
         Lattice vectors of unit cells if the model describes a supercell.
-    W : ndarray
+    N : list of tuple of int, optional
+        Primitive vectors of supercell if the model describes a supercell.
+    W : ndarray, optional
         Wannier functions in position representation if `read_xsf`.
-    r : ndarray
+    r : ndarray, optional
         Cartesian positions belonging to Wannier functions if `read_xsf`.
-    tau : ndarray
+    tau : ndarray, optional
         Positions of basis atoms if `read_xsf`.
-    atom_order : list of str
+    atom_order : list of str, optional
         Ordered list of atoms if `read_xsf`.
-    dV : float
+    dV : float, optional
         Volume element/voxel volume belonging to `r` if `read_xsf`.
     """
     def H(self, k1=0, k2=0, k3=0):
@@ -222,6 +224,7 @@ class Model(object):
         el = Model()
         el.size = N * self.size
         el.cells = []
+        el.N = [tuple(N1), tuple(N2), tuple(N3)]
 
         if comm.rank == 0:
             for n1 in range(N):
@@ -280,6 +283,53 @@ class Model(object):
         comm.Bcast(el.data)
 
         el.cells = comm.bcast(el.cells)
+
+        return el
+
+    def unit_cell(self):
+        """Map tight-binding model back to unit cell.
+
+        Original idea by Bin Shao.
+
+        See Also
+        --------
+        supercell
+        """
+        el = Model()
+        el.size = self.size // len(self.cells)
+
+        if comm.rank == 0:
+            const = dict()
+
+            status = misc.StatusBar(len(self.R),
+                title='map hoppings back to unit cell')
+
+            for n in range(len(self.R)):
+                for i, cell in enumerate(self.cells):
+                    t = self.data[n, :el.size, i * el.size:(i + 1) * el.size]
+
+                    if np.any(t != 0):
+                        R = tuple(np.dot(self.R[n], self.N) + np.array(cell))
+                        const[R] = t
+
+                status.update()
+
+            el.R = np.array(list(const.keys()), dtype=int)
+            el.data = np.array(list(const.values()))
+
+            count = len(const)
+            const.clear()
+        else:
+            count = None
+
+        count = comm.bcast(count)
+
+        if comm.rank != 0:
+            el.R = np.empty((count, 3), dtype=int)
+            el.data = np.empty((count, el.size, el.size), dtype=complex)
+
+        comm.Bcast(el.R)
+        comm.Bcast(el.data)
 
         return el
 
