@@ -1,5 +1,11 @@
 # Changes
 
+## v0.7
+
+* Faster Fourier transforms (Hamiltonian, dynamical matrix, coupling)
+* QE-6.8 support (cDFPT patch, optimal Wigner-Seitz weights in EPW)
+* Wannier functions in position representation as part of TB model
+
 ## v0.6
 
 * Mapping of all models to arbitrary commensurate supercells
