@@ -13,5 +13,5 @@ TaS2
 
     tr2_ph = 1e-12
 
-    cdfpt_bnd(1) = 9
+    cdfpt_bnd = 9
 /

@@ -43,10 +43,10 @@ index 15ea9b388..a6f7c8e22 100644
  ch_psi_all.o \
 diff --git a/LR_Modules/cdfpt.f90 b/LR_Modules/cdfpt.f90
 new file mode 100644
-index 000000000..fa2e8594f
+index 000000000..d6bf2eef0
 --- /dev/null
 +++ b/LR_Modules/cdfpt.f90
-@@ -0,0 +1,156 @@
+@@ -0,0 +1,165 @@
 +!
 +! Copyright (C) 2001-2016 Quantum ESPRESSO group
 +! This file is distributed under the terms of the
@@ -98,9 +98,9 @@ index 000000000..fa2e8594f
 +     COMPLEX(DP), ALLOCATABLE :: projs(:, :, :)
 +     !
 +     LOGICAL :: lbnd, lorb
-+     INTEGER :: ik, k1, k2, k3, ibnd, iorb
++     INTEGER :: ik, k1, k2, k3, ibnd, iorb, norb, order(nbnd)
 +     REAL(DP) :: weight
-+     REAL(DP), ALLOCATABLE :: weights(:, :,:)
++     REAL(DP) :: weights(nbnd, nk1 * nk2 * nk3)
 +     !
 +     lbnd = ANY(cdfpt_bnd > 0)
 +     lorb = ANY(cdfpt_orb > 0)
@@ -116,12 +116,12 @@ index 000000000..fa2e8594f
 +     IF (meta_ionode) THEN
 +        WRITE (stdout, "(/, 5x, 'cDFPT active subspace:')")
 +        !
-+        subspace = .FALSE.
++        subspace = .TRUE.
 +        !
 +        IF (lbnd) THEN
-+           DO ibnd = 1, SIZE(cdfpt_bnd)
-+              IF (cdfpt_bnd(ibnd) > 0) THEN
-+                 subspace(cdfpt_bnd(ibnd), :, :, :) = .TRUE.
++           DO ibnd = 1, nbnd
++              IF (.NOT. ANY(cdfpt_bnd == ibnd)) THEN
++                 subspace(ibnd, :, :, :) = .FALSE.
 +              ENDIF
 +           ENDDO
 +        ENDIF
@@ -141,19 +141,28 @@ index 000000000..fa2e8594f
 +                 'wrong number of bands in ' // filename, 1)
 +           ENDIF
 +           !
-+           weights = ABS(projs) ** 2
++           weights = 0.D0
++           norb = 0
++           DO iorb = 1, natomwfc
++              IF (ANY(cdfpt_orb == iorb)) THEN
++                 weights = weights + ABS(projs(iorb, :, :)) ** 2
++                 norb = norb + 1
++              ENDIF
++           ENDDO
 +           !
 +           DO ik = 1, nkstot
 +              CALL expand_k_index(ik, xk_proj(:, ik), k1, k2, k3)
 +              !
-+              DO ibnd = 1, nbnd
-+                 weight = 0.D0
-+                 DO iorb = 1, SIZE(cdfpt_orb)
-+                    IF (cdfpt_orb(iorb) > 0) weight = weight &
-+                       + weights(cdfpt_orb(iorb), ibnd, ik)
-+                 ENDDO
-+                 !
-+                 IF (weight > 0.5D0) subspace(ibnd, k1, k2, k3) = .TRUE.
++              order(1) = 0
++              CALL hpsort(nbnd, weights(:, ik), order)
++              !
++              iorb = 0
++              DO ibnd = nbnd, 1, -1
++                 IF (subspace(order(ibnd), k1, k2, k3) .AND. iorb < norb) THEN
++                    iorb = iorb + 1
++                 ELSE
++                    subspace(order(ibnd), k1, k2, k3) = .FALSE.
++                 ENDIF
 +              ENDDO
 +           ENDDO
 +        ENDIF
