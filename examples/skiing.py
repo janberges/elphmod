@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.optimize
 
+symmetric = True
+
 ph = elphmod.ph.Model('data/NbSe2_DFPT.ifc', divide_mass=False)
 ph = ph.supercell(3, 3)
 C = ph.D()
@@ -16,7 +18,13 @@ def E2(u):
     u /= np.linalg.norm(u)
     return np.einsum('x,xy,y', u, C, u).real
 
-u = 1 - 2 * np.random.rand(ph.r.size)
+if symmetric:
+    u = np.zeros(ph.size)
+    Nb3 = [10, 19, 22]
+    u.reshape(ph.r.shape)[Nb3] = np.average(ph.r[Nb3], axis=0) - ph.r[Nb3]
+else:
+    u = 1 - 2 * np.random.rand(ph.size)
+
 u = scipy.optimize.minimize(E2, u).x
 u /= u.max()
 
@@ -31,5 +39,8 @@ if elphmod.MPI.comm.rank == 0:
     ax.scatter(*ph.r[~Nb].T, s=50.0, c='y')
 
     ax.quiver(*ph.r.T, *u.reshape(ph.r.shape).T)
+
+    for n in range(ph.nat):
+        ax.text(*ph.r[n], str(n))
 
     plt.show()
