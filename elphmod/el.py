@@ -333,6 +333,63 @@ class Model(object):
 
         return el
 
+    def order_orbitals(self, *order):
+        """Reorder Wannier functions.
+
+        Together with :func:`shift_orbitals`, this function helps reconcile
+        inconsistent definitions of the basis/motif of the Bravais lattice.
+
+        Parameters
+        ----------
+        *order : int
+            New order of Wannier functions.
+        """
+        self.data = self.data[:, order, :]
+        self.data = self.data[:, :, order]
+
+    def shift_orbitals(self, s, S):
+        """Move selected Wannier functions across unit-cell boundary.
+
+        Together with :func:`order_orbitals`, this function helps reconcile
+        inconsistent definitions of the basis/motif of the Bravais lattice.
+
+        Parameters
+        ----------
+        s : slice
+            Slice of orbital indices corresponding to selected basis atom(s).
+        S : tuple of int
+            Shift of as multiple of primitive lattice vectors.
+        """
+        S = np.asarray(S)
+        data = self.data.copy()
+
+        old_R = set(range(len(self.R)))
+        new_R = []
+        new_t = []
+
+        for i in range(len(self.R)):
+            R = self.R[i] + S
+            match = np.all(self.R == R, axis=1)
+
+            if np.any(match):
+                j = np.argmax(match)
+                old_R.remove(j)
+                data[j, :, s] = self.data[i, :, s]
+                data[j, s, s] = self.data[j, s, s]
+            else:
+                t = np.zeros((self.size, self.size), dtype=complex)
+                t[:, s] = self.data[i, :, s]
+                t[s, s] = 0.0
+                new_R.append(R)
+                new_t.append(t)
+
+        for j in old_R:
+            data[j, :, s] = 0.0
+            data[j, s, s] = self.data[j, s, s]
+
+        self.R = np.concatenate((self.R, new_R))
+        self.data = np.concatenate((data, new_t))
+
 def read_hrdat(hrdat, divide_ndegen=True):
     """Read *_hr.dat* file from Wannier90."""
 
