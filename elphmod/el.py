@@ -390,6 +390,44 @@ class Model(object):
         self.R = np.concatenate((self.R, new_R))
         self.data = np.concatenate((data, new_t))
 
+        self.standardize()
+
+    def standardize(self):
+        """Standardize tight-binding data.
+
+        - Keep only nonzero hopping matrices.
+        - Sum over repeated lattice vectors.
+        - Sort lattice vectors.
+        """
+        if comm.rank == 0:
+            const = dict()
+
+            for n in range(len(self.R)):
+                if np.any(self.data[n] != 0.0):
+                    R = tuple(self.R[n])
+
+                    if R in const:
+                        const[R] += self.data[n]
+                    else:
+                        const[R] = self.data[n]
+
+            cells = sorted(list(const.keys()))
+            count = len(cells)
+
+            self.R = np.array(cells, dtype=int)
+            self.data = np.array([const[R] for R in cells])
+        else:
+            count = None
+
+        count = comm.bcast(count)
+
+        if comm.rank != 0:
+            self.R = np.empty((count, 3), dtype=int)
+            self.data = np.empty((count, self.size, self.size), dtype=complex)
+
+        comm.Bcast(self.R)
+        comm.Bcast(self.data)
+
 def read_hrdat(hrdat, divide_ndegen=True):
     """Read *_hr.dat* file from Wannier90."""
 
