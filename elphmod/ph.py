@@ -139,6 +139,8 @@ class Model(object):
         ph.atom_order = list(self.atom_order) * N
         ph.size = self.size * N
         ph.nat = self.nat * N
+        ph.N = [tuple(N1), tuple(N2), tuple(N3)]
+
         ph.cells = []
 
         if comm.rank == 0:
@@ -185,6 +187,60 @@ class Model(object):
                         const[R] = np.zeros((ph.size, ph.size))
 
                     const[R][B:B + self.size, A:A + self.size] = self.data[n]
+
+                status.update()
+
+            ph.R = np.array(list(const.keys()), dtype=int)
+            ph.data = np.array(list(const.values()))
+
+            count = len(const)
+            const.clear()
+        else:
+            count = None
+
+        count = comm.bcast(count)
+
+        if comm.rank != 0:
+            ph.R = np.empty((count, 3), dtype=int)
+            ph.data = np.empty((count, ph.size, ph.size))
+
+        comm.Bcast(ph.R)
+        comm.Bcast(ph.data)
+
+        return ph
+
+    def unit_cell(self):
+        """Map mass-spring model back to unit cell.
+
+        See Also
+        --------
+        supercell
+        """
+        ph = Model()
+        ph.size = self.size // len(self.cells)
+        ph.nat = self.nat // len(self.cells)
+        ph.M = self.M[:ph.nat]
+        ph.atom_order = self.atom_order[:ph.nat]
+        ph.r = self.r[:ph.nat]
+
+        B1 = np.cross(self.N[1], self.N[2])
+        B2 = np.cross(self.N[2], self.N[0])
+        B3 = np.cross(self.N[0], self.N[1])
+        ph.a = np.dot(np.array([B1, B2, B3]).T, self.a) / len(self.cells)
+
+        if comm.rank == 0:
+            const = dict()
+
+            status = misc.StatusBar(len(self.R),
+                title='map force constants back to unit cell')
+
+            for n in range(len(self.R)):
+                for i, cell in enumerate(self.cells):
+                    C = self.data[n, i * ph.size:(i + 1) * ph.size, :ph.size]
+
+                    if np.any(C != 0):
+                        R = tuple(np.dot(self.R[n], self.N) + np.array(cell))
+                        const[R] = C
 
                 status.update()
 
