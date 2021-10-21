@@ -336,6 +336,9 @@ class Model(object):
     def order_orbitals(self, *order):
         """Reorder Wannier functions.
 
+        Warning: Wannier functions in position representation and related
+        attributes remain unchanged!
+
         Together with :func:`shift_orbitals`, this function helps reconcile
         inconsistent definitions of the basis/motif of the Bravais lattice.
 
@@ -349,6 +352,9 @@ class Model(object):
 
     def shift_orbitals(self, s, S):
         """Move selected Wannier functions across unit-cell boundary.
+
+        Warning: Wannier functions in position representation and related
+        attributes remain unchanged!
 
         Together with :func:`order_orbitals`, this function helps reconcile
         inconsistent definitions of the basis/motif of the Bravais lattice.
