@@ -332,7 +332,45 @@ class Model(object):
 
         self.data = self.data.reshape((len(self.R), self.size, self.size))
 
+        self.standardize()
+
         self.r[s] += np.dot(S, self.a)
+
+    def standardize(self):
+        """Standardize mass-spring data.
+
+        - Keep only nonzero force-constant matrices.
+        - Sum over repeated lattice vectors.
+        - Sort lattice vectors.
+        """
+        if comm.rank == 0:
+            const = dict()
+
+            for n in range(len(self.R)):
+                if np.any(self.data[n] != 0.0):
+                    R = tuple(self.R[n])
+
+                    if R in const:
+                        const[R] += self.data[n]
+                    else:
+                        const[R] = self.data[n]
+
+            cells = sorted(list(const.keys()))
+            count = len(cells)
+
+            self.R = np.array(cells, dtype=int)
+            self.data = np.array([const[R] for R in cells])
+        else:
+            count = None
+
+        count = comm.bcast(count)
+
+        if comm.rank != 0:
+            self.R = np.empty((count, 3), dtype=int)
+            self.data = np.empty((count, self.size, self.size))
+
+        comm.Bcast(self.R)
+        comm.Bcast(self.data)
 
 def group(n, size=3):
     """Create slice of dynamical matrix belonging to `n`-th atom."""
