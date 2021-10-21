@@ -263,6 +263,77 @@ class Model(object):
 
         return ph
 
+    def order_atoms(self, *order):
+        """Reorder atoms.
+
+        Together with :func:`shift_atoms`, this function helps reconcile
+        inconsistent definitions of the basis/motif of the Bravais lattice.
+
+        Parameters
+        ----------
+        *order : int
+            New atom order.
+        """
+        self.data = self.data.reshape((len(self.R), self.nat, 3, self.nat, 3))
+
+        self.data = self.data[:, order, :, :, :]
+        self.data = self.data[:, :, :, order, :]
+
+        self.data = self.data.reshape((len(self.R), self.size, self.size))
+
+        self.M = [self.M[na] for na in order]
+        self.atom_order = [self.atom_order[na] for na in order]
+        self.r = [self.r[na] for na in order]
+
+    def shift_atoms(self, s, S):
+        """Move selected atoms across unit-cell boundary.
+
+        Together with :func:`order_atoms`, this function helps reconcile
+        inconsistent definitions of the basis/motif of the bravais lattice.
+
+        Parameters
+        ----------
+        s : slice
+            Slice of atom indices corresponding to selected basis atom(s).
+        S : tuple of int
+            Shift of as multiple of primitive lattice vectors.
+        """
+        self.data = self.data.reshape((len(self.R), self.nat, 3, self.nat, 3))
+
+        S = np.asarray(S)
+        data = self.data.copy()
+
+        old_R = set(range(len(self.R)))
+        new_R = []
+        new_C = []
+
+        for i in range(len(self.R)):
+            R = self.R[i] + S
+            match = np.all(self.R == R, axis=1)
+
+            if np.any(match):
+                j = np.argmax(match)
+                old_R.remove(j)
+                data[j, s, :, :, :] = self.data[i, s, :, :, :]
+                data[j, s, :, s, :] = self.data[j, s, :, s, :]
+            else:
+                C = np.zeros((self.nat, 3, self.nat, 3))
+                C[s, :, :, :] = self.data[i, s, :, :, :]
+                C[s, :, s, :] = 0.0
+                new_R.append(R)
+                new_C.append(C)
+
+        for j in old_R:
+            data[j, s, :, :, :] = 0.0
+            data[j, s, :, s, :] = self.data[j, s, :, s, :]
+
+        self.R = np.concatenate((self.R, new_R))
+        self.data = np.concatenate((data, new_C))
+
+        self.data = self.data.reshape((len(self.R), self.size, self.size))
+
+        self.r[s] += np.dot(S, self.a)
+
 def group(n, size=3):
     """Create slice of dynamical matrix belonging to `n`-th atom."""
 

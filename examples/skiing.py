@@ -12,6 +12,10 @@ symmetric = True
 
 ph = elphmod.ph.Model('data/NbSe2_DFPT.ifc', divide_mass=False)
 ph = ph.supercell(3, 3)
+
+for S in 6, 8, 15, 17, 24, 26:
+    ph.shift_atoms(S, (0, -1, 0))
+
 C = ph.D()
 
 def E2(u):
@@ -20,7 +24,7 @@ def E2(u):
 
 if symmetric:
     u = np.zeros(ph.size)
-    Nb3 = [10, 19, 22]
+    Nb3 = [4, 13, 16]
     u.reshape(ph.r.shape)[Nb3] = np.average(ph.r[Nb3], axis=0) - ph.r[Nb3]
 else:
     u = 1 - 2 * np.random.rand(ph.size)
