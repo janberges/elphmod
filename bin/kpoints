@@ -22,4 +22,4 @@ print(N)
 for cols[0] in k[0]:
    for cols[1] in k[1]:
       for cols[2] in k[2]:
-         print(' '.join('%11.9f' % c for c in cols))
+         print(' '.join('%12.10f' % c for c in cols))
