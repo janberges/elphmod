@@ -1,5 +1,11 @@
 # Changes
 
+## v0.8
+
+* QE patches included in source distribution
+* Flexible basis/motif of tight-binding and mass-spring models
+* Improved selection of cDFPT target subspaces
+
 ## v0.7
 
 * Faster Fourier transforms (Hamiltonian, dynamical matrix, coupling)
