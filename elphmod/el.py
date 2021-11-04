@@ -135,16 +135,19 @@ class Model(object):
             comm.Bcast(self.data)
 
         if read_xsf:
-            r0, a, self.atom_order, self.tau, shape = misc.read_xsf(
-                '%s_%05d.xsf' % (seedname, 1), only_header=True)
-
-            self.dV = abs(np.dot(np.cross(a[0], a[1]), a[2])) / np.prod(shape)
-
             if buffer_wf:
                 self.W = MPI.load('%s_wf.npy' % seedname, shared_memory)
                 self.r = MPI.load('%s_xyz.npy' % seedname, shared_memory)
 
-            if not buffer_wf or self.W.size == 0 or self.r.size == 0:
+            read_buffer = buffer_wf and self.W.size and self.r.size
+
+            r0, a, self.atom_order, self.tau, shape = misc.read_xsf(
+                '%s_head.xsf' % seedname if read_buffer else
+                '%s_%05d.xsf' % (seedname, 1), only_header=True)
+
+            self.dV = abs(np.dot(np.cross(a[0], a[1]), a[2])) / np.prod(shape)
+
+            if not read_buffer:
                 node, images, self.r = MPI.shared_array(shape + (3,),
                     shared_memory=shared_memory)
 
@@ -181,6 +184,9 @@ class Model(object):
                 comm.Barrier()
 
                 if buffer_wf and comm.rank == 0:
+                    misc.write_xsf('%s_head.xsf' % seedname, r0, a,
+                        self.atom_order, self.tau, shape, only_header=True)
+
                     np.save('%s_wf.npy' % seedname, self.W)
                     np.save('%s_xyz.npy' % seedname, self.r)
 
