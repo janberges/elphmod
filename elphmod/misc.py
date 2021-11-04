@@ -151,8 +151,32 @@ def read_cube(cube):
     return a, X, r, data
 
 def read_xsf(xsf, only_header=False, comm=comm):
-    """Read file in XCrySDen format."""
+    """Read file in XCrySDen format.
 
+    Parameters
+    ----------
+    xsf : str
+        Name of XCrySDen file.
+    only_header : bool, default False
+        Skip reading data?
+
+    Returns
+    -------
+    r0 : ndarray
+        Origin of the data grid.
+    a : ndarray
+        Spanning vectors of the data grid.
+    X : list of str
+        Atomic numbers or symbols.
+    r : ndarray
+        Cartesian atomic coordinates.
+    data : ndarray
+        Data-grid values or, if `only_header`, shape of data grid.
+
+    See Also
+    --------
+    write_xsf
+    """
     if comm.rank == 0:
         lines = open(xsf)
 
@@ -214,6 +238,60 @@ def read_xsf(xsf, only_header=False, comm=comm):
     comm.Bcast(data)
 
     return r0, a, X, r, data
+
+def write_xsf(xsf, r0, a, X, r, data, only_header=False, comm=comm):
+    """Write file in XCrySDen format.
+
+    Parameters
+    ----------
+    xsf : str
+        Name of XCrySDen file.
+    r0 : ndarray
+        Origin of the data grid.
+    a : ndarray
+        Spanning vectors of the data grid.
+    X : list of str
+        Atomic numbers or symbols.
+    r : ndarray
+        Cartesian atomic coordinates.
+    data : ndarray
+        Data-grid values or, if `only_header`, shape of data grid.
+    only_header : bool, default False
+        Skip writing data?
+
+    See Also
+    --------
+    read_xsf
+    """
+    if comm.rank == 0:
+        n = tuple(data) if only_header else data.shape
+
+        with open(xsf, 'w') as text:
+            text.write('PRIMCOORD\n')
+            text.write('%6d  1\n' % len(X))
+
+            for i in range(len(X)):
+                text.write('%-5s' % X[i])
+                text.write(' %11.7f %11.7f %11.7f\n' % tuple(r[i]))
+
+            text.write('BEGIN_BLOCK_DATAGRID_3D\n')
+            text.write('3D_field\n')
+            text.write('BEGIN_DATAGRID_3D_UNKNOWN\n')
+            text.write('%6d %5d %5d\n' % tuple(n))
+            text.write('%12.6f %11.6f %11.6f\n' % tuple(r0))
+
+            for i in range(3):
+                text.write('%12.7f %11.7f %11.7f\n' % tuple(a[i]))
+
+            if not only_header:
+                for i, value in enumerate(data.flat, 1):
+                    text.write('%13.5e' % value)
+
+                    if not i % 6 or i == data.size:
+                        text.write('\n')
+
+            text.write('END_DATAGRID_3D\n')
+            text.write('END_BLOCK_DATAGRID_3D\n')
 
 def split(expr, sd=',', od='{', cd='}'):
     """Split expression with separators and brackets using distributive law.
