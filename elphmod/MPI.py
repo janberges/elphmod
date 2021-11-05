@@ -107,6 +107,51 @@ def matrix(size, comm=comm):
 
     return col, row
 
+def shm_split(comm=comm):
+    """Create communicators for use with shared memory.
+
+    Parameters
+    ----------
+    comm : MPI.Intracomm
+        Overarching communicator.
+
+    Returns
+    -------
+    node : MPI.Intracomm
+        Communicator between processes that share memory (on the same node).
+    images : MPI.Intracomm
+        Communicator between processes that have the same ``node.rank``.
+
+    Notes
+    -----
+    Visualization for a machine with 2 nodes with 4 processors each::
+
+         _________________ _____________________________________________________
+        | comm.rank = 0   | comm.rank = 1   | comm.rank = 2   | comm.rank = 3   |
+        | node.rank = 0   | node.rank = 1   | node.rank = 2   | node.rank = 3   |
+        | images.rank = 0 | images.rank = 0 | images.rank = 0 | images.rank = 0 |
+        |_________________|_________________|_________________|_________________|
+         _________________ _____________________________________________________
+        | comm.rank = 4   | comm.rank = 5   | comm.rank = 6   | comm.rank = 7   |
+        | node.rank = 0   | node.rank = 1   | node.rank = 2   | node.rank = 3   |
+        | images.rank = 1 | images.rank = 1 | images.rank = 1 | images.rank = 1 |
+        |_________________|_________________|_________________|_________________|
+
+    Since both ``node.rank`` and ``images.rank`` are sorted by ``comm.rank``,
+    ``comm.rank == 0`` is equivalent to ``node.rank == images.rank == 0``.
+    """
+    # From article from Intel Developer Zone:
+    # 'An Introduction to MPI-3 Shared Memory Programming'
+
+    node = comm.Split_type(MPI.COMM_TYPE_SHARED, key=comm.rank)
+
+    # From Gilles reply to Stack Overflow question:
+    # 'get Nodes with MPI program in C'
+
+    images = comm.Split(node.rank, key=comm.rank)
+
+    return node, images
+
 def shared_array(shape, dtype=float, shared_memory=True, single_memory=False,
         comm=comm):
     """Create array whose memory is shared among all processes on same node.
@@ -114,8 +159,6 @@ def shared_array(shape, dtype=float, shared_memory=True, single_memory=False,
     With ``shared_memory=False`` (``single_memory=True``) a conventional array
     is created on each (only one) processor, which however allows for the same
     broadcasting syntax as shown below.
-
-    Example:
 
     .. code-block:: python
 
@@ -132,18 +175,6 @@ def shared_array(shape, dtype=float, shared_memory=True, single_memory=False,
 
         # Wait if node.rank != 0:
         comm.Barrier()
-
-    .. code-block:: text
-
-                                   ______ ______
-                        Figure:   |_0,_0_|_4,_0_|
-                                  |_1,_1_|_5,_1_|
-        comm.rank and node.rank   |_2,_2_|_6,_2_|
-        on machine with 2 nodes   |_3,_3_|_7,_3_|
-        with 4 processors each.    node 1 node 2
-
-    Because of the sorting ``key=comm.rank`` in the split functions below,
-    ``comm.rank == 0`` is equivalent to ``node.rank == images.rank == 0``.
     """
     dtype = np.dtype(dtype)
 
@@ -157,18 +188,15 @@ def shared_array(shape, dtype=float, shared_memory=True, single_memory=False,
     if single_memory or comm.size == 1:
         # pretend that all processors are on same node:
 
-        node = comm # same machine
-
         if comm.rank == 0:
             array = np.empty(shape, dtype=dtype)
         else:
             array = np.empty(0, dtype=dtype)
 
-    elif shared_memory:
-        # From article from Intel Developer Zone:
-        # 'An Introduction to MPI-3 Shared Memory Programming'
+        return comm, I, array
 
-        node = comm.Split_type(MPI.COMM_TYPE_SHARED, key=comm.rank) # same node
+    elif shared_memory:
+        node, images = shm_split(comm)
 
         # Shared memory allocation following Lisandro Dalcin on Google Groups:
         # 'Shared memory for data structures and mpi4py.MPI.Win.Allocate_shared'
@@ -180,19 +208,14 @@ def shared_array(shape, dtype=float, shared_memory=True, single_memory=False,
 
         array = np.ndarray(shape, buffer=buffer, dtype=dtype)
 
+        return node, images, array
+
     else:
         # pretend that each processor is on separate node:
 
-        node = I # same core
-
         array = np.empty(shape, dtype=dtype)
 
-    # From Gilles reply to Stack Overflow question:
-    # 'get Nodes with MPI program in C'
-
-    images = comm.Split(node.rank, key=comm.rank) # same node.rank
-
-    return node, images, array
+        return I, comm, array
 
 def load(filename, shared_memory=False, comm=comm):
     """Read and broadcast NumPy data."""
