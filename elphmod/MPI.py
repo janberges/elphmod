@@ -107,13 +107,15 @@ def matrix(size, comm=comm):
 
     return col, row
 
-def shm_split(comm=comm):
+def shm_split(comm=comm, shared_memory=True):
     """Create communicators for use with shared memory.
 
     Parameters
     ----------
     comm : MPI.Intracomm
         Overarching communicator.
+    shared_memory : bool, default True
+        Use shared memory? Provided for convenience.
 
     Returns
     -------
@@ -121,6 +123,11 @@ def shm_split(comm=comm):
         Communicator between processes that share memory (on the same node).
     images : MPI.Intracomm
         Communicator between processes that have the same ``node.rank``.
+
+    Warnings
+    --------
+    If shared memory is not implemented, each process shares memory only with
+    itself. A warning is issued.
 
     Notes
     -----
@@ -140,6 +147,12 @@ def shm_split(comm=comm):
     Since both ``node.rank`` and ``images.rank`` are sorted by ``comm.rank``,
     ``comm.rank == 0`` is equivalent to ``node.rank == images.rank == 0``.
     """
+    if not shared_memory or MPI.COMM_TYPE_SHARED == MPI.UNDEFINED:
+        if shared_memory:
+            info('Shared memory not implemented')
+
+        return I, comm
+
     # From article from Intel Developer Zone:
     # 'An Introduction to MPI-3 Shared Memory Programming'
 
@@ -176,46 +189,26 @@ def shared_array(shape, dtype=float, shared_memory=True, single_memory=False,
         # Wait if node.rank != 0:
         comm.Barrier()
     """
+    buffer = None
     dtype = np.dtype(dtype)
 
-    if shared_memory and MPI.COMM_TYPE_SHARED == MPI.UNDEFINED:
-        # disable shared memory if it is not supported:
+    if single_memory:
+        node, images = comm, I
 
-        info('Shared memory not implemented')
-
-        shared_memory = False
-
-    if single_memory or comm.size == 1:
-        # pretend that all processors are on same node:
-
-        if comm.rank == 0:
-            array = np.empty(shape, dtype=dtype)
-        else:
-            array = np.empty(0, dtype=dtype)
-
-        return comm, I, array
-
-    elif shared_memory:
-        node, images = shm_split(comm)
+        if comm.rank != 0:
+            shape = 0
+    else:
+        node, images = shm_split(comm, shared_memory)
 
         # Shared memory allocation following Lisandro Dalcin on Google Groups:
         # 'Shared memory for data structures and mpi4py.MPI.Win.Allocate_shared'
 
-        size = np.prod(shape) * dtype.itemsize if node.rank == 0 else 0
+        if node.size > 1:
+            size = np.prod(shape) * dtype.itemsize if node.rank == 0 else 0
+            window = MPI.Win.Allocate_shared(size, dtype.itemsize, comm=node)
+            buffer, itemsize = window.Shared_query(0)
 
-        window = MPI.Win.Allocate_shared(size, dtype.itemsize, comm=node)
-        buffer, itemsize = window.Shared_query(0)
-
-        array = np.ndarray(shape, buffer=buffer, dtype=dtype)
-
-        return node, images, array
-
-    else:
-        # pretend that each processor is on separate node:
-
-        array = np.empty(shape, dtype=dtype)
-
-        return I, comm, array
+    return node, images, np.ndarray(shape, buffer=buffer, dtype=dtype)
 
 def load(filename, shared_memory=False, comm=comm):
     """Read and broadcast NumPy data."""
