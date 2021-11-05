@@ -166,7 +166,7 @@ def shm_split(comm=comm, shared_memory=True):
     return node, images
 
 def shared_array(shape, dtype=float, shared_memory=True, single_memory=False,
-        comm=comm):
+        only_info=False, comm=comm):
     """Create array whose memory is shared among all processes on same node.
 
     With ``shared_memory=False`` (``single_memory=True``) a conventional array
@@ -208,7 +208,34 @@ def shared_array(shape, dtype=float, shared_memory=True, single_memory=False,
             window = MPI.Win.Allocate_shared(size, dtype.itemsize, comm=node)
             buffer, itemsize = window.Shared_query(0)
 
-    return node, images, np.ndarray(shape, buffer=buffer, dtype=dtype)
+    if only_info:
+        return node, images, shape, buffer, dtype
+    else:
+        return node, images, np.ndarray(shape, buffer=buffer, dtype=dtype)
+
+class SharedArray(np.ndarray):
+    """Create array whose memory is shared among all processes on same node.
+
+    See Also
+    --------
+    shared_array
+    """
+    def __new__(cls, *args, **kwargs):
+        node, images, shape, buffer, dtype = shared_array(only_info=True,
+            *args, **kwargs)
+
+        array = super(SharedArray, cls).__new__(cls, shape,
+            buffer=buffer, dtype=dtype)
+
+        array.node = node
+        array.images = images
+
+        return array
+
+    def __array_finalize__(self, array):
+        if array is not None:
+            self.node = getattr(array, 'node', I)
+            self.images = getattr(array, 'images', comm)
 
 def load(filename, shared_memory=False, comm=comm):
     """Read and broadcast NumPy data."""
