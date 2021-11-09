@@ -1020,7 +1020,7 @@ def read_wannier90_eig_file(seedname, num_bands, nkpts):
 
     return eig
 
-def eband_from_qe_pwo(pw_scf_out):
+def eband_from_qe_pwo(pw_scf_out, subset = None):
     """Calculate ``eband`` part of one-electron energy.
 
     The 'one-electron contribution' energy in the Quantum ESPRESSO PWscf output
@@ -1056,6 +1056,9 @@ def eband_from_qe_pwo(pw_scf_out):
     ----------
     pw_scf_out : str
         The name of the output file (typically 'pw.out').
+    subset : list or array
+        List of indices to pick only a subset of the bands
+        for the integration
 
     Returns
     -------
@@ -1073,13 +1076,13 @@ def eband_from_qe_pwo(pw_scf_out):
 
             line_index = ii
 
-    (number, of, k, pointsequal, N_k, fermd, smearing_s, width, ryequal,
-        smearing) = lines[line_index].split()
-
-    N_k = int(N_k)
-    kT = float(smearing)
+    
+    smearing_line = lines[line_index].split()
+    N_k = int(smearing_line[4])
+    kT = float(smearing_line[9])
 
     k_Points = np.empty([N_k, 4])
+    
 
     for ii in np.arange(N_k):
         (kb, einsb, eq, bra, kx, ky, kz, wk_s, eq2,
@@ -1106,36 +1109,46 @@ def eband_from_qe_pwo(pw_scf_out):
 
     N_states = int(N_states)
 
-    # read all Energies for all the different k points and Kohn-Sham States:
+    # read all energies for all the different k points and Kohn-Sham States:
 
     for ii in np.arange(len(lines)):
         if lines[ii].find('     End of') == 0:
-
             state_start_index = ii + 4
 
-    Energies = []
-    k_weights = []
 
-    print('Number of k Points: ', N_k)
-
-    for jj in np.arange(N_k):
-        for ii in np.arange(3):
-
-            List = lines[jj * (3 + 3) + state_start_index + ii].split()
-
-            for ii in np.arange(len(List)):
-                Energies.append(float(List[ii]))
-                k_weights.append(k_Points[jj, 3])
-
+    energies = np.zeros((N_k, N_states))
+        
+    # the states are written in columns of size 8
+    # with divmod we check how many rows we have
+    state_lines = divmod(N_states,8)[0]
+    if divmod(N_states,8)[1] != 0:
+        state_lines  += 1
+        
+    for ik in np.arange(N_k):
+        energies_per_k = []
+        for istate in range(state_lines):
+            energies_per_k.extend(lines[state_start_index+istate + (state_lines+3)*ik].split())
+            
+        energies[ik] = np.array(energies_per_k)
+    
+            
     kT *= misc.Ry
 
-    eF = read_Fermi_level(pw_scf_out)
-
-    eband = np.zeros(len(Energies))
-
-    for ii in np.arange(len(Energies)):
-        eband[ii] = (Energies[ii] * k_weights[ii]
-            * occupations.fermi_dirac((Energies[ii] - eF) / kT))
+    mu = read_Fermi_level(pw_scf_out)
+        
+    eband = np.zeros(energies.shape)
+    
+    if subset == None:
+        for ik in range(N_k):
+            for iband in range(N_states):
+                eband[ik, iband] = (energies[ik,iband] * k_Points[ik, 3] *
+                                     occupations.fermi_dirac((energies[ik,iband] - mu) / kT))
+    else:
+        for ik in range(N_k):
+            for iband in subset:
+                eband[ik, iband] = (energies[ik,iband] * k_Points[ik, 3] *
+                                     occupations.fermi_dirac((energies[ik,iband] - mu) / kT))
+            
 
     eband = eband.sum() / misc.Ry
 
@@ -1221,3 +1234,62 @@ def decayH(seedname, **kwargs):
         H[ii] = np.max(abs(el.data[ii])) / misc.Ry
 
     return R, H
+
+def read_energy_contributions_scf_out(filename):
+    """Read energy contributions to the total energy
+    from Quantum ESPRESSO's scf output file.
+
+    Parameters
+    ----------
+    filename : str
+        scf output file name.
+
+    Returns
+    -------
+    dict
+        energy contributions.
+    """
+
+    if comm.rank == 0:
+        energies = dict()
+
+        with open(filename) as lines:
+            for line in lines:
+                words = [word
+                    for column in line.split()
+                    for word in column.split('=') if word]
+
+                if not words:
+                    continue
+
+                key = words[0].lower()
+
+                if key in 'sum bands':
+                    if words[0]=='sum':
+                        energies['sum bands'] = words[2]
+                elif key in 'one-electron contribution':
+                    if words[0]=='one-electron':
+                        energies[key] = words[2]
+                elif key in 'hartree contribution':
+                    if words[0]=='hartree':
+                        energies[key] = words[2]
+                elif key in 'xc contribution':
+                    if words[0]=='xc':
+                        energies[key] = words[2]
+                elif key in 'ewald contribution':
+                    if words[0]=='ewald':
+                        energies[key] = words[2]
+                elif key in 'smearing contrib.':
+                    if words[0]=='smearing':
+                        energies[key] = words[3]
+                elif key in '!':
+                    if words[0]=='!':
+                        energies['total'] = words[3]
+                    
+
+    else:
+        energies = None
+
+    energies = comm.bcast(energies)
+
+    return energies
