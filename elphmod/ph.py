@@ -860,7 +860,8 @@ def polarization(e, path, angle=60):
     return mode
 
 def q2r(ph, D_irr=None, q_irr=None, nq=None, D_full=None, angle=60,
-        apply_asr=False, apply_asr_simple=False, apply_rsr=False):
+        apply_asr=False, apply_asr_simple=False, apply_rsr=False,
+        divide_mass=True, divide_ndegen=True):
     """Interpolate dynamical matrices given for irreducible wedge of q points.
 
     This function replaces `interpolate_dynamical_matrices`, which depends on
@@ -893,6 +894,12 @@ def q2r(ph, D_irr=None, q_irr=None, nq=None, D_full=None, angle=60,
         the self force constant to minus the sum of all other force constants.
     apply_rsr : bool
         Enforce rotation sum rule by overwriting self force constants?
+    divide_mass : bool
+        Divide force constants by atomic masses?
+    divide_ndegen : bool
+        Divide force constants by degeneracy of Wigner-Seitz point? Only
+        ``True`` yields correct phonons. ``False`` should only be used for
+        debugging.
     """
     if D_full is None:
         D_full = np.empty((nq, nq, ph.size, ph.size), dtype=complex)
@@ -971,7 +978,8 @@ def q2r(ph, D_irr=None, q_irr=None, nq=None, D_full=None, angle=60,
     if apply_asr_simple:
         asr(phid)
 
-    ph.R, ph.data = short_range_model(phid, ph.M, ph.a, ph.r)
+    ph.R, ph.data = short_range_model(phid, ph.M, ph.a, ph.r,
+        divide_mass=divide_mass, divide_ndegen=divide_ndegen)
 
     if apply_asr or apply_rsr:
         sum_rule_correction(ph, asr=apply_asr, rsr=apply_rsr)
