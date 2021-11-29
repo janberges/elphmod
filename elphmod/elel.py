@@ -9,6 +9,58 @@ import numpy as np
 from . import bravais, dispersion, MPI
 comm = MPI.comm
 
+class Model(object):
+    """Localized model for electron-electron interaction.
+
+    Currently, only square and hexagonal Bravais lattices are supported.
+
+    Parameters
+    ----------
+    uijkl : str
+        File with Coulomb tensor in orbital basis on uniform q mesh.
+    nq : int
+        Dimension of q mesh.
+    no : int
+        Number of orbitals.
+    skip : int, optional
+        Number of header lines in `uijkl`.
+    angle : numbe, optional
+        Angle between lattice vectors.
+
+    Attributes
+    ----------
+    R : ndarray
+        Lattice vectors of Wigner-Seitz supercell.
+    data : ndarray
+        Corresponding density-density interaction in orbital basis.
+    size : int
+        Number of Wannier functions.
+    """
+    def W(self, q1=0, q2=0, q3=0):
+        """Set up density-density Coulomb matrix for arbitrary q point."""
+
+        q = np.array([q1, q2, q3])
+
+        return np.einsum('Rab,R->ab', self.data, np.exp(-1j * self.R.dot(q)))
+
+    def __init__(self, uijkl, nq, no, skip=0, angle=120):
+        Wq = read_orbital_Coulomb_interaction(uijkl, nq, no,
+            dd=True, skip=skip).reshape((nq, nq, 1, no, no))
+
+        WR = np.fft.ifftn(Wq, axes=(0, 1, 2))
+
+        irvec, ndegen, wslen = bravais.wigner_seitz(nq, angle=angle)
+
+        self.R = np.zeros((len(irvec), 3), dtype=int)
+        self.data = np.empty((len(irvec), no, no), dtype=complex)
+
+        self.R[:, :2] = irvec
+
+        for i in range(len(self.R)):
+            self.data[i] = WR[tuple(self.R[i] % nq)] / ndegen[i]
+
+        self.size = no
+
 def read_local_Coulomb_tensor(filename, no):
     """Read local Coulomb tensor from VASP."""
 
