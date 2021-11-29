@@ -6,7 +6,7 @@
 import sys
 import numpy as np
 
-from . import bravais, dispersion, MPI
+from . import bravais, dispersion, misc, MPI
 comm = MPI.comm
 
 class Model(object):
@@ -35,6 +35,10 @@ class Model(object):
         Corresponding density-density interaction in orbital basis.
     size : int
         Number of Wannier functions.
+    cells : list of tuple of int, optional
+        Lattice vectors of unit cells if the model describes a supercell.
+    N : list of tuple of int, optional
+        Primitive vectors of supercell if the model describes a supercell.
     """
     def W(self, q1=0, q2=0, q3=0):
         """Set up density-density Coulomb matrix for arbitrary q point."""
@@ -43,7 +47,10 @@ class Model(object):
 
         return np.einsum('Rab,R->ab', self.data, np.exp(-1j * self.R.dot(q)))
 
-    def __init__(self, uijkl, nq, no, skip=0, angle=120):
+    def __init__(self, uijkl=None, nq=None, no=None, skip=0, angle=120):
+        if uijkl is None:
+            return
+
         Wq = read_orbital_Coulomb_interaction(uijkl, nq, no,
             dd=True, skip=skip).reshape((nq, nq, 1, no, no))
 
@@ -60,6 +67,101 @@ class Model(object):
             self.data[i] = WR[tuple(self.R[i] % nq)] / ndegen[i]
 
         self.size = no
+
+    def supercell(self, N1=1, N2=1, N3=1):
+        """Map localized model for electron-electron interaction onto supercell.
+
+        Parameters
+        ----------
+        N1, N2, N3 : tuple of int or int, default 1
+            Supercell lattice vectors in units of primitive lattice vectors.
+            Multiples of single primitive vector can be defined via a scalar
+            integer, linear combinations via a 3-tuple of integers.
+
+        Returns
+        -------
+        object
+            Localized model for electron-electron interaction for supercell.
+        """
+        if not hasattr(N1, '__len__'): N1 = (N1, 0, 0)
+        if not hasattr(N2, '__len__'): N2 = (0, N2, 0)
+        if not hasattr(N3, '__len__'): N3 = (0, 0, N3)
+
+        N1 = np.array(N1)
+        N2 = np.array(N2)
+        N3 = np.array(N3)
+
+        N = np.dot(N1, np.cross(N2, N3))
+
+        B1 = np.cross(N2, N3)
+        B2 = np.cross(N3, N1)
+        B3 = np.cross(N1, N2)
+
+        elel = Model()
+        elel.size = N * self.size
+        elel.cells = []
+        elel.N = [tuple(N1), tuple(N2), tuple(N3)]
+
+        if comm.rank == 0:
+            for n1 in range(N):
+                for n2 in range(N):
+                    for n3 in range(N):
+                        indices = n1 * N1 + n2 * N2 + n3 * N3
+
+                        if np.all(indices % N == 0):
+                            elel.cells.append(tuple(indices // N))
+
+            assert len(elel.cells) == N
+
+            const = dict()
+
+            status = misc.StatusBar(len(self.R),
+                title='map interaction onto supercell')
+
+            for n in range(len(self.R)):
+                for i, cell in enumerate(elel.cells):
+                    R = self.R[n] + np.array(cell)
+
+                    R1, r1 = divmod(np.dot(R, B1), N)
+                    R2, r2 = divmod(np.dot(R, B2), N)
+                    R3, r3 = divmod(np.dot(R, B3), N)
+
+                    R = R1, R2, R3
+
+                    indices = r1 * N1 + r2 * N2 + r3 * N3
+                    j = elel.cells.index(tuple(indices // N))
+
+                    A = i * self.size
+                    B = j * self.size
+
+                    if R not in const:
+                        const[R] = np.zeros((elel.size, elel.size),
+                            dtype=complex)
+
+                    const[R][B:B + self.size, A:A + self.size] = self.data[n]
+
+                status.update()
+
+            elel.R = np.array(list(const.keys()), dtype=int)
+            elel.data = np.array(list(const.values()))
+
+            count = len(const)
+            const.clear()
+        else:
+            count = None
+
+        count = comm.bcast(count)
+
+        if comm.rank != 0:
+            elel.R = np.empty((count, 3), dtype=int)
+            elel.data = np.empty((count, elel.size, elel.size), dtype=complex)
+
+        comm.Bcast(elel.R)
+        comm.Bcast(elel.data)
+
+        elel.cells = comm.bcast(elel.cells)
+
+        return elel
 
 def read_local_Coulomb_tensor(filename, no):
     """Read local Coulomb tensor from VASP."""
