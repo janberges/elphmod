@@ -17,7 +17,7 @@ a = elphmod.bravais.primitives(ibrav=4)
 b = elphmod.bravais.reciprocals(*a)
 A = np.dot(N, a)
 
-elel = elphmod.elel.Model('data/U.ijkl', nq=2, no=1, skip=2)
+elel = elphmod.elel.Model('data/U.ijkl', nq=2, no=1)
 ElEl = elel.supercell(*N)
 
 q, x, GMKG = elphmod.bravais.path('GMKG', ibrav=4, N=150)

@@ -22,8 +22,6 @@ class Model(object):
         Dimension of q mesh.
     no : int
         Number of orbitals.
-    skip : int, optional
-        Number of header lines in `uijkl`.
     angle : numbe, optional
         Angle between lattice vectors.
 
@@ -47,12 +45,12 @@ class Model(object):
 
         return np.einsum('Rab,R->ab', self.data, np.exp(-1j * self.R.dot(q)))
 
-    def __init__(self, uijkl=None, nq=None, no=None, skip=0, angle=120):
+    def __init__(self, uijkl=None, nq=None, no=None, angle=120):
         if uijkl is None:
             return
 
-        Wq = read_orbital_Coulomb_interaction(uijkl, nq, no,
-            dd=True, skip=skip).reshape((nq, nq, 1, no, no))
+        Wq = read_orbital_Coulomb_interaction(uijkl, nq, no, dd=True)
+        Wq = Wq.reshape((nq, nq, 1, no, no))
 
         WR = np.fft.ifftn(Wq, axes=(0, 1, 2))
 
@@ -179,7 +177,7 @@ def read_local_Coulomb_tensor(filename, no):
 
     return U
 
-def read_orbital_Coulomb_interaction(filename, nq, no, dd=False, skip=2):
+def read_orbital_Coulomb_interaction(filename, nq, no, dd=False):
     """Read Coulomb interaction in orbital basis."""
 
     if dd:
@@ -189,22 +187,24 @@ def read_orbital_Coulomb_interaction(filename, nq, no, dd=False, skip=2):
 
     if comm.rank == 0:
         with open(filename) as data:
-            for _ in range(skip):
-                next(data)
-
             for line in data:
-                columns = line.split()
+                try:
+                    columns = line.split()
 
-                q1, q2 = [int(round(float(q) * nq)) % nq for q in columns[0:2]]
+                    q1, q2 = [int(round(float(q) * nq)) % nq
+                        for q in columns[0:2]]
 
-                i, j, k, l = [int(n) - 1 for n in columns[3:7]]
+                    i, j, k, l = [int(n) - 1
+                        for n in columns[3:7]]
 
-                if not dd:
-                    U[q1, q2, j, i, l, k] \
-                        = float(columns[7]) + 1j * float(columns[8])
-                elif i == j and k == l:
-                    U[q1, q2, i, k] \
-                        = float(columns[7]) + 1j * float(columns[8])
+                    if not dd:
+                        U[q1, q2, j, i, l, k] \
+                            = float(columns[7]) + 1j * float(columns[8])
+                    elif i == j and k == l:
+                        U[q1, q2, i, k] \
+                            = float(columns[7]) + 1j * float(columns[8])
+                except (ValueError, IndexError):
+                    continue
 
     comm.Bcast(U)
 
