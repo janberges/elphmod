@@ -6,7 +6,7 @@
 import elphmod
 import matplotlib.pyplot as plt
 
-elel = elphmod.elel.Model('data/U.ijkl', nq=2, no=1, skip=2)
+elel = elphmod.elel.Model('data/U.ijkl', nq=2, no=1)
 
 q, x, GMKG = elphmod.bravais.path('GMKG', ibrav=4, N=150)
 
