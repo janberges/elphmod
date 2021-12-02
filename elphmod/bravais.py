@@ -1653,7 +1653,7 @@ def write_pwi(pwi, struct):
                     data.write('celldm(%d) = %.12g\n' % (i, celldm))
 
         for key in ['a', 'b', 'c', 'nat', 'ibrav', 'ntyp',
-                    'ecutwfc', 'ecutrho', 'degauss', 'nbnd']:
+                'ecutwfc', 'ecutrho', 'degauss', 'nbnd']:
             if key in struct:
                 data.write('%s = %.12g\n' % (key, struct[key]))
 
@@ -2190,10 +2190,10 @@ def write_matdyn(matdyn, struct):
         return
 
     with open(matdyn, 'w') as data:
-
         data.write('&INPUT\n')
 
-        for key in 'asr', 'flfrq', 'flfrc', 'q_in_band_form', 'q_in_cryst_coord':
+        for key in ['asr', 'flfrq', 'flfrc', 'q_in_band_form',
+                'q_in_cryst_coord']:
             if key in struct:
                 data.write('%s = %s\n' % (key, struct[key]))
 
@@ -2375,25 +2375,25 @@ def write_epw(epw, struct):
     with open(epw, 'w') as data:
 
         data.write('&INPUTEPW\n')
-        for key in ('prefix', 'outdir', 'dvscf_dir'):
+        for key in ['prefix', 'outdir', 'dvscf_dir']:
             if key in struct:
                 data.write('%s = %s\n' % (key, struct[key]))
 
         data.write('\n')
 
-        for key in ('wannierize', 'elph'):
+        for key in ['wannierize', 'elph']:
             if key in struct:
                 data.write('%s = %s\n' % (key, struct[key]))
 
         data.write('\n')
 
-        for key in ('epbwrite', 'epwwrite'):
+        for key in ['epbwrite', 'epwwrite']:
             if key in struct:
                 data.write('%s = %s\n' % (key, struct[key]))
 
         data.write('\n')
 
-        for key in ('epbread', 'epwread'):
+        for key in ['epbread', 'epwread']:
             if key in struct:
                 data.write('%s = %s\n' % (key, struct[key]))
 

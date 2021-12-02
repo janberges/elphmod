@@ -133,16 +133,16 @@ def shm_split(comm=comm, shared_memory=True):
     -----
     Visualization for a machine with 2 nodes with 4 processors each::
 
-         _________________ _____________________________________________________
-        | comm.rank = 0   | comm.rank = 1   | comm.rank = 2   | comm.rank = 3   |
-        | node.rank = 0   | node.rank = 1   | node.rank = 2   | node.rank = 3   |
-        | images.rank = 0 | images.rank = 0 | images.rank = 0 | images.rank = 0 |
-        |_________________|_________________|_________________|_________________|
-         _________________ _____________________________________________________
-        | comm.rank = 4   | comm.rank = 5   | comm.rank = 6   | comm.rank = 7   |
-        | node.rank = 0   | node.rank = 1   | node.rank = 2   | node.rank = 3   |
-        | images.rank = 1 | images.rank = 1 | images.rank = 1 | images.rank = 1 |
-        |_________________|_________________|_________________|_________________|
+         ________________ ________________ ________________ ________________
+        | comm.rank: 0   | comm.rank: 1   | comm.rank: 2   | comm.rank: 3   |
+        | node.rank: 0   | node.rank: 1   | node.rank: 2   | node.rank: 3   |
+        | images.rank: 0 | images.rank: 0 | images.rank: 0 | images.rank: 0 |
+        |________________|________________|________________|________________|
+         ________________ ________________ ________________ ________________
+        | comm.rank: 4   | comm.rank: 5   | comm.rank: 6   | comm.rank: 7   |
+        | node.rank: 0   | node.rank: 1   | node.rank: 2   | node.rank: 3   |
+        | images.rank: 1 | images.rank: 1 | images.rank: 1 | images.rank: 1 |
+        |________________|________________|________________|________________|
 
     Since both ``node.rank`` and ``images.rank`` are sorted by ``comm.rank``,
     ``comm.rank == 0`` is equivalent to ``node.rank == images.rank == 0``.

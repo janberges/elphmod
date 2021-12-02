@@ -1020,7 +1020,7 @@ def read_wannier90_eig_file(seedname, num_bands, nkpts):
 
     return eig
 
-def eband_from_qe_pwo(pw_scf_out, subset = None):
+def eband_from_qe_pwo(pw_scf_out, subset=None):
     """Calculate ``eband`` part of one-electron energy.
 
     The 'one-electron contribution' energy in the Quantum ESPRESSO PWscf output
@@ -1076,13 +1076,11 @@ def eband_from_qe_pwo(pw_scf_out, subset = None):
 
             line_index = ii
 
-    
     smearing_line = lines[line_index].split()
     N_k = int(smearing_line[4])
     kT = float(smearing_line[9])
 
     k_Points = np.empty([N_k, 4])
-    
 
     for ii in np.arange(N_k):
         (kb, einsb, eq, bra, kx, ky, kz, wk_s, eq2,
@@ -1115,40 +1113,38 @@ def eband_from_qe_pwo(pw_scf_out, subset = None):
         if lines[ii].find('     End of') == 0:
             state_start_index = ii + 4
 
-
     energies = np.zeros((N_k, N_states))
-        
+
     # the states are written in columns of size 8
     # with divmod we check how many rows we have
-    state_lines = divmod(N_states,8)[0]
-    if divmod(N_states,8)[1] != 0:
-        state_lines  += 1
-        
+    state_lines = divmod(N_states, 8)[0]
+    if divmod(N_states, 8)[1] != 0:
+        state_lines += 1
+
     for ik in np.arange(N_k):
         energies_per_k = []
         for istate in range(state_lines):
-            energies_per_k.extend(lines[state_start_index+istate + (state_lines+3)*ik].split())
-            
+            energies_per_k.extend(lines[state_start_index
+                + istate + (state_lines + 3) * ik].split())
+
         energies[ik] = np.array(energies_per_k)
-    
-            
+
     kT *= misc.Ry
 
     mu = read_Fermi_level(pw_scf_out)
-        
+
     eband = np.zeros(energies.shape)
-    
+
     if subset == None:
         for ik in range(N_k):
             for iband in range(N_states):
-                eband[ik, iband] = (energies[ik,iband] * k_Points[ik, 3] *
-                                     occupations.fermi_dirac((energies[ik,iband] - mu) / kT))
+                eband[ik, iband] = (energies[ik, iband] * k_Points[ik, 3]
+                    * occupations.fermi_dirac((energies[ik, iband] - mu) / kT))
     else:
         for ik in range(N_k):
             for iband in subset:
-                eband[ik, iband] = (energies[ik,iband] * k_Points[ik, 3] *
-                                     occupations.fermi_dirac((energies[ik,iband] - mu) / kT))
-            
+                eband[ik, iband] = (energies[ik, iband] * k_Points[ik, 3]
+                    * occupations.fermi_dirac((energies[ik, iband] - mu) / kT))
 
     eband = eband.sum() / misc.Ry
 
@@ -1265,27 +1261,26 @@ def read_energy_contributions_scf_out(filename):
                 key = words[0].lower()
 
                 if key in 'sum bands':
-                    if words[0]=='sum':
+                    if words[0] == 'sum':
                         energies['sum bands'] = words[2]
                 elif key in 'one-electron contribution':
-                    if words[0]=='one-electron':
+                    if words[0] == 'one-electron':
                         energies[key] = words[2]
                 elif key in 'hartree contribution':
-                    if words[0]=='hartree':
+                    if words[0] == 'hartree':
                         energies[key] = words[2]
                 elif key in 'xc contribution':
-                    if words[0]=='xc':
+                    if words[0] == 'xc':
                         energies[key] = words[2]
                 elif key in 'ewald contribution':
-                    if words[0]=='ewald':
+                    if words[0] == 'ewald':
                         energies[key] = words[2]
                 elif key in 'smearing contrib.':
-                    if words[0]=='smearing':
+                    if words[0] == 'smearing':
                         energies[key] = words[3]
                 elif key in '!':
-                    if words[0]=='!':
+                    if words[0] == '!':
                         energies['total'] = words[3]
-                    
 
     else:
         energies = None
