@@ -12,7 +12,7 @@ info = elphmod.MPI.info
 
 el = elphmod.el.Model('TaS2')
 mu = elphmod.el.read_Fermi_level('pw.out')
-ph = elphmod.ph.Model('ifc', apply_asr=True)
+ph = elphmod.ph.Model('ifc', apply_asr_simple=True)
 elph = elphmod.elph.Model('work/TaS2.epmatwp', 'wigner.dat', el, ph,
     divide_mass=False) # with this argument, elph.g() returns <k+q|dV/du|k>
 

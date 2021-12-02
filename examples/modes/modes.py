@@ -78,7 +78,7 @@ if not flag_coords_type:
 # Load mass-spring model and setup symmetric crystal structure:
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-ph = elphmod.ph.Model('../data/NbSe2_DFPT.ifc', apply_asr=True)
+ph = elphmod.ph.Model('../data/NbSe2_DFPT.ifc', apply_asr_simple=True)
 
 # cartesian coordinates (angstrom)
 tau = ph.r * Bohr2Angstrom

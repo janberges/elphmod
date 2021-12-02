@@ -16,7 +16,7 @@ data = 'NbSe2_cDFPT'
 
 info('Set up mass-spring model..')
 
-ph = elphmod.ph.Model('data/%s.ifc' % data, apply_asr=True)
+ph = elphmod.ph.Model('data/%s.ifc' % data, apply_asr_simple=True)
 
 info('Diagonalize dynamical matrix along G-M-K-G..')
 

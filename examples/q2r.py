@@ -18,7 +18,7 @@ q_path, x = elphmod.bravais.GMKG(301)
 
 colors = ['skyblue', 'dodgerblue', 'orange']
 
-ph = elphmod.ph.Model('data/%s.ifc' % data, apply_asr=True)
+ph = elphmod.ph.Model('data/%s.ifc' % data, apply_asr_simple=True)
 
 q = sorted(elphmod.bravais.irreducibles(nq))
 q = np.array(q, dtype=float) / nq * 2 * np.pi
@@ -26,7 +26,7 @@ q = np.array(q, dtype=float) / nq * 2 * np.pi
 D = elphmod.dispersion.sample(ph.D, q)
 
 ph2 = copy.copy(ph)
-elphmod.ph.q2r(ph2, D, q, nq, apply_asr=True)
+elphmod.ph.q2r(ph2, D, q, nq, apply_asr_simple=True)
 
 plt.figure()
 
