@@ -1,3 +1,4 @@
+Shift Wannier functions more accurately in STM and STS simulations.
 Save el.Model, ph.Model, and elph.Model to files (_hr.dat, flfrc).
 Move I/O functions and numerical constants to separarate modules.
 Free local memory after data has been gathered in global memory.
