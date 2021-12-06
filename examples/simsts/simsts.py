@@ -96,7 +96,7 @@ if comm.rank == 0:
     for k1 in range(nk):
         for k2 in range(nk):
             for n in range(el.size):
-                if 0.0 < e[k1, k2, n] < V:
+                if V < e[k1, k2, n] < 0.0 or 0.0 < e[k1, k2, n] < V:
                     tmp = 0.0
                     for iR in range(len(R)):
                         tmp += np.einsum('nxy,n', W[iR, :, x0:x1, y0:y1],
