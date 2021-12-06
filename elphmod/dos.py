@@ -8,9 +8,23 @@ import numpy as np
 from . import bravais, misc, MPI
 comm = MPI.comm
 
-def hexDOS(energies):
+def hexDOS(energies, minimum=None, maximum=None):
     r"""Calculate DOS from energies on triangular mesh (2D tetrahedron method).
 
+    Parameters
+    ----------
+    energies : ndarray
+        Energies on triangular mesh.
+    minimum, maximum : float, optional
+        Energy window of interest (for efficiency).
+
+    Returns
+    -------
+    function
+        Density of states as a function of energy.
+
+    Notes
+    -----
     Integration over all energies yields unity.
 
     Derivation: The density of states can be expressed as
@@ -60,8 +74,16 @@ def hexDOS(energies):
         for i in range(N)
         for j in range(N)
         for k in range(2)
-        if comm.rank == ((i * N + j) * 2 + k) % comm.size
         ]
+
+    if minimum is not None:
+        triangles = [v for v in triangles if v[2] >= minimum]
+
+    if maximum is not None:
+        triangles = [v for v in triangles if v[0] <= maximum]
+
+    triangles = [v for n, v in enumerate(triangles)
+        if comm.rank == n % comm.size]
 
     D = np.empty(len(triangles))
 
@@ -89,9 +111,25 @@ def hexDOS(energies):
 
     return np.vectorize(DOS)
 
-def hexa2F(energies, couplings):
+def hexa2F(energies, couplings, minimum=None, maximum=None):
     r"""Calculate :math:`\alpha^2 F` from energies and coupling.
 
+    Parameters
+    ----------
+    energies : ndarray
+        Energies on triangular mesh.
+    couplings : ndarray
+        Couplings on triangular mesh.
+    minimum, maximum : float, optional
+        Energy window of interest (for efficiency).
+
+    Returns
+    -------
+    function
+        :math:`\alpha^2 F` as a function of energy.
+
+    Notes
+    -----
     Integration over all energies yields the arithmetic mean of the coupling.
 
     Note that it may be more convenient to calculate the mass renormalization
@@ -109,16 +147,24 @@ def hexa2F(energies, couplings):
     N, N = energies.shape
 
     triangles = [
-        tuple(zip(*sorted([
+        sorted([
             ((i + k) % N, (j + k) % N),
             ((i + 1) % N, j),
             (i, (j + 1) % N),
-            ], key=lambda x: energies[x])))
+            ], key=lambda x: energies[x])
         for i in range(N)
         for j in range(N)
         for k in range(2)
-        if comm.rank == ((i * N + j) * 2 + k) % comm.size
         ]
+
+    if minimum is not None:
+        triangles = [v for v in triangles if energies[v[2]] >= minimum]
+
+    if maximum is not None:
+        triangles = [v for v in triangles if energies[v[0]] <= maximum]
+
+    triangles = [tuple(zip(*v)) for n, v in enumerate(triangles)
+        if comm.rank == n % comm.size]
 
     triangles = [(energies[v], couplings[v]) for v in triangles]
 
