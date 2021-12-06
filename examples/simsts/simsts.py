@@ -60,19 +60,21 @@ if comm.rank == 0:
     cells = range(-3, 4)
     R = np.array([(n1, n2, 0) for n1 in cells for n2 in cells])
 
-    W = np.empty((len(R),) + el.W.shape)
+    W = np.empty((len(R),) + el.W.shape[:3])
     overlap = np.empty((len(R), el.size))
 
     norm = np.sqrt(np.pi * elphmod.misc.a0 ** 3)
-    d = np.linalg.norm(tip - el.r, axis=3)
-    s = np.exp(-d / elphmod.misc.a0) / norm
 
     for iR in range(len(R)):
         dx = R[iR, 0] * nx
         dy = R[iR, 1] * ny
 
+        shift = np.dot(R[iR], a)
+        d = np.linalg.norm(tip - shift - el.r, axis=3)
+        s = np.exp(-d / elphmod.misc.a0) / norm
+
         for n in range(el.size):
-            W[iR, n] = el.W[n]
+            W[iR, n] = el.W[n, :, :, zt]
             W[iR, n] = np.roll(W[iR, n], shift=dx, axis=0)
             W[iR, n] = np.roll(W[iR, n], shift=dy, axis=1)
 
@@ -81,7 +83,7 @@ if comm.rank == 0:
             if dy > 0: W[iR, n, :, :dy] = 0.0
             if dy < 0: W[iR, n, :, dy:] = 0.0
 
-            overlap[iR, n] = np.sum(s * W[iR, n]) * el.dV
+            overlap[iR, n] = np.sum(s * el.W[n]) * el.dV
 
 info('Calculate scanning-tunneling image and weight electronic eigenstates..')
 
@@ -97,7 +99,7 @@ if comm.rank == 0:
                 if 0.0 < e[k1, k2, n] < V:
                     tmp = 0.0
                     for iR in range(len(R)):
-                        tmp += np.einsum('nxy,n', W[iR, :, x0:x1, y0:y1, zt],
+                        tmp += np.einsum('nxy,n', W[iR, :, x0:x1, y0:y1],
                             U[k1, k2, :, n]) * np.exp(1j
                             * (k1 * R[iR, 0] + k2 * R[iR, 1]) * scale)
                     STM += abs(tmp) ** 2
