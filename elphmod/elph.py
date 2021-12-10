@@ -159,6 +159,17 @@ class Model(object):
 
         return g
 
+    def gR(self, Rq1=0, Rq2=0, Rq3=0, Rk1=0, Rk2=0, Rk3=0):
+        """Get electron-phonon matrix elements for arbitrary lattice vectors."""
+
+        index_q = misc.vector_index(self.Rq, (Rq1, Rq2, Rq3))
+        index_k = misc.vector_index(self.Rk, (Rk1, Rk2, Rk3))
+
+        if index_q is None or index_k is None:
+            return np.zeros_like(self.data[0, :, 0, :, :])
+        else:
+            return self.data[index_q, :, index_k, :, :]
+
     def __init__(self, epmatwp=None, wigner=None, el=None, ph=None,
             old_ws=False, divide_mass=True, divide_ndegen=True,
             shared_memory=False):

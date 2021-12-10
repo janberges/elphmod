@@ -83,6 +83,16 @@ class Model(object):
 
         return np.einsum('Rab,R->ab', self.data, np.exp(1j * self.R.dot(k)))
 
+    def t(self, R1=0, R2=0, R3=0):
+        """Get on-site or hopping energy for arbitrary lattice vector."""
+
+        index = misc.vector_index(self.R, (R1, R2, R3))
+
+        if index is None:
+            return np.zeros_like(self.data[0])
+        else:
+            return self.data[index]
+
     def __init__(self, seedname=None, divide_ndegen=True, read_xsf=False,
             normalize_wf=False, buffer_wf=False, check_ortho=False,
             shared_memory=False):
@@ -381,19 +391,18 @@ class Model(object):
 
         for i in range(len(self.R)):
             R = self.R[i] + S
-            match = np.all(self.R == R, axis=1)
+            j = misc.vector_index(self.R, R)
 
-            if np.any(match):
-                j = np.argmax(match)
-                old_R.remove(j)
-                data[j, :, s] = self.data[i, :, s]
-                data[j, s, s] = self.data[j, s, s]
-            else:
+            if j is None:
                 t = np.zeros((self.size, self.size), dtype=complex)
                 t[:, s] = self.data[i, :, s]
                 t[s, s] = 0.0
                 new_R.append(R)
                 new_t.append(t)
+            else:
+                old_R.remove(j)
+                data[j, :, s] = self.data[i, :, s]
+                data[j, s, s] = self.data[j, s, s]
 
         for j in old_R:
             data[j, :, s] = 0.0

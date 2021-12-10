@@ -104,6 +104,16 @@ class Model(object):
             sum_rule_correction(self, asr=apply_asr, rsr=apply_rsr,
                 divide_mass=divide_mass)
 
+    def C(self, R1=0, R2=0, R3=0):
+        """Get interatomic force constants for arbitrary lattice vector."""
+
+        index = misc.vector_index(self.R, (R1, R2, R3))
+
+        if index is None:
+            return np.zeros_like(self.data[0])
+        else:
+            return self.data[index]
+
     def supercell(self, N1=1, N2=1, N3=1):
         """Map mass-spring model onto supercell.
 
@@ -309,19 +319,18 @@ class Model(object):
 
         for i in range(len(self.R)):
             R = self.R[i] + S
-            match = np.all(self.R == R, axis=1)
+            j = misc.vector_index(self.R, R)
 
-            if np.any(match):
-                j = np.argmax(match)
-                old_R.remove(j)
-                data[j, s, :, :, :] = self.data[i, s, :, :, :]
-                data[j, s, :, s, :] = self.data[j, s, :, s, :]
-            else:
+            if j is None:
                 C = np.zeros((self.nat, 3, self.nat, 3))
                 C[s, :, :, :] = self.data[i, s, :, :, :]
                 C[s, :, s, :] = 0.0
                 new_R.append(R)
                 new_C.append(C)
+            else:
+                old_R.remove(j)
+                data[j, s, :, :, :] = self.data[i, s, :, :, :]
+                data[j, s, :, s, :] = self.data[j, s, :, s, :]
 
         for j in old_R:
             data[j, s, :, :, :] = 0.0

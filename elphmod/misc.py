@@ -340,3 +340,25 @@ def split(expr, sd=',', od='{', cd='}'):
             yield x
 
     return factorize(expr)
+
+def vector_index(vectors, vector):
+    """Find index of vector in list of vectors.
+
+    Parameters
+    ----------
+    vectors : ndarray
+        List of vectors.
+    vector : ndarray
+        Vector.
+
+    Returns
+    -------
+    int
+        Index of vector in list of vectors.
+    """
+    match = np.all(vectors == vector, axis=1)
+
+    if np.any(match):
+        return np.argmax(match)
+    else:
+        return None
