@@ -17,7 +17,8 @@ V = 0.1 * elphmod.misc.Ry # sample bias
 
 info('Set up and diagonalize Wannier Hamiltonian..')
 
-el = elphmod.el.Model('graphene', read_xsf=True, normalize_wf=True)
+el = elphmod.el.Model('graphene', read_xsf=True, normalize_wf=True,
+    check_ortho=True)
 
 _, order = elphmod.dispersion.dispersion_full(el.H, nk, order=True)
 e, U = elphmod.dispersion.dispersion_full_nosym(el.H, nk, vectors=True)
