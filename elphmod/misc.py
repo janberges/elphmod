@@ -93,9 +93,33 @@ def group(points, eps=1e-7):
 
     return [np.where(groups == group)[0] for group in set(groups)]
 
-def read_cube(cube):
-    """Read Gaussian cube file."""
+def read_cube(cube, only_header=False, comm=comm):
+    """Read Gaussian cube file.
 
+    Parameters
+    ----------
+    cube : str
+        Name of Gaussian cube file.
+    only_header : bool, default False
+        Skip reading data?
+
+    Returns
+    -------
+    r0 : ndarray
+        Origin of the data grid.
+    a : ndarray
+        Spanning vectors of the data grid.
+    X : list of str
+        Atomic numbers.
+    r : ndarray
+        Cartesian atomic coordinates.
+    data : ndarray
+        Data-grid values or, if `only_header`, shape of data grid.
+
+    See Also
+    --------
+    read_xsf : Equivalent function for XCrySDen format.
+    """
     if comm.rank == 0:
         lines = open(cube)
 
@@ -111,6 +135,7 @@ def read_cube(cube):
     nat = comm.bcast(nat)
 
     n = np.empty(3, dtype=int)
+    r0 = np.empty(3, dtype=float)
     a = np.empty((3, 3), dtype=float)
     X = np.empty(nat, dtype=int)
     r = np.empty((nat, 3), dtype=float)
@@ -127,9 +152,13 @@ def read_cube(cube):
             r[i] = list(map(float, cols[1:4]))
 
     comm.Bcast(n)
+    comm.Bcast(r0)
     comm.Bcast(a)
     comm.Bcast(X)
     comm.Bcast(r)
+
+    if only_header:
+        return r0, a, X, r, tuple(n)
 
     if comm.rank == 0:
         data = np.empty(np.prod(n))
@@ -148,7 +177,7 @@ def read_cube(cube):
 
     comm.Bcast(data)
 
-    return a, X, r, data
+    return r0, a, X, r, data
 
 def read_xsf(xsf, only_header=False, comm=comm):
     """Read file in XCrySDen format.
@@ -175,7 +204,8 @@ def read_xsf(xsf, only_header=False, comm=comm):
 
     See Also
     --------
-    write_xsf
+    read_cube : Equivalent function for Gaussian cube format.
+    write_xsf : Write file in XCrySDen format.
     """
     if comm.rank == 0:
         lines = open(xsf)
@@ -261,7 +291,7 @@ def write_xsf(xsf, r0, a, X, r, data, only_header=False, comm=comm):
 
     See Also
     --------
-    read_xsf
+    read_xsf : Read file in XCrySDen format.
     """
     if comm.rank == 0:
         n = tuple(data) if only_header else data.shape
