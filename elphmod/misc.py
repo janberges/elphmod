@@ -145,6 +145,7 @@ def read_cube(cube, only_header=False, comm=comm):
             cols = next(lines).split()
             n[i] = int(cols[0])
             a[i] = list(map(float, cols[1:4]))
+            a[i] *= n[i]
 
         for i in range(nat):
             cols = next(lines).split()
