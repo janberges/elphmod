@@ -323,6 +323,40 @@ def write_xsf(xsf, r0, a, X, r, data, only_header=False, comm=comm):
             text.write('END_DATAGRID_3D\n')
             text.write('END_BLOCK_DATAGRID_3D\n')
 
+def real_space_grid(shape, r0, a, shared_memory=False):
+    """Sample real-space grid.
+
+    Parameters
+    ----------
+    shape : tuple of int
+        Shape of the 3D real-space grid.
+    r0 : ndarray
+        Origin of the real-space grid.
+    a : ndarray
+        Cartesian spanning vectors of the real-space grid.
+    shared_memory : bool, default False
+        Store real-space grid in shared memory?
+
+    Returns
+    -------
+    ndarray
+        Cartesian coordinates for all grid points.
+    """
+    node, images, r = MPI.shared_array(shape + (3,),
+        shared_memory=shared_memory)
+
+    if comm.rank == 0:
+        axes = [np.linspace(0.0, 1.0, num) for num in shape]
+        axes = np.meshgrid(*axes, indexing='ij')
+        r[...] = r0 + np.einsum('nijk,nx->ijkx', axes, a)
+
+    if node.rank == 0:
+        images.Bcast(r)
+
+    comm.Barrier()
+
+    return r
+
 def split(expr, sd=',', od='{', cd='}'):
     """Split expression with separators and brackets using distributive law.
 

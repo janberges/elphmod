@@ -158,18 +158,7 @@ class Model(object):
             self.dV = abs(np.dot(np.cross(a[0], a[1]), a[2])) / np.prod(shape)
 
             if not read_buffer:
-                node, images, self.r = MPI.shared_array(shape + (3,),
-                    shared_memory=shared_memory)
-
-                if comm.rank == 0:
-                    axes = [np.linspace(0.0, 1.0, num) for num in shape]
-                    axes = np.meshgrid(*axes, indexing='ij')
-                    self.r[...] = r0 + np.einsum('nijk,nx->ijkx', axes, a)
-
-                if node.rank == 0:
-                    images.Bcast(self.r)
-
-                comm.Barrier()
+                self.r = misc.real_space_grid(shape, r0, a, shared_memory)
 
                 sizes, bounds = MPI.distribute(self.size, bounds=True)
 
