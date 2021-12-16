@@ -111,7 +111,7 @@ def read_cube(cube, only_header=False, comm=comm):
         Spanning vectors of the data grid.
     X : list of str
         Atomic numbers.
-    r : ndarray
+    tau : ndarray
         Cartesian atomic coordinates.
     data : ndarray
         Data-grid values or, if `only_header`, shape of data grid.
@@ -138,7 +138,7 @@ def read_cube(cube, only_header=False, comm=comm):
     r0 = np.empty(3, dtype=float)
     a = np.empty((3, 3), dtype=float)
     X = np.empty(nat, dtype=int)
-    r = np.empty((nat, 3), dtype=float)
+    tau = np.empty((nat, 3), dtype=float)
 
     if comm.rank == 0:
         for i in range(3):
@@ -150,16 +150,16 @@ def read_cube(cube, only_header=False, comm=comm):
         for i in range(nat):
             cols = next(lines).split()
             X[i] = int(cols[0])
-            r[i] = list(map(float, cols[1:4]))
+            tau[i] = list(map(float, cols[2:5]))
 
     comm.Bcast(n)
     comm.Bcast(r0)
     comm.Bcast(a)
     comm.Bcast(X)
-    comm.Bcast(r)
+    comm.Bcast(tau)
 
     if only_header:
-        return r0, a, X, r, tuple(n)
+        return r0, a, X, tau, tuple(n)
 
     if comm.rank == 0:
         data = np.empty(np.prod(n))
@@ -178,7 +178,7 @@ def read_cube(cube, only_header=False, comm=comm):
 
     comm.Bcast(data)
 
-    return r0, a, X, r, data
+    return r0, a, X, tau, data
 
 def read_xsf(xsf, only_header=False, comm=comm):
     """Read file in XCrySDen format.
@@ -198,7 +198,7 @@ def read_xsf(xsf, only_header=False, comm=comm):
         Spanning vectors of the data grid.
     X : list of str
         Atomic numbers or symbols.
-    r : ndarray
+    tau : ndarray
         Cartesian atomic coordinates.
     data : ndarray
         Data-grid values or, if `only_header`, shape of data grid.
@@ -224,13 +224,13 @@ def read_xsf(xsf, only_header=False, comm=comm):
     r0 = np.empty(3, dtype=float)
     a = np.empty((3, 3), dtype=float)
     X = ['X'] * nat
-    r = np.empty((nat, 3), dtype=float)
+    tau = np.empty((nat, 3), dtype=float)
 
     if comm.rank == 0:
         for i in range(nat):
             cols = next(lines).split()
             X[i] = cols[0]
-            r[i] = list(map(float, cols[1:4]))
+            tau[i] = list(map(float, cols[1:4]))
 
         while next(lines).strip() != 'BEGIN_DATAGRID_3D_UNKNOWN':
             pass
@@ -245,10 +245,10 @@ def read_xsf(xsf, only_header=False, comm=comm):
     comm.Bcast(r0)
     comm.Bcast(a)
     X = comm.bcast(X)
-    comm.Bcast(r)
+    comm.Bcast(tau)
 
     if only_header:
-        return r0, a, X, r, tuple(n)
+        return r0, a, X, tau, tuple(n)
 
     if comm.rank == 0:
         data = np.empty(np.prod(n))
@@ -268,9 +268,9 @@ def read_xsf(xsf, only_header=False, comm=comm):
 
     comm.Bcast(data)
 
-    return r0, a, X, r, data
+    return r0, a, X, tau, data
 
-def write_xsf(xsf, r0, a, X, r, data, only_header=False, comm=comm):
+def write_xsf(xsf, r0, a, X, tau, data, only_header=False, comm=comm):
     """Write file in XCrySDen format.
 
     Parameters
@@ -283,7 +283,7 @@ def write_xsf(xsf, r0, a, X, r, data, only_header=False, comm=comm):
         Spanning vectors of the data grid.
     X : list of str
         Atomic numbers or symbols.
-    r : ndarray
+    tau : ndarray
         Cartesian atomic coordinates.
     data : ndarray
         Data-grid values or, if `only_header`, shape of data grid.
@@ -303,7 +303,7 @@ def write_xsf(xsf, r0, a, X, r, data, only_header=False, comm=comm):
 
             for i in range(len(X)):
                 text.write('%-5s' % X[i])
-                text.write(' %11.7f %11.7f %11.7f\n' % tuple(r[i]))
+                text.write(' %11.7f %11.7f %11.7f\n' % tuple(tau[i]))
 
             text.write('BEGIN_BLOCK_DATAGRID_3D\n')
             text.write('3D_field\n')

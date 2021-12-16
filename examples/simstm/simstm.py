@@ -13,7 +13,7 @@ AFMhot = elphmod.plot.colormap( # Gnuplot
     (1.00, elphmod.plot.Color(255, 255, 255)),
     )
 
-r0, a, X, r, data = elphmod.misc.read_cube('stm.cube')
+r0, a, X, tau, data = elphmod.misc.read_cube('stm.cube')
 
 plot = elphmod.plot.plot(data[:, :, data.shape[2] // 4], angle=120)
 
