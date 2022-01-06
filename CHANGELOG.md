@@ -1,5 +1,11 @@
 # Changes
 
+## v0.9
+
+* New electron-electron class (incl. supercell mapping)
+* Shared-memory array as subclass of NumPy array
+* Improved handling of XCrySDen and Gaussian cube files
+
 ## v0.8
 
 * QE patches included in source distribution
