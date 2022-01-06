@@ -9,3 +9,20 @@ for example in *.py
 do
     mpirun python3 $example
 done
+
+for example in \
+    goldstone \
+    lambda \
+    modes \
+    phrenorm \
+    phrenorm_3d \
+    phrenorm_graphene \
+    projwfc projwfc_3d \
+    simstm \
+    simsts \
+    wannier
+do
+    pushd $example
+    ./run.sh
+    popd
+done
