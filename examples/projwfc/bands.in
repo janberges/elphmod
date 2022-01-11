@@ -18,7 +18,9 @@
     occupations = 'smearing'
     degauss = 0.01
 
-    nbnd = 10
+    assume_isolated = '2D'
+
+    nbnd = 11
 /
 &ELECTRONS
     conv_thr = 1e-10

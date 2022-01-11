@@ -9,12 +9,14 @@
     nat = 2
 
     a = 2.46
-    c = 7.0
+    c = 11.0
 
     ecutwfc = 30.0
 
     occupations = 'smearing'
     degauss = 0.01
+
+    assume_isolated = '2D'
 /
 &ELECTRONS
     conv_thr = 1e-12

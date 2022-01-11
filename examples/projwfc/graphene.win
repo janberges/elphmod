@@ -1,5 +1,5 @@
 num_wann 5
-num_bands 10
+num_bands 11
 
 begin projections
 C: pz
@@ -8,10 +8,7 @@ f=0.5,0.5,0.0: s
 f=0.5,1.0,0.0: s
 end projections
 
-dis_win_min -20.0
-dis_win_max 20.0
-dis_froz_min -20.0
-dis_froz_max 4.0
+dis_froz_max -1.0
 
 dis_num_iter 10000
 num_iter 0
@@ -20,9 +17,9 @@ write_hr true
 use_ws_distance true
 
 begin unit_cell_cart
- 2.46 0.000000000 0.0
--1.23 2.130422493 0.0
- 0.00 0.000000000 7.0
+ 2.46 0.000000000  0.0
+-1.23 2.130422493  0.0
+ 0.00 0.000000000 11.0
 end unit_cell_cart
 
 begin atoms_frac
