@@ -8,9 +8,7 @@ end projections
 use_ws_distance false
 
 dis_win_min 1.0
-dis_win_max 8.0
-dis_froz_min 2.0
-dis_froz_max 4.0
+dis_froz_max 5.0
 
 dis_num_iter 10000
 num_iter 0

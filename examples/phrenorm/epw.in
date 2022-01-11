@@ -14,9 +14,8 @@ TaS2
 
     proj(1) = 'Ta: dz2; dx2-y2; dxy'
 
-    dis_win_max = 8.0
-    dis_froz_min = 2.0
-    dis_froz_max = 4.0
+    dis_win_min = 1.0
+    dis_froz_max = 5.0
 
     num_iter = 0
     wdata(1) = 'dis_num_iter 10000'
