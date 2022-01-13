@@ -22,7 +22,7 @@ Using the example of a nitrogen molecule, this example shows that
 The example also shows how to calculate exact DFPT phonon self-energies for
 gapped systems (i.e., without any electronic occupation smearing).
 
-For the (c)DFPT part, you need a modified version 6.7 of Quantum ESPRESSO. You
+For the (c)DFPT part, you need a modified version of Quantum ESPRESSO. You
 can use the provided [patch](../../patches) to apply the required changes.
 
 The results obtained in this example are far from converged!

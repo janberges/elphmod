@@ -6,7 +6,7 @@ This example shows how to
 * work with electrons, phonons, and their coupling in localized bases,
 * consistently renormalize phonon dispersions (go from cDFPT to DFPT).
 
-For the cDFPT part, you need a modified version 6.7 of Quantum ESPRESSO. You
+For the cDFPT part, you need a modified version of Quantum ESPRESSO. You
 can use the provided [patch](../../patches) to apply the required changes.
 
 The results obtained in this example are very far from converged! In return,

@@ -1,5 +1,7 @@
 # Changes
 
+* QE-7.0 support (cDFPT patch)
+
 ## v0.9
 
 * New electron-electron class (incl. supercell mapping)
