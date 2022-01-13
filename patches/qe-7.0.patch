@@ -361,3 +361,12 @@ index a5ca8c3e6..d63fdf2d2 100644
 +  CALL setup_cdfpt_subspace
 +  !
    RETURN
+diff --git a/install/makedeps.sh b/install/makedeps.sh
+index 82aaaf496..d294d4451 100755
+--- a/install/makedeps.sh
++++ b/install/makedeps.sh
+@@ -76,3 +76,3 @@ for dir in $dirs; do
+         LR_Modules )
+-             DEPENDS="$DEPEND1 $LEVEL1/Modules $LEVEL1/PW/src" ;;
++             DEPENDS="$DEPEND1 $LEVEL1/Modules $LEVEL1/PW/src $LEVEL1/PP/src" ;;
+ 	ACFDT/src ) 
