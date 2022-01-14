@@ -10,7 +10,8 @@ done
 
 nk=2
 
-mpirun pw.x -nk $nk < pw.in | tee pw.out
+mpirun pw.x -nk $nk < scf.in | tee scf.out
+mpirun pw.x -nk $nk < nscf.in | tee nscf.out
 mpirun pp.x -nk $nk < pp.in | tee pp.out
 
 mpirun python3 simstm.py
