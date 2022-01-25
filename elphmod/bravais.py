@@ -1763,6 +1763,13 @@ def read_win(win):
                     struct[key] = words[1]
                 elif key == 'wannier_plot':
                     struct[key] = words[1]
+                    
+                elif key == 'dis_num_iter':
+                    struct[key] = int(words[1])
+                elif key == 'num_iter':
+                    struct[key] = int(words[1])
+                elif key == 'search_shells':
+                    struct[key] = int(words[1])
 
                 elif key == 'mp_grid':
                     mp_grid = np.empty(3)
@@ -1886,6 +1893,12 @@ def write_win(win, struct):
         for key in ['write_hr', 'bands_plot']:
             if key in struct:
                 data.write('%s = %s\n' % (key, struct[key]))
+
+        data.write('\n')
+        
+        for key in ['dis_num_iter', 'num_iter', 'search_shells']:
+            if key in struct:
+                data.write('%3s = %.12g\n' % (key, struct[key]))
 
         data.write('\n')
 
