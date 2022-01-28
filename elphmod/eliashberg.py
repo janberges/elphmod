@@ -25,7 +25,7 @@ def Tc(lamda, wlog, mustar=0.1):
         Critical temperature in kelvin.
     """
     return wlog / (1.20 * misc.kB) * np.exp(-1.04 * (1 + lamda)
-        / (lamda - 0.62 * lamda * mustar - mustar))
+        / max(1e-3, (lamda - mustar * (1 + 0.62 * lamda))))
 
 def McMillan(nq, e, w2, g2, eps=1e-10, mustar=0.0):
     r"""Calculate parameters and result of McMillan's formula.
