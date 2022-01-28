@@ -810,19 +810,33 @@ def Pi_g(q, e, g, U, kT=0.025, eps=1e-15,
 
     return Pig
 
-def double_fermi_surface_average(q, e, g2, kT=0.025,
+def double_fermi_surface_average(q, e, g2=None, kT=0.025,
         occupations=occupations.fermi_dirac, comm=comm):
-    """Calculate double Fermi-surface average.
+    r"""Calculate double Fermi-surface average.
+
+    Please note that not the average itself is returned!
+
+    .. math::
+
+        \langle g^2 \rangle = \frac {
+            \sum_{\vec q \nu \vec k m n}
+            |g_{\vec q \nu \vec k m n}|^2
+            \delta(\epsilon_{\vec k n})
+            \delta(\epsilon_{\vec k + \vec q m})
+        }{
+            \sum_{\vec q \vec k m n}
+            \delta(\epsilon_{\vec k n})
+            \delta(\epsilon_{\vec k + \vec q m})
+        }
 
     Parameters
     ----------
-    q : list of 2-tuples
-        Considered q points defined via crystal coordinates :math:`q_1, q_2 \in
-        [0, 2 \pi)`.
+    q : list of tuple
+        List of q points in crystal coordinates :math:`q_i \in [0, 2 \pi)`.
     e : ndarray
         Electron dispersion on uniform mesh. The Fermi level must be at zero.
     g2 : ndarray
-        Quantity to be averaged, typically electron-phonon coupling.
+        Quantity to be averaged, typically squared electron-phonon coupling.
     kT : float
         Smearing temperature.
     occupations : function
@@ -830,52 +844,76 @@ def double_fermi_surface_average(q, e, g2, kT=0.025,
 
     Returns
     -------
-    float
-        Double Fermi-surface average.
+    ndarray
+        Enumerator of double Fermi-surface average before :math:`\vec q \nu`
+        summation.
+    ndarray
+        Denominator of double Fermi-surface average before :math:`\vec q`
+        summation.
     """
-    nk, nk, nel = e.shape
-    nQ, nph = g2.shape[:2]
+    nQ = len(q)
+
+    q_orig = q
+    q = np.zeros((nQ, 3))
+    q[:, :len(q_orig[0])] = q_orig
+
+    nk_orig = e.shape[:-1]
+    nk = np.ones(3, dtype=int)
+    nk[:len(nk_orig)] = nk_orig
+
+    nbnd = e.shape[-1]
+    e = np.reshape(e, (nk[0], nk[1], nk[2], nbnd))
+
+    if g2 is None:
+        g2 = np.ones((nQ, 1))
+
+    else:
+        g2 = np.reshape(g2, (nQ, -1, nk[0], nk[1], nk[2], nbnd, nbnd))
+
+    nb = g2.shape[1]
 
     d = occupations.delta(e / kT) / kT
 
-    e = np.tile(e, (2, 2, 1))
-    d = np.tile(d, (2, 2, 1))
+    e = np.tile(e, (2, 2, 2, 1))
+    d = np.tile(d, (2, 2, 2, 1))
 
     scale = nk / (2 * np.pi)
 
     sizes, bounds = MPI.distribute(nQ, bounds=True, comm=comm)
 
-    my_av = np.empty((sizes[comm.rank], nph), dtype=g2.dtype)
-    my_wg = np.empty(sizes[comm.rank])
+    my_enum = np.empty((sizes[comm.rank], nb),
+        dtype=float if np.isrealobj(g2) else complex)
+    my_deno = np.empty(sizes[comm.rank])
 
-    d2 = np.empty((nk, nk, nel, nel))
+    d2 = np.empty((nk[0], nk[1], nk[2], nbnd, nbnd))
 
-    k1 = slice(0, nk)
-    k2 = slice(0, nk)
+    k1 = slice(0, nk[0])
+    k2 = slice(0, nk[1])
+    k3 = slice(0, nk[2])
 
     for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
-        q1 = int(round(q[iq, 0] * scale)) % nk
-        q2 = int(round(q[iq, 1] * scale)) % nk
+        q1, q2, q3 = np.round(q[iq] * scale).astype(int) % nk
 
-        kq1 = slice(q1, q1 + nk)
-        kq2 = slice(q2, q2 + nk)
+        kq1 = slice(q1, q1 + nk[0])
+        kq2 = slice(q2, q2 + nk[1])
+        kq3 = slice(q3, q3 + nk[2])
 
-        for m in range(nel):
-            for n in range(nel):
-                d2[:, :, m, n] = d[kq1, kq2, m] * d[k1, k2, n]
+        for m in range(nbnd):
+            for n in range(nbnd):
+                d2[..., m, n] = d[kq1, kq2, kq3, m] * d[k1, k2, k3, n]
 
-        my_wg[my_iq] = d2.sum()
+        for nu in range(nb):
+            my_enum[my_iq, nu] = (g2[iq, nu] * d2).sum()
 
-        for nu in range(nph):
-            my_av[my_iq, nu] = (g2[iq, nu] * d2).sum()
+        my_deno[my_iq] = d2.sum()
 
-    av = np.empty((nQ, nph), dtype=g2.dtype)
-    wg = np.empty(nQ)
+    enum = np.empty((nQ, nb), dtype=my_enum.dtype)
+    deno = np.empty(nQ)
 
-    comm.Allgatherv(my_av, (av, sizes * nph))
-    comm.Allgatherv(my_wg, (wg, sizes))
+    comm.Allgatherv(my_enum, (enum, sizes * nb))
+    comm.Allgatherv(my_deno, (deno, sizes))
 
-    return av, wg
+    return enum, deno
 
 def triangle(q1, q2, q3, e, g1, g2, g3, kT=0.025, eps=1e-14,
         occupations=occupations.fermi_dirac, comm=comm):

@@ -23,27 +23,25 @@ cmap = elphmod.plot.colormap(
 
 el = elphmod.el.Model('data/NbSe2')
 
-ekk = elphmod.dispersion.dispersion_full(el.H, nk)[:, :, 0] - mu
-Ekk = ekk[::dk, ::dk]
-
-delta_kk = elphmod.occupations.fermi_dirac.delta(ekk / kT) / kT
+ekk = elphmod.dispersion.dispersion_full(el.H, nk)[:, :, :1] - mu
+Ekk = ekk[::dk, ::dk, 0]
 
 q = np.array(sorted(elphmod.bravais.irreducibles(nq)))
 
 wedge = np.empty((len(q), 2))
+
+wedge[:, 0] = elphmod.diagrams.double_fermi_surface_average(q * 2 * np.pi / nq,
+    ekk, kT=kT)[1] / nk ** 2
 
 progress = elphmod.misc.StatusBar(len(q),
     title='calculate double-delta integrals')
 
 for iq, (q1, q2) in enumerate(q):
     ekq = np.roll(np.roll(ekk, shift=-q1, axis=0), shift=-q2, axis=1)
-    Ekq = ekq[::dk, ::dk]
-
-    delta_kq = elphmod.occupations.fermi_dirac.delta(ekq / kT) / kT
+    Ekq = ekq[::dk, ::dk, 0]
 
     intersections = elphmod.dos.double_delta(Ekk, Ekq)(0.0)
 
-    wedge[iq, 0] = np.average(delta_kk * delta_kq)
     wedge[iq, 1] = sum(intersections.values())
 
     progress.update()
