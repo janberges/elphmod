@@ -1763,7 +1763,7 @@ def read_win(win):
                     struct[key] = words[1]
                 elif key == 'wannier_plot':
                     struct[key] = words[1]
-                    
+
                 elif key == 'dis_num_iter':
                     struct[key] = int(words[1])
                 elif key == 'num_iter':
@@ -1895,7 +1895,7 @@ def write_win(win, struct):
                 data.write('%s = %s\n' % (key, struct[key]))
 
         data.write('\n')
-        
+
         for key in ['dis_num_iter', 'num_iter', 'search_shells']:
             if key in struct:
                 data.write('%3s = %.12g\n' % (key, struct[key]))

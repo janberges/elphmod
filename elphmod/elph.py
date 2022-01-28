@@ -543,7 +543,7 @@ def transform(g, q, nk, U=None, u=None, broadcast=True, shared_memory=False):
 
     return g
 
-def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
+def coupling(filename, nQ, nmodes, nk, bands, Q=None, nq=None, offset=0,
         completion=True, complete_k=False, squeeze=False, status=False,
         phase=False):
     """Read and complete electron-phonon matrix elements."""
@@ -557,9 +557,9 @@ def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
 
     dtype = complex if phase else float
 
-    elph = np.empty((nQ, nb, nk, nk, bands, bands), dtype=dtype)
+    elph = np.empty((nQ, nmodes, nk, nk, bands, bands), dtype=dtype)
 
-    my_elph = np.empty((sizes[comm.rank], nb, nk, nk, bands, bands),
+    my_elph = np.empty((sizes[comm.rank], nmodes, nk, nk, bands, bands),
         dtype=dtype)
 
     my_elph[:] = np.nan
@@ -605,19 +605,19 @@ def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
             if status:
                 print('Complete data for q point %d..' % iq)
 
-            for nu in range(nb):
+            for nu in range(nmodes):
                 for ibnd in range(bands):
                     for jbnd in range(bands):
                         bravais.complete(my_elph[n, nu, :, :, ibnd, jbnd])
 
     if complete_k and nq: # to be improved considerably
-        comm.Gatherv(my_elph, (elph, sizes * nb * nk * nk * bands * bands))
+        comm.Gatherv(my_elph, (elph, sizes * nmodes * nk * nk * bands * bands))
 
-        elph_complete = np.empty((nq, nq, nb, nk, nk, bands, bands),
+        elph_complete = np.empty((nq, nq, nmodes, nk, nk, bands, bands),
             dtype=dtype)
 
         if comm.rank == 0:
-            for nu in range(nb):
+            for nu in range(nmodes):
                 for ibnd in range(bands):
                     for jbnd in range(bands):
                         elph_complete[:, :, nu, :, :, ibnd, jbnd] = (
@@ -627,15 +627,16 @@ def coupling(filename, nQ, nb, nk, bands, Q=None, nq=None, offset=0,
         comm.Bcast(elph_complete)
         elph = elph_complete
     else:
-        comm.Allgatherv(my_elph, (elph, sizes * nb * nk * nk * bands * bands))
+        comm.Allgatherv(my_elph,
+            (elph, sizes * nmodes * nk * nk * bands * bands))
 
     return elph[..., 0, 0] if bands == 1 and squeeze else elph
 
-def read_EPW_output(epw_out, q, nq, nb, nk, bands=1,
+def read_EPW_output(epw_out, q, nq, nmodes, nk, bands=1,
                     eps=1e-4, squeeze=False, status=False, epf=False):
     """Read electron-phonon coupling from EPW output file."""
 
-    elph = np.empty((len(q), nb, nk, nk, bands, bands),
+    elph = np.empty((len(q), nmodes, nk, nk, bands, bands),
         dtype=complex if epf else float)
 
     q = [(q1, q2) for q1, q2 in q]
@@ -696,7 +697,7 @@ def read_EPW_output(epw_out, q, nq, nb, nk, bands=1,
                     next(data)
                     next(data)
 
-                    for _ in range(bands * bands * nb):
+                    for _ in range(bands * bands * nmodes):
                         columns = next(data).split()
 
                         jbnd, ibnd, nu = [int(i) - 1 for i in columns[:3]]
@@ -848,13 +849,13 @@ def write_xml_files(filename, data, angle=120, angle0=0):
     if data.ndim == 4:
         data = data[:, :, np.newaxis, np.newaxis, :, :]
 
-    nQ, nb, nk, nk, nbands, nbands = data.shape
+    nQ, nmodes, nk, nk, nbands, nbands = data.shape
 
     a1, a2 = bravais.translations(angle, angle0)
     b1, b2 = bravais.reciprocals(a1, a2)
 
     for iq in range(nQ):
-        for irep in range(nb):
+        for irep in range(nmodes):
             with open(filename % (iq + 1, irep + 1), 'w') as xml:
                 xml.write("""<?xml version="1.0"?>
 <?iotk version="1.2.0"?>

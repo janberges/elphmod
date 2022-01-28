@@ -195,8 +195,8 @@ def polarization(e, U, kT=0.025, eps=1e-15, subspace=None,
     if cRPA and subspace.shape != e.shape:
         subspace = np.reshape(subspace, e.shape)
 
-    nk, nk, nb = e.shape
-    nk, nk, no, nb = U.shape # U[k1, k2, a, n] = <k a|k n>
+    nk, nk, nmodes = e.shape
+    nk, nk, no, nmodes = U.shape # U[k1, k2, a, n] = <k a|k n>
 
     x = e / kT
 
@@ -225,10 +225,10 @@ def polarization(e, U, kT=0.025, eps=1e-15, subspace=None,
         kq1 = slice(q1, q1 + nk)
         kq2 = slice(q2, q2 + nk)
 
-        Pi = np.empty((nb, nb, no, no), dtype=complex)
+        Pi = np.empty((nmodes, nmodes, no, no), dtype=complex)
 
-        for m in range(nb):
-            for n in range(nb):
+        for m in range(nmodes):
+            for n in range(nmodes):
                 df = f[kq1, kq2, m] - f[k1, k2, n]
                 de = e[kq1, kq2, m] - e[k1, k2, n]
 
@@ -316,7 +316,7 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15, omega=0.0,
     else:
         g2 = np.reshape(g2, (nQ, -1, nk[0], nk[1], nk[2], nbnd, nbnd))
 
-    nb = g2.shape[1]
+    nmodes = g2.shape[1]
 
     x = e / kT
 
@@ -347,12 +347,12 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15, omega=0.0,
 
     sizes, bounds = MPI.distribute(nQ, bounds=True, comm=comm)
 
-    my_Pi = np.empty((sizes[comm.rank], nb),
+    my_Pi = np.empty((sizes[comm.rank], nmodes),
         dtype=float if np.isrealobj(g2) and np.isrealobj(omega) else complex)
 
     if fluctuations:
         my_Pi_k = np.empty((sizes[comm.rank],
-            nb, nk[0], nk[1], nk[2], nbnd, nbnd), dtype=my_Pi.dtype)
+            nmodes, nk[0], nk[1], nk[2], nbnd, nbnd), dtype=my_Pi.dtype)
 
     dfde = np.empty((nk[0], nk[1], nk[2], nbnd, nbnd),
         dtype=float if np.isrealobj(omega) else complex)
@@ -394,7 +394,7 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15, omega=0.0,
 
                     dfde[..., m, n] *= envelope
 
-        for nu in range(nb):
+        for nu in range(nmodes):
             Pi_k = g2[iq, nu] * dfde
 
             my_Pi[my_iq, nu] = prefactor * Pi_k.sum()
@@ -402,15 +402,16 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15, omega=0.0,
             if fluctuations:
                 my_Pi_k[my_iq, nu] = 2 * Pi_k
 
-    Pi = np.empty((nQ, nb), dtype=my_Pi.dtype)
+    Pi = np.empty((nQ, nmodes), dtype=my_Pi.dtype)
 
-    comm.Allgatherv(my_Pi, (Pi, sizes * nb))
+    comm.Allgatherv(my_Pi, (Pi, sizes * nmodes))
 
     if fluctuations:
-        Pi_k = np.empty((nQ, nb) + nk_orig + (nbnd, nbnd),
+        Pi_k = np.empty((nQ, nmodes) + nk_orig + (nbnd, nbnd),
             dtype=my_Pi_k.dtype)
 
-        comm.Allgatherv(my_Pi_k, (Pi_k, sizes * nb * nk.prod() * nbnd * nbnd))
+        comm.Allgatherv(my_Pi_k,
+            (Pi_k, sizes * nmodes * nk.prod() * nbnd * nbnd))
 
         return Pi, Pi_k
 
@@ -451,7 +452,7 @@ def phonon_self_energy2(q, e, g2, kT=0.025, nmats=1000, hyb_width=1.0,
     susceptibility2 : Similar function with `g2` set to one.
     """
     nk, nk = e.shape
-    nQ, nb, nk, nk = g2.shape
+    nQ, nmodes, nk, nk = g2.shape
 
     if (nmats * (2 * nk) ** 2 * np.dtype(complex).itemsize * comm.size
             > GB * 1e9):
@@ -477,7 +478,7 @@ def phonon_self_energy2(q, e, g2, kT=0.025, nmats=1000, hyb_width=1.0,
 
     sizes, bounds = MPI.distribute(nQ, bounds=True)
 
-    my_Pi = np.empty((sizes[comm.rank], nb), dtype=complex)
+    my_Pi = np.empty((sizes[comm.rank], nmodes), dtype=complex)
 
     for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         q1 = int(round(q[iq, 0] * scale)) % nk
@@ -488,12 +489,12 @@ def phonon_self_energy2(q, e, g2, kT=0.025, nmats=1000, hyb_width=1.0,
 
         chi = prefactor * np.sum(Gk * Gkq, axis=0).real + tail
 
-        for nu in range(nb):
+        for nu in range(nmodes):
             my_Pi[my_iq, nu] = np.sum(g2[iq, nu] * chi)
 
-    Pi = np.empty((nQ, nb), dtype=complex)
+    Pi = np.empty((nQ, nmodes), dtype=complex)
 
-    comm.Allgatherv(my_Pi, (Pi, sizes * nb))
+    comm.Allgatherv(my_Pi, (Pi, sizes * nmodes))
 
     return Pi
 
@@ -870,7 +871,7 @@ def double_fermi_surface_average(q, e, g2=None, kT=0.025,
     else:
         g2 = np.reshape(g2, (nQ, -1, nk[0], nk[1], nk[2], nbnd, nbnd))
 
-    nb = g2.shape[1]
+    nmodes = g2.shape[1]
 
     d = occupations.delta(e / kT) / kT
 
@@ -881,7 +882,7 @@ def double_fermi_surface_average(q, e, g2=None, kT=0.025,
 
     sizes, bounds = MPI.distribute(nQ, bounds=True, comm=comm)
 
-    my_enum = np.empty((sizes[comm.rank], nb),
+    my_enum = np.empty((sizes[comm.rank], nmodes),
         dtype=float if np.isrealobj(g2) else complex)
     my_deno = np.empty(sizes[comm.rank])
 
@@ -902,15 +903,15 @@ def double_fermi_surface_average(q, e, g2=None, kT=0.025,
             for n in range(nbnd):
                 d2[..., m, n] = d[kq1, kq2, kq3, m] * d[k1, k2, k3, n]
 
-        for nu in range(nb):
+        for nu in range(nmodes):
             my_enum[my_iq, nu] = (g2[iq, nu] * d2).sum()
 
         my_deno[my_iq] = d2.sum()
 
-    enum = np.empty((nQ, nb), dtype=my_enum.dtype)
+    enum = np.empty((nQ, nmodes), dtype=my_enum.dtype)
     deno = np.empty(nQ)
 
-    comm.Allgatherv(my_enum, (enum, sizes * nb))
+    comm.Allgatherv(my_enum, (enum, sizes * nmodes))
     comm.Allgatherv(my_deno, (deno, sizes))
 
     return enum, deno
