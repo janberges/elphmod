@@ -90,8 +90,6 @@ def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosab=0.0, cosbc=0.0, cosac=0.0,
 
         elif ibrav in {-5, 5, 12, 13}:
             celldm[3] = cosab
-    else:
-        celldm = np.array(celldm)
 
     if not bohr:
         celldm[0] *= misc.a0
@@ -1443,7 +1441,7 @@ def BZ(angle=120, angle0=0):
     return outline
 
 def read_pwi(pwi):
-    """Read crystal structure from PW input file.
+    """Read input data and crystal structure from PW input file.
 
     Parameters
     ----------
@@ -1453,108 +1451,28 @@ def read_pwi(pwi):
     Returns
     -------
     dict
-        Crystal structure.
+        Input data and crystal structure.
     """
     if comm.rank == 0:
         struct = dict()
 
-        system_flag = False
-        control_flag = False
-        electrons_flag = False
+        for namelist in misc.read_namelists(pwi).values():
+            struct.update(namelist)
+
+        for key in ['celldm']:
+            if key in struct and not isinstance(struct[key], list):
+                struct[key] = [struct[key]]
 
         with open(pwi) as lines:
             for line in lines:
-                words = [word
-                    for column in line.split()
-                    for word in column.split('=') if word]
+                words = [word for word in line.split() if word]
 
                 if not words:
                     continue
 
                 key = words[0].lower()
 
-                if key == '&control':
-                    control_flag = True
-
-                elif key == '&system':
-                    system_flag = True
-
-                elif key == '&electrons':
-                    electrons_flag = True
-
-                elif control_flag:
-                    if key in 'calculation':
-                        struct[key] = words[1]
-
-                    elif key in 'prefix':
-                        struct[key] = words[1]
-
-                    elif key in 'pseudo_dir':
-                        struct[key] = words[1]
-
-                    elif key in 'outdir':
-                        struct[key] = words[1]
-
-                    elif key == '/':
-                        control_flag = False
-
-                elif system_flag:
-                    if key.startswith('celldm'):
-                        if 'celldm' not in struct:
-                            struct['celldm'] = np.zeros(6)
-
-                        struct['celldm'][int(key[7:-1]) - 1] = float(words[1])
-
-                    elif key in 'abc':
-                        struct[key] = float(words[1])
-
-                    elif key == 'nat':
-                        struct[key] = int(words[1])
-
-                    elif key == 'ibrav':
-                        struct[key] = int(words[1])
-
-                    elif key == 'ntyp':
-                        struct[key] = int(words[1])
-
-                    elif key == 'ecutwfc':
-                        struct[key] = float(words[1])
-
-                    elif key == 'ecutrho':
-                        struct[key] = float(words[1])
-
-                    elif key == 'degauss':
-                        struct[key] = float(words[1])
-
-                    elif key == 'occupations':
-                        struct[key] = words[1]
-
-                    elif key == 'smearing':
-                        struct[key] = words[1]
-
-                    elif key == 'nbnd':
-                        struct[key] = int(words[1])
-
-                    elif key == 'nosym':
-                        struct[key] = words[1]
-
-                    elif key == '/':
-                        system_flag = False
-
-                elif electrons_flag:
-                    if key == 'mixing_beta':
-                        struct[key] = float(words[1])
-
-                    elif key == 'conv_thr':
-                        struct[key] = words[1]
-                        # if 'd' in words[1]:
-                        #     words[1] = words[1].replace('d', 'e')
-                        #     struct[key] = float(words[1])
-
-                    elif key == '/':
-                        electrons_flag = False
-
-                elif key == 'atomic_species':
+                if key == 'atomic_species':
                     struct['at_species'] = []
                     struct['mass'] = []
                     struct['pp'] = []
@@ -1639,9 +1557,9 @@ def write_pwi(pwi, struct):
     with open(pwi, 'w') as data:
         data.write('&CONTROL\n')
 
-        for key in 'calculation', 'prefix', 'pseudo_dir', 'outdir':
+        for key in ['calculation', 'prefix', 'pseudo_dir', 'outdir']:
             if key in struct:
-                data.write('%s = %s\n' % (key, struct[key]))
+                data.write('%s = %r\n' % (key, struct[key]))
 
         data.write('/\n')
 
@@ -1650,28 +1568,21 @@ def write_pwi(pwi, struct):
         if 'celldm' in struct:
             for i, celldm in enumerate(struct['celldm'], 1):
                 if celldm:
-                    data.write('celldm(%d) = %.12g\n' % (i, celldm))
+                    data.write('celldm(%d) = %r\n' % (i, celldm))
 
         for key in ['a', 'b', 'c', 'nat', 'ibrav', 'ntyp',
-                'ecutwfc', 'ecutrho', 'degauss', 'nbnd']:
+                'ecutwfc', 'ecutrho', 'degauss', 'nbnd',
+                'occupations', 'smearing', 'nosym']:
             if key in struct:
-                data.write('%s = %.12g\n' % (key, struct[key]))
-
-        for key in ['occupations', 'smearing', 'nosym']:
-            if key in struct:
-                data.write('%s = %s\n' % (key, struct[key]))
+                data.write('%s = %r\n' % (key, struct[key]))
 
         data.write('/\n')
 
         data.write('&ELECTRONS\n')
 
-        for key in ['mixing_beta']:
+        for key in ['mixing_beta', 'conv_thr']:
             if key in struct:
-                data.write('%s = %.12g\n' % (key, struct[key]))
-
-        for key in ['conv_thr']:
-            if key in struct:
-                data.write('%s = %s\n' % (key, struct[key]))
+                data.write('%s = %r\n' % (key, struct[key]))
 
         data.write('/\n')
 
@@ -1713,8 +1624,6 @@ def write_pwi(pwi, struct):
 
             for r in struct['r_cell']:
                 data.write('%12.9f %12.9f %12.9f\n' % tuple(r))
-
-            data.write('\n')
 
 def read_win(win):
     """Read input data from .win file (Wannier90).
@@ -1777,7 +1686,7 @@ def read_win(win):
                         mp_grid[i] = words[1 + i]
                     struct[key] = mp_grid
 
-                elif key in 'begin':
+                elif key == 'begin':
                     if words[1] == 'projections':
                         # create sub-dict for projections
                         # complicated solution
@@ -1836,12 +1745,12 @@ def read_win(win):
 
                     elif words[1] == 'kpoints':
                         nk = int(np.prod(mp_grid))
-                        struct['kpoints'] = np.empty((nk, 4))
+                        struct['kpoints'] = np.zeros((nk, 4))
 
                         for n in range(nk):
                             words = next(lines).split()
 
-                            for x in range(4):
+                            for x in range(len(words)):
                                 struct['kpoints'][n, x] = float(words[x])
 
     else:
@@ -1865,17 +1774,16 @@ def write_win(win, struct):
         return
 
     with open(win, 'w') as data:
-
         for key in ['num_bands', 'num_wann']:
             if key in struct:
-                data.write('%3s = %.12g\n' % (key, struct[key]))
+                data.write('%s = %r\n' % (key, struct[key]))
 
         data.write('\n')
 
         for key in ['dis_win_min', 'dis_win_max',
                 'dis_froz_min', 'dis_froz_max']:
             if key in struct:
-                data.write('%3s = %.12g\n' % (key, struct[key]))
+                data.write('%s = %r\n' % (key, struct[key]))
 
         data.write('\n')
 
@@ -1898,7 +1806,7 @@ def write_win(win, struct):
 
         for key in ['dis_num_iter', 'num_iter', 'search_shells']:
             if key in struct:
-                data.write('%3s = %.12g\n' % (key, struct[key]))
+                data.write('%s = %r\n' % (key, struct[key]))
 
         data.write('\n')
 
@@ -1954,52 +1862,8 @@ def read_ph(filename):
     if comm.rank == 0:
         struct = dict()
 
-        with open(filename) as lines:
-            for line in lines:
-                words = [word
-                    for column in line.split()
-                    for word in column.split('=') if word]
-
-                if not words:
-                    continue
-
-                key = words[0].lower()
-
-                if key in 'prefix':
-                    struct[key] = words[1]
-
-                elif key in 'outdir':
-                    struct[key] = words[1]
-
-                elif key in 'fildyn':
-                    struct[key] = words[1]
-
-                elif key in 'fildvscf':
-                    struct[key] = words[1]
-
-                elif key in 'ldisp':
-                    struct[key] = words[1]
-
-                elif key == 'nq1':
-                    struct[key] = int(words[1])
-
-                elif key == 'nq2':
-                    struct[key] = int(words[1])
-
-                elif key == 'nq3':
-                    struct[key] = int(words[1])
-
-                elif key == 'tr2_ph':
-                    struct[key] = words[1]
-
-                elif key in 'alpha_mix':
-                    struct[key] = float(words[1])
-
-                elif key in 'cdfpt':
-                    struct[key] = words[1]
-
-                elif key in 'subspace':
-                    struct[key] = words[1]
+        for namelist in misc.read_namelists(filename).values():
+            struct.update(namelist)
     else:
         struct = None
 
@@ -2021,42 +1885,30 @@ def write_ph(ph, struct):
         return
 
     with open(ph, 'w') as data:
-
         data.write('&INPUTPH\n')
 
-        for key in 'prefix', 'outdir':
+        for key in ['prefix', 'outdir']:
             if key in struct:
-                data.write('%s = %s\n' % (key, struct[key]))
+                data.write('%s = %r\n' % (key, struct[key]))
 
         data.write('\n')
 
-        for key in 'fildyn', 'fildvscf':
+        for key in ['fildyn', 'fildvscf']:
             if key in struct:
-                data.write('%s = %s\n' % (key, struct[key]))
+                data.write('%s = %r\n' % (key, struct[key]))
 
         data.write('\n')
 
-        for key in ['ldisp']:
+        for key in ['ldisp', 'nq1', 'nq2', 'nq3']:
             if key in struct:
-                data.write('%s = %s\n' % (key, struct[key]))
-
-        for key in ['nq1', 'nq2', 'nq3']:
-            if key in struct:
-                data.write('%3s = %.12g\n' % (key, struct[key]))
+                data.write('%s = %r\n' % (key, struct[key]))
 
         data.write('\n')
 
-        for key in ['tr2_ph']:
+        for key in ['tr2_ph', 'alpha_mix', 'cdfpt', 'subspace',
+                'cdfpt_bnd', 'cdfpt_orb']:
             if key in struct:
-                data.write('%s = %s\n' % (key, struct[key]))
-
-        for key in ['alpha_mix']:
-            if key in struct:
-                data.write('%3s = %.12g\n' % (key, struct[key]))
-
-        for key in 'cdfpt', 'subspace':
-            if key in struct:
-                data.write('%s = %s\n' % (key, struct[key]))
+                data.write('%s = %r\n' % (key, struct[key]))
 
         data.write('/\n')
 
@@ -2077,26 +1929,8 @@ def read_q2r(filename):
     if comm.rank == 0:
         struct = dict()
 
-        with open(filename) as lines:
-            for line in lines:
-                words = [word
-                    for column in line.split()
-                    for word in column.split('=') if word]
-
-                if not words:
-                    continue
-
-                key = words[0].lower()
-
-                if key in 'zasr':
-                    struct[key] = words[1]
-
-                elif key in 'fildyn':
-                    struct[key] = words[1]
-
-                elif key in 'flfrc':
-                    struct[key] = words[1]
-
+        for namelist in misc.read_namelists(filename).values():
+            struct.update(namelist)
     else:
         struct = None
 
@@ -2118,12 +1952,11 @@ def write_q2r(q2r, struct):
         return
 
     with open(q2r, 'w') as data:
-
         data.write('&INPUT\n')
 
-        for key in 'zasr', 'fildyn', 'flfrc':
+        for key in ['zasr', 'fildyn', 'flfrc']:
             if key in struct:
-                data.write('%s = %s\n' % (key, struct[key]))
+                data.write('%s = %r\n' % (key, struct[key]))
 
         data.write('/\n')
 
@@ -2144,34 +1977,16 @@ def read_matdyn(filename):
     if comm.rank == 0:
         struct = dict()
 
+        for namelist in misc.read_namelists(filename).values():
+            struct.update(namelist)
+
         with open(filename) as lines:
             for line in lines:
-                words = [word
-                    for column in line.split()
-                    for word in column.split('=') if word]
-
-                if not words:
-                    continue
-
-                key = words[0].lower()
-
-                if key in 'asr':
-                    struct[key] = words[1]
-
-                elif key in 'flfrc':
-                    struct[key] = words[1]
-
-                elif key in 'flfrq':
-                    struct[key] = words[1]
-
-                elif key in 'q_in_band_form':
-                    struct[key] = words[1]
-
-                elif key in 'q_in_cryst_coord':
-                    struct[key] = words[1]
-
-                elif key == '/':
-                    words = next(lines).split()
+                if '/' in line:
+                    for line in lines:
+                        words = line.split()
+                        if words:
+                            break
 
                     struct['nq'] = int(words[0])
                     struct['q'] = np.empty((struct['nq'], 4))
@@ -2181,7 +1996,6 @@ def read_matdyn(filename):
 
                         for x in range(4):
                             struct['q'][n, x] = float(words[x])
-
     else:
         struct = None
 
@@ -2208,12 +2022,12 @@ def write_matdyn(matdyn, struct):
         for key in ['asr', 'flfrq', 'flfrc', 'q_in_band_form',
                 'q_in_cryst_coord']:
             if key in struct:
-                data.write('%s = %s\n' % (key, struct[key]))
+                data.write('%s = %r\n' % (key, struct[key]))
 
         data.write('/\n')
         data.write('%d\n' % struct['nq'])
         for (kx, ky, kz, wk) in struct['q']:
-            data.write('%.12g %.12g %.12g %.12g\n' % (kx, ky, kz, wk))
+            data.write('%12.9f %12.9f %12.9f %.12g\n' % (kx, ky, kz, wk))
 
 def read_epw(filename):
     """Read input parameters from Quantum ESPRESSO's epw file.
@@ -2228,143 +2042,35 @@ def read_epw(filename):
     dict
         Input parameters.
     """
-
     if comm.rank == 0:
         struct = dict()
 
-        proj_dict = dict()
-        proj_counter = 0
+        for namelist in misc.read_namelists(filename).values():
+            struct.update(namelist)
 
-        wdata_dict = dict()
-        wdata_counter = 0
+        for key in ['proj', 'wdata']:
+            if key in struct and not isinstance(struct[key], list):
+                struct[key] = [struct[key]]
 
-        with open(filename) as lines:
-            for line in lines:
-                words = [word
-                    for column in line.split()
-                    for word in column.split('=') if word]
+        #with open(filename) as lines:
+        #    for line in lines:
+        #        if '/' in line:
+        #             print(next(lines))
+        #             if next(lines) == None:
+        #                 continue
+        #             words = next(lines).split()
+        #             print(words)
 
-                if not words:
-                    continue
+        #             struct['nq'] = int(words[0])
+        #             struct['q_coords_type'] = words[1]
 
-                key = words[0].lower()
+        #             struct['q'] = np.empty((struct['nq'], 3))
 
-                if key in 'prefix':
-                    struct[key] = words[1]
-                elif key in 'outdir':
-                    struct[key] = words[1]
-                elif key in 'dvscf_dir':
-                    struct[key] = words[1]
-                elif key in 'wannierize':
-                    struct[key] = words[1]
-                elif key in 'elph':
-                    struct[key] = words[1]
-                elif key in 'epbwrite':
-                    struct[key] = words[1]
-                elif key in 'epwwrite':
-                    struct[key] = words[1]
-                elif key in 'epbread':
-                    struct[key] = words[1]
-                elif key in 'epwread':
-                    struct[key] = words[1]
-                elif key == 'use_ws':
-                    struct[key] = words[1]
+        #             for n in range(struct['nq']):
+        #                 words = next(lines).split()
 
-                elif key == 'nbndsub':
-                    struct[key] = int(words[1])
-                elif key == 'num_iter':
-                    struct[key] = int(words[1])
-
-                elif key == 'bands_skipped':
-                    print(words)
-                    struct[key] = words[1] + '=' + words[2]
-
-                elif key == 'dis_win_min':
-                    struct[key] = float(words[1])
-                elif key == 'dis_win_max':
-                    struct[key] = float(words[1])
-                elif key == 'dis_froz_min':
-                    struct[key] = float(words[1])
-                elif key == 'dis_froz_max':
-                    struct[key] = float(words[1])
-
-                elif 'proj' in key:
-                    words = line
-                    pos_x = words.find('=')
-
-                    # split strings into number of projection and text
-                    orbital = words[pos_x + 1:-1]
-                    proj_dict[proj_counter] = orbital
-
-                    proj_counter += 1
-
-                elif 'wdata' in key:
-                    words = line
-                    pos_x = words.find('=')
-
-                    # split strings into number of projection and text
-                    orbital = words[pos_x + 1:-1]
-                    wdata_dict[wdata_counter] = orbital
-
-                    wdata_counter += 1
-
-                elif key == 'nq1':
-                    struct[key] = int(words[1])
-
-                elif key == 'nq2':
-                    struct[key] = int(words[1])
-
-                elif key == 'nq3':
-                    struct[key] = int(words[1])
-
-                elif key == 'nk1':
-                    struct[key] = int(words[1])
-
-                elif key == 'nk2':
-                    struct[key] = int(words[1])
-
-                elif key == 'nk3':
-                    struct[key] = int(words[1])
-
-                elif key == 'nkf1':
-                    struct[key] = int(words[1])
-
-                elif key == 'nkf2':
-                    struct[key] = int(words[1])
-
-                elif key == 'nkf3':
-                    struct[key] = int(words[1])
-
-                elif key == 'nqf1':
-                    struct[key] = int(words[1])
-
-                elif key == 'nqf2':
-                    struct[key] = int(words[1])
-
-                elif key == 'nqf3':
-                    struct[key] = int(words[1])
-
-                # elif key =='/':
-                #     print(next(lines))
-                #     if next(lines) == None:
-                #         continue
-                #     words = next(lines).split()
-                #     print(words)
-
-                #     struct['nq'] = int(words[0])
-                #     struct['q_coords_type'] = words[1]
-
-                #     struct['q'] = np.empty((struct['nq'], 3))
-
-                #     for n in range(struct['nq']):
-                #         words = next(lines).split()
-
-                #         for x in range(3):
-                #             struct['q'][n, x] = float(words[x])
-
-            struct['proj'] = proj_dict
-            struct['wdata'] = wdata_dict
-
+        #                 for x in range(3):
+        #                     struct['q'][n, x] = float(words[x])
     else:
         struct = None
 
@@ -2386,96 +2092,83 @@ def write_epw(epw, struct):
         return
 
     with open(epw, 'w') as data:
-
         data.write('&INPUTEPW\n')
         for key in ['prefix', 'outdir', 'dvscf_dir']:
             if key in struct:
-                data.write('%s = %s\n' % (key, struct[key]))
+                data.write('%s = %r\n' % (key, struct[key]))
 
         data.write('\n')
 
         for key in ['wannierize', 'elph']:
             if key in struct:
-                data.write('%s = %s\n' % (key, struct[key]))
+                data.write('%s = %r\n' % (key, struct[key]))
 
         data.write('\n')
 
         for key in ['epbwrite', 'epwwrite']:
             if key in struct:
-                data.write('%s = %s\n' % (key, struct[key]))
+                data.write('%s = %r\n' % (key, struct[key]))
 
         data.write('\n')
 
         for key in ['epbread', 'epwread']:
             if key in struct:
-                data.write('%s = %s\n' % (key, struct[key]))
+                data.write('%s = %r\n' % (key, struct[key]))
 
         data.write('\n')
 
-        for key in ['use_ws']:
+        for key in ['use_ws', 'nbndsub', 'bands_skipped']:
             if key in struct:
-                data.write('%s = %s\n' % (key, struct[key]))
-
-        for key in ['nbndsub']:
-            if key in struct:
-                data.write('%3s = %.12g\n' % (key, struct[key]))
-
-        for key in ['bands_skipped']:
-            if key in struct:
-                data.write('%s = %s\n' % (key, struct[key]))
+                data.write('%s = %r\n' % (key, struct[key]))
 
         data.write('\n')
 
         for key in ['dis_win_min', 'dis_win_max',
                 'dis_froz_min', 'dis_froz_max']:
             if key in struct:
-                data.write('%3s = %.12g\n' % (key, struct[key]))
+                data.write('%s = %r\n' % (key, struct[key]))
 
         data.write('\n')
 
-        if struct['proj']:
-            proj_dict = struct['proj']
-            proj_keys = list(proj_dict.keys())
-
-            for key in proj_keys:
-                data.write('proj(%s) = %s\n' % (key + 1, proj_dict[key]))
+        if 'proj' in struct:
+            for n, value in enumerate(struct['proj'], 1):
+                if value:
+                    data.write('proj(%d) = %r\n' % (n, value))
 
         data.write('\n')
 
         for key in ['num_iter']:
             if key in struct:
-                data.write('%3s = %.12g\n' % (key, struct[key]))
+                data.write('%s = %r\n' % (key, struct[key]))
 
-        if struct['wdata']:
-            wdata_dict = struct['wdata']
-            wdata_keys = list(wdata_dict.keys())
-
-            for key in wdata_keys:
-                data.write('wdata(%s) = %s\n' % (key + 1, wdata_dict[key]))
+        if 'wdata' in struct:
+            for n, value in enumerate(struct['wdata'], 1):
+                if value:
+                    data.write('wdata(%d) = %r\n' % (n, value))
 
         data.write('\n')
 
         for key in ['nk1', 'nk2', 'nk3']:
             if key in struct:
-                data.write('%3s = %.12g\n' % (key, struct[key]))
+                data.write('%s = %r\n' % (key, struct[key]))
 
         data.write('\n')
 
         for key in ['nq1', 'nq2', 'nq3']:
             if key in struct:
-                data.write('%3s = %.12g\n' % (key, struct[key]))
+                data.write('%s = %r\n' % (key, struct[key]))
 
         data.write('\n')
 
         for key in ['nkf1', 'nkf2', 'nkf3']:
             if key in struct:
-                data.write('%3s = %.12g\n' % (key, struct[key]))
+                data.write('%s = %r\n' % (key, struct[key]))
 
         data.write('\n')
 
         for key in ['nqf1', 'nqf2', 'nqf3']:
             if key in struct:
-                data.write('%3s = %.12g\n' % (key, struct[key]))
+                data.write('%s = %r\n' % (key, struct[key]))
 
         data.write('/')
         data.write('\n')
@@ -2537,7 +2230,6 @@ def point_on_path(test_point, point_A, point_B, eps=1e-14):
     bool
         Is the test_point on a straight line between point A and B?
     """
-
     cross = np.cross(point_B - point_A, test_point - point_A)
     if all(abs(v) < eps for v in cross):
         dot = np.dot(point_B - point_A, test_point - point_A)
