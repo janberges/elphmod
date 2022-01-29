@@ -358,6 +358,88 @@ def real_space_grid(shape, r0, a, shared_memory=False):
 
     return r
 
+def read_namelist(filename):
+    """Extract all Fortran namelists from file.
+
+    Parameters
+    ----------
+    filename : str
+        Name of file with namelists.
+
+    Returns
+    -------
+    dict of dict
+        Namelist data.
+    """
+    import re
+
+    with open(filename) as data:
+        text = data.read()
+
+    # remove comments:
+
+    text = re.sub(r'!.*$', '', text, flags=re.MULTILINE)
+
+    # protect string (which might contain spaces):
+
+    groups = []
+
+    def replace(match):
+        groups.append(match.group(0))
+        return '___%d___' % len(groups)
+
+    def place(match):
+        return groups[int(match.group(0).strip('_')) - 1]
+
+    count = 1
+    while count:
+        text, count = re.subn(r'\'[^\'"]*\'|"[^\'"]*"', replace, text)
+
+    # parse all namelists:
+
+    data = dict()
+
+    for namelist in re.finditer(r'&(\w+)(.+?)/', text, flags=re.DOTALL):
+        name, content = namelist.groups()
+        name = name.lower()
+        data[name] = dict()
+
+        items = re.split(r'[;,\s]+', content)
+
+        key = None
+        for i, item in enumerate(items):
+            if '=' in items[i + 1:i + 2]:
+                key = item.lower()
+                data[name][key] = []
+
+            elif key is not None and item and item != '=':
+                count = 1
+                while count:
+                    item, count = re.subn('___\d+___', place, item)
+
+                if re.match(r'(\'.*\'|".*")$', item):
+                    item = item[1:-1]
+                elif re.search('[Tt]', item):
+                    item = True
+                elif re.search('[Ff]', item):
+                    item = False
+                else:
+                    try:
+                        item = int(item)
+                    except ValueError:
+                        try:
+                            item = float(re.sub(r'[dDE]', 'e', item))
+                        except ValueError:
+                            pass
+
+                data[name][key].append(item)
+
+        for key, value in data[name].items():
+            if len(value) == 1:
+                data[name][key] = value[0]
+
+    return data
+
 def split(expr, sd=',', od='{', cd='}'):
     """Split expression with separators and brackets using distributive law.
 
