@@ -358,7 +358,7 @@ def real_space_grid(shape, r0, a, shared_memory=False):
 
     return r
 
-def read_namelist(filename):
+def read_namelists(filename):
     """Extract all Fortran namelists from file.
 
     Parameters
@@ -404,15 +404,26 @@ def read_namelist(filename):
         name = name.lower()
         data[name] = dict()
 
+        content = re.sub(r'=', ' = ', content)
+        content = re.sub(r'\s+\(', '(', content)
         items = re.split(r'[;,\s]+', content)
 
         key = None
         for i, item in enumerate(items):
-            if '=' in items[i + 1:i + 2]:
-                key = item.lower()
-                data[name][key] = []
+            if not item:
+                continue
 
-            elif key is not None and item and item != '=':
+            if '=' in items[i + 1:i + 2]:
+                key, n = re.match(r'([^(]*)[( ]*(\d*)', item.lower()).groups()
+                n = int(n) - 1 if n else 0
+
+                if not key in data[name]:
+                    data[name][key] = []
+
+                while len(data[name][key]) < n:
+                    data[name][key].append(None)
+
+            elif key is not None and item != '=':
                 count = 1
                 while count:
                     item, count = re.subn('___\d+___', place, item)
@@ -432,7 +443,8 @@ def read_namelist(filename):
                         except ValueError:
                             pass
 
-                data[name][key].append(item)
+                data[name][key][n:n + 1] = [item]
+                n += 1
 
         for key, value in data[name].items():
             if len(value) == 1:
