@@ -1533,7 +1533,6 @@ def read_pwi(pwi):
 
                         for x in range(3):
                             struct['r_cell'][n, x] = float(words[x])
-
     else:
         struct = None
 
@@ -1667,11 +1666,11 @@ def read_win(win):
                     struct[key] = float(words[1])
 
                 elif key == 'write_hr':
-                    struct[key] = words[1]
+                    struct[key] = 't' in words[1].lower()
                 elif key == 'bands_plot':
-                    struct[key] = words[1]
+                    struct[key] = 't' in words[1].lower()
                 elif key == 'wannier_plot':
-                    struct[key] = words[1]
+                    struct[key] = 't' in words[1].lower()
 
                 elif key == 'dis_num_iter':
                     struct[key] = int(words[1])
@@ -1681,9 +1680,9 @@ def read_win(win):
                     struct[key] = int(words[1])
 
                 elif key == 'mp_grid':
-                    mp_grid = np.empty(3)
+                    mp_grid = np.empty(3, dtype=int)
                     for i in range(3):
-                        mp_grid[i] = words[1 + i]
+                        mp_grid[i] = int(words[1 + i])
                     struct[key] = mp_grid
 
                 elif key == 'begin':
@@ -1691,29 +1690,28 @@ def read_win(win):
                         # create sub-dict for projections
                         # complicated solution
                         # not able to save different wannier centres
+                        # order of projections not preserved
                         proj_dict = dict()
                         while 'end' not in words:
                             words = next(lines)
                             if 'end' in words:
                                 continue
                             else:
-                                pos_x = words.find(':')
-
-                                # split strings into atom/pos.... : ... orbital
-                                atom_pos = words[:pos_x]
-                                orbital = words[pos_x + 1:-1]
-                                proj_dict[atom_pos] = orbital
+                                atom_pos, orbital = words.split(':', 1)
+                                proj_dict[atom_pos.strip()] = orbital.strip()
 
                         struct['proj'] = proj_dict
 
                     elif words[1] == 'kpoint_path':
-                        words = next(lines).split()
-
                         struct['kpoint_path'] = []
 
-                        while 'end'!=words[0]:
-                            struct['kpoint_path'].append(words)
-                            words = next(lines).split()
+                        while True:
+                            line = next(lines).strip()
+
+                            if line.startswith('end'):
+                                break
+
+                            struct['kpoint_path'].append(line)
 
                     elif words[1] == 'unit_cell_cart':
                         struct['unit_cell'] = np.empty((3, 3))
@@ -1730,7 +1728,7 @@ def read_win(win):
                         words = next(lines).split()
                         # get nat from lines
                         tmp = []
-                        while 'end'!=words[0]:
+                        while 'end' != words[0]:
                             tmp.append(words)
                             words = next(lines).split()
                         nat = len(tmp)
@@ -1752,7 +1750,6 @@ def read_win(win):
 
                             for x in range(len(words)):
                                 struct['kpoints'][n, x] = float(words[x])
-
     else:
         struct = None
 
@@ -1789,18 +1786,15 @@ def write_win(win, struct):
 
         if struct['proj']:
             data.write('begin projections\n')
-            proj_dict = struct['proj']
-            proj_keys = list(proj_dict.keys())
-
-            for key in proj_keys:
-                data.write('%s:%s\n' % (key, proj_dict[key]))
+            for key, value in struct['proj'].items():
+                data.write('%s: %s\n' % (key, value))
             data.write('end projections\n')
 
         data.write('\n')
 
         for key in ['write_hr', 'bands_plot']:
             if key in struct:
-                data.write('%s = %s\n' % (key, struct[key]))
+                data.write('%s = %r\n' % (key, struct[key]))
 
         data.write('\n')
 
@@ -1812,10 +1806,8 @@ def write_win(win, struct):
 
         if struct['kpoint_path']:
             data.write('begin kpoint_path\n')
-            lines = len(struct['kpoint_path'])
-            for i in range(lines):
-                path_i = tuple(struct['kpoint_path'][i])
-                data.write('%s %s %s %s %s %s %s %s\n' % (path_i))
+            for line in struct['kpoint_path']:
+                data.write('%s\n' % line)
             data.write('end kpoint_path\n')
 
         data.write('\n')
@@ -1835,8 +1827,7 @@ def write_win(win, struct):
         data.write('\n')
 
         if 'mp_grid' in struct:
-            data.write('mp_grid: %.12g %.12g %.12g\n'
-                % tuple(struct['mp_grid']))
+            data.write('mp_grid: %d %d %d\n' % tuple(struct['mp_grid']))
 
         data.write('\n')
 
@@ -2093,6 +2084,7 @@ def write_epw(epw, struct):
 
     with open(epw, 'w') as data:
         data.write('&INPUTEPW\n')
+
         for key in ['prefix', 'outdir', 'dvscf_dir']:
             if key in struct:
                 data.write('%s = %r\n' % (key, struct[key]))
