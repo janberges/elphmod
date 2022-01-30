@@ -1849,18 +1849,7 @@ def read_ph(filename):
     dict
         Input parameters.
     """
-
-    if comm.rank == 0:
-        struct = dict()
-
-        for namelist in misc.read_namelists(filename).values():
-            struct.update(namelist)
-    else:
-        struct = None
-
-    struct = comm.bcast(struct)
-
-    return struct
+    return misc.read_input_data(filename)
 
 def write_ph(ph, struct):
     """Write input data to ph file (Quantum ESPRESSO).
@@ -1916,18 +1905,7 @@ def read_q2r(filename):
     dict
         Input parameters.
     """
-
-    if comm.rank == 0:
-        struct = dict()
-
-        for namelist in misc.read_namelists(filename).values():
-            struct.update(namelist)
-    else:
-        struct = None
-
-    struct = comm.bcast(struct)
-
-    return struct
+    return misc.read_input_data(filename)
 
 def write_q2r(q2r, struct):
     """Write input data to q2r file (Quantum ESPRRESO).

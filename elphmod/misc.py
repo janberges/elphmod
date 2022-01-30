@@ -452,6 +452,31 @@ def read_namelists(filename):
 
     return data
 
+def read_input_data(filename):
+    """Read Quantum ESPRESSO input data.
+
+    Parameters
+    ----------
+    filename : str
+        Name of input file.
+
+    Returns
+    -------
+    dict
+        Input data.
+    """
+    if comm.rank == 0:
+        struct = dict()
+
+        for namelist in read_namelists(filename).values():
+            struct.update(namelist)
+    else:
+        struct = None
+
+    struct = comm.bcast(struct)
+
+    return struct
+
 def split(expr, sd=',', od='{', cd='}'):
     """Split expression with separators and brackets using distributive law.
 
