@@ -7,6 +7,7 @@ set -e
 
 for example in *.py
 do
+    echo $example
     mpirun python3 $example
 done
 
