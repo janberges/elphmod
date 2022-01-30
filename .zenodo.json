@@ -1,0 +1,31 @@
+{
+    "creators": [
+        {
+            "orcid": "0000-0001-7041-2906",
+            "affiliation": "University of Bremen",
+            "name": "Berges, Jan"
+        },
+        {
+            "orcid": "0000-0003-1363-6342",
+            "affiliation": "University of Bremen",
+            "name": "Schobert, Arne"
+        },
+        {
+            "orcid": "0000-0002-5436-290X",
+            "affiliation": "Lund University",
+            "name": "van Loon, Erik G. C. P."
+        },
+        {
+            "orcid": "0000-0002-6199-2176",
+            "affiliation": "Radboud University Nijmegen",
+            "name": "R\u00f6sner, Malte"
+        },
+        {
+            "orcid": "0000-0002-5579-2231",
+            "affiliation": "University of Hamburg",
+            "name": "Wehling, Tim O."
+        }
+    ],
+
+    "title": "elphmod: Python modules to handle electron-phonon models"
+}

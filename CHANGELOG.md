@@ -1,5 +1,7 @@
 # Changes
 
+## v0.10
+
 * More forgiving namelist input
 * QE-7.0 support (cDFPT patch)
 
