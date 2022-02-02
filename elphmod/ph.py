@@ -383,6 +383,24 @@ class Model(object):
         comm.Bcast(self.R)
         comm.Bcast(self.data)
 
+    def decay(self):
+        """Plot force constants as a function of bond length.
+
+        Returns
+        -------
+        ndarray
+            Bond lengths.
+        ndarray
+            Frobenius norm of force-constant matrices.
+        """
+        l = self.l.flatten()
+        C = np.linalg.norm(self.data.reshape((len(self.R),
+            self.nat, 3, self.nat, 3)), ord='fro', axis=(2, 4)).flatten()
+
+        nonzero = np.where(C > 0)
+
+        return l[nonzero], C[nonzero]
+
 def group(n, size=3):
     """Create slice of dynamical matrix belonging to `n`-th atom."""
 
