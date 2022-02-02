@@ -49,6 +49,8 @@ class Model(object):
         Positions of basis atoms.
     R : ndarray
         Lattice vectors of Wigner-Seitz supercell.
+    l : ndarray.
+        Bond lengths.
     atom_order : list of str
         Ordered list of atoms.
     data : ndarray
@@ -95,7 +97,7 @@ class Model(object):
         model = comm.bcast(model)
 
         self.M, self.a, self.r, self.atom_order = model[1:]
-        self.R, self.data = short_range_model(*model[:-1],
+        self.R, self.data, self.l = short_range_model(*model[:-1],
             divide_mass=divide_mass, divide_ndegen=divide_ndegen)
         self.size = self.data.shape[1]
         self.nat = self.size // 3
@@ -798,31 +800,43 @@ def short_range_model(phid, amass, at, tau, eps=1e-7, divide_mass=True,
                             R = tuple(R)
 
                             if R not in const:
-                                const[R] = np.zeros((3 * nat, 3 * nat))
+                                const[R] = [
+                                    np.zeros((3 * nat, 3 * nat)),
+                                    np.zeros((nat, nat))]
 
-                            const[R][3 * na1:3 * na1 + 3,
-                                     3 * na2:3 * na2 + 3] = C
+                            const[R][0][3 * na1:3 * na1 + 3,
+                                        3 * na2:3 * na2 + 3] = C
+
+                            const[R][1][na1, na2] = length
 
     # convert dictionary into arrays:
 
-    cells = np.array(list(const.keys()), dtype=np.int8)
-    const = np.array(list(const.values()))
+    my_count = len(const)
+    my_cells = np.array(list(const.keys()), dtype=np.int8)
+    my_const = np.empty((my_count, 3 * nat, 3 * nat))
+    my_bonds = np.empty((my_count, nat, nat))
+
+    for i, (c, l) in enumerate(const.values()):
+        my_const[i] = c
+        my_bonds[i] = l
 
     # gather data of all processes:
 
-    dims = np.array(comm.allgather(len(const)))
-    dim = dims.sum()
+    my_counts = np.array(comm.allgather(my_count))
+    count = my_counts.sum()
 
-    allcells = np.empty((dim, 3), dtype=np.int8)
-    allconst = np.empty((dim, 3 * nat, 3 * nat))
+    cells = np.empty((count, 3), dtype=np.int8)
+    const = np.empty((count, 3 * nat, 3 * nat))
+    bonds = np.empty((count, nat, nat))
 
-    comm.Allgatherv(cells, (allcells, dims * 3))
-    comm.Allgatherv(const, (allconst, dims * (3 * nat) ** 2))
+    comm.Allgatherv(my_cells, (cells, my_counts * 3))
+    comm.Allgatherv(my_const, (const, my_counts * (3 * nat) ** 2))
+    comm.Allgatherv(my_bonds, (bonds, my_counts * nat ** 2))
 
     # (see cdef _p_message message_vector in mpi4py/src/mpi4py/MPI/msgbuffer.pxi
     # for possible formats of second argument 'recvbuf')
 
-    return allcells, allconst
+    return cells, const, bonds
 
 def sgnsqrt(w2):
     """Calculate signed square root."""
@@ -987,7 +1001,7 @@ def q2r(ph, D_irr=None, q_irr=None, nq=None, D_full=None, angle=60,
     if apply_asr_simple:
         asr(phid)
 
-    ph.R, ph.data = short_range_model(phid, ph.M, ph.a, ph.r,
+    ph.R, ph.data, ph.l = short_range_model(phid, ph.M, ph.a, ph.r,
         divide_mass=divide_mass, divide_ndegen=divide_ndegen)
 
     if apply_asr or apply_rsr:
