@@ -7,7 +7,7 @@ import numpy as np
 if MPI.comm.rank:
     raise SystemExit
 
-x = np.linspace(-5, 5, 1000)
+x, dx = np.linspace(-5, 5, 1000, retstep=True)
 
 style = dict(color='lightgray', linestyle='dashed')
 
@@ -39,6 +39,13 @@ plt.plot(x, occupations.gauss.delta(x), label='Gauss')
 plt.plot(x, occupations.marzari_vanderbilt.delta(x), label='Marzari-Vanderbilt')
 plt.plot(x, occupations.methfessel_paxton.delta(x), label='Methfessel-Paxton')
 plt.plot(x, occupations.lorentz.delta(x), label='Lorentz')
+
+X = (x[1:] + x[:-1]) / 2
+plt.plot(X, -np.diff(occupations.fermi_dirac(x)) / dx, 'k--')
+plt.plot(X, -np.diff(occupations.gauss(x)) / dx, 'k--')
+plt.plot(X, -np.diff(occupations.marzari_vanderbilt(x)) / dx, 'k--')
+plt.plot(X, -np.diff(occupations.methfessel_paxton(x)) / dx, 'k--')
+plt.plot(X, -np.diff(occupations.lorentz(x)) / dx, 'k--')
 
 plt.xlabel = r'$x$'
 plt.ylabel = r'$\delta(x)$'

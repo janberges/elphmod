@@ -1,5 +1,8 @@
 # Changes
 
+* Fixed sign in Marzari-Vanderbilt-De Vita-Payne smearing
+* Interatomic distances are stored together with force constants
+
 ## v0.10
 
 * More forgiving namelist input

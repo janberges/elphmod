@@ -47,9 +47,9 @@ gauss.delta = gauss_delta
 def marzari_vanderbilt(x):
     """Calculate Marzari-Vanderbilt (cold smearing) step function."""
 
-    y = -x - 1 / np.sqrt(2)
+    y = x + 1 / np.sqrt(2)
 
-    return (math.erf(y) + 1) / 2 + np.exp(-y * y) / np.sqrt(2 * np.pi)
+    return (math.erf(-y) + 1) / 2 + np.exp(-y * y) / np.sqrt(2 * np.pi)
 
 if not_doc:
     marzari_vanderbilt = np.vectorize(marzari_vanderbilt)
@@ -57,9 +57,9 @@ if not_doc:
 def marzari_vanderbilt_delta(x):
     """Calculate negative derivative of Marzari-Vanderbilt step function."""
 
-    y = x - 1 / np.sqrt(2)
+    y = x + 1 / np.sqrt(2)
 
-    return np.exp(-y * y) * (2 - np.sqrt(2) * x) / np.sqrt(np.pi)
+    return (np.sqrt(2) * x + 2) * np.exp(-y * y) / np.sqrt(np.pi)
 
 marzari_vanderbilt.delta = marzari_vanderbilt_delta
 
