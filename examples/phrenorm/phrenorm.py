@@ -11,11 +11,14 @@ import numpy as np
 comm = elphmod.MPI.comm
 info = elphmod.MPI.info
 
-kT = 0.005 * elphmod.misc.Ry
-f = elphmod.occupations.fermi_dirac
+PW = elphmod.bravais.read_pwi('scf.in')
+PH = elphmod.bravais.read_ph('dfpt.in')
 
-nk = 4
-nq = 2
+kT = PW['degauss'] * elphmod.misc.Ry
+f = elphmod.occupations.smearing(PW['smearing'])
+
+nk = PW['k_points'][0]
+nq = PH['nq1']
 
 nel = 1
 nph = 9

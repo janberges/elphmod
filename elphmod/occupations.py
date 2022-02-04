@@ -188,6 +188,30 @@ if not_doc:
 
 fermi_dirac_matsubara.delta = fermi_dirac_matsubara_delta
 
+def smearing(name):
+    """Select smearing function via name used in Quantum ESPRESSO.
+
+    Parameters
+    ----------
+    name : str
+        Any available option for PWscf input parameter ``smearing``.
+
+    Returns
+    -------
+    function
+        Smearing function.
+    """
+    name = name.lower()
+
+    if name in {'gaussian', 'gauss'}:
+        return gauss
+    if name in {'methfessel-paxton', 'm-p', 'mp'}:
+        return methfessel_paxton
+    if name in {'marzari-vanderbilt', 'cold', 'm-v', 'mv'}:
+        return marzari_vanderbilt
+    if name in {'fermi-dirac', 'f-d', 'fd'}:
+        return fermi_dirac
+
 if __name__ == '__main__':
     # check if int[a, b] df = f(b) - f(a):
 
