@@ -188,12 +188,12 @@ if not_doc:
 
 fermi_dirac_matsubara.delta = fermi_dirac_matsubara_delta
 
-def smearing(name):
+def smearing(name='gaussian'):
     """Select smearing function via name used in Quantum ESPRESSO.
 
     Parameters
     ----------
-    name : str
+    name : str, default 'gaussian'
         Any available option for PWscf input parameter ``smearing``.
 
     Returns
