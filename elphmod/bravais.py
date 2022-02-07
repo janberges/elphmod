@@ -1453,12 +1453,9 @@ def read_pwi(pwi):
     dict
         Input data and crystal structure.
     """
+    struct = misc.read_input_data(pwi, broadcast=False)
+
     if comm.rank == 0:
-        struct = dict()
-
-        for namelist in misc.read_namelists(pwi).values():
-            struct.update(namelist)
-
         for key in ['celldm']:
             if key in struct and not isinstance(struct[key], list):
                 struct[key] = [struct[key]]
@@ -1533,8 +1530,6 @@ def read_pwi(pwi):
 
                         for x in range(3):
                             struct['r_cell'][n, x] = float(words[x])
-    else:
-        struct = None
 
     struct = comm.bcast(struct)
 
@@ -1942,13 +1937,9 @@ def read_matdyn(filename):
     dict
         Input parameters.
     """
+    struct = misc.read_input_data(filename, broadcast=False)
 
     if comm.rank == 0:
-        struct = dict()
-
-        for namelist in misc.read_namelists(filename).values():
-            struct.update(namelist)
-
         with open(filename) as lines:
             for line in lines:
                 if '/' in line:
@@ -1965,8 +1956,6 @@ def read_matdyn(filename):
 
                         for x in range(4):
                             struct['q'][n, x] = float(words[x])
-    else:
-        struct = None
 
     struct = comm.bcast(struct)
 
@@ -2011,12 +2000,9 @@ def read_epw(filename):
     dict
         Input parameters.
     """
+    struct = misc.read_input_data(filename, broadcast=False)
+
     if comm.rank == 0:
-        struct = dict()
-
-        for namelist in misc.read_namelists(filename).values():
-            struct.update(namelist)
-
         for key in ['proj', 'wdata']:
             if key in struct and not isinstance(struct[key], list):
                 struct[key] = [struct[key]]
@@ -2040,8 +2026,6 @@ def read_epw(filename):
 
         #                 for x in range(3):
         #                     struct['q'][n, x] = float(words[x])
-    else:
-        struct = None
 
     struct = comm.bcast(struct)
 

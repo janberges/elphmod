@@ -452,13 +452,15 @@ def read_namelists(filename):
 
     return data
 
-def read_input_data(filename):
+def read_input_data(filename, broadcast=True):
     """Read Quantum ESPRESSO input data.
 
     Parameters
     ----------
     filename : str
         Name of input file.
+    broadcast : bool
+        Broadcast result from rank 0 to all processes?
 
     Returns
     -------
@@ -473,7 +475,8 @@ def read_input_data(filename):
     else:
         struct = None
 
-    struct = comm.bcast(struct)
+    if broadcast:
+        struct = comm.bcast(struct)
 
     return struct
 
