@@ -1216,7 +1216,7 @@ def Fourier_interpolation(data, angle=60, sign=-1, hr_file=None, function=True):
 
     return dict((tuple(point), value) for point, value in zip(points, values))
 
-def path(points, ibrav=4, N=30, recvec=None, qe=False, **kwargs):
+def path(points, N=30, recvec=None, qe=False, **kwargs):
     """Generate arbitrary path through Brillouin zone.
 
     Parameters
@@ -1224,8 +1224,6 @@ def path(points, ibrav=4, N=30, recvec=None, qe=False, **kwargs):
     points : ndarray
         List of high-symmetry points in crystal coordinates. Some well-known
         labels such as ``G`` (|Ggr|), ``M``, or ``K`` may also be used.
-    ibrav : int
-        Bravais-lattice index.
     N : float
         Number of points per :math:`2 \pi / a`.
     recvec : ndarray, optional
@@ -1233,7 +1231,8 @@ def path(points, ibrav=4, N=30, recvec=None, qe=False, **kwargs):
     qe : bool, default False
         Also return path in QE input format?
     **kwargs
-        Arguments passed to :func:`primitives`.
+        Arguments passed to :func:`primitives`, e.g., parameters from
+        'func'`read_pwi`, particularly the Bravais-lattice index `ibrav`.
 
     Returns
     -------
@@ -1288,7 +1287,7 @@ def path(points, ibrav=4, N=30, recvec=None, qe=False, **kwargs):
             'A': [-0.5, 0.0, 0.5],
             'E': [-0.5, 0.5, 0.5],
             },
-        }.get(ibrav, {})
+        }.get(kwargs.get('ibrav', 8), {})
 
     labels['G'] = [0.0, 0.0, 0.0]
 
@@ -1296,7 +1295,7 @@ def path(points, ibrav=4, N=30, recvec=None, qe=False, **kwargs):
         for point in points])
 
     if recvec is None:
-        a = primitives(ibrav, **kwargs)
+        a = primitives(**kwargs)
         b = reciprocals(*a)
     else:
         b = recvec
@@ -1324,17 +1323,18 @@ def path(points, ibrav=4, N=30, recvec=None, qe=False, **kwargs):
         corners.append(len(k) - 1)
 
     if qe:
-        struct = dict(ktyp='crystal_b', nks=len(corners),
-            k_points=np.empty((len(corners), 4)))
+        kwargs['ktyp'] = 'crystal_b'
+        kwargs['nks'] = len(corners)
+        kwargs['k_points'] = np.empty((len(corners), 4))
 
         for i in range(len(corners)):
-            struct['k_points'][i, :3] = k[corners[i]]
+            kwargs['k_points'][i, :3] = k[corners[i]]
             try:
-                struct['k_points'][i, 3] = corners[i + 1] - corners[i]
+                kwargs['k_points'][i, 3] = corners[i + 1] - corners[i]
             except IndexError:
-                struct['k_points'][i, 3] = 0
+                kwargs['k_points'][i, 3] = 0
 
-        return 2 * np.pi * np.array(k), np.array(x), corners, struct
+        return 2 * np.pi * np.array(k), np.array(x), corners, kwargs
     else:
         return 2 * np.pi * np.array(k), np.array(x), corners
 
