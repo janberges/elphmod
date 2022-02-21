@@ -46,7 +46,7 @@ def rotate(vector, angle, two_dimensional=True):
 
         return np.dot(rotation, vector)
 
-def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosab=0.0, cosbc=0.0, cosac=0.0,
+def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
         celldm=None, bohr=False, **ignore):
     """Get primitive vectors of Bravais lattice as in QE.
 
@@ -58,7 +58,7 @@ def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosab=0.0, cosbc=0.0, cosac=0.0,
     ----------
     ibrav : int
         Bravais-lattice index.
-    a, b, c, cosab, cosbc, cosac : float
+    a, b, c, cosbc, cosac, cosab : float
         Traditional crystallographic constants in angstrom.
     celldm : list of float
         Alternative crystallographic constants. The first element is the
@@ -1560,7 +1560,7 @@ def write_pwi(pwi, struct):
     with open(pwi, 'w') as data:
         data.write('&CONTROL\n')
 
-        for key in ['calculation', 'prefix', 'pseudo_dir', 'outdir']:
+        for key in ['prefix', 'outdir', 'pseudo_dir', 'calculation']:
             if key in struct:
                 data.write('%s = %r\n' % (key, struct[key]))
 
@@ -1573,10 +1573,9 @@ def write_pwi(pwi, struct):
                 if celldm:
                     data.write('celldm(%d) = %r\n' % (i, celldm))
 
-        for key in ['a', 'b', 'c', 'nat', 'ibrav', 'ntyp',
-                'ecutwfc', 'ecutrho', 'degauss', 'nbnd',
-                'occupations', 'smearing', 'nosym',
-                'tot_charge']:
+        for key in ['ibrav', 'ntyp', 'nat', 'a', 'b', 'c', 'cosbc', 'cosac',
+                'cosab', 'ecutwfc', 'ecutrho', 'nbnd', 'occupations',
+                'smearing', 'degauss', 'nosym', 'tot_charge']:
             if key in struct:
                 data.write('%s = %r\n' % (key, struct[key]))
 
@@ -1584,7 +1583,7 @@ def write_pwi(pwi, struct):
 
         data.write('&ELECTRONS\n')
 
-        for key in ['mixing_beta', 'conv_thr']:
+        for key in ['conv_thr', 'mixing_beta']:
             if key in struct:
                 data.write('%s = %r\n' % (key, struct[key]))
 
@@ -1928,7 +1927,7 @@ def write_q2r(q2r, struct):
     with open(q2r, 'w') as data:
         data.write('&INPUT\n')
 
-        for key in ['zasr', 'fildyn', 'flfrc']:
+        for key in ['fildyn', 'flfrc', 'zasr']:
             if key in struct:
                 data.write('%s = %r\n' % (key, struct[key]))
 
@@ -1987,7 +1986,7 @@ def write_matdyn(matdyn, struct):
     with open(matdyn, 'w') as data:
         data.write('&INPUT\n')
 
-        for key in ['asr', 'flfrq', 'flfrc', 'q_in_band_form',
+        for key in ['flfrc', 'flfrq', 'asr', 'q_in_band_form',
                 'q_in_cryst_coord']:
             if key in struct:
                 data.write('%s = %r\n' % (key, struct[key]))
