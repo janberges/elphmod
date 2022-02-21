@@ -817,7 +817,7 @@ def read_projwfc_out(projwfc_out):
     Returns
     -------
     list of str
-        Comman names of (pseudo) atomic orbitals listed in `projwfc_out` (in
+        Common names of (pseudo) atomic orbitals listed in `projwfc_out` (in
         that order).
     """
     if comm.rank == 0:
@@ -867,8 +867,25 @@ def read_projwfc_out(projwfc_out):
 
     return orbitals
 
-def proj_sum(proj, orbitals, *groups):
+def proj_sum(proj, orbitals, *groups, **kwargs):
     """Sum over selected atomic projections.
+
+    Parameters
+    ----------
+    proj : ndarray
+        Atomic projections from :func:`read_atomic_projections`.
+    orbitals : list of str
+        Names of all orbitals from :func:`read_projwfc_out`.
+    *groups
+        Comma-separated lists of names of selected orbitals. Omitted name
+        components are summed over. Curly braces are expanded.
+    other : bool, default False
+        Return remaining orbital weight too?
+
+    Returns
+    -------
+    ndarray
+        Summed-over atomic projections.
 
     Examples:
 
@@ -884,7 +901,10 @@ def proj_sum(proj, orbitals, *groups):
         return re.match('(?:([A-Z][a-z]?)(\d*))?-?(\d*)(?:([spdfx])(\S*))?',
             orbital.strip()).groups()
 
-    summed = np.empty(proj.shape[:2] + (len(groups),))
+    other = kwargs.get('other', False)
+
+    summed = np.empty(proj.shape[:2] + (len(groups) + 1 if other
+        else len(groups),))
 
     if comm.rank == 0:
         orbitals = list(map(info, orbitals))
@@ -898,6 +918,9 @@ def proj_sum(proj, orbitals, *groups):
                         indices.add(a)
 
             summed[..., n] = proj[..., sorted(indices)].sum(axis=2)
+
+        if other:
+            summed[..., -1] = proj.sum(axis=2) - summed[..., :-1].sum(axis=2)
 
     comm.Bcast(summed)
 
