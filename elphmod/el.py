@@ -220,7 +220,7 @@ class Model(object):
         N2 = np.array(N2)
         N3 = np.array(N3)
 
-        N = np.dot(N1, np.cross(N2, N3))
+        N = abs(np.dot(N1, np.cross(N2, N3)))
 
         B1 = np.cross(N2, N3)
         B2 = np.cross(N3, N1)
