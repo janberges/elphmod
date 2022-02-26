@@ -916,9 +916,9 @@ def double_fermi_surface_average(q, e, g2=None, kT=0.025,
 
     return enum, deno
 
-def triangle(q1, q2, q3, e, g1, g2, g3, kT=0.025, eps=1e-14,
+def triangle(q, Q, e, gq, gQ, gqQ, kT=0.025, eps=1e-14,
         occupations=occupations.fermi_dirac, comm=comm):
-    r"""Calculate triangle diagram.
+    r"""Calculate triangle diagram (third order of grand potential).
 
     .. math::
 
@@ -960,13 +960,12 @@ def triangle(q1, q2, q3, e, g1, g2, g3, kT=0.025, eps=1e-14,
 
     Parameters
     ----------
-    q1, q2, q3 : 2-tuples
-        q points of the vertices in crystal coordinates :math:`q_1, q_2 \in [0,
-        2 \pi)`.  In the above diagram, :math:`q_1 = q, q_2 = q', q3 = q - q'`.
+    q, Q : tuple
+        q points in crystal coordinates :math:`q_i, q'_i \in [0, 2 \pi)`.
     e : ndarray
         Electron dispersion on uniform mesh. The Fermi level must be at zero.
-    g1, g2, g3 : ndarray
-        Electron-phonon coupling for given q points.
+    gq, gQ, gqQ : ndarray
+        Electron-phonon coupling for given q points and their difference.
     kT : float
         Smearing temperature.
     eps : float
@@ -976,57 +975,70 @@ def triangle(q1, q2, q3, e, g1, g2, g3, kT=0.025, eps=1e-14,
 
     Returns
     -------
-    ndarray
+    complex
         Value of triangle.
     """
-    nk, nk, nbnd = e.shape
+    tmp = np.zeros(3)
+    tmp[:len(q)] = q
+    q = tmp
+
+    tmp = np.zeros(3)
+    tmp[:len(Q)] = Q
+    Q = tmp
+
+    nk = np.ones(3, dtype=int)
+    nk[:len(e.shape[:-1])] = e.shape[:-1]
+
+    nbnd = e.shape[-1]
+    e = np.reshape(e, (nk[0], nk[1], nk[2], nbnd))
+    gq = np.reshape(gq, (nk[0], nk[1], nk[2], nbnd, nbnd))
+    gQ = np.reshape(gQ, (nk[0], nk[1], nk[2], nbnd, nbnd))
+    gqQ = np.reshape(gqQ, (nk[0], nk[1], nk[2], nbnd, nbnd))
 
     x = e / kT
 
     f = occupations(x)
     d = occupations.delta(x) / kT
+    p = occupations.delta_prime(x) / kT ** 2
 
-    e = np.tile(e, (2, 2, 1))
-    f = np.tile(f, (2, 2, 1))
-    d = np.tile(d, (2, 2, 1))
-    g1 = np.tile(g1, (2, 2, 1, 1))
-    g2 = np.tile(g2, (2, 2, 1, 1))
-    g3 = np.tile(g3, (2, 2, 1, 1))
+    e = np.tile(e, (2, 2, 2, 1))
+    f = np.tile(f, (2, 2, 2, 1))
+    d = np.tile(d, (2, 2, 2, 1))
 
     scale = nk / (2 * np.pi)
-    prefactor = 1.0 / nk ** 2
+    prefactor = 4.0 / nk.prod()
 
-    chi = np.empty((nbnd, nbnd, nbnd, nk, nk), dtype=complex)
+    chi = np.empty((nbnd, nbnd, nbnd, nk[0], nk[1], nk[2]), dtype=complex)
 
-    q11 = int(round(q1[0] * scale)) % nk
-    q12 = int(round(q1[1] * scale)) % nk
+    q = np.round(q * scale).astype(int) % nk
+    Q = np.round(Q * scale).astype(int) % nk
 
-    q21 = int(round(q2[0] * scale)) % nk
-    q22 = int(round(q2[1] * scale)) % nk
+    k1 = slice(0, nk[0])
+    k2 = slice(0, nk[1])
+    k3 = slice(0, nk[2])
 
-    k1 = slice(0, nk)
-    k2 = slice(0, nk)
+    kq1 = slice(q[0], q[0] + nk[0])
+    kq2 = slice(q[1], q[1] + nk[1])
+    kq3 = slice(q[2], q[2] + nk[2])
 
-    kq1 = slice(q11, q11 + nk)
-    kq2 = slice(q12, q12 + nk)
-
-    kQ1 = slice(q21, q21 + nk)
-    kQ2 = slice(q22, q22 + nk)
+    kQ1 = slice(Q[0], Q[0] + nk[0])
+    kQ2 = slice(Q[1], Q[1] + nk[1])
+    kQ3 = slice(Q[2], Q[2] + nk[2])
 
     for a in range(nbnd):
-        ea = e[k1, k2, a]
-        fa = f[k1, k2, a]
-        da = d[k1, k2, a]
+        ea = e[k1, k2, k3, a]
+        fa = f[k1, k2, k3, a]
+        da = d[k1, k2, k3, a]
 
         for b in range(nbnd):
-            eb = e[kq1, kq2, b]
-            fb = f[kq1, kq2, b]
-            db = d[kq1, kq2, b]
+            eb = e[kq1, kq2, kq3, b]
+            fb = f[kq1, kq2, kq3, b]
+            db = d[kq1, kq2, kq3, b]
 
             for c in range(nbnd):
-                ec = e[kQ1, kQ2, c]
-                fc = f[kQ1, kQ2, c]
-                dc = d[kQ1, kQ2, c]
+                ec = e[kQ1, kQ2, kQ3, c]
+                fc = f[kQ1, kQ2, kQ3, c]
+                dc = d[kQ1, kQ2, kQ3, c]
 
                 dea = eb - ec
                 deb = ec - ea
@@ -1055,9 +1067,11 @@ def triangle(q1, q2, q3, e, g1, g2, g3, kT=0.025, eps=1e-14,
                 chi[a, b, c][l] = (da[l] + dfb[l] / deb[l]) / deb[l]
 
                 l = ~L
-                chi[a, b, c][l] = da[l] * (0.5 - fa[l])
+                chi[a, b, c][l] = -0.5 * p[..., a][l]
 
-    chi = np.einsum('abckl,klba,klca,klbc', chi,
-        g1[k1, k2].conj(), g2[k1, k2], g3[kQ1, kQ2])
+    for i in range(3):
+        gqQ = np.roll(gqQ, shift=-Q[i], axis=i)
+
+    chi = np.einsum('abcijk,ijkba,ijkca,ijkbc', chi, gq.conj(), gQ, gqQ)
 
     return prefactor * chi.sum()
