@@ -24,8 +24,8 @@ plt.plot(x, occupations.marzari_vanderbilt(x), label='Marzari-Vanderbilt')
 plt.plot(x, occupations.methfessel_paxton(x), label='Methfessel-Paxton')
 plt.plot(x, occupations.lorentz(x), label='Lorentz')
 
-plt.xlabel = r'$x$'
-plt.ylabel = r'$f(x)$'
+plt.xlabel(r"$x$")
+plt.ylabel(r"$f(x)$")
 plt.legend()
 plt.show()
 
@@ -47,7 +47,32 @@ plt.plot(X, -np.diff(occupations.marzari_vanderbilt(x)) / dx, 'k--')
 plt.plot(X, -np.diff(occupations.methfessel_paxton(x)) / dx, 'k--')
 plt.plot(X, -np.diff(occupations.lorentz(x)) / dx, 'k--')
 
-plt.xlabel = r'$x$'
-plt.ylabel = r'$\delta(x)$'
+plt.xlabel(r"$x$")
+plt.ylabel(r"$\delta(x)$")
+plt.legend()
+plt.show()
+
+print('Plot derivatives of delta functions..')
+
+plt.axvline(x=0.0, **style)
+plt.axhline(y=0.0, **style)
+
+plt.plot(x, occupations.fermi_dirac.delta_prime(x), label='Fermi-Dirac')
+plt.plot(x, occupations.gauss.delta_prime(x), label='Gauss')
+plt.plot(x, occupations.marzari_vanderbilt.delta_prime(x),
+    label='Marzari-Vanderbilt')
+plt.plot(x, occupations.methfessel_paxton.delta_prime(x),
+    label='Methfessel-Paxton')
+plt.plot(x, occupations.lorentz.delta_prime(x), label='Lorentz')
+
+X = (X[1:] + X[:-1]) / 2
+plt.plot(X, -np.diff(occupations.fermi_dirac(x), 2) / dx ** 2, 'k--')
+plt.plot(X, -np.diff(occupations.gauss(x), 2) / dx ** 2, 'k--')
+plt.plot(X, -np.diff(occupations.marzari_vanderbilt(x), 2) / dx ** 2, 'k--')
+plt.plot(X, -np.diff(occupations.methfessel_paxton(x), 2) / dx ** 2, 'k--')
+plt.plot(X, -np.diff(occupations.lorentz(x), 2) / dx ** 2, 'k--')
+
+plt.xlabel(r"$x$")
+plt.ylabel(r"$\delta'(x)$")
 plt.legend()
 plt.show()
