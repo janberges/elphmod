@@ -90,7 +90,6 @@ class Model(object):
             Electron-phonon matrix element :math:`\sqrt{2 \omega} g_{\nu m n}`
             in Ry\ :sup:`3/2`.
         """
-
         nRq, nph, nRk, nel, nel = self.data.shape
 
         q = np.array([q1, q2, q3])

@@ -1028,7 +1028,6 @@ def read_wannier90_eig_file(seedname, num_bands, nkpts):
         Kohn-Sham energies: ``eig[num_bands, nkpts]``.
 
     """
-
     eig = np.empty((num_bands, nkpts))
 
     f = open(seedname + '.eig', 'r')
@@ -1190,7 +1189,6 @@ def read_decayH(file):
         The maximum absolute value of the elements of the Hamiltonian matrix in
         rydberg.
     """
-
     with open(file) as f_decay:
         lines = f_decay.readlines()
 
@@ -1268,7 +1266,6 @@ def read_energy_contributions_scf_out(filename):
     dict
         energy contributions.
     """
-
     if comm.rank == 0:
         energies = dict()
 
