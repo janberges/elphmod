@@ -634,10 +634,42 @@ def coupling(filename, nQ, nmodes, nk, bands, Q=None, nq=None, offset=0,
 
     return elph[..., 0, 0] if bands == 1 and squeeze else elph
 
-def read_EPW_output(epw_out, q, nq, nmodes, nk, bands=1,
-                    eps=1e-4, squeeze=False, status=False, epf=False):
-    """Read electron-phonon coupling from EPW output file."""
+def read_EPW_output(epw_out, q, nq, nmodes, nk, bands=1, eps=1e-4,
+        squeeze=False, status=False, epf=False, defpot=False):
+    """Read electron-phonon coupling from EPW output file (using ``prtgkk``).
 
+    Currently, the coupling must be defined on a uniform 2D k mesh
+    (corresponding to triangular or square lattice).
+
+    Parameters
+    ----------
+    epw_out : str
+        Name of EPW output file.
+    q : list of int
+        List of q points as integer recriprocal lattice units.
+    nq : int
+        Number of q points per dimension.
+    nmodes : int
+        Number of phonon modes.
+    nk : int
+        Number of k points per dimension.
+    bands : int
+        Number of electronic bands.
+    eps : float
+        Tolerance for q and k points.
+    squeeze : bool
+        In single-band case, skip dimensions of output arrary corresponding to
+        electronic bands?
+    status : bool
+        Report currently processed q point?
+    epf : bool
+        Read real and imaginary part of the coupling of dimension energy to the
+        power of 2/3 from last two columns? A modified version of EPW is needed.
+        Otherwise, the modulus of the coupling of dimension energy is read.
+    defpot : bool
+        Multiply coupling by square root of twice the phonon energy to obtain a
+        quantity of dimension energy to the power of 2/3?
+    """
     elph = np.empty((len(q), nmodes, nk, nk, bands, bands),
         dtype=complex if epf else float)
 
@@ -707,6 +739,9 @@ def read_EPW_output(epw_out, q, nq, nmodes, nk, bands=1,
                         if epf:
                             elph[iq, nu, k1, k2, ibnd, jbnd] = complex(
                                 float(columns[-2]), float(columns[-1]))
+                        elif defpot:
+                            elph[iq, nu, k1, k2, ibnd, jbnd] = float(
+                                columns[-1]) * np.sqrt(2 * float(columns[-2]))
                         else:
                             elph[iq, nu, k1, k2, ibnd, jbnd] = float(
                                 columns[-1])
@@ -714,7 +749,7 @@ def read_EPW_output(epw_out, q, nq, nmodes, nk, bands=1,
         if np.isnan(elph).any():
             print('Warning: EPW output incomplete!')
 
-        if epf:
+        if epf or defpot:
             elph *= 1e-3 ** 1.5 # meV^(3/2) to eV^(3/2)
         else:
             elph *= 1e-3 # meV to eV
