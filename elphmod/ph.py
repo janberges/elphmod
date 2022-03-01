@@ -32,6 +32,10 @@ class Model(object):
         Positions of basis atoms if `flfrc` is omitted.
     atom_order : list of str
         Ordered list of atoms if `flfrc` is omitted.
+    epsil : ndarray
+        Dielectric tensor if `flfrc` is omitted.
+    zeu : ndarray
+        Born effective charges if `flfrc` is omitted.
     divide_mass : bool
         Divide force constants by atomic masses?
     divide_ndegen : bool
@@ -53,6 +57,10 @@ class Model(object):
         Bond lengths.
     atom_order : list of str
         Ordered list of atoms.
+    eps : ndarray
+        Dielectric tensor.
+    Z : ndarray
+        Born effective charges.
     data : ndarray
         Corresponding self and interatomic force constants.
     size : int
@@ -78,12 +86,12 @@ class Model(object):
 
     def __init__(self, flfrc=None, apply_asr=False, apply_asr_simple=False,
         apply_rsr=False, phid=np.zeros((1, 1, 1, 1, 1, 3, 3)), amass=np.ones(1),
-        at=np.eye(3), tau=np.zeros((1, 3)), atom_order=['X'], divide_mass=True,
-        divide_ndegen=True):
+        at=np.eye(3), tau=np.zeros((1, 3)), atom_order=['X'], epsil=None,
+        zeu=None, divide_mass=True, divide_ndegen=True):
 
         if comm.rank == 0:
             if flfrc is None:
-                model = phid.copy(), amass, at, tau, atom_order
+                model = phid.copy(), amass, at, tau, atom_order, epsil, zeu
             else:
                 model = read_flfrc(flfrc)
 
@@ -96,8 +104,8 @@ class Model(object):
 
         model = comm.bcast(model)
 
-        self.M, self.a, self.r, self.atom_order = model[1:]
-        self.R, self.data, self.l = short_range_model(*model[:-1],
+        self.M, self.a, self.r, self.atom_order, self.eps, self.Z = model[1:]
+        self.R, self.data, self.l = short_range_model(*model[:-3],
             divide_mass=divide_mass, divide_ndegen=divide_ndegen)
         self.size = self.data.shape[1]
         self.nat = self.size // 3
@@ -623,6 +631,8 @@ def read_flfrc(flfrc):
             for na in range(nat):
                 na = int(cells()[0]) - 1
                 zeu[na] = table(3)
+        else:
+            epsil = zeu = None
 
         # read interatomic force constants:
 
@@ -644,7 +654,7 @@ def read_flfrc(flfrc):
 
     # return force constants, masses, and geometry:
 
-    return [phid, amass[ityp], at, tau, atom_order]
+    return [phid, amass[ityp], at, tau, atom_order, epsil, zeu]
 
 def asr(phid):
     """Apply simple acoustic sum rule correction to force constants."""
