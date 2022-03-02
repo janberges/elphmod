@@ -20,6 +20,8 @@ class Model(object):
     apply_asr_simple : bool
         Apply simple acoustic sum rule correction to force constants? This sets
         the self force constant to minus the sum of all other force constants.
+    apply_zasr : bool
+        Apply acoustic sum rule correction to Born effective charges?
     apply_rsr : bool
         Apply rotation sum rule correction to force constants?
     phid : ndarray
@@ -85,9 +87,9 @@ class Model(object):
         return np.einsum('Rxy,R->xy', self.data, np.exp(-1j * self.R.dot(q)))
 
     def __init__(self, flfrc=None, apply_asr=False, apply_asr_simple=False,
-        apply_rsr=False, phid=np.zeros((1, 1, 1, 1, 1, 3, 3)), amass=np.ones(1),
-        at=np.eye(3), tau=np.zeros((1, 3)), atom_order=['X'], epsil=None,
-        zeu=None, divide_mass=True, divide_ndegen=True):
+        apply_zasr=False, apply_rsr=False, phid=np.zeros((1, 1, 1, 1, 1, 3, 3)),
+        amass=np.ones(1), at=np.eye(3), tau=np.zeros((1, 3)), atom_order=['X'],
+        epsil=None, zeu=None, divide_mass=True, divide_ndegen=True):
 
         if comm.rank == 0:
             if flfrc is None:
@@ -99,6 +101,9 @@ class Model(object):
 
             if apply_asr_simple:
                 asr(model[0])
+
+            if apply_zasr:
+                zasr(model[-1])
         else:
             model = None
 
@@ -669,6 +674,11 @@ def asr(phid):
             for m2 in range(nr2)
             for m3 in range(nr3)
             if na1 != na2 or m1 or m2 or m3)
+
+def zasr(Z):
+    """Apply acoustic sum rule correction to Born effective charges."""
+
+    Z -= np.average(Z, axis=0)
 
 def sum_rule_correction(ph, asr=True, rsr=True, eps=1e-15, report=True,
         divide_mass=True):
