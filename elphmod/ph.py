@@ -68,7 +68,9 @@ class Model(object):
     Z : ndarray
         Born effective charges divided by square root of atomic masses.
     data : ndarray
-        Corresponding self and interatomic force constants.
+        Interatomic force constants divided by atomic masses.
+    divide_mass : bool
+        Have force constants and Born charges been divided by atomic masses?
     size : int
         Number of displacement directions/bands.
     nat : int
@@ -150,6 +152,7 @@ class Model(object):
             divide_mass=divide_mass, divide_ndegen=divide_ndegen)
         self.size = self.data.shape[1]
         self.nat = self.size // 3
+        self.divide_mass = divide_mass
 
         if apply_asr or apply_rsr:
             sum_rule_correction(self, asr=apply_asr, rsr=apply_rsr,

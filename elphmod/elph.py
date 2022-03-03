@@ -49,6 +49,8 @@ class Model(object):
         Rk-dependent coupling for above q point for possible reuse.
     cells : list of tuple of int, optional
         Lattice vectors of unit cells if the model describes a supercell.
+    Rk0 : int
+        Index of electronic lattice vector at origin if `ph.lr`.
     """
     def g(self, q1=0, q2=0, q3=0, k1=0, k2=0, k3=0, elbnd=False, phbnd=False,
             broadcast=True, comm=comm):
@@ -110,6 +112,15 @@ class Model(object):
             #           + cfac * epmatwe(:, :, :, :, iq)
 
             comm.Allreduce(my_g, self.gq)
+
+            if self.ph.lr:
+                for K, factor in self.ph.generate_lattice_vectors(q):
+                    for na in range(self.ph.nat):
+                        exp = np.exp(-1j * np.dot(K, self.ph.r[na]))
+                        f = 1j * factor * np.dot(K, self.ph.Z[na]) * exp
+
+                        for a in range(self.el.size):
+                            self.gq[3 * na:3 * na + 3, self.Rk0, a, a] += f
 
         Rl, Ru = MPI.distribute(nRk, bounds=True,
             comm=comm)[1][comm.rank:comm.rank + 2]
@@ -236,6 +247,11 @@ class Model(object):
 
             # divide by square root of atomic masses:
 
+            if self.ph.lr and self.ph.divide_mass != divide_mass:
+                print("Warning: Inconsistent 'divide_mass' in 'ph' and 'elph'!")
+                print("The value from 'ph' (%r) is used." % self.ph.divide_mass)
+                divide_mass = self.ph.divide_mass
+
             if divide_mass:
                 for x in range(ph.size):
                     g[:, x] /= np.sqrt(ph.M[x // 3])
@@ -249,6 +265,9 @@ class Model(object):
 
         self.gq = np.empty((ph.size, len(self.Rk), el.size, el.size),
             dtype=complex)
+
+        if self.ph.lr:
+            self.Rk0 = misc.vector_index(self.Rk, (0, 0, 0))
 
     def sample(self, *args, **kwargs):
         """Sample coupling.
