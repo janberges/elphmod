@@ -24,6 +24,10 @@ class Model(object):
         Apply acoustic sum rule correction to Born effective charges?
     apply_rsr : bool
         Apply rotation sum rule correction to force constants?
+    lr : bool
+        Compute long-range terms in case of polar material?
+    lr2d : bool
+        Compute long-range terms for two-dimensional system if `lr`?
     phid : ndarray
         Force constants if `flfrc` is omitted.
     amass : ndarray
@@ -39,7 +43,7 @@ class Model(object):
     zeu : ndarray
         Born effective charges if `flfrc` is omitted.
     divide_mass : bool
-        Divide force constants by atomic masses?
+        Divide force constants and Born effective charges by atomic masses?
     divide_ndegen : bool
         Divide force constants by degeneracy of Wigner-Seitz point? Only
         ``True`` yields correct phonons. ``False`` should only be used for
@@ -62,7 +66,7 @@ class Model(object):
     eps : ndarray
         Dielectric tensor.
     Z : ndarray
-        Born effective charges.
+        Born effective charges divided by square root of atomic masses.
     data : ndarray
         Corresponding self and interatomic force constants.
     size : int
@@ -71,6 +75,20 @@ class Model(object):
         Number of atoms.
     cells : list of tuple of int, optional
         Lattice vectors of unit cells if the model describes a supercell.
+    lr : bool
+        Compute long-range terms?
+    lr2d : bool
+        Compute long-range terms for two-dimensional system if `lr`?
+    b : ndarray
+        Reciprocal primitive vectors if `lr`.
+    prefactor : float
+        Prefactor of long-range terms if `lr`.
+    r_eff : float
+        Effective thickness if `lr2d`.
+    scale : float
+        Relevant scaling factor if `lr`.
+    D_lr : ndarray
+        Constant part of long-range correction to dynamical matrix if `lr`.
     """
     def D(self, q1=0, q2=0, q3=0):
         """Set up dynamical matrix for arbitrary q point."""
@@ -84,12 +102,30 @@ class Model(object):
         # 234       phid(:,j1,j2,na1,na2) / DBLE(nr1*nr2*nr3)
         # The last argument of cfft3d is the sign (+1).
 
-        return np.einsum('Rxy,R->xy', self.data, np.exp(-1j * self.R.dot(q)))
+        Dq = np.einsum('Rxy,R->xy', self.data, np.exp(-1j * self.R.dot(q)))
+
+        if self.lr:
+            Dq -= self.D_lr
+
+            for K, factor in self.generate_lattice_vectors(q):
+                for na1 in range(self.nat):
+                    f1 = np.dot(K, self.Z[na1])
+
+                    for na2 in range(self.nat):
+                        f2 = np.dot(K, self.Z[na2])
+
+                        exp = np.exp(1j * np.dot(K, self.r[na1] - self.r[na2]))
+
+                        Dq[3 * na1:3 * na1 + 3, 3 * na2:3 * na2 + 3] += (
+                            factor * np.outer(f1, f2) * exp)
+
+        return Dq
 
     def __init__(self, flfrc=None, apply_asr=False, apply_asr_simple=False,
-        apply_zasr=False, apply_rsr=False, phid=np.zeros((1, 1, 1, 1, 1, 3, 3)),
-        amass=np.ones(1), at=np.eye(3), tau=np.zeros((1, 3)), atom_order=['X'],
-        epsil=None, zeu=None, divide_mass=True, divide_ndegen=True):
+        apply_zasr=False, apply_rsr=False, lr=True, lr2d=False,
+        phid=np.zeros((1, 1, 1, 1, 1, 3, 3)), amass=np.ones(1), at=np.eye(3),
+        tau=np.zeros((1, 3)), atom_order=['X'], epsil=None, zeu=None,
+        divide_mass=True, divide_ndegen=True):
 
         if comm.rank == 0:
             if flfrc is None:
@@ -118,6 +154,135 @@ class Model(object):
         if apply_asr or apply_rsr:
             sum_rule_correction(self, asr=apply_asr, rsr=apply_rsr,
                 divide_mass=divide_mass)
+
+        self.lr = lr and self.eps is not None and self.Z is not None
+
+        if self.lr:
+            self.lr2d = lr2d
+
+            self.prepare_long_range()
+
+            self.D_lr = np.zeros((self.size, self.size), dtype=complex)
+
+            for K, factor in self.generate_lattice_vectors(np.zeros(3)):
+                for na1 in range(self.nat):
+                    f1 = np.dot(K, self.Z[na1])
+
+                    f2 = np.zeros(3, dtype=complex)
+
+                    for na2 in range(self.nat):
+                        exp = np.exp(1j * np.dot(K, self.r[na1] - self.r[na2]))
+                        f2 += np.dot(K, self.Z[na2]) * exp
+
+                    self.D_lr[3 * na1:3 * na1 + 3, 3 * na1:3 * na1 + 3] += (
+                        factor * np.outer(f1, f2))
+
+            if divide_mass:
+                for na in range(self.nat):
+                    self.D_lr[3 * na:3 * na + 3, :] /= np.sqrt(self.M[na])
+                    self.D_lr[:, 3 * na:3 * na + 3] /= np.sqrt(self.M[na])
+
+                    self.Z[na] /= np.sqrt(self.M[na])
+
+    def prepare_long_range(self, alpha=1.0, G_max=14.0):
+        """Prepare calculation of long-range terms for polar materials.
+
+        The following two routines are based on ``rgd_blk`` and ``rgd_blk_epw``
+        of Quantum ESPRESSO and the EPW code.
+
+        Copyright (C) 2010-2016 S. Ponce', R. Margine, C. Verdi, F. Giustino
+        Copyright (C) 2001-2012 Quantum ESPRESSO group
+
+        Please refer to:
+
+        * Phonons: Gonze et al., Phys. Rev. B 50, 13035 (1994)
+        * Coupling: Verdi and Giustino, Phys. Rev. Lett. 115, 176401 (2015)
+        * 2D case: Sohier, Calandra, and Mauri, Phys. Rev. B 94, 085415 (2016)
+        * Quadrupoles: Ponce' et al., Phys. Rev. Research 3, 043022 (2021)
+
+        Parameters
+        ----------
+        alpha : float
+            Ewald parameter.
+        G_max : float
+            Cutoff for reciprocal lattice vectors.
+        """
+        self.b = np.array(bravais.reciprocals(*self.a))
+
+        e2 = 2.0 # square of electron charge in Rydberg units
+
+        if self.lr2d:
+            c = 1 / self.b[2, 2]
+            self.r_eff = (self.eps[:2, :2] - np.eye(2)) * c / 2
+
+            area = np.linalg.norm(np.cross(self.a[0], self.a[1]))
+            self.prefactor = 2 * np.pi * e2 / area
+        else:
+            volume = abs(np.dot(self.a[0], np.cross(self.a[1], self.a[2])))
+            self.prefactor = 4 * np.pi * e2 / volume
+
+        a = np.linalg.norm(self.a[0])
+        self.scale = 4 * alpha * (2 * np.pi / a) ** 2
+
+        nr = 1 + (np.sqrt(self.scale * G_max)
+            / np.linalg.norm(2 * np.pi * self.b, axis=1)).astype(int)
+
+        if self.lr2d:
+            nr[2] = 0
+
+        self.G = []
+
+        for m1 in range(-nr[0], nr[0] + 1):
+            for m2 in range(-nr[1], nr[1] + 1):
+                for m3 in range(-nr[2], nr[2] + 1):
+                    G = 2 * np.pi * (m1 * self.b[0] + m2 * self.b[1]
+                        + m3 * self.b[2])
+
+                    if self.lr2d:
+                        GeG = (G ** 2).sum()
+                    else:
+                        GeG = np.einsum('i,ij,j', G, self.eps, G)
+
+                    if GeG < self.scale * G_max:
+                        self.G.append(G)
+
+    def generate_lattice_vectors(self, q, eps=1e-8):
+        r"""Generate reciprocal lattice vectors to compute long-range terms.
+
+        Parameters
+        ----------
+        q : ndarray
+            q point in reciprocal lattice units :math:`q_i \in [0, 2 \pi)`.
+        eps : float
+            Tolerance for vanishing lattice vectors.
+
+        Yields
+        ------
+        ndarray
+            Reciprocal lattice vector :math:`\vec K = \vec G + \vec q`.
+        float
+            Relevant factor.
+        """
+        for G in self.G:
+            K = G + np.dot(q, self.b)
+
+            if self.lr2d:
+                K2K = (K[:2] ** 2).sum()
+
+                if K2K < eps:
+                    KrK = 0.0
+                else:
+                    KrK = np.einsum('i,ij,j', K[:2], self.r_eff, K[:2]) / K2K
+
+                KeK = (K ** 2).sum()
+            else:
+                KeK = np.einsum('i,ij,j', K, self.eps, K)
+
+            if KeK > eps:
+                factor = self.prefactor * np.exp(-KeK / self.scale)
+                factor /= np.sqrt(KeK) + KrK * KeK if self.lr2d else KeK
+
+                yield K, factor
 
     def C(self, R1=0, R2=0, R3=0):
         """Get interatomic force constants for arbitrary lattice vector."""
