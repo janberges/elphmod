@@ -162,30 +162,7 @@ class Model(object):
 
         if self.lr:
             self.lr2d = lr2d
-
             self.prepare_long_range()
-
-            self.D_lr = np.zeros((self.size, self.size), dtype=complex)
-
-            for K, factor in self.generate_lattice_vectors(np.zeros(3)):
-                for na1 in range(self.nat):
-                    f1 = np.dot(K, self.Z[na1])
-
-                    f2 = np.zeros(3, dtype=complex)
-
-                    for na2 in range(self.nat):
-                        exp = np.exp(1j * np.dot(K, self.r[na1] - self.r[na2]))
-                        f2 += np.dot(K, self.Z[na2]) * exp
-
-                    self.D_lr[3 * na1:3 * na1 + 3, 3 * na1:3 * na1 + 3] += (
-                        factor * np.outer(f1, f2))
-
-            if divide_mass:
-                for na in range(self.nat):
-                    self.D_lr[3 * na:3 * na + 3, :] /= np.sqrt(self.M[na])
-                    self.D_lr[:, 3 * na:3 * na + 3] /= np.sqrt(self.M[na])
-
-                    self.Z[na] /= np.sqrt(self.M[na])
 
     def prepare_long_range(self, alpha=1.0, G_max=14.0):
         """Prepare calculation of long-range terms for polar materials.
@@ -248,6 +225,28 @@ class Model(object):
 
                     if GeG < self.scale * G_max:
                         self.G.append(G)
+
+        self.D_lr = np.zeros((self.size, self.size), dtype=complex)
+
+        for K, factor in self.generate_lattice_vectors(np.zeros(3)):
+            for na1 in range(self.nat):
+                f1 = np.dot(K, self.Z[na1])
+
+                f2 = np.zeros(3, dtype=complex)
+
+                for na2 in range(self.nat):
+                    exp = np.exp(1j * np.dot(K, self.r[na1] - self.r[na2]))
+                    f2 += np.dot(K, self.Z[na2]) * exp
+
+                self.D_lr[3 * na1:3 * na1 + 3, 3 * na1:3 * na1 + 3] += (
+                    factor * np.outer(f1, f2))
+
+        if self.divide_mass:
+            for na in range(self.nat):
+                self.D_lr[3 * na:3 * na + 3, :] /= np.sqrt(self.M[na])
+                self.D_lr[:, 3 * na:3 * na + 3] /= np.sqrt(self.M[na])
+
+                self.Z[na] /= np.sqrt(self.M[na])
 
     def generate_lattice_vectors(self, q, eps=1e-8):
         r"""Generate reciprocal lattice vectors to compute long-range terms.
