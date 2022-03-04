@@ -89,7 +89,7 @@ class Model(object):
         Effective thickness if `lr2d`.
     scale : float
         Relevant scaling factor if `lr`.
-    D_lr : ndarray
+    D0_lr : ndarray
         Constant part of long-range correction to dynamical matrix if `lr`.
     """
     def D(self, q1=0, q2=0, q3=0):
@@ -107,19 +107,26 @@ class Model(object):
         Dq = np.einsum('Rxy,R->xy', self.data, np.exp(-1j * self.R.dot(q)))
 
         if self.lr:
-            Dq -= self.D_lr
+            Dq += self.D_lr(q1, q2, q3)
 
-            for K, factor in self.generate_lattice_vectors(q):
-                for na1 in range(self.nat):
-                    f1 = np.dot(K, self.Z[na1])
+        return Dq
 
-                    for na2 in range(self.nat):
-                        f2 = np.dot(K, self.Z[na2])
+    def D_lr(self, q1=0, q2=0, q3=0):
+        """Calculate long-range part of dynamical matrix."""
 
-                        exp = np.exp(1j * np.dot(K, self.r[na1] - self.r[na2]))
+        Dq = self.D0_lr.copy()
 
-                        Dq[3 * na1:3 * na1 + 3, 3 * na2:3 * na2 + 3] += (
-                            factor * np.outer(f1, f2) * exp)
+        for K, factor in self.generate_lattice_vectors(q1, q2, q3):
+            for na1 in range(self.nat):
+                f1 = np.dot(K, self.Z[na1])
+
+                for na2 in range(self.nat):
+                    f2 = np.dot(K, self.Z[na2])
+
+                    exp = np.exp(1j * np.dot(K, self.r[na1] - self.r[na2]))
+
+                    Dq[3 * na1:3 * na1 + 3, 3 * na2:3 * na2 + 3] += (
+                        factor * np.outer(f1, f2) * exp)
 
         return Dq
 
@@ -226,9 +233,9 @@ class Model(object):
                     if GeG < self.scale * G_max:
                         self.G.append(G)
 
-        self.D_lr = np.zeros((self.size, self.size), dtype=complex)
+        self.D0_lr = np.zeros((self.size, self.size), dtype=complex)
 
-        for K, factor in self.generate_lattice_vectors(np.zeros(3)):
+        for K, factor in self.generate_lattice_vectors():
             for na1 in range(self.nat):
                 f1 = np.dot(K, self.Z[na1])
 
@@ -238,17 +245,17 @@ class Model(object):
                     exp = np.exp(1j * np.dot(K, self.r[na1] - self.r[na2]))
                     f2 += np.dot(K, self.Z[na2]) * exp
 
-                self.D_lr[3 * na1:3 * na1 + 3, 3 * na1:3 * na1 + 3] += (
+                self.D0_lr[3 * na1:3 * na1 + 3, 3 * na1:3 * na1 + 3] -= (
                     factor * np.outer(f1, f2))
 
         if self.divide_mass:
             for na in range(self.nat):
-                self.D_lr[3 * na:3 * na + 3, :] /= np.sqrt(self.M[na])
-                self.D_lr[:, 3 * na:3 * na + 3] /= np.sqrt(self.M[na])
+                self.D0_lr[3 * na:3 * na + 3, :] /= np.sqrt(self.M[na])
+                self.D0_lr[:, 3 * na:3 * na + 3] /= np.sqrt(self.M[na])
 
                 self.Z[na] /= np.sqrt(self.M[na])
 
-    def generate_lattice_vectors(self, q, eps=1e-8):
+    def generate_lattice_vectors(self, q1=0, q2=0, q3=0, eps=1e-8):
         r"""Generate reciprocal lattice vectors to compute long-range terms.
 
         Parameters
@@ -266,7 +273,7 @@ class Model(object):
             Relevant factor.
         """
         for G in self.G:
-            K = G + np.dot(q, self.b)
+            K = G + q1 * self.b[0] + q2 * self.b[1] + q3 * self.b[2]
 
             if self.lr2d:
                 K2K = (K[:2] ** 2).sum()

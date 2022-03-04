@@ -114,13 +114,10 @@ class Model(object):
             comm.Allreduce(my_g, self.gq)
 
             if self.ph.lr:
-                for K, factor in self.ph.generate_lattice_vectors(q):
-                    for na in range(self.ph.nat):
-                        exp = np.exp(-1j * np.dot(K, self.ph.r[na]))
-                        f = 1j * factor * np.dot(K, self.ph.Z[na]) * exp
+                g_lr = self.g_lr(q1, q2, q3)
 
-                        for a in range(self.el.size):
-                            self.gq[3 * na:3 * na + 3, self.Rk0, a, a] += f
+                for a in range(self.el.size):
+                    self.gq[:, self.Rk0, a, a] += g_lr
 
         Rl, Ru = MPI.distribute(nRk, bounds=True,
             comm=comm)[1][comm.rank:comm.rank + 2]
@@ -168,6 +165,21 @@ class Model(object):
             comm.Bcast(g)
 
         return g
+
+    def g_lr(self, q1=0, q2=0, q3=0):
+        """Calculate long-range part of electron-phonon coupling."""
+
+        gq = np.zeros(self.ph.size, dtype=complex)
+
+        for K, factor in self.ph.generate_lattice_vectors(q1, q2, q3):
+            for na in range(self.ph.nat):
+                f = np.dot(K, self.ph.Z[na])
+
+                exp = np.exp(-1j * np.dot(K, self.ph.r[na]))
+
+                gq[3 * na:3 * na + 3] += 1j * factor * f * exp
+
+        return gq
 
     def gR(self, Rq1=0, Rq2=0, Rq3=0, Rk1=0, Rk2=0, Rk3=0):
         """Get electron-phonon matrix elements for arbitrary lattice vectors."""
