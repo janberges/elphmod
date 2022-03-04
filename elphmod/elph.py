@@ -175,6 +175,9 @@ class Model(object):
             for na in range(self.ph.nat):
                 f = np.dot(K, self.ph.Z[na])
 
+                if self.ph.Q is not None:
+                    f = f - 0.5j * K.dot(self.ph.Q[na]).dot(K)
+
                 exp = np.exp(-1j * np.dot(K, self.ph.r[na]))
 
                 gq[3 * na:3 * na + 3] += 1j * factor * f * exp

@@ -15,6 +15,8 @@ class Model(object):
     ----------
     flfrc : str
         File with interatomic force constants from ``q2r.x``.
+    quadrupole_fmt : str
+        File with quadrupole tensors in format suitable for ``epw.x``.
     apply_asr : bool
         Apply acoustic sum rule correction to force constants?
     apply_asr_simple : bool
@@ -42,6 +44,8 @@ class Model(object):
         Dielectric tensor if `flfrc` is omitted.
     zeu : ndarray
         Born effective charges if `flfrc` is omitted.
+    Q : ndarray
+        Quadrupole tensors if `quadrupole_fmt` is omitted.
     divide_mass : bool
         Divide force constants and Born effective charges by atomic masses?
     divide_ndegen : bool
@@ -67,6 +71,8 @@ class Model(object):
         Dielectric tensor.
     Z : ndarray
         Born effective charges divided by square root of atomic masses.
+    Q : ndarray
+        Quadrupole tensors divided by square root of atomic masses.
     data : ndarray
         Interatomic force constants divided by atomic masses.
     divide_mass : bool
@@ -140,17 +146,20 @@ class Model(object):
         else:
             return self.data[index]
 
-    def __init__(self, flfrc=None, apply_asr=False, apply_asr_simple=False,
-        apply_zasr=False, apply_rsr=False, lr=True, lr2d=False,
-        phid=np.zeros((1, 1, 1, 1, 1, 3, 3)), amass=np.ones(1), at=np.eye(3),
-        tau=np.zeros((1, 3)), atom_order=['X'], epsil=None, zeu=None,
-        divide_mass=True, divide_ndegen=True):
+    def __init__(self, flfrc=None, quadrupole_fmt=None, apply_asr=False,
+        apply_asr_simple=False, apply_zasr=False, apply_rsr=False, lr=True,
+        lr2d=False, phid=np.zeros((1, 1, 1, 1, 1, 3, 3)), amass=np.ones(1),
+        at=np.eye(3), tau=np.zeros((1, 3)), atom_order=['X'], epsil=None,
+        zeu=None, Q=None, divide_mass=True, divide_ndegen=True):
 
         if comm.rank == 0:
             if flfrc is None:
                 model = phid.copy(), amass, at, tau, atom_order, epsil, zeu
             else:
                 model = read_flfrc(flfrc)
+
+            if quadrupole_fmt is not None:
+                Q = read_quadrupole_fmt(quadrupole_fmt)
 
             # optionally, apply acoustic sum rule:
 
@@ -163,6 +172,8 @@ class Model(object):
             model = None
 
         model = comm.bcast(model)
+
+        self.Q = comm.bcast(Q)
 
         self.M, self.a, self.r, self.atom_order, self.eps, self.Z = model[1:]
         self.R, self.data, self.l = short_range_model(*model[:-3],
@@ -264,6 +275,9 @@ class Model(object):
                 self.D0_lr[:, 3 * na:3 * na + 3] /= np.sqrt(self.M[na])
 
                 self.Z[na] /= np.sqrt(self.M[na])
+
+                if self.Q is not None:
+                    self.Q[na] /= np.sqrt(self.M[na])
 
     def generate_lattice_vectors(self, q1=0, q2=0, q3=0, eps=1e-8):
         r"""Generate reciprocal lattice vectors to compute long-range terms.
@@ -834,6 +848,36 @@ def read_flfrc(flfrc):
     # return force constants, masses, and geometry:
 
     return [phid, amass[ityp], at, tau, atom_order, epsil, zeu]
+
+def read_quadrupole_fmt(quadrupole_fmt):
+    """Read file *quadrupole.fmt* suitable for ``epw.x``."""
+
+    Q = []
+
+    with open(quadrupole_fmt) as data:
+        next(data)
+
+        for line in data:
+            cols = line.split()
+
+            na, i = [int(col) - 1 for col in cols[:2]]
+
+            Qxx, Qyy, Qzz, Qyz, Qxz, Qxy = list(map(float, cols[2:]))
+
+            while len(Q) <= na:
+                Q.append(np.zeros((3, 3, 3)))
+
+            Q[na][i, 0, 0] = Qxx
+            Q[na][i, 1, 1] = Qyy
+            Q[na][i, 2, 2] = Qzz
+            Q[na][i, 1, 2] = Qyz
+            Q[na][i, 2, 1] = Qyz
+            Q[na][i, 0, 2] = Qxz
+            Q[na][i, 2, 0] = Qxz
+            Q[na][i, 0, 1] = Qxy
+            Q[na][i, 1, 0] = Qxy
+
+    return np.array(Q)
 
 def asr(phid):
     """Apply simple acoustic sum rule correction to force constants."""
