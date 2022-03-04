@@ -130,6 +130,16 @@ class Model(object):
 
         return Dq
 
+    def C(self, R1=0, R2=0, R3=0):
+        """Get interatomic force constants for arbitrary lattice vector."""
+
+        index = misc.vector_index(self.R, (R1, R2, R3))
+
+        if index is None:
+            return np.zeros_like(self.data[0])
+        else:
+            return self.data[index]
+
     def __init__(self, flfrc=None, apply_asr=False, apply_asr_simple=False,
         apply_zasr=False, apply_rsr=False, lr=True, lr2d=False,
         phid=np.zeros((1, 1, 1, 1, 1, 3, 3)), amass=np.ones(1), at=np.eye(3),
@@ -292,16 +302,6 @@ class Model(object):
                 factor /= np.sqrt(KeK) + KrK * KeK if self.lr2d else KeK
 
                 yield K, factor
-
-    def C(self, R1=0, R2=0, R3=0):
-        """Get interatomic force constants for arbitrary lattice vector."""
-
-        index = misc.vector_index(self.R, (R1, R2, R3))
-
-        if index is None:
-            return np.zeros_like(self.data[0])
-        else:
-            return self.data[index]
 
     def supercell(self, N1=1, N2=1, N3=1):
         """Map mass-spring model onto supercell.
