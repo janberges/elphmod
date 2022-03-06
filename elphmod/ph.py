@@ -255,19 +255,12 @@ class Model(object):
                         self.G.append(G)
 
         self.D0_lr = np.zeros((self.size, self.size), dtype=complex)
+        Dq0_lr = self.D_lr()
 
-        for K, factor in self.generate_lattice_vectors():
-            for na1 in range(self.nat):
-                f1 = np.dot(K, self.Z[na1])
-
-                f2 = np.zeros(3, dtype=complex)
-
-                for na2 in range(self.nat):
-                    exp = np.exp(1j * np.dot(K, self.r[na1] - self.r[na2]))
-                    f2 += np.dot(K, self.Z[na2]) * exp
-
+        for na1 in range(self.nat):
+            for na2 in range(self.nat):
                 self.D0_lr[3 * na1:3 * na1 + 3, 3 * na1:3 * na1 + 3] -= (
-                    factor * np.outer(f1, f2))
+                    Dq0_lr[3 * na1:3 * na1 + 3, 3 * na2:3 * na2 + 3])
 
         if self.divide_mass:
             for na in range(self.nat):
