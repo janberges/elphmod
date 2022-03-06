@@ -121,18 +121,32 @@ class Model(object):
         """Calculate long-range part of dynamical matrix."""
 
         Dq = self.D0_lr.copy()
+        D12 = np.zeros((3, 3), dtype=complex)
 
         for K, factor in self.generate_lattice_vectors(q1, q2, q3):
             for na1 in range(self.nat):
                 f1 = np.dot(K, self.Z[na1])
 
+                if self.Q is not None:
+                    g1 = K.dot(self.Q[na1]).dot(K)
+
                 for na2 in range(self.nat):
                     f2 = np.dot(K, self.Z[na2])
 
+                    if self.Q is not None:
+                        g2 = K.dot(self.Q[na2]).dot(K)
+
                     exp = np.exp(1j * np.dot(K, self.r[na1] - self.r[na2]))
 
+                    D12[...] = np.outer(f1, f2)
+
+                    if self.Q is not None:
+                        D12 -= 0.5j * np.outer(f1, g2) # right
+                        D12 += 0.5j * np.outer(g1, f2) # signs?
+                        D12 += 0.25 * np.outer(g1, g2)
+
                     Dq[3 * na1:3 * na1 + 3, 3 * na2:3 * na2 + 3] += (
-                        factor * np.outer(f1, f2) * exp)
+                        factor * D12 * exp)
 
         return Dq
 
