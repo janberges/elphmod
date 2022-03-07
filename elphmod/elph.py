@@ -171,16 +171,8 @@ class Model(object):
 
         gq = np.zeros(self.ph.size, dtype=complex)
 
-        for K, factor in self.ph.generate_lattice_vectors(q1, q2, q3):
-            for na in range(self.ph.nat):
-                f = np.dot(K, self.ph.Z[na])
-
-                if self.ph.Q is not None:
-                    f = f - 0.5j * K.dot(self.ph.Q[na]).dot(K)
-
-                exp = np.exp(-1j * np.dot(K, self.ph.r[na]))
-
-                gq[3 * na:3 * na + 3] += 1j * factor * f * exp
+        for factor, d, q in self.ph.generate_lattice_vectors(q1, q2, q3):
+            gq += 1j * factor * (d if self.ph.Q is None else d + q).conj()
 
         return gq
 
