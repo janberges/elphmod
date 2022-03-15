@@ -237,6 +237,12 @@ class SharedArray(np.ndarray):
             self.node = getattr(array, 'node', I)
             self.images = getattr(array, 'images', comm)
 
+    def Bcast(self):
+        if self.node.rank == 0:
+            self.images.Bcast(self)
+
+        comm.Barrier()
+
 def load(filename, shared_memory=False, comm=comm):
     """Read and broadcast NumPy data."""
 
