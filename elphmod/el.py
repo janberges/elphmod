@@ -197,6 +197,32 @@ class Model(object):
                             print('%3d %3d %12.4f' % (m, n,
                                 np.sum(self.W[m] * self.W[n]) * self.dV))
 
+    def symmetrize(self):
+        r"""Symmetrize Hamiltonian.
+
+        .. math::
+
+            H_{\vec k} = H_{\vec k}^\dagger,
+            H_{\vec R} = H_{-\vec R}^\dagger
+        """
+        if comm.rank == 0:
+            status = misc.StatusBar(len(self.R),
+                title='symmetrize Hamiltonian')
+
+            for n in range(len(self.R)):
+                N = misc.vector_index(self.R, -self.R[n])
+
+                if N is None:
+                    self.data[n] = 0.0
+                else:
+                    self.data[n] += self.data[N].T.conj()
+                    self.data[n] /= 2
+                    self.data[N] = self.data[n].T.conj()
+
+                status.update()
+
+        comm.Bcast(self.data)
+
     def supercell(self, N1=1, N2=1, N3=1):
         """Map tight-binding model onto supercell.
 

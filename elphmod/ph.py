@@ -319,6 +319,32 @@ class Model(object):
 
                 yield factor, d, q
 
+    def symmetrize(self):
+        r"""Symmetrize dynamical matrix.
+
+        .. math::
+
+            D_{\vec q} = D_{\vec q}^\dagger,
+            D_{\vec R} = D_{-\vec R}^\dagger
+        """
+        if comm.rank == 0:
+            status = misc.StatusBar(len(self.R),
+                title='symmetrize dynamical matrix')
+
+            for n in range(len(self.R)):
+                N = misc.vector_index(self.R, -self.R[n])
+
+                if N is None:
+                    self.data[n] = 0.0
+                else:
+                    self.data[n] += self.data[N].T.conj()
+                    self.data[n] /= 2
+                    self.data[N] = self.data[n].T.conj()
+
+                status.update()
+
+        comm.Bcast(self.data)
+
     def supercell(self, N1=1, N2=1, N3=1):
         """Map mass-spring model onto supercell.
 
