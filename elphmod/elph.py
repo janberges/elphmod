@@ -184,7 +184,7 @@ class Model(object):
     def gR(self, Rq1=0, Rq2=0, Rq3=0, Rk1=0, Rk2=0, Rk3=0):
         """Get electron-phonon matrix elements for arbitrary lattice vectors."""
 
-        index_q = misc.vector_index(self.Rq, (Rq1, Rq2, Rq3))
+        index_q = misc.vector_index(self.Rg, (Rq1, Rq2, Rq3))
         index_k = misc.vector_index(self.Rk, (Rk1, Rk2, Rk3))
 
         if index_q is None or index_k is None:
@@ -288,6 +288,39 @@ class Model(object):
                             g[irg, x, :, m, n] /= self.dg[N, M, X, irg]
                         else:
                             g[irg, x, :, m, n] = 0.0
+
+    def symmetrize(self):
+        r"""Symmetrize electron-phonon coupling.
+
+        .. math::
+
+            g_{\vec q, \vec k} = g_{-\vec q, \vec k + \vec q}^\dagger,
+            g_{\vec R, \vec R'} = g_{\vec R - \vec R', -\vec R'}^\dagger
+        """
+        if comm.rank == 0:
+            status = misc.StatusBar(len(self.Rg) * len(self.Rk),
+                title='symmetrize coupling')
+
+            for g in range(len(self.Rg)):
+                for k in range(len(self.Rk)):
+                    G = misc.vector_index(self.Rg, self.Rg[g] - self.Rk[k])
+                    K = misc.vector_index(self.Rk, -self.Rk[k])
+
+                    if G is None or K is None:
+                        self.data[g, :, k] = 0.0
+                    else:
+                        self.data[g, :, k] += self.data[
+                            G, :, K].swapaxes(1, 2).conj()
+                        self.data[g, :, k] /= 2
+                        self.data[G, :, K] = self.data[
+                            g, :, k].swapaxes(1, 2).conj()
+
+                    status.update()
+
+        if self.node.rank == 0:
+            self.images.Bcast(self.data.view(dtype=float))
+
+        comm.Barrier()
 
     def sample(self, *args, **kwargs):
         """Sample coupling.
