@@ -122,7 +122,7 @@ class Model(object):
 
         Dq = self.D0_lr.copy()
 
-        for factor, d, q in self.generate_lattice_vectors(q1, q2, q3):
+        for factor, d, q in self.generate_long_range(q1, q2, q3):
             Dq += factor * np.outer(d, d.conj())
 
             if self.Q is not None:
@@ -267,8 +267,8 @@ class Model(object):
                 if self.Q is not None:
                     self.Q[na] /= np.sqrt(self.M[na])
 
-    def generate_lattice_vectors(self, q1=0, q2=0, q3=0, eps=1e-8):
-        r"""Generate reciprocal lattice vectors to compute long-range terms.
+    def generate_long_range(self, q1=0, q2=0, q3=0, eps=1e-8):
+        r"""Generate long-range terms.
 
         Parameters
         ----------
@@ -279,10 +279,12 @@ class Model(object):
 
         Yields
         ------
-        ndarray
-            Reciprocal lattice vector :math:`\vec K = \vec G + \vec q`.
         float
             Relevant factor.
+        ndarray
+            Dipole term.
+        ndarray
+            Quadrupole term.
         """
         for G in self.G:
             K = G + q1 * self.b[0] + q2 * self.b[1] + q3 * self.b[2]
