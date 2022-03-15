@@ -872,6 +872,14 @@ def read_projwfc_out(projwfc_out):
 def proj_sum(proj, orbitals, *groups, **kwargs):
     """Sum over selected atomic projections.
 
+    Example:
+
+    .. code-block:: python
+
+        proj = read_atomic_projections('atomic_proj.xml')
+        orbitals = read_projwf_out('projwfc.out')
+        proj = proj_sum(proj, orbitals, 'S-p', 'Ta-d{z2, x2-y2, xy}')
+
     Parameters
     ----------
     proj : ndarray
@@ -888,14 +896,6 @@ def proj_sum(proj, orbitals, *groups, **kwargs):
     -------
     ndarray
         Summed-over atomic projections.
-
-    Examples:
-
-    .. code-block:: python
-
-        proj = read_atomic_projections('atomic_proj.xml')
-        orbitals = read_projwf_out('projwfc.out')
-        proj = proj_sum(proj, orbitals, 'S-p', 'Ta-d{z2, x2-y2, xy}')
     """
     import re
 
