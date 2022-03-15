@@ -41,8 +41,13 @@ class Model(object):
         Tight-binding and mass-spring models.
     Rk, Rg : ndarray
         Lattice vectors of Wigner-Seitz supercells.
+    dk, dg : ndarray
+        Degeneracies of Wigner-Seitz points.
     data : ndarray
         Corresponding electron-phonon matrix elements.
+    node, images : MPI.Intracomm
+        Communicators between processes that share memory or same ``node.rank``
+        if `shared_memory`.
     q : ndarray
         Previously sampled q point, if any.
     gq : ndarray
@@ -200,7 +205,7 @@ class Model(object):
 
         # read lattice vectors within Wigner-Seitz cell:
 
-        self.Rk, ndegen_k, self.Rg, ndegen_g = bravais.read_wigner_file(wigner,
+        self.Rk, self.dk, self.Rg, self.dg = bravais.read_wigner_file(wigner,
             old_ws=old_ws, nat=ph.nat)
 
         # read coupling in Wannier basis from EPW output:
@@ -208,8 +213,8 @@ class Model(object):
 
         shape = len(self.Rg), ph.size, len(self.Rk), el.size, el.size
 
-        node, images, g = MPI.shared_array(shape, dtype=np.complex128,
-            shared_memory=shared_memory)
+        self.node, self.images, self.data = MPI.shared_array(shape,
+            dtype=np.complex128, shared_memory=shared_memory)
 
         if comm.rank == 0:
             with open(epmatwp) as data:
@@ -217,7 +222,7 @@ class Model(object):
                     tmp = np.fromfile(data, dtype=np.complex128,
                         count=np.prod(shape[1:])).reshape(shape[1:])
 
-                    g[irg] = np.swapaxes(tmp, 2, 3)
+                    self.data[irg] = np.swapaxes(tmp, 2, 3)
 
                     # index orders:
                     # EPW (Fortran): a, b, R', x, R
@@ -230,27 +235,7 @@ class Model(object):
             # undo supercell double counting:
 
             if divide_ndegen:
-                for irk in range(len(self.Rk)):
-                    for m in range(el.size):
-                        M = m if ndegen_k.shape[1] > 1 else 0
-                        for n in range(el.size):
-                            N = n if ndegen_k.shape[0] > 1 else 0
-                            if ndegen_k[N, M, irk]:
-                                g[:, :, irk, m, n] /= ndegen_k[N, M, irk]
-                            else:
-                                g[:, :, irk, m, n] = 0.0
-
-                for irg in range(len(self.Rg)):
-                    for x in range(ph.size):
-                        X = x // 3 if ndegen_g.shape[2] > 1 else 0
-                        for m in range(el.size):
-                            M = m if ndegen_g.shape[1] > 1 else 0
-                            for n in range(el.size):
-                                N = n if ndegen_g.shape[0] > 1 else 0
-                                if ndegen_g[N, M, X, irg]:
-                                    g[irg, x, :, m, n] /= ndegen_g[N, M, X, irg]
-                                else:
-                                    g[irg, x, :, m, n] = 0.0
+                self.divide_ndegen(self.data)
 
             # divide by square root of atomic masses:
 
@@ -261,20 +246,48 @@ class Model(object):
 
             if divide_mass:
                 for x in range(ph.size):
-                    g[:, x] /= np.sqrt(ph.M[x // 3])
+                    self.data[:, x] /= np.sqrt(ph.M[x // 3])
 
-        if node.rank == 0:
-            images.Bcast(g.view(dtype=float))
+        if self.node.rank == 0:
+            self.images.Bcast(self.data.view(dtype=float))
 
         comm.Barrier()
-
-        self.data = g
 
         self.gq = np.empty((ph.size, len(self.Rk), el.size, el.size),
             dtype=complex)
 
         if self.ph.lr:
             self.Rk0 = misc.vector_index(self.Rk, (0, 0, 0))
+
+    def divide_ndegen(self, g):
+        """Divide real-space coupling by degeneracy of Wigner-Seitz point.
+
+        Parameters
+        ----------
+        g : ndarray
+            Real-space coupling.
+        """
+        for irk in range(len(self.Rk)):
+            for m in range(self.el.size):
+                M = m if self.dk.shape[1] > 1 else 0
+                for n in range(self.el.size):
+                    N = n if self.dk.shape[0] > 1 else 0
+                    if self.dk[N, M, irk]:
+                        g[:, :, irk, m, n] /= self.dk[N, M, irk]
+                    else:
+                        g[:, :, irk, m, n] = 0.0
+
+        for irg in range(len(self.Rg)):
+            for x in range(self.ph.size):
+                X = x // 3 if self.dg.shape[2] > 1 else 0
+                for m in range(self.el.size):
+                    M = m if self.dg.shape[1] > 1 else 0
+                    for n in range(self.el.size):
+                        N = n if self.dg.shape[0] > 1 else 0
+                        if self.dg[N, M, X, irg]:
+                            g[irg, x, :, m, n] /= self.dg[N, M, X, irg]
+                        else:
+                            g[irg, x, :, m, n] = 0.0
 
     def sample(self, *args, **kwargs):
         """Sample coupling.
@@ -379,14 +392,14 @@ class Model(object):
         elph.Rg = np.array(sorted(set().union(*comm.allgather(Rg))))
         elph.Rk = np.array(sorted(set().union(*comm.allgather(Rk))))
 
-        node, images, elph.data = MPI.shared_array((len(elph.Rg), elph.ph.size,
-            len(elph.Rk), elph.el.size, elph.el.size), dtype=complex,
-            shared_memory=shared_memory)
+        elph.node, self.images, elph.data = MPI.shared_array((len(elph.Rg),
+            elph.ph.size, len(elph.Rk), elph.el.size, elph.el.size),
+            dtype=complex, shared_memory=shared_memory)
 
         elph.gq = np.empty((elph.ph.size, len(elph.Rk),
             elph.el.size, elph.el.size), dtype=complex)
 
-        if node.rank == 0:
+        if elph.node.rank == 0:
             elph.data[...] = 0.0
 
         status = misc.StatusBar(len(elph.Rg) * len(elph.Rk),
@@ -396,17 +409,17 @@ class Model(object):
             for k, (K1, K2, K3) in enumerate(elph.Rk):
                 R = G1, G2, G3, K1, K2, K3
 
-                for rank in range(node.size):
-                    if node.rank == rank:
+                for rank in range(elph.node.size):
+                    if elph.node.rank == rank:
                         if R in const:
                             elph.data[g, :, k] += const[R]
 
-                    node.Barrier()
+                    elph.node.Barrier()
 
                 status.update()
 
-        if node.rank == 0:
-            images.Allreduce(MPI.MPI.IN_PLACE, elph.data.view(dtype=float))
+        if elph.node.rank == 0:
+            self.images.Allreduce(MPI.MPI.IN_PLACE, elph.data.view(dtype=float))
 
         return elph
 
@@ -569,6 +582,50 @@ def transform(g, q, nk, U=None, u=None, broadcast=True, shared_memory=False):
     node.Barrier()
 
     return g
+
+def q2r(elph, nq, nk, g, divide_ndegen=True):
+    """Fourier-transform electron-phonon coupling from reciprocal to real space.
+
+    Parameters
+    ----------
+    elph : object
+        Localized model for electron-phonon coupling.
+    nq, nk : tuple of int
+        Number of q and k points along axes, i.e., shapes of uniform meshes.
+    g : ndarray
+        Electron-phonon coupling on complete uniform q- and k-point meshes.
+    divide_ndegen : bool
+        Divide real-space coupling by degeneracy of Wigner-Seitz point? Only
+        ``True`` yields correct couplings. ``False`` should only be used for
+        debugging.
+    """
+    nq_orig = nq
+    nq = np.ones(3, dtype=int)
+    nq[:len(nq_orig)] = nq_orig
+
+    nk_orig = nk
+    nk = np.ones(3, dtype=int)
+    nk[:len(nk_orig)] = nk_orig
+
+    g = np.reshape(g, (nq[0], nq[1], nq[2], elph.ph.size,
+        nk[0], nk[1], nk[2], elph.el.size, elph.el.size))
+
+    g = np.fft.ifftn(g.conj(), axes=(0, 1, 2, 4, 5, 6)).conj()
+
+    if comm.rank == 0:
+        for irg, (Rg1, Rg2, Rg3) in enumerate(elph.Rg):
+            for irk, (Rk1, Rk2, Rk3) in enumerate(elph.Rk):
+                elph.data[irg, :, irk, :, :] = g[
+                    Rg1 % nq[0], Rg2 % nq[1], Rg3 % nq[2], :,
+                    Rk1 % nk[0], Rk2 % nk[1], Rk3 % nk[2], :, :]
+
+        if divide_ndegen:
+            elph.divide_ndegen(elph.data)
+
+    if elph.node.rank == 0:
+        elph.images.Bcast(elph.data.view(dtype=float))
+
+    comm.Barrier()
 
 def coupling(filename, nQ, nmodes, nk, bands, Q=None, nq=None, offset=0,
         completion=True, complete_k=False, squeeze=False, status=False,
