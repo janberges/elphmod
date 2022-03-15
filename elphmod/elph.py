@@ -118,7 +118,7 @@ class Model(object):
 
             comm.Allreduce(my_g, self.gq)
 
-            if self.ph.lr:
+            if self.ph.lr and np.any(q != 0):
                 g_lr = self.g_lr(q1, q2, q3)
 
                 for a in range(self.el.size):
