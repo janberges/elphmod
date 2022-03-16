@@ -1,5 +1,12 @@
 # Changes
 
+## v0.11
+
+* Symmetrization of Hamiltonian, dynamical matrix, and coupling
+* Long-range dipole and quadrupole terms of dynamical matrix and coupling
+* 1st and 3rd order of diagrammatic expansion of grand potential
+* Derivatives of delta functions
+* Mapping to supercells with "negative volume"
 * Fixed sign in Marzari-Vanderbilt-De Vita-Payne smearing
 * Interatomic distances are stored together with force constants
 
