@@ -643,14 +643,28 @@ def q2r(elph, nq, nk, g, divide_ndegen=True):
     g = np.reshape(g, (nq[0], nq[1], nq[2], elph.ph.size,
         nk[0], nk[1], nk[2], elph.el.size, elph.el.size))
 
-    g = np.fft.ifftn(g.conj(), axes=(0, 1, 2, 4, 5, 6)).conj()
+    M = np.mgrid[:elph.ph.size, :elph.el.size, :elph.el.size].reshape((3, -1)).T
+
+    sizes, bounds = MPI.distribute(len(M), bounds=True)
+
+    my_data = np.empty((sizes[comm.rank],
+        nq[0], nq[1], nq[2], nk[0], nk[1], nk[2]), dtype=complex)
+
+    for i, (nu, m, n) in enumerate(M[bounds[comm.rank]:bounds[comm.rank + 1]]):
+        my_data[i] = np.fft.ifftn(g[:, :, :, nu, :, :, :, m, n].conj()).conj()
 
     if comm.rank == 0:
-        for irg, (Rg1, Rg2, Rg3) in enumerate(elph.Rg):
-            for irk, (Rk1, Rk2, Rk3) in enumerate(elph.Rk):
-                elph.data[irg, :, irk, :, :] = g[
-                    Rg1 % nq[0], Rg2 % nq[1], Rg3 % nq[2], :,
-                    Rk1 % nk[0], Rk2 % nk[1], Rk3 % nk[2], :, :]
+        data = np.empty((elph.ph.size, elph.el.size, elph.el.size,
+            nq[0], nq[1], nq[2], nk[0], nk[1], nk[2]), dtype=complex)
+    else:
+        data = None
+
+    comm.Gatherv(my_data, (data, comm.gather(my_data.size)))
+
+    if comm.rank == 0:
+        for irg, (g1, g2, g3) in enumerate(elph.Rg % nq):
+            for irk, (k1, k2, k3) in enumerate(elph.Rk % nk):
+                elph.data[irg, :, irk] = data[..., g1, g2, g3, k1, k2, k3]
 
         if divide_ndegen:
             elph.divide_ndegen(elph.data)
