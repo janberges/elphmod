@@ -181,71 +181,75 @@ def polarization(e, U, kT=0.025, eps=1e-15, subspace=None,
     Returns
     -------
     function
-        RPA polarization in orbital basis as a function of :math:`q_1, q_2 \in
-        [0, 2 \pi)`.
+        RPA polarization in orbital basis as a function of :math:`q_1, q_2, q_3
+        \in [0, 2 \pi)`.
     """
     cRPA = subspace is not None
 
-    if e.ndim == 2:
-        e = e[:, :, np.newaxis]
+    nk_orig = e.shape[:-1]
+    nk = np.ones(3, dtype=int)
+    nk[:len(nk_orig)] = nk_orig
 
-    if U.ndim == 3:
-        U = U[:, :, :, np.newaxis]
+    nbnd = e.shape[-1]
+    e = np.reshape(e, (nk[0], nk[1], nk[2], nbnd))
+    U = np.reshape(U, (nk[0], nk[1], nk[2], -1, nbnd))
+    # U[k1, k2, k3, a, n] = <k a|k n>
+    norb = U.shape[3]
 
     if cRPA and subspace.shape != e.shape:
         subspace = np.reshape(subspace, e.shape)
-
-    nk, nk, nmodes = e.shape
-    nk, nk, no, nmodes = U.shape # U[k1, k2, a, n] = <k a|k n>
 
     x = e / kT
 
     f = occupations(x)
     d = occupations.delta(x) / (-kT)
 
-    e = np.tile(e, (2, 2, 1))
-    f = np.tile(f, (2, 2, 1))
-    U = np.tile(U, (2, 2, 1, 1))
+    e = np.tile(e, (2, 2, 2, 1))
+    f = np.tile(f, (2, 2, 2, 1))
+    U = np.tile(U, (2, 2, 2, 1, 1))
 
     if cRPA:
-        subspace = np.tile(subspace, (2, 2, 1))
+        subspace = np.tile(subspace, (2, 2, 2, 1))
 
     scale = nk / (2 * np.pi)
-    prefactor = 2.0 / nk ** 2
+    prefactor = 2.0 / nk.prod()
 
-    k1 = slice(0, nk)
-    k2 = k1
+    k1 = slice(0, nk[0])
+    k2 = slice(0, nk[1])
+    k3 = slice(0, nk[2])
 
-    dfde = np.empty((nk, nk))
+    dfde = np.empty(tuple(nk))
 
-    def calculate_polarization(q1=0, q2=0):
-        q1 = int(round(q1 * scale)) % nk
-        q2 = int(round(q2 * scale)) % nk
+    def calculate_polarization(q1=0, q2=0, q3=0):
+        q = np.array([q1, q2, q3])
 
-        kq1 = slice(q1, q1 + nk)
-        kq2 = slice(q2, q2 + nk)
+        q1, q2, q3 = np.round(q * scale).astype(int) % nk
 
-        Pi = np.empty((nmodes, nmodes, no, no), dtype=complex)
+        kq1 = slice(q1, q1 + nk[0])
+        kq2 = slice(q2, q2 + nk[1])
+        kq3 = slice(q3, q3 + nk[2])
 
-        for m in range(nmodes):
-            for n in range(nmodes):
-                df = f[kq1, kq2, m] - f[k1, k2, n]
-                de = e[kq1, kq2, m] - e[k1, k2, n]
+        Pi = np.empty((nbnd, nbnd, norb, norb), dtype=complex)
+
+        for m in range(nbnd):
+            for n in range(nbnd):
+                df = f[kq1, kq2, kq3, m] - f[k1, k2, k3, n]
+                de = e[kq1, kq2, kq3, m] - e[k1, k2, k3, n]
 
                 ok = abs(de) > eps
 
                 dfde[ok] = df[ok] / de[ok]
-                dfde[~ok] = d[:, :, n][~ok]
+                dfde[~ok] = d[..., n][~ok]
 
                 if cRPA:
                     exclude = np.where(
-                        subspace[kq1, kq2, m] & subspace[k1, k2, n])
+                        subspace[kq1, kq2, kq3, m] & subspace[k1, k2, k3, n])
 
                     dfde[exclude] = 0.0
 
-                UU = U[kq1, kq2, :, m].conj() * U[k1, k2, :, n]
+                UU = U[kq1, kq2, kq3, :, m].conj() * U[k1, k2, k3, :, n]
 
-                Pi[m, n] = np.einsum('kla,kl,klb->ab', UU.conj(), dfde, UU)
+                Pi[m, n] = np.einsum('ijka,ijk,ijkb->ab', UU.conj(), dfde, UU)
 
         return prefactor * Pi.sum(axis=(0, 1))
 
@@ -516,9 +520,8 @@ def renormalize_coupling_band(q, e, g, W, U, kT=0.025, eps=1e-15,
 
     Parameters
     ----------
-    q : list of 2-tuples
-        Considered q points defined via crystal coordinates :math:`q_1, q_2 \in
-        [0, 2 \pi)`.
+    q : list of tuple
+        List of q points in crystal coordinates :math:`q_i \in [0, 2 \pi)`.
     e : ndarray
         Electron dispersion on uniform mesh. The Fermi level must be at zero.
     g : ndarray
@@ -547,17 +550,31 @@ def renormalize_coupling_band(q, e, g, W, U, kT=0.025, eps=1e-15,
     --------
     renormalize_coupling_orbital
     """
-    nk, nk, nbnd = e.shape
-    nQ, nmodes, nk, nk, nbnd, nbnd = g.shape
+    nQ = len(q)
+
+    q_orig = q
+    q = np.zeros((nQ, 3))
+    q[:, :len(q_orig[0])] = q_orig
+
+    nk_orig = e.shape[:-1]
+    nk = np.ones(3, dtype=int)
+    nk[:len(nk_orig)] = nk_orig
+
+    nbnd = e.shape[-1]
+    e = np.reshape(e, (nk[0], nk[1], nk[2], nbnd))
+
+    U = np.reshape(U, (nk[0], nk[1], nk[2], -1, nbnd))
+    norb = U.shape[3]
+
+    g = np.reshape(g, (nQ, -1, nk[0], nk[1], nk[2], nbnd, nbnd))
+    nmodes = g.shape[1]
 
     dd = W.ndim == 3
 
     if dd:
-        nQ, norb, norb = W.shape
+        W = np.reshape(W, (nQ, norb, norb))
     else:
-        nQ, norb, norb, norb, norb = W.shape
-
-    nk, nk, norb, nbnd = U.shape
+        W = np.reshape(W, (nQ, norb, norb, norb, norb))
 
     if nbnd_sub is None:
         nbnd_sub = nbnd
@@ -567,59 +584,60 @@ def renormalize_coupling_band(q, e, g, W, U, kT=0.025, eps=1e-15,
     f = occupations(x)
     d = occupations.delta(x) / (-kT)
 
-    e = np.tile(e, (2, 2, 1))
-    f = np.tile(f, (2, 2, 1))
-    U = np.tile(U, (2, 2, 1, 1))
+    e = np.tile(e, (2, 2, 2, 1))
+    f = np.tile(f, (2, 2, 2, 1))
+    U = np.tile(U, (2, 2, 2, 1, 1))
 
     scale = nk / (2 * np.pi)
-    prefactor = 2.0 / nk ** 2
+    prefactor = 2.0 / nk.prod()
 
     sizes, bounds = MPI.distribute(nQ, bounds=True)
 
-    my_g_ = np.empty((sizes[comm.rank], nmodes, nk, nk, nbnd, nbnd),
-        dtype=complex)
+    my_g_ = np.empty((sizes[comm.rank],
+        nmodes, nk[0], nk[1], nk[2], nbnd, nbnd), dtype=complex)
 
-    dfde = np.empty((nk, nk, nbnd_sub, nbnd_sub))
+    dfde = np.empty((nk[0], nk[1], nk[2], nbnd_sub, nbnd_sub))
 
     for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         if status:
             print('Renormalize coupling for q point %d..' % (iq + 1))
 
-        q1 = int(round(q[iq, 0] * scale)) % nk
-        q2 = int(round(q[iq, 1] * scale)) % nk
+        q1, q2, q3 = np.round(q[iq] * scale).astype(int) % nk
 
-        k1 = slice(0, nk)
-        k2 = slice(0, nk)
+        k1 = slice(0, nk[0])
+        k2 = slice(0, nk[1])
+        k3 = slice(0, nk[2])
 
-        kq1 = slice(q1, q1 + nk)
-        kq2 = slice(q2, q2 + nk)
+        kq1 = slice(q1, q1 + nk[0])
+        kq2 = slice(q2, q2 + nk[1])
+        kq3 = slice(q3, q3 + nk[2])
 
         for m in range(nbnd_sub):
             for n in range(nbnd_sub):
-                df = f[kq1, kq2, m] - f[k1, k2, n]
-                de = e[kq1, kq2, m] - e[k1, k2, n]
+                df = f[kq1, kq2, kq3, m] - f[k1, k2, k3, n]
+                de = e[kq1, kq2, kq3, m] - e[k1, k2, k3, n]
 
                 ok = abs(de) > eps
 
-                dfde[:, :, m, n][ok] = df[ok] / de[ok]
-                dfde[:, :, m, n][~ok] = d[:, :, n][~ok]
+                dfde[..., m, n][ok] = df[ok] / de[ok]
+                dfde[..., m, n][~ok] = d[..., n][~ok]
 
         if dd:
-            indices = 'KLcM,KLcN,KLMN,xKLMN->xc'
+            indices = 'IJKcM,IJKcN,IJKMN,xIJKMN->xc'
         else:
-            indices = 'KLcM,KLdN,KLMN,xKLMN->xcd'
+            indices = 'IJKcM,IJKdN,IJKMN,xIJKMN->xcd'
 
         Pig = prefactor * np.einsum(indices,
-            U[kq1, kq2, :, :nbnd_sub], U[k1, k2, :, :nbnd_sub].conj(),
+            U[kq1, kq2, kq3, :, :nbnd_sub], U[k1, k2, k3, :, :nbnd_sub].conj(),
             dfde, g[iq, :, :, :, :nbnd_sub, :nbnd_sub])
 
         if dd:
-            indices = 'klam,klan,ac,xc->xklmn'
+            indices = 'ijkam,ijkan,ac,xc->xijkmn'
         else:
-            indices = 'klam,klbn,abcd,xcd->xklmn'
+            indices = 'ijkam,ijkbn,abcd,xcd->xijkmn'
 
         my_g_[my_iq] = g[iq] + np.einsum(indices,
-            U[kq1, kq2].conj(), U[k1, k2], W[iq], Pig)
+            U[kq1, kq2, kq3].conj(), U[k1, k2, k3], W[iq], Pig)
 
         #   k+q m           K+q M
         #  ___/___ a     c ___/___
@@ -629,9 +647,9 @@ def renormalize_coupling_band(q, e, g, W, U, kT=0.025, eps=1e-15,
         #     /    b     d    /
         #    k n             K N
 
-    g_ = np.empty((nQ, nmodes, nk, nk, nbnd, nbnd), dtype=complex)
+    g_ = np.empty((nQ, nmodes) + nk_orig + (nbnd, nbnd), dtype=complex)
 
-    comm.Allgatherv(my_g_, (g_, sizes * nmodes * nk * nk * nbnd * nbnd))
+    comm.Allgatherv(my_g_, (g_, sizes * nmodes * nk.prod() * nbnd * nbnd))
 
     return g_
 
@@ -653,9 +671,8 @@ def renormalize_coupling_orbital(q, e, g, W, U, **kwargs):
 
     Parameters
     ----------
-    q : list of 2-tuples
-        Considered q points defined via crystal coordinates :math:`q_1, q_2 \in
-        [0, 2 \pi)`.
+    q : list of tuple
+        List of q points in crystal coordinates :math:`q_i \in [0, 2 \pi)`.
     e : ndarray
         Electron dispersion on uniform mesh. The Fermi level must be at zero.
     g : ndarray
@@ -694,17 +711,18 @@ def renormalize_coupling_orbital(q, e, g, W, U, **kwargs):
     #   b     d    /    b'
     #             k n
 
-    G = g.copy()
+    g = g.copy()
 
-    for k1 in range(G.shape[2]):
-        for k2 in range(G.shape[3]):
-            if dd:
-                for a in range(G.shape[4]):
-                    G[:, :, k1, k2, a, a] += dg[:, :, a]
-            else:
-                G[:, :, k1, k2, :, :] += dg
+    while dg.ndim < g.ndim - 1 if dd else g.ndim:
+        dg = dg[:, :, np.newaxis]
 
-    return G
+    if dd:
+        for a in range(dg.shape[-1]):
+            g[..., a, a] += dg[..., a]
+    else:
+        g += dg
+
+    return g
 
 def Pi_g(q, e, g, U, kT=0.025, eps=1e-15,
         occupations=occupations.fermi_dirac, dd=True, status=True):
@@ -712,9 +730,8 @@ def Pi_g(q, e, g, U, kT=0.025, eps=1e-15,
 
     Parameters
     ----------
-    q : list of 2-tuples
-        Considered q points defined via crystal coordinates :math:`q_1, q_2 \in
-        [0, 2 \pi)`.
+    q : list of tuple
+        List of q points in crystal coordinates :math:`q_i \in [0, 2 \pi)`.
     e : ndarray
         Electron dispersion on uniform mesh. The Fermi level must be at zero.
     g : ndarray
@@ -737,21 +754,36 @@ def Pi_g(q, e, g, U, kT=0.025, eps=1e-15,
     ndarray
         (k-independent) product of electron-phonon coupling and Lindhard bubble.
     """
-    nk, nk, nbnd = e.shape
-    nQ, nmodes, nk, nk, norb, norb = g.shape
-    nk, nk, norb, nbnd = U.shape
+    nQ = len(q)
+
+    q_orig = q
+    q = np.zeros((nQ, 3))
+    q[:, :len(q_orig[0])] = q_orig
+
+    nk_orig = e.shape[:-1]
+    nk = np.ones(3, dtype=int)
+    nk[:len(nk_orig)] = nk_orig
+
+    nbnd = e.shape[-1]
+    e = np.reshape(e, (nk[0], nk[1], nk[2], nbnd))
+
+    U = np.reshape(U, (nk[0], nk[1], nk[2], -1, nbnd))
+    norb = U.shape[3]
+
+    g = np.reshape(g, (nQ, -1, nk[0], nk[1], nk[2], norb, norb))
+    nmodes = g.shape[1]
 
     x = e / kT
 
     f = occupations(x)
     d = occupations.delta(x) / (-kT)
 
-    e = np.tile(e, (2, 2, 1))
-    f = np.tile(f, (2, 2, 1))
-    U = np.tile(U, (2, 2, 1, 1))
+    e = np.tile(e, (2, 2, 2, 1))
+    f = np.tile(f, (2, 2, 2, 1))
+    U = np.tile(U, (2, 2, 2, 1, 1))
 
     scale = nk / (2 * np.pi)
-    prefactor = 2.0 / nk ** 2
+    prefactor = 2.0 / nk.prod()
 
     sizes, bounds = MPI.distribute(nQ, bounds=True)
 
@@ -760,39 +792,40 @@ def Pi_g(q, e, g, U, kT=0.025, eps=1e-15,
     else:
         my_Pig = np.empty((sizes[comm.rank], nmodes, norb, norb), dtype=complex)
 
-    dfde = np.empty((nk, nk, nbnd, nbnd))
+    dfde = np.empty((nk[0], nk[1], nk[2], nbnd, nbnd))
 
     for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         if status:
             print('Calculate "g Pi" for q point %d..' % (iq + 1))
 
-        q1 = int(round(q[iq, 0] * scale)) % nk
-        q2 = int(round(q[iq, 1] * scale)) % nk
+        q1, q2, q3 = np.round(q[iq] * scale).astype(int) % nk
 
-        k1 = slice(0, nk)
-        k2 = slice(0, nk)
+        k1 = slice(0, nk[0])
+        k2 = slice(0, nk[1])
+        k3 = slice(0, nk[2])
 
-        kq1 = slice(q1, q1 + nk)
-        kq2 = slice(q2, q2 + nk)
+        kq1 = slice(q1, q1 + nk[0])
+        kq2 = slice(q2, q2 + nk[1])
+        kq3 = slice(q3, q3 + nk[2])
 
         for m in range(nbnd):
             for n in range(nbnd):
-                df = f[kq1, kq2, m] - f[k1, k2, n]
-                de = e[kq1, kq2, m] - e[k1, k2, n]
+                df = f[kq1, kq2, kq3, m] - f[k1, k2, k3, n]
+                de = e[kq1, kq2, kq3, m] - e[k1, k2, k3, n]
 
                 ok = abs(de) > eps
 
-                dfde[:, :, m, n][ok] = df[ok] / de[ok]
-                dfde[:, :, m, n][~ok] = d[:, :, n][~ok]
+                dfde[..., m, n][ok] = df[ok] / de[ok]
+                dfde[..., m, n][~ok] = d[..., n][~ok]
 
         if dd:
-            indices = 'klcm,klcn,klmn,klam,klbn,xklab->xc'
+            indices = 'ijkcm,ijkcn,ijkmn,ijkam,ijkbn,xijkab->xc'
         else:
-            indices = 'klcm,kldn,klmn,klam,klbn,xklab->xcd'
+            indices = 'ijkcm,ijkdn,ijkmn,ijkam,ijkbn,xijkab->xcd'
 
         my_Pig[my_iq] = prefactor * np.einsum(indices,
-            U[kq1, kq2], U[k1, k2].conj(), dfde, U[kq1, kq2].conj(), U[k1, k2],
-            g[iq])
+            U[kq1, kq2, kq3], U[k1, k2, k3].conj(), dfde,
+            U[kq1, kq2, kq3].conj(), U[k1, k2, k3], g[iq])
 
         #     k+q m
         #  c ___/___ a
