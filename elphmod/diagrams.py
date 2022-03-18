@@ -141,7 +141,7 @@ def susceptibility2(e, kT=0.025, nmats=1000, hyb_width=1.0, hyb_height=0.0):
 
     return calculate_susceptibility
 
-def polarization(e, U, kT=0.025, eps=1e-15, subspace=None,
+def polarization(e, U, kT=0.025, eps=1e-10, subspace=None,
         occupations=occupations.fermi_dirac):
     r"""Calculate RPA polarization in orbital basis (density-density).
 
@@ -255,7 +255,7 @@ def polarization(e, U, kT=0.025, eps=1e-15, subspace=None,
 
     return calculate_polarization
 
-def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-15, omega=0.0,
+def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
         occupations=occupations.fermi_dirac, fluctuations=False, Delta=None,
         Delta_diff=False, Delta_occupations=occupations.gauss, Delta_kT=0.025,
         comm=comm):
@@ -502,7 +502,7 @@ def phonon_self_energy2(q, e, g2, kT=0.025, nmats=1000, hyb_width=1.0,
 
     return Pi
 
-def renormalize_coupling_band(q, e, g, W, U, kT=0.025, eps=1e-15,
+def renormalize_coupling_band(q, e, g, W, U, kT=0.025, eps=1e-10,
         occupations=occupations.fermi_dirac, nbnd_sub=None, status=True):
     r"""Calculate renormalized electron-phonon coupling in band basis.
 
@@ -629,7 +629,7 @@ def renormalize_coupling_band(q, e, g, W, U, kT=0.025, eps=1e-15,
 
         Pig = prefactor * np.einsum(indices,
             U[kq1, kq2, kq3, :, :nbnd_sub], U[k1, k2, k3, :, :nbnd_sub].conj(),
-            dfde, g[iq, :, :, :, :nbnd_sub, :nbnd_sub])
+            dfde, g[iq, :, k1, k2, k3, :nbnd_sub, :nbnd_sub])
 
         if dd:
             indices = 'ijkam,ijkan,ac,xc->xijkmn'
@@ -724,7 +724,7 @@ def renormalize_coupling_orbital(q, e, g, W, U, **kwargs):
 
     return g
 
-def Pi_g(q, e, g, U, kT=0.025, eps=1e-15,
+def Pi_g(q, e, g, U, kT=0.025, eps=1e-10,
         occupations=occupations.fermi_dirac, dd=True, status=True):
     """Join electron-phonon coupling and Lindhard bubble in orbital basis.
 
@@ -949,7 +949,7 @@ def double_fermi_surface_average(q, e, g2=None, kT=0.025,
 
     return enum, deno
 
-def first_order(e, g, kT=0.025, eps=1e-14,
+def first_order(e, g, kT=0.025, eps=1e-10,
         occupations=occupations.fermi_dirac, comm=comm):
     r"""Calculate first-order diagram of grand potential.
 
@@ -980,7 +980,7 @@ def first_order(e, g, kT=0.025, eps=1e-14,
 
     return 2.0 / nk.prod() * np.einsum('ijkmm,ijkm', g, occupations(e / kT))
 
-def triangle(q, Q, e, gq, gQ, gqQ, kT=0.025, eps=1e-14,
+def triangle(q, Q, e, gq, gQ, gqQ, kT=0.025, eps=1e-10,
         occupations=occupations.fermi_dirac, comm=comm):
     r"""Calculate triangle diagram (third order of grand potential).
 
