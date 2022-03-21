@@ -89,7 +89,8 @@ class Model(object):
             on all but the first processor.
         comm : MPI communicator
             Group of processors running this function (for parallelization of
-            Fourier transforms).
+            Fourier transforms). Please note: To run this function serially,
+            e.g., when parallelizing over q or k points, use ``elphmod.MPI.I``.
 
         Returns
         -------
