@@ -363,7 +363,7 @@ def dispersion_full_nosym(matrix, size, *args, **kwargs):
 
     return dispersion(matrix, k, *args, **kwargs)
 
-def sample(matrix, k):
+def sample(matrix, k, **kwargs):
     """Calculate Hamiltonian or dynamical matrix for given k points.
 
     Parameters
@@ -372,6 +372,8 @@ def sample(matrix, k):
         Matrix as a function of k.
     k : ndarray
         k points.
+    **kwargs
+        Keyword arguments passed to `matrix`.
     """
     k = np.array(k)
     kshape = k.shape[:-1]
@@ -379,7 +381,7 @@ def sample(matrix, k):
 
     sizes, bounds = MPI.distribute(len(k), bounds=True)
 
-    template = matrix()
+    template = matrix(**kwargs)
 
     my_matrix = np.empty((sizes[comm.rank],) + template.shape,
         dtype=template.dtype)
@@ -387,7 +389,7 @@ def sample(matrix, k):
     status = misc.StatusBar(sizes[comm.rank], title='sample something')
 
     for my_ik, ik in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
-        my_matrix[my_ik] = matrix(*k[ik])
+        my_matrix[my_ik] = matrix(*k[ik], **kwargs)
 
         status.update()
 
