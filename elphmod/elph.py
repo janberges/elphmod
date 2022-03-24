@@ -888,6 +888,60 @@ def read_EPW_output(epw_out, q, nq, nmodes, nk, bands=1, eps=1e-4,
 
     return elph[..., 0, 0] if bands == 1 and squeeze else elph
 
+def read_prtgkk(epw_out, nq, nmodes, nk, nbnd):
+    """Read frequencies and coupling from EPW output (using ``prtgkk``).
+
+    Parameters
+    ----------
+    epw_out : str
+        Name of EPW output file.
+    nq : int
+        Number of q points.
+    nmodes : int
+        Number of phonon modes.
+    nk : int
+        Number of k points.
+    nbnd : int
+        Number of electronic bands.
+
+    Returns
+    -------
+    ndarray
+        Phonon frequencies (meV).
+    ndarray
+        Electron-phonon coupling (meV).
+    """
+    w = np.empty((nq, nmodes))
+    g = np.empty((nq, nmodes, nk, nbnd, nbnd))
+
+    if comm.rank == 0:
+        iq = -1
+
+        with open(epw_out) as lines:
+            for line in lines:
+                if line.startswith('     iq = '):
+                    ik = -1
+                    iq += 1
+
+                if line.startswith('     ik = '):
+                    ik += 1
+
+                    next(lines)
+                    next(lines)
+
+                    for _ in range(nbnd * nbnd * nmodes):
+                        columns = next(lines).split()
+
+                        jbnd, ibnd, nu = [int(i) - 1 for i in columns[:3]]
+
+                        w[iq, nu] = float(columns[-2])
+                        g[iq, nu, ik, ibnd, jbnd] = float(columns[-1])
+
+    comm.Bcast(w)
+    comm.Bcast(g)
+
+    return w, g
+
 def read_patterns(filename, q, nrep, status=True):
     """Read XML files with displacement patterns from QE."""
 
