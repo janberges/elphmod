@@ -187,7 +187,7 @@ class Model(object):
             self.lr2d = lr2d
             self.prepare_long_range()
 
-    def prepare_long_range(self, alpha=1.0, G_max=14.0):
+    def prepare_long_range(self, alpha=1.0, G_max=28.0):
         """Prepare calculation of long-range terms for polar materials.
 
         The following two routines are based on ``rgd_blk`` and ``rgd_blk_epw``
