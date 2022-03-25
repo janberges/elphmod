@@ -659,6 +659,8 @@ def read_atomic_projections(atomic_proj_xml, order=False, from_fermi=True,
     other : bool
         Estimate projection onto "other" orbitals as difference of band weights
         to one?
+    **order_kwargs
+        Keyword arguments passed to :func:`band_order`.
 
     Returns
     -------

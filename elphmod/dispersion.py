@@ -9,7 +9,8 @@ from . import bravais, misc, MPI
 comm = MPI.comm
 
 def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
-        order=False, hermitian=True, broadcast=True, shared_memory=False):
+        order=False, hermitian=True, broadcast=True, shared_memory=False,
+        **order_kwargs):
     """Diagonalize Hamiltonian or dynamical matrix for given k points.
 
     Parameters
@@ -41,6 +42,8 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
         Broadcast result from rank 0 to all processes?
     shared_memory : bool
         Store results in shared memory?
+    **order_kwargs
+        Keyword arguments passed to :func:`band_order`.
 
     Returns
     -------
@@ -161,7 +164,7 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
             dtype=int, **memory)
 
         if comm.rank == 0:
-            o = band_order(v, V)
+            o = band_order(v, V, **order_kwargs)
 
             for point in range(points):
                 v[point] = v[point, o[point]]
@@ -210,7 +213,7 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
 
 def dispersion_full(matrix, size, angle=60, vectors=False, gauge=False,
         rotate=False, order=False, hermitian=True, broadcast=True,
-        shared_memory=False):
+        shared_memory=False, **order_kwargs):
     """Diagonalize Hamiltonian or dynamical matrix on uniform k-point mesh."""
 
     # choose irreducible set of k points:
@@ -273,14 +276,15 @@ def dispersion_full(matrix, size, angle=60, vectors=False, gauge=False,
             o = np.empty((points, bands), dtype=int)
 
             main_path = [n for n in range(points) if on_main_path(n)]
-            main_order = band_order(v[main_path], V[main_path], status=False)
+            main_order = band_order(v[main_path], V[main_path], status=False,
+                **order_kwargs)
 
             status = misc.StatusBar(points, title='disentangle bands')
 
             for n, N in zip(main_path, main_order):
                 side_path = [m for m in range(points) if on_side_path(n, m)]
                 side_order = band_order(v[side_path], V[side_path],
-                    by_mean=False, status=False)
+                    by_mean=False, status=False, **order_kwargs)
 
                 for m, M in zip(side_path, side_order):
                     o[m] = M[N]
@@ -399,9 +403,30 @@ def sample(matrix, k, **kwargs):
 
     return matrix
 
-def band_order(v, V, by_mean=True, dv=float('inf'), status=True):
-    """Sort bands by overlap of eigenvectors at neighboring k points."""
+def band_order(v, V, by_mean=True, dv=float('inf'), eps=1e-10, status=True):
+    """Sort bands by overlap of eigenvectors at neighboring k points.
 
+    Parameters
+    ----------
+    v : ndarray
+        List of eigenvalues.
+    V : ndarray
+        Corresponding list of eigenvectors.
+    by_mean : bool
+        Sort disentangled bands by average frequency?
+    dv : float
+        Maximum allowed difference between consecutive eigenvalues of the same
+        band after disentanglement.
+    eps : float
+        Maximum difference between eigenvalues considered degenerate.
+    status : bool
+        Show progress bar?
+
+    Returns
+    -------
+    ndarray
+        List of band indices that sort eigenstates.
+    """
     points, bands = v.shape
 
     o = np.empty((points, bands), dtype=int)
@@ -426,13 +451,11 @@ def band_order(v, V, by_mean=True, dv=float('inf'), status=True):
         # be orthogonal. Thus k points with degenerate eigenvectors are not used
         # as starting point:
 
-        if np.all(np.absolute(np.diff(v[n])) > 1e-10):
+        if np.all(np.absolute(np.diff(v[n])) > eps):
             n0 = n
 
         if status:
             bar.update()
-
-    # reorder disentangled bands by average frequency:
 
     if by_mean:
         o[:] = o[:, sorted(range(bands), key=lambda i: v[:, o[:, i]].sum())]
