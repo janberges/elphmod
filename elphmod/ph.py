@@ -290,20 +290,24 @@ class Model(object):
             K = G + q1 * self.b[0] + q2 * self.b[1] + q3 * self.b[2]
 
             if self.lr2d:
-                K2K = (K[:2] ** 2).sum()
-
-                if K2K < eps:
-                    KrK = 0.0
-                else:
-                    KrK = np.einsum('i,ij,j', K[:2], self.r_eff, K[:2]) / K2K
-
                 KeK = (K ** 2).sum()
             else:
                 KeK = np.einsum('i,ij,j', K, self.eps, K)
 
             if KeK > eps:
                 factor = self.prefactor * np.exp(-KeK / self.scale)
-                factor /= np.sqrt(KeK) + KrK * KeK if self.lr2d else KeK
+
+                if self.lr2d:
+                    K2K = (K[:2] ** 2).sum()
+
+                    if K2K < eps:
+                        KrK = 0.0
+                    else:
+                        KrK = np.einsum('i,ij,j', K[:2], self.r_eff, K[:2]) / K2K
+
+                    factor /= np.sqrt(KeK) + KrK * KeK
+                else:
+                    factor /= KeK
 
                 exp = np.exp(1j * np.dot(self.r, K))
                 exp = exp[:, np.newaxis]
