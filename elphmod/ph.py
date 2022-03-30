@@ -292,14 +292,9 @@ class Model(object):
                 factor = self.prefactor * np.exp(-KeK / self.scale)
 
                 if self.lr2d:
-                    K2K = (K[:2] ** 2).sum()
+                    KrK = np.einsum('i,ij,j', K[:2], self.r_eff, K[:2])
 
-                    if K2K < eps:
-                        KrK = 0.0
-                    else:
-                        KrK = np.einsum('i,ij,j', K[:2], self.r_eff, K[:2]) / K2K
-
-                    factor /= np.sqrt(KeK) + KrK * KeK
+                    factor /= np.sqrt(KeK) + KrK
                 else:
                     factor /= KeK
 
