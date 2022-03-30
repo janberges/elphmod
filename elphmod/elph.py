@@ -177,8 +177,8 @@ class Model(object):
 
         gq = np.zeros(self.ph.size, dtype=complex)
 
-        for factor, d, q in self.ph.generate_long_range(q1, q2, q3):
-            gq += 1j * factor * (d if self.ph.Q is None else d + q).conj()
+        for val, vec in self.ph.generate_long_range(q1, q2, q3):
+            gq += 1j * val * vec.conj()
 
         return gq
 

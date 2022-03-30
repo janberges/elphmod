@@ -122,12 +122,8 @@ class Model(object):
 
         Dq = self.D0_lr.copy()
 
-        for factor, d, q in self.generate_long_range(q1, q2, q3):
-            Dq += factor * np.outer(d, d.conj())
-
-            if self.Q is not None:
-                Dq += factor * (np.outer(d, q.conj()) + np.outer(q, d.conj())
-                    + np.outer(q, q.conj()))
+        for val, vec in self.generate_long_range(q1, q2, q3):
+            Dq += val * np.outer(vec, vec.conj())
 
         return Dq
 
@@ -280,11 +276,9 @@ class Model(object):
         Yields
         ------
         float
-            Relevant factor.
+            Scalar prefactor.
         ndarray
-            Dipole term.
-        ndarray
-            Quadrupole term.
+            Direction-dependent term.
         """
         for G in self.G:
             K = G + q1 * self.b[0] + q2 * self.b[1] + q3 * self.b[2]
@@ -312,16 +306,12 @@ class Model(object):
                 exp = np.exp(1j * np.dot(self.r, K))
                 exp = exp[:, np.newaxis]
 
-                d = np.dot(K, self.Z) * exp
-                d = d.ravel()
+                dot = np.dot(K, self.Z).astype(complex)
 
                 if self.Q is not None:
-                    q = 0.5j * K.dot(self.Q).dot(K) * exp
-                    q = q.ravel()
-                else:
-                    q = None
+                    dot += 0.5j * K.dot(self.Q).dot(K)
 
-                yield factor, d, q
+                yield factor, (dot * exp).ravel()
 
     def symmetrize(self):
         r"""Symmetrize dynamical matrix.
