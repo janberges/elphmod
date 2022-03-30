@@ -51,6 +51,8 @@ class Model(object):
         Born effective charges if `flfrc` is omitted.
     Q : ndarray
         Quadrupole tensors if `quadrupole_fmt` is omitted.
+    L : float
+        Range-separation parameter for two-dimensional electrostatics.
     divide_mass : bool
         Divide force constants and Born effective charges by atomic masses?
     divide_ndegen : bool
@@ -85,6 +87,8 @@ class Model(object):
         Quadrupole tensors.
     q : ndarray
         Quadrupole tensors divided by square root of atomic masses.
+    L : float
+        Range-separation parameter for two-dimensional electrostatics.
     data : ndarray
         Interatomic force constants divided by atomic masses.
     divide_mass : bool
@@ -163,7 +167,8 @@ class Model(object):
         apply_asr_simple=False, apply_zasr=False, apply_rsr=False, lr=True,
         lr2d=None, phid=np.zeros((1, 1, 1, 1, 1, 3, 3)), amass=np.ones(1),
         at=np.eye(3), tau=np.zeros((1, 3)), atom_order=['X'], epsil=None,
-        zeu=None, Q=None, divide_mass=True, divide_ndegen=True, ifc=None):
+        zeu=None, Q=None, L=None, divide_mass=True, divide_ndegen=True,
+        ifc=None):
 
         if comm.rank == 0:
             if flfrc is None:
@@ -219,6 +224,7 @@ class Model(object):
         model = comm.bcast(model)
 
         self.Q = comm.bcast(Q)
+        self.L = comm.bcast(L)
 
         (self.M, self.a, self.r, self.atom_order, self.eps, self.Z, self.nq,
             self.q0, self.D0) = model[-9:]
@@ -266,6 +272,8 @@ class Model(object):
         * Coupling: Verdi and Giustino, Phys. Rev. Lett. 115, 176401 (2015)
         * 2D case: Sohier, Calandra, and Mauri, Phys. Rev. B 94, 085415 (2016)
         * Quadrupoles: Ponce' et al., Phys. Rev. Research 3, 043022 (2021)
+        * New 2D phonons: Royo and Stengel, Phys. Rev. X 11, 041027 (2021)
+        * New 2D coupling: Ponce' et al., in preparation (2022)
 
         Parameters
         ----------
@@ -280,7 +288,8 @@ class Model(object):
 
         if self.lr2d:
             c = 1 / self.b[2, 2]
-            self.r_eff = (self.eps[:2, :2] - np.eye(2)) * c / 2
+
+            self.r_eff = (self.eps - np.eye(3)) * c / 2
 
             area = np.linalg.norm(np.cross(self.a[0], self.a[1]))
             self.prefactor = 2 * np.pi * e2 / area
@@ -333,13 +342,15 @@ class Model(object):
                 if self.Q is not None:
                     self.q[na] /= np.sqrt(self.M[na])
 
-    def generate_long_range(self, q1=0, q2=0, q3=0, eps=1e-10):
+    def generate_long_range(self, q1=0, q2=0, q3=0, perp=True, eps=1e-10):
         r"""Generate long-range terms.
 
         Parameters
         ----------
         q : ndarray
             q point in reciprocal lattice units :math:`q_i \in [0, 2 \pi)`.
+        perp : bool
+            Yield out-of-plane terms?
         eps : float
             Tolerance for vanishing lattice vectors.
 
@@ -359,14 +370,28 @@ class Model(object):
                 KeK = np.einsum('i,ij,j', K, self.eps, K)
 
             if KeK > eps:
-                factor = self.prefactor * np.exp(-KeK / self.scale)
-
                 if self.lr2d:
-                    KrK = np.einsum('i,ij,j', K[:2], self.r_eff, K[:2])
+                    KrK = np.einsum('i,ij,j', K[:2], self.r_eff[:2, :2], K[:2])
 
-                    factor /= np.sqrt(KeK) + KrK
+                if self.lr2d and self.L is not None:
+                    KrK_perp = self.r_eff[2, 2]
+
+                    K_norm = np.sqrt(KeK)
+                    f = 1 - np.tanh(K_norm * self.L / 2)
+
+                    factor = self.prefactor * f / K_norm
+                    factor /= 1 + f / K_norm * KrK
+
+                    if perp:
+                        factor_perp = -self.prefactor * f / K_norm
+                        factor_perp /= 1 - f * K_norm * KrK_perp
                 else:
-                    factor /= KeK
+                    factor = self.prefactor * np.exp(-KeK / self.scale)
+
+                    if self.lr2d:
+                        factor /= np.sqrt(KeK) + KrK
+                    else:
+                        factor /= KeK
 
                 exp = np.exp(1j * np.dot(self.r, K))
                 exp = exp[:, np.newaxis]
@@ -376,7 +401,18 @@ class Model(object):
                 if self.Q is not None:
                     dot += 0.5j * K.dot(self.q).dot(K)
 
+                    if self.lr2d and self.L is not None:
+                        dot -= 0.5j * K_norm * self.q[..., 2, 2] * K_norm
+
                 yield factor, (dot * exp).ravel()
+
+                if self.lr2d and self.L is not None and perp:
+                    dot_perp = (K_norm * self.z[:, 2, :]).astype(complex)
+
+                    if self.Q is not None:
+                        dot_perp += 1j * K_norm * self.q[..., 2, :2].dot(K[:2])
+
+                    yield factor_perp, (dot_perp * exp).ravel()
 
     def sample_orig(self):
         """Sample dynamical matrix on original q-point mesh."""
