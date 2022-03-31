@@ -513,9 +513,9 @@ class Model(object):
 
         self.data = self.data.reshape((len(self.R), self.size, self.size))
 
-        self.M = [self.M[na] for na in order]
+        self.M = np.array([self.M[na] for na in order])
         self.atom_order = [self.atom_order[na] for na in order]
-        self.r = [self.r[na] for na in order]
+        self.r = np.array([self.r[na] for na in order])
 
     def shift_atoms(self, s, S):
         """Move selected atoms across unit-cell boundary.
