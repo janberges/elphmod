@@ -351,6 +351,60 @@ def volume(a1, a2=None, a3=None):
 
     return abs(np.dot(a1, np.cross(a2, a3)))
 
+def supercell(N1=1, N2=1, N3=1):
+    """Set up supercell.
+
+    Parameters
+    ----------
+    N1, N2, N3 : tuple of int or int, default 1
+        Supercell lattice vectors in units of primitive lattice vectors.
+        Multiples of single primitive vector can be defined via a scalar
+        integer, linear combinations via a 3-tuple of integers.
+
+    Returns
+    -------
+    int
+        Number of unit cells in supercell.
+    tuple of ndarray
+        Integer vectors spanning the supercell.
+    tuple of ndarray
+        Integer vectors spanning the reciprocal supercell.
+    list of tuple
+        Integer positions of the unit cells in the supercell.
+    """
+    if not hasattr(N1, '__len__'): N1 = (N1, 0, 0)
+    if not hasattr(N2, '__len__'): N2 = (0, N2, 0)
+    if not hasattr(N3, '__len__'): N3 = (0, 0, N3)
+
+    N1 = np.array(N1)
+    N2 = np.array(N2)
+    N3 = np.array(N3)
+
+    N = np.dot(N1, np.cross(N2, N3))
+
+    B1 = np.sign(N) * np.cross(N2, N3)
+    B2 = np.sign(N) * np.cross(N3, N1)
+    B3 = np.sign(N) * np.cross(N1, N2)
+
+    N = abs(N)
+
+    cells = []
+
+    if comm.rank == 0:
+        for n1 in range(N):
+            for n2 in range(N):
+                for n3 in range(N):
+                    indices = n1 * N1 + n2 * N2 + n3 * N3
+
+                    if np.all(indices % N == 0):
+                        cells.append(tuple(indices // N))
+
+        assert len(cells) == N
+
+    cells = comm.bcast(cells)
+
+    return N, (N1, N2, N3), (B1, B2, B3), cells
+
 def images(k1, k2, nk, angle=60):
     """Generate symmetry-equivalent k points.
 

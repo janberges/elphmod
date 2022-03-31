@@ -339,8 +339,6 @@ class Model(object):
         ----------
         N1, N2, N3 : tuple of int or int, default 1
             Supercell lattice vectors in units of primitive lattice vectors.
-            Multiples of single primitive vector can be defined via a scalar
-            integer, linear combinations via a 3-tuple of integers.
         shared_memory : bool, default False
             Store mapped coupling in shared memory?
 
@@ -348,28 +346,17 @@ class Model(object):
         -------
         object
             Localized model for electron-phonon coupling for supercell.
+
+        See Also
+        --------
+        bravais.supercell
         """
-        if not hasattr(N1, '__len__'): N1 = (N1, 0, 0)
-        if not hasattr(N2, '__len__'): N2 = (0, N2, 0)
-        if not hasattr(N3, '__len__'): N3 = (0, 0, N3)
-
-        N1 = np.array(N1)
-        N2 = np.array(N2)
-        N3 = np.array(N3)
-
-        N = np.dot(N1, np.cross(N2, N3))
-
-        B1 = np.sign(N) * np.cross(N2, N3)
-        B2 = np.sign(N) * np.cross(N3, N1)
-        B3 = np.sign(N) * np.cross(N1, N2)
-
-        N = abs(N)
-
         elph = Model(
             el=self.el.supercell(N1, N2, N3),
             ph=self.ph.supercell(N1, N2, N3))
 
-        elph.cells = elph.el.cells
+        N, (N1, N2, N3), (B1, B2, B3), elph.cells = bravais.supercell(
+            N1, N2, N3)
 
         Rg = set()
         Rk = set()

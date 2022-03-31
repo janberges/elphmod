@@ -230,46 +230,24 @@ class Model(object):
         ----------
         N1, N2, N3 : tuple of int or int, default 1
             Supercell lattice vectors in units of primitive lattice vectors.
-            Multiples of single primitive vector can be defined via a scalar
-            integer, linear combinations via a 3-tuple of integers.
 
         Returns
         -------
         object
             Tight-binding model for supercell.
+
+        See Also
+        --------
+        bravais.supercell
         """
-        if not hasattr(N1, '__len__'): N1 = (N1, 0, 0)
-        if not hasattr(N2, '__len__'): N2 = (0, N2, 0)
-        if not hasattr(N3, '__len__'): N3 = (0, 0, N3)
-
-        N1 = np.array(N1)
-        N2 = np.array(N2)
-        N3 = np.array(N3)
-
-        N = np.dot(N1, np.cross(N2, N3))
-
-        B1 = np.sign(N) * np.cross(N2, N3)
-        B2 = np.sign(N) * np.cross(N3, N1)
-        B3 = np.sign(N) * np.cross(N1, N2)
-
-        N = abs(N)
-
         el = Model()
+
+        N, (N1, N2, N3), (B1, B2, B3), el.cells = bravais.supercell(N1, N2, N3)
+
         el.size = N * self.size
-        el.cells = []
         el.N = [tuple(N1), tuple(N2), tuple(N3)]
 
         if comm.rank == 0:
-            for n1 in range(N):
-                for n2 in range(N):
-                    for n3 in range(N):
-                        indices = n1 * N1 + n2 * N2 + n3 * N3
-
-                        if np.all(indices % N == 0):
-                            el.cells.append(tuple(indices // N))
-
-            assert len(el.cells) == N
-
             const = dict()
 
             status = misc.StatusBar(len(self.R),
