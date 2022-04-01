@@ -16,14 +16,12 @@ This is a collection of Python modules to handle electron-phonon models:
 * `occupations` - step and delta smearing functions
 * `eliashberg` - parameters for McMillan's formula
 * `plot` - BZ plots, color models, and fatbands
-* `misc` - status bars etc.
+* `misc` - constants, status bars, parsing, etc.
 
 ## Installation
 
-To install the latest version of elphmod in a virtual environment:
+To install the latest version of elphmod:
 
-    python3 -m venv venv
-    source venv/bin/activate
     python3 -m pip install elphmod
 
 Alternatively, to install the latest development version:
