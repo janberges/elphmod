@@ -83,6 +83,8 @@ class Model(object):
         Number of atoms.
     cells : list of tuple of int, optional
         Lattice vectors of unit cells if the model describes a supercell.
+    N : list of tuple of int, optional
+        Primitive vectors of supercell if the model describes a supercell.
     lr : bool
         Compute long-range terms?
     lr2d : bool
