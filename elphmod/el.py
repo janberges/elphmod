@@ -51,6 +51,8 @@ class Model(object):
         Corresponding on-site energies and hoppings.
     size : int
         Number of Wannier functions/bands.
+    nk : tuple of int
+        Shape of original k-point mesh.
     cells : list of tuple of int, optional
         Lattice vectors of unit cells if the model describes a supercell.
     N : list of tuple of int, optional
@@ -105,6 +107,7 @@ class Model(object):
 
         self.R, self.data = read_hrdat(seedname, divide_ndegen)
         self.size = self.data.shape[1]
+        self.nk = None
 
         supvecs = read_wsvecdat('%s_wsvec.dat' % seedname)
 
