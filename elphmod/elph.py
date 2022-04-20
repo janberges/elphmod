@@ -8,8 +8,9 @@
 
 import numpy as np
 
-from . import bravais, misc, MPI
+from . import bravais, dispersion, misc, MPI
 comm = MPI.comm
+info = MPI.info
 
 class Model(object):
     """Localized model for electron-phonon coupling.
@@ -58,8 +59,10 @@ class Model(object):
         Rk-dependent coupling for above q point for possible reuse.
     cells : list of tuple of int, optional
         Lattice vectors of unit cells if the model describes a supercell.
+    g0 : ndarray
+        Coupling on original q and k meshes.
     Rk0 : int
-        Index of electronic lattice vector at origin if `ph.lr`.
+        Index of electronic lattice vector at origin.
     """
     def g(self, q1=0, q2=0, q3=0, k1=0, k2=0, k3=0, elbnd=False, phbnd=False,
             broadcast=True, comm=comm):
@@ -204,6 +207,7 @@ class Model(object):
         self.el = el
         self.ph = ph
         self.q = None
+        self.g0 = None
 
         # read lattice vectors within Wigner-Seitz cell:
 
@@ -267,8 +271,7 @@ class Model(object):
         self.gq = np.empty((ph.size, len(self.Rk), el.size, el.size),
             dtype=complex)
 
-        if self.ph.lr:
-            self.Rk0 = misc.vector_index(self.Rk, (0, 0, 0))
+        self.Rk0 = misc.vector_index(self.Rk, (0, 0, 0))
 
     def divide_ndegen(self, g):
         """Divide real-space coupling by degeneracy of Wigner-Seitz point.
@@ -299,6 +302,42 @@ class Model(object):
                             g[irg, x, :, m, n] /= self.dg[N, M, X, irg]
                         else:
                             g[irg, x, :, m, n] = 0.0
+
+    def sample_orig(self, shared_memory=True):
+        """Sample coupling on original q and k meshes."""
+
+        if self.el.nk is None:
+            info('Set "nk" attribute of electron model first!', error=True)
+
+        if self.ph.q0 is None:
+            self.ph.sample_orig()
+
+        self.g0 = self.sample(q=self.ph.q0, nk=self.el.nk,
+            shared_memory=shared_memory)
+
+    def update_short_range(self, shared_memory=True):
+        """Update short-range part of real-space coupling."""
+
+        if self.g0 is None:
+            info('Run "sample_orig" before "prepare_long_range"!', error=True)
+
+        g = MPI.SharedArray(self.g0.shape, dtype=complex,
+            shared_memory=shared_memory)
+
+        g_lr = dispersion.sample(self.g_lr, self.ph.q0[1:])
+
+        for _ in range(len(self.el.nk)):
+            g_lr = g_lr[..., np.newaxis]
+
+        if comm.rank == 0:
+            g[...] = self.g0[...]
+
+            for a in range(self.el.size):
+                g[1:, ..., a, a] -= g_lr
+
+        g.Bcast()
+
+        q2r(self, self.ph.nq, self.el.nk, g)
 
     def symmetrize(self):
         r"""Symmetrize electron-phonon coupling.

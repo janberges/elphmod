@@ -5,7 +5,7 @@
 
 import numpy as np
 
-from . import bravais, misc, MPI
+from . import bravais, dispersion, misc, MPI
 comm = MPI.comm
 info = MPI.info
 
@@ -88,6 +88,10 @@ class Model(object):
         Number of atoms.
     nq : tuple of int
         Shape of original q-point mesh.
+    q0 : ndarray
+        Original q-point mesh.
+    D0 : ndarray
+        Dynamical matrices on original q-point mesh.
     cells : list of tuple of int, optional
         Lattice vectors of unit cells if the model describes a supercell.
     N : list of tuple of int, optional
@@ -174,6 +178,8 @@ class Model(object):
         model = comm.bcast(model)
 
         self.nq = comm.bcast(model[0].shape[2:5])
+        self.q0 = None
+        self.D0 = None
 
         self.Q = comm.bcast(Q)
 
@@ -328,6 +334,28 @@ class Model(object):
                     dot += 0.5j * K.dot(self.q).dot(K)
 
                 yield factor, (dot * exp).ravel()
+
+    def sample_orig(self):
+        """Sample dynamical matrix on original q-point mesh."""
+
+        self.q0 = [(q1, q2, q3)
+            for q1 in range(self.nq[0])
+            for q2 in range(self.nq[1])
+            for q3 in range(self.nq[2])]
+
+        self.q0 = 2 * np.pi * np.array(self.q0, dtype=float) / self.nq
+
+        self.D0 = dispersion.sample(self.D, self.q0)
+
+    def update_short_range(self):
+        """Update short-range part of interatomic force constants."""
+
+        if self.D0 is None:
+            info('Run "sample_orig" before "prepare_long_range"!', error=True)
+
+        D = self.D0 - dispersion.sample(self.D_lr, self.q0)
+
+        q2r(self, nq=self.nq, D_full=D)
 
     def symmetrize(self):
         r"""Symmetrize dynamical matrix.
