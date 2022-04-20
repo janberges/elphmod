@@ -7,6 +7,7 @@ import numpy as np
 
 from . import bravais, misc, MPI
 comm = MPI.comm
+info = MPI.info
 
 class Model(object):
     """Mass-spring model for the phonons.
@@ -81,6 +82,8 @@ class Model(object):
         Number of displacement directions/bands.
     nat : int
         Number of atoms.
+    nq : tuple of int
+        Shape of original q-point mesh.
     cells : list of tuple of int, optional
         Lattice vectors of unit cells if the model describes a supercell.
     N : list of tuple of int, optional
@@ -141,7 +144,7 @@ class Model(object):
 
     def __init__(self, flfrc=None, quadrupole_fmt=None, apply_asr=False,
         apply_asr_simple=False, apply_zasr=False, apply_rsr=False, lr=True,
-        lr2d=False, phid=np.zeros((1, 1, 1, 1, 1, 3, 3)), amass=np.ones(1),
+        lr2d=None, phid=np.zeros((1, 1, 1, 1, 1, 3, 3)), amass=np.ones(1),
         at=np.eye(3), tau=np.zeros((1, 3)), atom_order=['X'], epsil=None,
         zeu=None, Q=None, divide_mass=True, divide_ndegen=True):
 
@@ -166,6 +169,8 @@ class Model(object):
 
         model = comm.bcast(model)
 
+        self.nq = comm.bcast(model[0].shape[2:5])
+
         self.Q = comm.bcast(Q)
 
         self.M, self.a, self.r, self.atom_order, self.eps, self.Z = model[1:]
@@ -182,7 +187,14 @@ class Model(object):
         self.lr = lr and self.eps is not None and self.Z is not None
 
         if self.lr:
-            self.lr2d = lr2d
+            lr2d_guess = self.nq[2] == 1
+
+            self.lr2d = lr2d_guess if lr2d is None else lr2d
+
+            if self.lr2d != lr2d:
+                info('Warning: System is assumed to be %s-dimensional.'
+                    % ('two' if self.lr2d else 'three'))
+
             self.prepare_long_range()
 
     def prepare_long_range(self, alpha=1.0, G_max=28.0):
