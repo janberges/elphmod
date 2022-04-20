@@ -71,8 +71,12 @@ class Model(object):
     eps : ndarray
         Dielectric tensor.
     Z : ndarray
+        Born effective charges.
+    z : ndarray
         Born effective charges divided by square root of atomic masses.
     Q : ndarray
+        Quadrupole tensors.
+    q : ndarray
         Quadrupole tensors divided by square root of atomic masses.
     data : ndarray
         Interatomic force constants divided by atomic masses.
@@ -259,6 +263,9 @@ class Model(object):
                     if GeG < self.scale * G_max:
                         self.G.append(G)
 
+        self.z = np.copy(self.Z)
+        self.q = np.copy(self.Q)
+
         self.D0_lr = np.zeros((self.size, self.size), dtype=complex)
         Dq0_lr = self.D_lr()
 
@@ -272,10 +279,10 @@ class Model(object):
                 self.D0_lr[3 * na:3 * na + 3, :] /= np.sqrt(self.M[na])
                 self.D0_lr[:, 3 * na:3 * na + 3] /= np.sqrt(self.M[na])
 
-                self.Z[na] /= np.sqrt(self.M[na])
+                self.z[na] /= np.sqrt(self.M[na])
 
                 if self.Q is not None:
-                    self.Q[na] /= np.sqrt(self.M[na])
+                    self.q[na] /= np.sqrt(self.M[na])
 
     def generate_long_range(self, q1=0, q2=0, q3=0, eps=1e-8):
         r"""Generate long-range terms.
@@ -315,10 +322,10 @@ class Model(object):
                 exp = np.exp(1j * np.dot(self.r, K))
                 exp = exp[:, np.newaxis]
 
-                dot = np.dot(K, self.Z).astype(complex)
+                dot = np.dot(K, self.z).astype(complex)
 
                 if self.Q is not None:
-                    dot += 0.5j * K.dot(self.Q).dot(K)
+                    dot += 0.5j * K.dot(self.q).dot(K)
 
                 yield factor, (dot * exp).ravel()
 
