@@ -52,7 +52,7 @@ class Model(object):
     size : int
         Number of Wannier functions/bands.
     nk : tuple of int
-        Shape of original k-point mesh.
+        Guessed shape of original k-point mesh.
     cells : list of tuple of int, optional
         Lattice vectors of unit cells if the model describes a supercell.
     N : list of tuple of int, optional
@@ -107,7 +107,8 @@ class Model(object):
 
         self.R, self.data = read_hrdat(seedname, divide_ndegen)
         self.size = self.data.shape[1]
-        self.nk = None
+        self.nk = tuple(2 * self.R[np.all(self.R[:, x] == 0, axis=1)].max() or 1
+            for x in [[1, 2], [2, 0], [0, 1]])
 
         supvecs = read_wsvecdat('%s_wsvec.dat' % seedname)
 
