@@ -460,8 +460,7 @@ def phonon_self_energy2(q, e, g2, kT=0.025, nmats=1000, hyb_width=1.0,
 
     if (nmats * (2 * nk) ** 2 * np.dtype(complex).itemsize * comm.size
             > GB * 1e9):
-        info('Error: Memory limit (%g GB) exceeded!' % GB)
-        quit()
+        info('Memory limit (%g GB) exceeded!' % GB, error=True)
 
     e = np.tile(e, (2, 2))
 

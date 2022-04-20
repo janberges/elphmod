@@ -1,3 +1,5 @@
+Use info function from MPI module to raise errors and warnings.
+Disentangle two-dimensional bands with spin degree of freedom.
 Check if cDFPT examples work for for nspin = 2 or noncolin = .true.
 Shift Wannier functions more accurately in STM and STS simulations.
 Save el.Model, ph.Model, and elph.Model to files (_hr.dat, flfrc).
