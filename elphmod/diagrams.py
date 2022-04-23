@@ -422,6 +422,46 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
     else:
         return Pi
 
+def phonon_self_energy_fermi_shift(e, g, kT=0.025,
+        occupations=occupations.fermi_dirac):
+    r"""Calculate phonon self-energy arising from change of chemical potential.
+
+    :func:`phonon_self_energy` provides the second derivative of the grand
+    potential. To obtain the second derivative of the free energy, this shift
+    associated with a possible change of the chemical potential has to be added.
+
+    Parameters
+    ----------
+    e : ndarray
+        Electron dispersion on uniform mesh. The Fermi level must be at zero.
+    g : ndarray
+        Electron-phonon coupling for :math:`\vec q = 0`.
+    kT : float
+        Smearing temperature.
+    occupations : function
+        Particle distribution as a function of energy divided by `kT`.
+
+    Returns
+    -------
+    ndarray
+        Phonon self-energy correction.
+    """
+    nk = np.ones(3, dtype=int)
+    nk[:len(e.shape[:-1])] = e.shape[:-1]
+
+    nbnd = e.shape[-1]
+    e = np.reshape(e, (nk[0], nk[1], nk[2], nbnd))
+    g = np.reshape(g, (-1, nk[0], nk[1], nk[2], nbnd, nbnd))
+    nmodes = g.shape[0]
+
+    x = e / kT
+    d = occupations.delta(x) / kT
+
+    dos = d.sum()
+    avg = np.einsum('ijkn,xijknn->x', d, g) / dos
+
+    return 2.0 / nk.prod() * dos * np.outer(avg, avg) # one complex conjugate?
+
 def phonon_self_energy2(q, e, g2, kT=0.025, nmats=1000, hyb_width=1.0,
         hyb_height=0.0, GB=4.0):
     """Calculate phonon self-energy using the Green's functions explicitly.
