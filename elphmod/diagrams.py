@@ -452,7 +452,6 @@ def phonon_self_energy_fermi_shift(e, g, kT=0.025,
     nbnd = e.shape[-1]
     e = np.reshape(e, (nk[0], nk[1], nk[2], nbnd))
     g = np.reshape(g, (-1, nk[0], nk[1], nk[2], nbnd, nbnd))
-    nmodes = g.shape[0]
 
     x = e / kT
     d = occupations.delta(x) / kT
@@ -997,7 +996,7 @@ def first_order(e, g, kT=0.025, eps=1e-10,
     e : ndarray
         Electron dispersion on uniform mesh. The Fermi level must be at zero.
     g : ndarray
-        Electron-phonon coupling for selected q point and phonon mode.
+        Electron-phonon coupling for selected q point.
     kT : float
         Smearing temperature.
     eps : float
@@ -1015,9 +1014,9 @@ def first_order(e, g, kT=0.025, eps=1e-10,
 
     nbnd = e.shape[-1]
     e = np.reshape(e, (nk[0], nk[1], nk[2], nbnd))
-    g = np.reshape(g, (nk[0], nk[1], nk[2], nbnd, nbnd))
+    g = np.reshape(g, (-1, nk[0], nk[1], nk[2], nbnd, nbnd))
 
-    return 2.0 / nk.prod() * np.einsum('ijkmm,ijkm', g, occupations(e / kT))
+    return 2.0 / nk.prod() * np.einsum('xijkmm,ijkm->x', g, occupations(e / kT))
 
 def triangle(q, Q, e, gq, gQ, gqQ, kT=0.025, eps=1e-10,
         occupations=occupations.fermi_dirac, comm=comm):
