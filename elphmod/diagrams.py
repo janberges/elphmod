@@ -351,14 +351,16 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
 
     sizes, bounds = MPI.distribute(nQ, bounds=True, comm=comm)
 
-    my_Pi = np.empty((sizes[comm.rank], nmodes),
+    omega = np.array(omega)
+
+    my_Pi = np.empty((sizes[comm.rank], nmodes) + omega.shape,
         dtype=float if np.isrealobj(g2) and np.isrealobj(omega) else complex)
 
     if fluctuations:
-        my_Pi_k = np.empty((sizes[comm.rank],
-            nmodes, nk[0], nk[1], nk[2], nbnd, nbnd), dtype=my_Pi.dtype)
+        my_Pi_k = np.empty((sizes[comm.rank], nmodes) + omega.shape
+            + (nk[0], nk[1], nk[2], nbnd, nbnd), dtype=my_Pi.dtype)
 
-    dfde = np.empty((nk[0], nk[1], nk[2], nbnd, nbnd),
+    dfde = np.empty(omega.shape + (nk[0], nk[1], nk[2], nbnd, nbnd),
         dtype=float if np.isrealobj(omega) else complex)
 
     k1 = slice(0, nk[0])
@@ -377,8 +379,8 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
                 df = f[k1, k2, k3, n] - f[kq1, kq2, kq3, m]
                 de = e[k1, k2, k3, n] - e[kq1, kq2, kq3, m]
 
-                if omega:
-                    dfde[..., m, n] = df / (de + omega)
+                if np.any(omega != 0):
+                    dfde[..., m, n] = df / np.add.outer(omega, de)
 
                 else:
                     ok = abs(de) > eps
@@ -401,21 +403,21 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
         for nu in range(nmodes):
             Pi_k = g2[iq, nu] * dfde
 
-            my_Pi[my_iq, nu] = prefactor * Pi_k.sum()
+            my_Pi[my_iq, nu] = prefactor * Pi_k.sum(axis=tuple(range(-5, 0)))
 
             if fluctuations:
                 my_Pi_k[my_iq, nu] = 2 * Pi_k
 
-    Pi = np.empty((nQ, nmodes), dtype=my_Pi.dtype)
+    Pi = np.empty((nQ, nmodes) + omega.shape, dtype=my_Pi.dtype)
 
-    comm.Allgatherv(my_Pi, (Pi, sizes * nmodes))
+    comm.Allgatherv(my_Pi, (Pi, sizes * nmodes * omega.size))
 
     if fluctuations:
-        Pi_k = np.empty((nQ, nmodes) + nk_orig + (nbnd, nbnd),
+        Pi_k = np.empty((nQ, nmodes) + omega.shape + nk_orig + (nbnd, nbnd),
             dtype=my_Pi_k.dtype)
 
         comm.Allgatherv(my_Pi_k,
-            (Pi_k, sizes * nmodes * nk.prod() * nbnd * nbnd))
+            (Pi_k, sizes * nmodes * omega.size * nk.prod() * nbnd * nbnd))
 
         return Pi, Pi_k
 
