@@ -1405,3 +1405,35 @@ def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
             os.system('rm %s%d' % (fildyn, iq + 1))
 
     return ph
+
+def spectral_function(D, omega, eta):
+    """Calculate phonon spectral function.
+
+    See Eq. 76 by Monacelli et al., J. Phys. Condens. Matter 33, 363001 (2021).
+
+    Parameters
+    ----------
+    D : ndarray
+        Dynamical matrix. The last three axes belong to the two displacement
+        directions and the frequency argument.
+    omega : ndarray
+        Frequency arguments.
+    eta : float
+        Broadening parameter for all phonon modes.
+
+    Returns
+    -------
+    ndarray
+        Spectral function.
+    """
+    G_inv = D.copy()
+
+    for x in range(D.shape[-2]):
+        G_inv[..., x, x, :] -= (omega + 1j * eta) ** 2
+
+    G = np.empty_like(G_inv)
+
+    for w in range(len(omega)):
+        G[..., w] = np.linalg.inv(G_inv[..., w])
+
+    return omega / np.pi * np.trace(G, axis1=-3, axis2=-2).imag
