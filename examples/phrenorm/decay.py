@@ -10,16 +10,14 @@ import matplotlib.pyplot as plt
 
 pwi = elphmod.bravais.read_pwi('scf.in')
 
-if elphmod.MPI.comm.rank != 0:
-    raise SystemExit
+R1, H1 = elphmod.el.read_decayH('decay.H')
+R2, H2 = elphmod.el.decayH('TaS2', **pwi)
 
-R, H = elphmod.el.read_decayH('decay.H')
-plt.plot(R, H, 'o', color='blue', markersize=10, label='EPW output')
+if elphmod.MPI.comm.rank == 0:
+    plt.plot(R1, H1, 'o', color='blue', markersize=10, label='EPW output')
+    plt.plot(R2, H2, 'o', color='orange', label='calculated from Wannier90 data')
 
-R, H = elphmod.el.decayH('TaS2', **pwi)
-plt.plot(R, H, 'o', color='orange', label='calculated from Wannier90 data')
-
-plt.xlabel = 'Distance (angstrom)'
-plt.ylabel = 'Hopping (eV)'
-plt.legend()
-plt.show()
+    plt.xlabel = 'Distance (angstrom)'
+    plt.ylabel = 'Hopping (eV)'
+    plt.legend()
+    plt.show()
