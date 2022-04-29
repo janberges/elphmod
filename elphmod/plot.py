@@ -711,6 +711,43 @@ def load(filename):
 
         return image
 
+def adjust_pixels(image, points, distances, width, height=None):
+    """Even out image with block-wise equidistant columns.
+
+    Parameters
+    ----------
+    image : ndarray
+        Image with inconsistent horizontal (2nd axis) sampling.
+    points : list of int
+        Indices of columns where equidistant sampling changes.
+    distances : list of float
+        Desired cumulative distance of `points`.
+    width : int
+        Desired width of adjusted image.
+    height : int, optional
+        Desired height of adjusted image. Unchanged by default.
+
+    Returns
+    -------
+    ndarray
+        Adjusted image with overall equidistant columns.
+    """
+    distances = np.array(distances) - distances[0]
+
+    new_points = np.round(distances / distances[-1] * (width - 1)).astype(int)
+
+    if height is None:
+        height = image.shape[0]
+
+    new_image = np.empty((height, width) + image.shape[2:])
+
+    for i in range(1, len(points)):
+        new_image[:, new_points[i - 1]:new_points[i] + 1] = bravais.resize(
+            image[:, points[i - 1]:points[i] + 1], angle=90, periodic=False,
+            shape=(height, new_points[i] - new_points[i - 1] + 1))
+
+    return new_image
+
 def label_pie_with_TeX(stem,
     width=7.0, # total width in cm
 
