@@ -835,7 +835,7 @@ def read_flfrc(flfrc):
                             for m2 in range(nr2):
                                 for m1 in range(nr1):
                                     phid[na1, na2, m1, m2, m3, j1, j2] \
-                                        = float(cells()[-1])
+                                        = float(cells()[3])
 
     # return force constants, masses, and geometry:
 
