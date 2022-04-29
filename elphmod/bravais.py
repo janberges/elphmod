@@ -1205,6 +1205,9 @@ def Fourier_interpolation(data, angle=60, sign=-1, hr_file=None, function=True):
     count = 0
     for n in range(N):
         for m in range(N):
+            if np.all(abs(data[n, m]) < 1e-6):
+                continue
+
             images = to_Voronoi(n, m, N, angle=180 - angle)
 
             # angle transform: from real to reciprocal lattice or vice versa
