@@ -849,7 +849,7 @@ def write_flfrc(flfrc, phid, amass, at, tau, atom_order, epsil=None, zeu=None):
     with open(flfrc, 'w') as data:
         # write crystal structure:
 
-        data.write('%3d %4d %2d' % (len(atm), len(atom_order), 1))
+        data.write('%3d %4d %2d' % (len(atm), len(atom_order), 0))
 
         for celldm in 1, 0, 0, 0, 0, 0:
             data.write(' %10.7f' % celldm)
