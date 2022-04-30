@@ -52,8 +52,8 @@ comm.Gatherv(my_DOS_smear, (DOS_smear, sizes))
 comm.Gatherv(my_DDI_smear, (DDI_smear, sizes))
 
 if comm.rank == 0:
-    plt.xlabel('$k T$ (eV)')
     plt.ylabel('DOS (eV$^{-1}$), DDI (eV$^{-2}$)')
+    plt.xlabel('Smearing $k T$ (eV)')
 
     plt.axhline(DOS_tetra, color='r', linestyle='--', label='DOS (tetra.)')
     plt.axhline(DDI_tetra, color='b', linestyle='--', label='DDI (tetra.)')

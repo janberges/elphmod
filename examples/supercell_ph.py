@@ -44,7 +44,7 @@ if elphmod.MPI.comm.rank == 0:
 
         plt.fill(*fatband, linewidth=0.0, color='firebrick')
 
-    plt.ylabel('phonon energy (meV)')
-    plt.xlabel('wave vector')
+    plt.ylabel('Phonon energy (meV)')
+    plt.xlabel('Wave vector')
     plt.xticks(x[GMKG], 'GMKG')
     plt.show()

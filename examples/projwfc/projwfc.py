@@ -31,9 +31,9 @@ E -= mu
 if elphmod.MPI.comm.rank != 0:
     raise SystemExit
 
+plt.ylabel('Electron energy (eV)')
+plt.xlabel('Wave vector')
 plt.xticks(X[GMKG], 'GMKG')
-plt.xlabel('wave vector')
-plt.ylabel('energy (eV)')
 
 for n in range(eps.shape[1]):
     fatbands = elphmod.plot.compline(x, eps[:, n], width[:, n, :])

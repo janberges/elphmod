@@ -78,9 +78,9 @@ for n in range(len(D)):
             plt.fill_between([x1, x2], w[nu] - 0.5 * width, w[nu] + 0.5 * width,
                 linewidth=0.0, color=colors[int(Z[nu])])
 
+plt.ylabel('Phonon energy (meV)')
 plt.xticks(range(len(D)),
     ['DFPT', 'cDFPT', 'cDFPT+$\Pi$', 'DFPT+ASR', 'DFPT+RSR'])
-plt.ylabel('phonon frequency (meV)')
 
 plt.legend(handles=[pts.Patch(color=color, label=label)
     for color, label in zip(colors, labels)])

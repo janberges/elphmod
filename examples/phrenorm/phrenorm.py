@@ -96,8 +96,8 @@ if comm.rank == 0:
         for fatband, color in zip(fatbands, 'rgb'):
             plt.fill(*fatband, color=color, linewidth=0.0)
 
-    plt.ylabel(r'$\epsilon$ (eV)')
-    plt.xlabel(r'$k$')
+    plt.ylabel('Electron energy (eV)')
+    plt.xlabel('Wave vector')
     plt.xticks(x[GMKG], 'GMKG')
     plt.show()
 
@@ -118,7 +118,7 @@ for method in sorted(ph):
             for fatband, color in zip(fatbands, 'ymk'):
                 plt.fill(*fatband, color=color, linewidth=0.0)
 
-        plt.ylabel(r'$\omega$ (meV)')
-        plt.xlabel(r'$q$')
+        plt.ylabel('Phonon energy (meV)')
+        plt.xlabel('Wave vector')
         plt.xticks(x[GMKG], 'GMKG')
         plt.show()

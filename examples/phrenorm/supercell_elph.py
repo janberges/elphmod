@@ -59,7 +59,7 @@ if elphmod.MPI.comm.rank == 0:
 
         plt.fill(*fatband, linewidth=0.0, color='dodgerblue')
 
-    plt.ylabel('electron-phonon coupling ($\mathrm{eV/\AA}$)')
-    plt.xlabel('wave vector')
+    plt.ylabel('Electron-phonon coupling ($\mathrm{eV/\AA}$)')
+    plt.xlabel('Wave vector')
     plt.xticks(x[GMKG], 'GMKG')
     plt.show()

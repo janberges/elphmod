@@ -75,6 +75,6 @@ if comm.rank == 0:
 
         plt.fill(*fatband, linewidth=0.0, color='dodgerblue')
 
-    plt.xlabel('wave vector ($2 \pi / a$)')
-    plt.ylabel('energy (eV)')
+    plt.ylabel('Electron energy (eV)')
+    plt.xlabel('Wave vector ($2 \pi / a$)')
     plt.show()

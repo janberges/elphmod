@@ -14,7 +14,7 @@ data = 'NbSe2_cDFPT'
 
 nq = 12
 
-q_path, x = elphmod.bravais.GMKG(301)
+q_path, x, GMKG = elphmod.bravais.GMKG(301, corner_indices=True)
 
 colors = ['skyblue', 'dodgerblue', 'orange']
 
@@ -46,6 +46,11 @@ for subplot, D in enumerate([ph.D, ph2.D]):
 
             for j, fatband in enumerate(fatbands):
                 plt.fill(*fatband, color=colors[j], linewidth=0.0)
+
+    if subplot == 0:
+        plt.ylabel('Phonon energy (meV)')
+    plt.xlabel('Wave vector')
+    plt.xticks(x[GMKG], 'GMKG')
 
 if comm.rank == 0:
     plt.show()

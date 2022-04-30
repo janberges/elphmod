@@ -22,8 +22,8 @@ e, order = elphmod.dispersion.dispersion(el.H, k, order=True)
 
 if comm.rank == 0:
     plt.plot(x, e - mu)
-    plt.ylabel(r'$\epsilon$ (eV)')
-    plt.xlabel(r'$k$')
+    plt.ylabel('Electron energy (eV)')
+    plt.xlabel('Wave vector')
     plt.xticks(x[GMKG], 'GMKG')
     plt.show()
 
@@ -31,8 +31,8 @@ w2, order = elphmod.dispersion.dispersion(ph.D, k, order=True)
 
 if comm.rank == 0:
     plt.plot(x, elphmod.ph.sgnsqrt(w2) * elphmod.misc.Ry * 1e3)
-    plt.xlabel(r'$q$')
-    plt.ylabel(r'$\omega$ (meV)')
+    plt.ylabel('Phonon energy (meV)')
+    plt.xlabel('Wave vector')
     plt.xticks(x[GMKG], 'GMKG')
     plt.show()
 

@@ -31,8 +31,8 @@ for seedname, ref, res in ('ws_yes', 'm', 'k--'), ('ws_no', 'g', 'k:'):
                 label=None if n else 'via elphmod (%s)' % seedname)
 
 if comm.rank == 0:
-    plt.xlabel('wave vector')
-    plt.ylabel('energy (eV)')
+    plt.ylabel('Electron energy (eV)')
+    plt.xlabel('Wave vector')
     plt.xticks(x[GMKG], 'GMKG')
     plt.legend()
     plt.show()

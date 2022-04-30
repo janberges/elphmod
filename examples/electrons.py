@@ -45,9 +45,9 @@ info('Plot dispersion and density of states..')
 if comm.rank == 0:
     fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
 
-    ax1.set_ylabel('energy (eV)')
-    ax1.set_xlabel('wave vector')
-    ax2.set_xlabel('density of states (1/eV)')
+    ax1.set_ylabel('Electron energy (eV)')
+    ax1.set_xlabel('Wave vector')
+    ax2.set_xlabel('Density of states (1/eV)')
 
     ax1.set_xticks(x[GMKG])
     ax1.set_xticklabels('GMKG')

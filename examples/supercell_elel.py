@@ -43,6 +43,6 @@ if elphmod.MPI.comm.rank == 0:
         plt.fill(*fatband, linewidth=0.0, color='purple')
 
     plt.ylabel('Coulomb interaction (eV)')
-    plt.xlabel('wave vector')
+    plt.xlabel('Wave vector')
     plt.xticks(x[GMKG], 'GMKG')
     plt.show()

@@ -14,7 +14,7 @@ W = elphmod.dispersion.dispersion(elel.W, q)
 
 if elphmod.MPI.comm.rank == 0:
     plt.plot(x, W)
-    plt.xticks(x[GMKG], 'GMKG')
-    plt.xlabel('wave vector')
     plt.ylabel('Coulomb interaction (eV)')
+    plt.xlabel('Wave vector')
+    plt.xticks(x[GMKG], 'GMKG')
     plt.show()

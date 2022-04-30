@@ -42,7 +42,7 @@ if elphmod.MPI.comm.rank == 0:
 
         plt.fill(*fatband, linewidth=0.0, color='dodgerblue')
 
-    plt.ylabel('electron energy (eV)')
-    plt.xlabel('wave vector')
+    plt.ylabel('Electron energy (eV)')
+    plt.xlabel('Wave vector')
     plt.xticks(x[GMKG], 'GMKG')
     plt.show()

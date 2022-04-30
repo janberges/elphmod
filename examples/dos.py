@@ -28,8 +28,8 @@ for n in range(len(e)):
 DOS_tetra = elphmod.dos.hexDOS(E)(e)
 
 if elphmod.MPI.comm.rank == 0:
-    plt.xlabel('energy (eV)')
-    plt.ylabel('density of states (1/eV)')
+    plt.ylabel('Density of states (1/eV)')
+    plt.xlabel('Electron energy (eV)')
     plt.fill_between(e, 0.0, DOS_tetra, facecolor='lightgray', label='tetra.')
     plt.plot(e, DOS_smear, color='red', label='smear.')
     plt.legend()

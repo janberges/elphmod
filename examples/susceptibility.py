@@ -30,8 +30,8 @@ chi_hyb = elphmod.diagrams.susceptibility2(e,
 chi_hyb_q = elphmod.dispersion.dispersion(chi_hyb, q, broadcast=False)
 
 if elphmod.MPI.comm.rank == 0:
-    plt.xlabel('wave vector')
-    plt.ylabel('susceptibility (1/eV)')
+    plt.ylabel('Susceptibility (1/eV)')
+    plt.xlabel('Wave vector')
     plt.xticks(x[GMKG], 'GMKG')
     plt.plot(x, chi_q, 'o', label='w/o hybridization')
     plt.plot(x, chi_hyb_q, 'o', label='with hybridization')

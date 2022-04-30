@@ -88,8 +88,8 @@ if comm.rank == 0:
     for n in range(el.size):
         plt.plot(x, e[:, n], 'b')
 
-    plt.ylabel(r'$\epsilon$ (eV)')
-    plt.xlabel(r'$k$')
+    plt.ylabel('Electron energy (eV)')
+    plt.xlabel('Wave vector')
     plt.xticks(x[GMKG], 'GMKG')
     plt.show()
 
@@ -107,8 +107,8 @@ for method, label, style in [('dfpt', 'DFPT', 'r'), ('cdfpt', 'cDFPT', 'g'),
             plt.plot(x, w[:, nu], style, label=None if nu else label)
 
 if comm.rank == 0:
-    plt.ylabel(r'$\omega$ (meV)')
-    plt.xlabel(r'$q$')
+    plt.ylabel('Phonon energy (meV)')
+    plt.xlabel('Wave vector')
     plt.xticks(x[GMKG], 'GMKG')
     plt.legend()
     plt.show()

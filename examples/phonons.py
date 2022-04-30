@@ -4,8 +4,8 @@
 # This program is free software under the terms of the GNU GPLv3 or later.
 
 import elphmod
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 comm = elphmod.MPI.comm
 info = elphmod.MPI.info
@@ -47,8 +47,8 @@ if comm.rank == 0:
 
         plt.plot(x0, w0[:, nu], 'k', label='QE' if nu == 0 else None)
 
-    plt.xlabel('wave vector')
-    plt.ylabel('phonon frequency (meV)')
+    plt.ylabel('Phonon energy (meV)')
+    plt.xlabel('Wave vector')
     plt.xticks(x[GMKG], 'GMKG')
     plt.legend()
     plt.show()
