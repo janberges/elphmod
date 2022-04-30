@@ -23,8 +23,8 @@ begin unit_cell_cart
 end unit_cell_cart
 
 begin atoms_frac
-C 0.333333333 0.666666667 0.0
 C 0.666666667 0.333333333 0.0
+C 0.333333333 0.666666667 0.0
 end atoms_frac
 
 mp_grid 6 6 1
