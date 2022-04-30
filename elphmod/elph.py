@@ -24,6 +24,10 @@ class Model(object):
         Tight-binding model for the electrons.
     ph : object
         Mass-spring model for the phonons.
+    Rk, Rg : ndarray
+        Lattice vectors of Wigner-Seitz supercells if `wigner` is omitted.
+    dk, dg : ndarray
+        Degeneracies of Wigner-Seitz points if `wigner` is omitted.
     old_ws : bool
         Use previous definition of Wigner-Seitz cells?
     divide_mass : bool
@@ -194,20 +198,23 @@ class Model(object):
             return self.data[index_q, :, index_k, :, :]
 
     def __init__(self, epmatwp=None, wigner=None, el=None, ph=None,
-            old_ws=False, divide_mass=True, divide_ndegen=True,
-            shared_memory=False):
+            Rk=None, dk=None, Rg=None, dg=None, old_ws=False,
+            divide_mass=True, divide_ndegen=True, shared_memory=False):
 
         self.el = el
         self.ph = ph
         self.q = None
 
-        if epmatwp is None:
-            return
-
         # read lattice vectors within Wigner-Seitz cell:
 
-        self.Rk, self.dk, self.Rg, self.dg = bravais.read_wigner_file(wigner,
-            old_ws=old_ws, nat=ph.nat)
+        if wigner is None:
+            if Rk is None or dk is None or Rg is None or dg is None:
+                return
+
+            self.Rk, self.dk, self.Rg, self.dg = Rk, dk, Rg, dg
+        else:
+            self.Rk, self.dk, self.Rg, self.dg = bravais.read_wigner_file(
+                wigner, old_ws=old_ws, nat=ph.nat)
 
         # read coupling in Wannier basis from EPW output:
         # ('epmatwp' allocated and printed in 'ephwann_shuffle.f90')
@@ -217,8 +224,11 @@ class Model(object):
         self.node, self.images, self.data = MPI.shared_array(shape,
             dtype=np.complex128, shared_memory=shared_memory)
 
+        if epmatwp is None:
+            return
+
         if comm.rank == 0:
-            with open(epmatwp) as data:
+            with open(epmatwp, 'rb') as data:
                 for irg in range(shape[0]):
                     tmp = np.fromfile(data, dtype=np.complex128,
                         count=np.prod(shape[1:])).reshape(shape[1:])
