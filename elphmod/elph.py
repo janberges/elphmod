@@ -679,7 +679,7 @@ def transform(g, q, nk, U=None, u=None, broadcast=True, shared_memory=False):
 
     return g
 
-def q2r(elph, nq, nk, g, divide_ndegen=True):
+def q2r(elph, nq, nk, g, divide_mass=True, divide_ndegen=True):
     """Fourier-transform electron-phonon coupling from reciprocal to real space.
 
     Parameters
@@ -690,6 +690,8 @@ def q2r(elph, nq, nk, g, divide_ndegen=True):
         Number of q and k points along axes, i.e., shapes of uniform meshes.
     g : ndarray
         Electron-phonon coupling on complete uniform q- and k-point meshes.
+    divide_mass : bool
+        Divide electron-phonon coupling by square root of atomic masses?
     divide_ndegen : bool
         Divide real-space coupling by degeneracy of Wigner-Seitz point? Only
         ``True`` yields correct couplings. ``False`` should only be used for
@@ -731,6 +733,10 @@ def q2r(elph, nq, nk, g, divide_ndegen=True):
 
         if divide_ndegen:
             elph.divide_ndegen(elph.data)
+
+        if not divide_mass:
+            for x in range(elph.ph.size):
+                elph.data[:, x] *= np.sqrt(elph.ph.M[x // 3])
 
     if elph.node.rank == 0:
         elph.images.Bcast(elph.data.view(dtype=float))
