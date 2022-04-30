@@ -17,8 +17,6 @@ f = elphmod.occupations.gauss
 nk = 6
 nq = 2
 
-g_eff = False
-
 info('Prepare wave vectors')
 
 q = sorted(elphmod.bravais.irreducibles(nq))
@@ -61,19 +59,6 @@ if comm.rank == 0:
 
     g2 += np.einsum('qijklmn->qjiklmn', g2.conj())
     g2 /= 2
-
-    if g_eff:
-        for iq in range(len(q)):
-            for k1 in range(nk):
-                for k2 in range(nk):
-                    for m in range(nel):
-                        for n in range(nel):
-                            v, V = np.linalg.eigh(g2[iq, :, :, k1, k2, m, n])
-                            numax = np.argmax(abs(v))
-                            g = np.sqrt(v[numax]) * V[:, numax].conj()
-                            g2[iq, :, :, k1, k2, m, n] = np.einsum('i,j->ij',
-                                g.conj(), g)
-
 else:
     g2 = np.empty((len(q), ph['cdfpt'].size, ph['cdfpt'].size,
         nk, nk, nel, nel), dtype=complex)
