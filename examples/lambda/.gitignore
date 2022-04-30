@@ -16,10 +16,9 @@
 *_hr.dat
 *_wsvec.dat
 decay.*
-dyn0
-dyn1
-dyn2
+dyn*
 ifc
+input_tmp.in
 save
 wigner.dat
 work

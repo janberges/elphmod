@@ -20,6 +20,7 @@
 decay.*
 dyn*
 ifc
+input_tmp.in
 save
 wigner.dat
 work
