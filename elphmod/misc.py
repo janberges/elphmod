@@ -16,7 +16,7 @@ verbosity = 1
 # 2: print info messages
 # 3: display status bars
 
-# constants in SI units:
+# exact constants in SI units:
 cSI = 299792458.0 # speed of light (m/s)
 eVSI = 1.602176634e-19 # electronvolt (J)
 hSI = 6.62607015e-34 # Planck constant (J s)
@@ -24,6 +24,9 @@ hbarSI = hSI / (2.0 * np.pi) # reduced Planck constant (J s)
 kBSI = 1.380649e-23 # Boltzmann constant (J/K)
 NA = 6.02214076e23 # Avogadro constant (1/mol)
 uSI = 1e-3 / NA # atomic mass constant (kg)
+
+# approximate constants in SI units:
+meSI = 9.1093837015e-31 # electron mass (kg)
 
 # constants in atomic units (eV, AA):
 Ry = 13.605693122994 # Rydberg energy (eV) [1]
