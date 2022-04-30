@@ -444,6 +444,81 @@ class Model(object):
 
         return elph
 
+    def standardize(self, eps=0.0):
+        """Standardize real-space coupling data.
+
+        - Keep only nonzero coupling matrices.
+        - Sum over repeated lattice vectors.
+        - Sort lattice vectors.
+
+        Parameters
+        ----------
+        eps : float
+            Threshold for "nonzero" matrix elements.
+        """
+        if comm.rank == 0:
+            const = dict()
+
+            for g in range(len(self.Rg)):
+                for k in range(len(self.Rk)):
+                    if np.any(abs(self.data[g, :, k]) > eps):
+                        R = tuple(self.Rg[g]) + tuple(self.Rk[k])
+
+                        if R in const:
+                            const[R] += self.data[g, :, k]
+                        else:
+                            const[R] = self.data[g, :, k]
+
+            Rg = sorted(set(r[:3] for r in const.keys()))
+            Rk = sorted(set(r[3:] for r in const.keys()))
+
+            dg = self.dg[..., [misc.vector_index(self.Rg, G) for G in Rg]]
+            dk = self.dk[..., [misc.vector_index(self.Rk, K) for K in Rk]]
+
+            ng = len(Rg)
+            nk = len(Rk)
+        else:
+            ng = nk = None
+
+        ng = comm.bcast(ng)
+        nk = comm.bcast(nk)
+
+        self.Rg = self.Rg[:ng]
+        self.Rk = self.Rk[:nk]
+
+        self.dg = np.empty_like(self.dg[..., :ng])
+        self.dk = np.empty_like(self.dk[..., :nk])
+
+        self.data = self.data.ravel()
+        self.data = self.data[:ng * self.ph.size * nk * self.el.size ** 2]
+        self.data = self.data.reshape((ng, self.ph.size,
+            nk, self.el.size, self.el.size))
+
+        if comm.rank == 0:
+            self.Rg[...] = Rg
+            self.Rk[...] = Rk
+
+            self.dg[...] = dg
+            self.dk[...] = dk
+
+            self.data[...] = 0.0
+
+            for g in range(len(Rg)):
+                for k in range(len(Rk)):
+                    if Rg[g] + Rk[k] in const:
+                        self.data[g, :, k] = const[Rg[g] + Rk[k]]
+
+        comm.Bcast(self.Rg)
+        comm.Bcast(self.Rk)
+
+        comm.Bcast(self.dg)
+        comm.Bcast(self.dk)
+
+        if self.node.rank == 0:
+            self.images.Bcast(self.data.view(dtype=float))
+
+        comm.Barrier()
+
 def sample(g, q, nk=None, U=None, u=None, broadcast=True, shared_memory=False):
     """Sample coupling for given q and k points and transform to band basis.
 
