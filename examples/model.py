@@ -13,7 +13,7 @@ a = 2.46 # AA
 
 M = 12.011 * u
 
-t = -2.6 # eV
+t = -2.6 / elphmod.misc.Ry
 
 Cx = -365.0 * Npm
 Cy = -245.0 * Npm
@@ -97,6 +97,7 @@ def dynamical_matrix(q1=0, q2=0, q3=0):
 tau0 = r[1] - r[0]
 tau1 = r[0]
 tau2 = -r[1]
+tau = np.linalg.norm(tau0)
 
 def coupling(q1=0, q2=0, q3=0, k1=0, k2=0, k3=0, **ignore):
     """Calculate el.-ph. coupling as in Section S9 of arXiv:2108.01121."""
@@ -110,13 +111,13 @@ def coupling(q1=0, q2=0, q3=0, k1=0, k2=0, k3=0, **ignore):
     d[:3, 1, 0] = tau0 + tau1 * np.exp(-1j * K1) + tau2 * np.exp(1j * K2)
     d[3:] = -d[:3].swapaxes(1, 2).conj()
 
-    return beta * t / (a ** 2 * np.sqrt(M)) * d
+    return beta * t / (tau ** 2 * np.sqrt(M)) * d
 
 H = elphmod.dispersion.sample(hamiltonian, k)
 D = elphmod.dispersion.sample(dynamical_matrix, q)
 g = elphmod.elph.sample(coupling, q.reshape((-1, 3)), nk)
 
-elphmod.bravais.Fourier_interpolation(H, hr_file=hr_dat)
+elphmod.bravais.Fourier_interpolation(H * elphmod.misc.Ry, hr_file=hr_dat)
 el = elphmod.el.Model(hr_dat)
 
 ph = elphmod.ph.Model(phid=np.empty((2, 2) + nq + (3, 3)),
