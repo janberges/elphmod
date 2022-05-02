@@ -7,7 +7,7 @@ from __future__ import division
 
 import numpy as np
 
-from . import MPI, occupations
+from . import misc, MPI, occupations
 comm = MPI.comm
 info = MPI.info
 
@@ -367,6 +367,12 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
     k2 = slice(0, nk[1])
     k3 = slice(0, nk[2])
 
+    dynamic = np.any(omega != 0)
+
+    status = misc.StatusBar(sizes[comm.rank],
+        title='calculate %s phonon self-energy'
+            % ('dynamic' if dynamic else 'static'))
+
     for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         q1, q2, q3 = np.round(q[iq] * scale).astype(int) % nk
 
@@ -379,9 +385,8 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
                 df = f[k1, k2, k3, n] - f[kq1, kq2, kq3, m]
                 de = e[k1, k2, k3, n] - e[kq1, kq2, kq3, m]
 
-                if np.any(omega != 0):
+                if dynamic:
                     dfde[..., m, n] = df / np.add.outer(omega, de)
-
                 else:
                     ok = abs(de) > eps
 
@@ -407,6 +412,8 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
 
             if fluctuations:
                 my_Pi_k[my_iq, nu] = 2 * Pi_k
+
+        status.update()
 
     Pi = np.empty((nQ, nmodes) + omega.shape, dtype=my_Pi.dtype)
 
