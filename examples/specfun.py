@@ -80,12 +80,10 @@ A = elphmod.plot.adjust_pixels(A, GMKG, x[GMKG], width, height)
 A = elphmod.plot.color(A[::-1], minimum=0.0, cmap=cmap).astype(int)
 
 if comm.rank == 0:
-    w0 *= elphmod.misc.Ry * 1e3
-
-    plt.imshow(A, extent=(x.min(), x.max(), w0.min(), w0.max()))
-    plt.axis('auto')
+    plt.imshow(A, extent=(x[0], x[-1], w[0], w[-1]))
     plt.plot(x, w0, 'k')
-    plt.ylabel('Phonon energy (meV)')
+    plt.ylabel('Phonon energy (Ry)')
     plt.xlabel('Wave vector')
     plt.xticks(x[GMKG], 'GMKG')
+    plt.axis('auto')
     plt.show()
