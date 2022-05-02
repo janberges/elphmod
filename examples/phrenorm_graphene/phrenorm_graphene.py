@@ -32,9 +32,7 @@ mu = elphmod.el.read_Fermi_level('scf.out')
 e, U, order = elphmod.dispersion.dispersion_full_nosym(el.H, nk,
     vectors=True, order=True)
 
-nel = 2
-e = e[..., -nel:] - mu
-U = U[..., -nel:]
+e -= mu
 
 info('Prepare phonons')
 
@@ -61,7 +59,7 @@ if comm.rank == 0:
     g2 /= 2
 else:
     g2 = np.empty((len(q), ph['cdfpt'].size, ph['cdfpt'].size,
-        nk, nk, nel, nel), dtype=complex)
+        nk, nk, el.size, el.size), dtype=complex)
 
 comm.Bcast(g2)
 

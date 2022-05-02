@@ -9,14 +9,15 @@ graphene
     use_ws = .true.
     epwwrite = .true.
 
-    nbndsub = 5
+    nbndsub = 2
+
+    efermi_read = .true.
+    fermi_energy = 1.3995
 
     proj(1) = 'C: pz'
-    proj(2) = 'f=0.0,0.5,0.0: s'
-    proj(3) = 'f=0.5,0.5,0.0: s'
-    proj(4) = 'f=0.5,1.0,0.0: s'
 
     dis_froz_max = 4.0
+    dis_froz_min = -1.5
 
     num_iter = 0
     wdata(1) = 'dis_num_iter 10000'
