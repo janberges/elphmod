@@ -1509,16 +1509,25 @@ def spectral_function(D, omega, eta):
     Returns
     -------
     ndarray
-        Spectral function.
+        Spectral function. The first axes belongs to the frequency argument.
     """
-    G_inv = D.copy()
+    sizes, bounds = MPI.distribute(len(omega), bounds=True)
 
-    for x in range(D.shape[-2]):
-        G_inv[..., x, x, :] -= (omega + 1j * eta) ** 2
+    my_A = np.empty((sizes[comm.rank],) + D.shape[:-3])
 
-    G = np.empty_like(G_inv)
+    status = misc.StatusBar(sizes[comm.rank],
+        title='calculate phonon spectral function')
 
-    for w in range(len(omega)):
-        G[..., w] = np.linalg.inv(G_inv[..., w])
+    for my_w, w in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
+        G_inv = D[..., w] - (omega[w] + 1j * eta) ** 2 * np.eye(D.shape[-2])
 
-    return omega / np.pi * np.trace(G, axis1=-3, axis2=-2).imag
+        my_A[my_w] = omega[w] / np.pi * np.trace(np.linalg.inv(G_inv).imag,
+            axis1=-2, axis2=-1)
+
+        status.update()
+
+    A = np.empty((len(omega),) + D.shape[:-3])
+
+    comm.Allgatherv(my_A, (A, comm.allgather(my_A.size)))
+
+    return A

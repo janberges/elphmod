@@ -71,7 +71,7 @@ Piw = elphmod.diagrams.phonon_self_energy(q, e, g2, kT, occupations=f,
 
 Dw = D0[..., None] - Pi0[..., None] + Piw
 
-A = elphmod.ph.spectral_function(Dw, w, eta2).T
+A = elphmod.ph.spectral_function(Dw, w, eta2)
 
 info('Plot results..')
 
