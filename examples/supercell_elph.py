@@ -5,9 +5,10 @@
 
 import elphmod
 import matplotlib.pyplot as plt
+import model
 import numpy as np
 
-nu = 8 # displacement direction
+nu = 1 # displacement direction
 
 N = [ # 3 x 3 (60 degrees instead of 120 degrees)
     [3, 0, 0],
@@ -19,10 +20,10 @@ a = elphmod.bravais.primitives(ibrav=4)
 b = elphmod.bravais.reciprocals(*a)
 A = np.dot(N, a)
 
-el = elphmod.el.Model('TaS2')
-ph = elphmod.ph.Model('dfpt.ifc', apply_asr_simple=True)
-elph = elphmod.elph.Model('dfpt.epmatwp', 'wigner.dat', el, ph,
-    divide_mass=False)
+el = elphmod.el.Model('data/graphene')
+ph = elphmod.ph.Model('data/graphene.ifc')
+elph = elphmod.elph.Model('data/graphene.epmatwp', 'data/graphene.wigner',
+    el, ph, divide_mass=False)
 elph.data *= elphmod.misc.Ry / elphmod.misc.a0
 
 ElPh = elph.supercell(*N, shared_memory=False)
@@ -46,7 +47,7 @@ G, U = elphmod.dispersion.dispersion(G, K, vectors=True)
 w = np.ones(g.shape)
 W = elphmod.dispersion.unfolding_weights(k, ElPh.cells, u, U)
 
-linewidth = 0.1
+linewidth = 0.5
 
 if elphmod.MPI.comm.rank == 0:
     for n in range(g.shape[1]):
