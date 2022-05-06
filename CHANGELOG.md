@@ -1,5 +1,13 @@
 # Changes
 
+## v0.12
+
+* Model input data (electrons, phonons, and coupling) for graphene
+* New function to write interatomic force constants in QE format
+* Calculation of phonon spectral function
+* Calculation of phonon self-energy arising from Fermi-level shift
+* Further functions generalized to 3D
+
 ## v0.11
 
 * Symmetrization of Hamiltonian, dynamical matrix, and coupling

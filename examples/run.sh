@@ -18,7 +18,8 @@ for example in \
     phrenorm \
     phrenorm_3d \
     phrenorm_graphene \
-    projwfc projwfc_3d \
+    projwfc \
+    projwfc_3d \
     simstm \
     simsts \
     wannier
