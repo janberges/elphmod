@@ -103,7 +103,7 @@ class Model(object):
         if seedname.endswith('_hr.dat'):
             seedname = seedname[:-7]
 
-        self.R, self.data = read_hrdat('%s_hr.dat' % seedname, divide_ndegen)
+        self.R, self.data = read_hrdat(seedname, divide_ndegen)
         self.size = self.data.shape[1]
 
         supvecs = read_wsvecdat('%s_wsvec.dat' % seedname)
@@ -444,11 +444,31 @@ class Model(object):
         comm.Bcast(self.R)
         comm.Bcast(self.data)
 
-def read_hrdat(hrdat, divide_ndegen=True):
-    """Read *_hr.dat* file from Wannier90."""
+def read_hrdat(seedname, divide_ndegen=True):
+    """Read *_hr.dat* (or *_tb.dat*) file from Wannier90.
 
+    Parameters
+    ----------
+    seedname : str
+        Common prefix of Wannier90 input and output files.
+    divide_ndegen : bool
+        Divide hopping by degeneracy of Wigner-Seitz point?
+
+    Returns
+    -------
+    ndarray
+        Lattice vectors.
+    ndarray
+        On-site and hopping parameters.
+    """
     if comm.rank == 0:
-        data = open(hrdat)
+        try:
+            data = open('%s_hr.dat' % seedname)
+            tb = False
+        except FileNotFoundError:
+            data = open('%s_tb.dat' % seedname)
+            tb = True
+            print('Warning: Hamiltonian read from "%s_tb.dat"!' % seedname)
 
         # read all words of current line:
 
@@ -462,6 +482,10 @@ def read_hrdat(hrdat, divide_ndegen=True):
         # skip header:
 
         date = cols()[2]
+
+        if tb:
+            for _ in range(3):
+                a = cols()
 
         # get dimensions:
 
@@ -492,13 +516,18 @@ def read_hrdat(hrdat, divide_ndegen=True):
         size = num_wann ** 2
 
         for n in range(nrpts):
+
+            if tb:
+                cells[n] = list(map(int, cols()))
+
             for _ in range(size):
                 tmp = cols()
 
-                const[n, int(tmp[3]) - 1, int(tmp[4]) - 1] = (
-                    float(tmp[5]) + 1j * float(tmp[6])) / ndegen[n]
+                const[n, int(tmp[-4]) - 1, int(tmp[-3]) - 1] = (
+                    float(tmp[-2]) + 1j * float(tmp[-1])) / ndegen[n]
 
-            cells[n] = list(map(int, tmp[:3]))
+            if not tb:
+                cells[n] = list(map(int, tmp[:3]))
 
         data.close()
 
