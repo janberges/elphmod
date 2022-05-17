@@ -755,7 +755,11 @@ def read_flfrc(flfrc):
         # read all words of current line:
 
         def cells():
-            return data.readline().split()
+            for line in data:
+                words = line.split()
+
+                if words:
+                    return words
 
         # read table:
 

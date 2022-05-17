@@ -453,7 +453,11 @@ def read_hrdat(hrdat, divide_ndegen=True):
         # read all words of current line:
 
         def cols():
-            return data.readline().split()
+            for line in data:
+                words = line.split()
+
+                if words:
+                    return words
 
         # skip header:
 
