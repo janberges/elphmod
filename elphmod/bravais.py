@@ -1640,7 +1640,7 @@ def write_pwi(pwi, struct):
 
         data.write('&ELECTRONS\n')
 
-        for key in ['conv_thr', 'mixing_beta']:
+        for key in ['conv_thr', 'diago_full_acc', 'mixing_beta']:
             if key in struct:
                 data.write('%s = %r\n' % (key, struct[key]))
 

@@ -20,6 +20,7 @@
 /
 &ELECTRONS
     conv_thr = 1e-10
+    diago_full_acc = .true.
 /
 
 ATOMIC_SPECIES
