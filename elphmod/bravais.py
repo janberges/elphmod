@@ -1224,7 +1224,7 @@ def Fourier_interpolation(data, angle=60, sign=-1, hr_file=None, function=True):
 
     # write "tight-binding model" to disk:
 
-    if hr_file is not None:
+    if hr_file is not None and comm.rank == 0:
         import time
 
         size = int(np.sqrt(np.prod(data.shape[2:])))
