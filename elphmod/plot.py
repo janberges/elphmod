@@ -543,6 +543,22 @@ def colormap(*args):
     return color
 
 def color(data, cmap=None, minimum=None, maximum=None, comm=comm):
+    """Colorize data using colormap.
+
+    Parameters
+    ----------
+    data : list of list
+        Data on two-dimensional mesh.
+    cmap : function
+        Colormap.
+    minimum, maxmimum : float
+        Data values corresponding to minimum and maximum of color scale.
+
+    Returns
+    -------
+    list of list of list
+        RGB image.
+    """
     if minimum is None:
         minimum = np.nanmin(data)
 
@@ -581,8 +597,22 @@ def color(data, cmap=None, minimum=None, maximum=None, comm=comm):
     return image
 
 def HSV2RGB(H, S=1, V=255):
-    """Transform hue, saturation, value to red, green, blue."""
+    """Transform hue, saturation, value to red, green, blue.
 
+    Parameters
+    ----------
+    H : float
+        Hue with period of 360 (degrees).
+    S : float
+        Saturation between 0 and 1.
+    V : float
+        Value/brightness between 0 and 255.
+
+    Returns
+    -------
+    float, float, float
+        Red, green, and blue values between 0 an 255.
+    """
     if S < 0:
         S = -S
         H += 180
@@ -604,8 +634,22 @@ def HSV2RGB(H, S=1, V=255):
     if h == 5: return V, p, q
 
 def RGB2HSV(R, G, B):
-    """Transform red, green, blue to hue, saturation, value."""
+    """Transform red, green, blue to hue, saturation, value.
 
+    Parameters
+    ----------
+    R, G, B : float
+        Red, green, and blue values between 0 an 255.
+
+    Returns
+    -------
+    float
+        Hue with period of 360 (degrees).
+    float
+        Saturation between 0 and 1.
+    float
+        Value/brightness between 0 and 255.
+    """
     V = max(R, G, B)
     extent = V - min(R, G, B)
 
@@ -623,8 +667,23 @@ def RGB2HSV(R, G, B):
     return H, S, V
 
 def PSV2RGB(P, S=1, V=255):
-    """Set color via phase, shift, and value."""
+    """Set color via phase, shift, and value.
 
+    Parameters
+    ----------
+    P : float
+        Phase between 0 and 2 pi.
+    S : float
+        Phase shift from red to green and from green to blue channel between 0
+        and 2 pi.
+    V : float
+        Value/brightness between 0 and 255.
+
+    Returns
+    -------
+    float, float, float
+        Red, green, and blue values between 0 an 255.
+    """
     return tuple(V * (0.5 - 0.5 * np.cos(P + S * np.array([0, 1, 2]))))
 
 def save(filename, image):
