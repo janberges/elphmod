@@ -12,10 +12,6 @@ comm = elphmod.MPI.comm
 mu = -0.1665
 kT = 0.025
 
-cmap = elphmod.plot.colormap(
-    (0.0, elphmod.plot.Color(0.0, 1, 255, model='PSV')),
-    (1.0, elphmod.plot.Color(5.5, 1, 255, model='PSV')))
-
 q, x, GMKG = elphmod.bravais.GMKG(30, corner_indices=True)
 
 el = elphmod.el.Model('data/NbSe2')
@@ -42,10 +38,9 @@ nq = 36
 
 chi_q = elphmod.dispersion.dispersion_full(chi, nq, broadcast=True)[:, :, 0]
 BZ = elphmod.plot.toBZ(chi_q, outside=np.nan, angle=120, points=300)
-image = elphmod.plot.color(BZ, cmap=cmap).astype(int)
 
 if comm.rank == 0:
-    plt.imshow(image)
+    plt.imshow(BZ, cmap='Greys')
     plt.axis('image')
     plt.axis('off')
     plt.show()

@@ -23,13 +23,6 @@ f = elphmod.occupations.fermi_dirac
 eta1 = 0.001 # broadening of self-energy
 eta2 = 0.0001 # broadening of all modes
 
-cmap = elphmod.plot.colormap(
-    (0.0, elphmod.plot.Color(255, 255, 255)),
-    (0.1, elphmod.plot.Color(0, 0, 255)),
-    (0.2, elphmod.plot.Color(255, 0, 0)),
-    (1.0, elphmod.plot.Color(0, 0, 0)),
-    )
-
 info('Load model Hamiltonian for graphene..')
 
 el = elphmod.el.Model('data/graphene')
@@ -77,10 +70,8 @@ info('Plot results..')
 
 A = elphmod.plot.adjust_pixels(A, GMKG, x[GMKG], width, height)
 
-A = elphmod.plot.color(A[::-1], minimum=0.0, cmap=cmap).astype(int)
-
 if comm.rank == 0:
-    plt.imshow(A, extent=(x[0], x[-1], w[0], w[-1]))
+    plt.imshow(A[::-1], extent=(x[0], x[-1], w[0], w[-1]), cmap='ocean_r')
     plt.plot(x, w0, 'k')
     plt.ylabel('Phonon energy (Ry)')
     plt.xlabel('Wave vector')

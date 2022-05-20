@@ -5,6 +5,7 @@
 
 import elphmod
 import numpy as np
+import matplotlib.pyplot as plt
 
 comm = elphmod.MPI.comm
 info = elphmod.MPI.info
@@ -12,11 +13,6 @@ info = elphmod.MPI.info
 mu = -0.1665
 nk = 120
 points = 500
-
-cmap = elphmod.plot.colormap(
-    (0, elphmod.plot.Color(255, 255, 255)),
-    (1, elphmod.plot.Color(0, 0, 0)),
-    )
 
 el = elphmod.el.Model('data/NbSe2')
 
@@ -28,10 +24,10 @@ kxmax, kymax, kx, ky, e = elphmod.plot.toBZ(e,
 dedky, dedkx = np.gradient(e, ky, kx)
 dedk = np.sqrt(dedkx ** 2 + dedky ** 2)
 
-image = elphmod.plot.color(dedk, cmap)
-
 if comm.rank == 0:
-    elphmod.plot.save('fermi_velocity.png', image)
+    plt.imshow(dedk, cmap='Greys')
+    plt.axis('off')
+    plt.show()
 
 info('Min./max./mean number of k-points for meV resolution:')
 

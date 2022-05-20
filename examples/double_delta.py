@@ -17,10 +17,6 @@ nq = nk
 
 kT = 0.01
 
-cmap = elphmod.plot.colormap(
-    (0.0, elphmod.plot.Color(0.0, 1, 255, model='PSV')),
-    (1.0, elphmod.plot.Color(5.5, 1, 255, model='PSV')))
-
 el = elphmod.el.Model('data/NbSe2')
 
 ekk = elphmod.dispersion.dispersion_full(el.H, nk)[:, :, :1] - mu
@@ -58,10 +54,8 @@ if comm.rank == 0:
 for n in range(2):
     BZ = elphmod.plot.toBZ(mesh[..., n], outside=np.nan, points=300)
 
-    image = elphmod.plot.color(BZ, cmap=cmap, maximum=5.0).astype(int)
-
     if comm.rank == 0:
-        axes[n].imshow(image)
+        axes[n].imshow(BZ, cmap='gist_stern')
         axes[n].axis('image')
         axes[n].axis('off')
 

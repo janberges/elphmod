@@ -117,20 +117,12 @@ comm.Bcast(weight)
 
 info('Plot scanning-tunnelling image..')
 
-AFMhot = elphmod.plot.colormap( # Gnuplot
-    (0.00, elphmod.plot.Color(0, 0, 0)),
-    (0.25, elphmod.plot.Color(128, 0, 0)),
-    (0.50, elphmod.plot.Color(255, 128, 0)),
-    (0.75, elphmod.plot.Color(255, 255, 128)),
-    (1.00, elphmod.plot.Color(255, 255, 255)),
-    )
-
 plot = elphmod.plot.plot(STM, angle=120)
 
-image = elphmod.plot.color(plot, AFMhot)
-
 if comm.rank == 0:
-    elphmod.plot.save('simstm.png', image)
+    plt.imshow(plot, cmap='afmhot')
+    plt.axis('off')
+    plt.show()
 
 info('Calculate scanning-tunnelling spectrum..')
 
