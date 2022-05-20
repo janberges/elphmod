@@ -445,7 +445,7 @@ class Color(object):
             return '#%02x%02x%02x' % RGB
 
     def __repr__(self):
-        return 'Color(%g, %g, %g, %s)' % (self.A, self.B, self.C, self.model)
+        return "Color(%g, %g, %g, '%s')" % (self.A, self.B, self.C, self.model)
 
     def __add__(i, u):
         if i.model == u.model:
