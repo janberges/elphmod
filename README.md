@@ -15,7 +15,7 @@ This is a collection of Python modules to handle electron-phonon models:
 * `diagrams` - susceptibilities, self-energies, etc.
 * `occupations` - step and delta smearing functions
 * `eliashberg` - parameters for McMillan's formula
-* `plot` - BZ plots, color models, and fatbands
+* `plot` - BZ plots, fatbands, etc.
 * `misc` - constants, status bars, parsing, etc.
 
 ## Installation
