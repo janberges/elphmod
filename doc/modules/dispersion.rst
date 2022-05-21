@@ -1,5 +1,5 @@
-dispersion: diagonalization on paths and meshes
-===============================================
+Dispersion
+==========
 
 .. automodule:: elphmod.dispersion
    :members:

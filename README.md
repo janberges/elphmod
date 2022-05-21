@@ -1,8 +1,8 @@
 [![DOI](https://zenodo.org/badge/330427606.svg)](https://zenodo.org/badge/latestdoi/330427606)
 
-![elphmod logo](https://raw.githubusercontent.com/janberges/elphmod/master/logo/logo.svg)
+# Python modules for electron-phonon models
 
-This is a collection of Python modules to handle electron-phonon models:
+![elphmod logo](https://raw.githubusercontent.com/janberges/elphmod/master/logo/logo.svg)
 
 * `el` - tight-binding models from Wannier90
 * `ph` - mass-spring models from Quantum ESPRESSO

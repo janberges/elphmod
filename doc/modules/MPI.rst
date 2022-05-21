@@ -1,5 +1,5 @@
-MPI: work distribution and shared memory
-========================================
+MPI
+===
 
 .. automodule:: elphmod.MPI
    :members:

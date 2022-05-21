@@ -2,7 +2,7 @@
 .. mdinclude:: ../README.md
 
 Modules
-=======
+-------
 
 .. toctree::
    :maxdepth: 2
@@ -22,7 +22,7 @@ Modules
    modules/misc
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`search`

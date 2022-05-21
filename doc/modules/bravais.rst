@@ -1,5 +1,5 @@
-bravais: lattices, symmetries, and interpolation
-================================================
+Bravais
+=======
 
 .. automodule:: elphmod.bravais
    :members:

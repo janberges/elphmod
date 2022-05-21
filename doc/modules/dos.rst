@@ -1,5 +1,5 @@
-dos: 2D tetrahedron methods
-===========================
+DOS
+===
 
 .. automodule:: elphmod.dos
    :members:

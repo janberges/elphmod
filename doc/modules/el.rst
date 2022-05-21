@@ -1,5 +1,5 @@
-el: tight-binding models from Wannier90
-=======================================
+Electron
+========
 
 .. automodule:: elphmod.el
    :members:

@@ -1,5 +1,5 @@
-occupations: step and delta smearing functions
-==============================================
+Occupations
+===========
 
 .. automodule:: elphmod.occupations
    :members:

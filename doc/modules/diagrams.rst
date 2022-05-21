@@ -1,5 +1,5 @@
-diagrams: susceptibilities, self-energies, etc.
-===============================================
+Diagrams
+========
 
 .. automodule:: elphmod.diagrams
    :members:

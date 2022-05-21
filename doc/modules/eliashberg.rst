@@ -1,5 +1,5 @@
-eliashberg: parameters for McMillan's formula
-=============================================
+Eliashberg
+==========
 
 .. automodule:: elphmod.eliashberg
    :members:

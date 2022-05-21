@@ -1,5 +1,5 @@
-plot: BZ plots, color models, and fatbands
-==========================================
+Plot
+====
 
 .. automodule:: elphmod.plot
    :members:

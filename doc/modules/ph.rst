@@ -1,5 +1,5 @@
-ph: mass-spring models from Quantum ESPRESSO
-============================================
+Phonon
+======
 
 .. automodule:: elphmod.ph
    :members:

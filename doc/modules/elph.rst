@@ -1,5 +1,5 @@
-elph: electron-phonon coupling from EPW
-=======================================
+Electron--phonon
+================
 
 .. automodule:: elphmod.elph
    :members:

@@ -1,5 +1,5 @@
-elel: Coulomb interaction from VASP
-===================================
+Electron--electron
+==================
 
 .. automodule:: elphmod.elel
    :members:

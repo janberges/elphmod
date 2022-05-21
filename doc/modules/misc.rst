@@ -1,5 +1,5 @@
-misc: status bars etc.
-======================
+Miscellaneous
+=============
 
 .. automodule:: elphmod.misc
    :members:
