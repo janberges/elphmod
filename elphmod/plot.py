@@ -74,7 +74,7 @@ def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
 
 def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
         resolution=500, interpolation=bravais.linear_interpolation, angle=60,
-        outside=0.0, broadcast=True):
+        outside=0.0, outlines=False, broadcast=True):
     """Show f(q1, q2, k1, k2) on "Brillouin zone made of Brillouin zones"."""
 
     nQ, nk, nk = mesh.shape
@@ -141,58 +141,39 @@ def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
     if broadcast:
         comm.Bcast(image)
 
-    return image
+    if outlines:
+        h = 1.0 / np.sqrt(3)
+        a = 1.0 / 3
 
-def double_plot_tex(texfile, imgfile, q, nq, angle=60,
-        qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8, scale=10.0):
-    """Draw outlines of mini Brillouin zones.
+        b1, b2 = bravais.reciprocals(a1, a2)
 
-    See Also
-    --------
-    double_plot
-    """
-    q = np.array(q, dtype=float) / nq
-
-    h = 1.0 / (nq * np.sqrt(3))
-    a = 1.0 / (nq * 3)
-
-    a1, a2 = bravais.translations(180 - angle)
-    b1, b2 = bravais.reciprocals(a1, a2)
-
-    with open(texfile, 'w') as TeX:
-        TeX.write(r'''\documentclass{{article}}
-\usepackage[paperwidth={width}cm, paperheight={height}cm, margin=0cm]{{geometry}}
-\usepackage{{tikz}}
-\setlength\parindent{{0pt}}
-\begin{{document}}
-\begin{{tikzpicture}}[x={scale}cm, y={scale}cm]
-    \useasboundingbox ({qxmin}, {qymin}) rectangle ({qxmax}, {qymax});
-    \node [anchor=south west, inner sep=0, outer sep=0] at ({qxmin}, {qymin})
-        {{\includegraphics[width={width}cm, height={height}cm]{{{imgfile}}}}};
-'''.format(width=scale * (qxmax - qxmin), height=scale * (qymax - qymin),
-            scale=scale, qxmin=qxmin, qxmax=qxmax, qymin=qymin, qymax=qymax,
-            imgfile=imgfile))
+        miniBZ = []
 
         for q1, q2 in q:
             qx, qy = q1 * b1 + q2 * b2
 
-            points = [
-                (qx + a * 2, qy),
-                (qx + a, qy + h),
-                (qx - a, qy + h),
-                (qx - a * 2, qy),
-                (qx - a, qy - h),
-                (qx + a, qy - h),
-                ]
+            if angle == 90:
+                miniBZ.append([
+                    (qx + 0.5, qy - 0.5),
+                    (qx + 0.5, qy + 0.5),
+                    (qx - 0.5, qy + 0.5),
+                    (qx - 0.5, qy - 0.5),
+                    (qx + 0.5, qy - 0.5),
+                    ])
+            else:
+                miniBZ.append([
+                    (qx + a * 2, qy),
+                    (qx + a, qy + h),
+                    (qx - a, qy + h),
+                    (qx - a * 2, qy),
+                    (qx - a, qy - h),
+                    (qx + a, qy - h),
+                    (qx + a * 2, qy),
+                    ])
 
-            points = ' -- '.join('(%.4f, %.4f)' % point for point in points)
+        return image, np.array(miniBZ) / nq
 
-            TeX.write(r'''\draw [white, line width=4pt] {points} -- cycle;
-'''.format(points=points))
-
-        TeX.write(r'''\end{tikzpicture}%
-\vspace*{-1cm}%
-\end{document}''')
+    return image
 
 def colorbar(image, left=0.02, bottom=0.02, width=0.03, height=0.30,
         minimum=None, maximum=None):
