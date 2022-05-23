@@ -1,5 +1,11 @@
 # Changes
 
+## v0.13
+
+* Phonon self-energy as a function of *separate* vertices
+* Decluttered plot module (some functions now in StoryLines package)
+* Support for `_tb.dat` files (tight-binding data from Wannier90)
+
 ## v0.12
 
 * Model input data (electrons, phonons, and coupling) for graphene
