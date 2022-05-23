@@ -56,24 +56,12 @@ for method in sorted(ph):
     elph = elphmod.elph.Model('%s.epmatwp' % method, 'wigner.dat',
         el, ph['cdfpt'])
 
-    g[method] = elph.sample(q=q_flat, U=U, u=None, broadcast=False)
-
-if comm.rank == 0:
-    g2 = np.einsum('qixyzmn,qjxyzmn->qijxyzmn', g['cdfpt'].conj(), g['dfpt'])
-    g2 *= elphmod.misc.Ry ** 3
-
-    g2 += np.einsum('qijxyzmn->qjixyzmn', g2.conj())
-    g2 /= 2
-
-else:
-    g2 = np.empty((len(q_flat), ph['cdfpt'].size, ph['cdfpt'].size,
-        nk, nk, nk, el.size, el.size), dtype=complex)
-
-comm.Bcast(g2)
+    g[method] = elph.sample(q=q_flat, U=U, u=None) * elphmod.misc.Ry ** 1.5
 
 info('Calculate phonon self-energy')
 
-Pi = elphmod.diagrams.phonon_self_energy(q_flat, e, g2, kT=kT, occupations=f)
+Pi = elphmod.diagrams.phonon_self_energy(q_flat, e, g=g['cdfpt'], G=g['dfpt'],
+    kT=kT, occupations=f)
 Pi = np.reshape(Pi, (nq, nq, nq, ph['cdfpt'].size, ph['cdfpt'].size))
 Pi /= elphmod.misc.Ry ** 2
 

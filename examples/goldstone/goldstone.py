@@ -33,14 +33,9 @@ ph['dfpt_asr'].data *= elphmod.misc.Ry ** 2
 ph['dfpt_rsr'] = elphmod.ph.Model('dfpt.ifc', apply_rsr=True)
 ph['dfpt_rsr'].data *= elphmod.misc.Ry ** 2
 
-d2 = np.einsum('qiklmn,qjklmn->qijklmn', d['cdfpt'].conj(), d['dfpt'])
-d2 += np.einsum('qijklmn->qjiklmn', d2.conj())
-d2 /= 2
-
 q = np.array([[0, 0]])
-Pi = elphmod.diagrams.phonon_self_energy(q, e, d2,
-    occupations=elphmod.occupations.heaviside)
-Pi = Pi.reshape((nph, nph))
+Pi = elphmod.diagrams.phonon_self_energy(q, e, g=d['cdfpt'], G=d['dfpt'],
+    occupations=elphmod.occupations.heaviside).reshape((nph, nph))
 
 if elphmod.MPI.comm.rank != 0:
     raise SystemExit

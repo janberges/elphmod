@@ -42,25 +42,16 @@ e, U = elphmod.dispersion.dispersion_full_nosym(el.H, nk, vectors=True)
 D0 = elphmod.dispersion.sample(ph.D, q)
 w0 = elphmod.ph.sgnsqrt(np.linalg.eigvalsh(D0))
 
-g = elphmod.elph.sample(elph.g, q, nk, U, broadcast=False)
-
-g2 = elphmod.MPI.SharedArray((len(q), ph.size, ph.size,
-    nk, nk, el.size, el.size), dtype=complex)
-
-if comm.rank == 0:
-    g2[...] = np.einsum('qiklmn,qjklmn->qijklmn', g.conj(), g)
-
-g2.Bcast()
+g = elph.sample(q=q, U=U)
 
 info('Calculate retarded displacement-displacement correlation function..')
 
 w = np.linspace(w0.min(), w0.max(), len(q))
 
-Pi0 = elphmod.diagrams.phonon_self_energy(q, e, g2, kT,
-    occupations=f).reshape((len(q), ph.size, ph.size))
+Pi0 = elphmod.diagrams.phonon_self_energy(q, e, g=g, kT=kT, occupations=f)
 
-Piw = elphmod.diagrams.phonon_self_energy(q, e, g2, kT, occupations=f,
-    omega=w + 1j * eta1).reshape((len(q), ph.size, ph.size, len(w)))
+Piw = elphmod.diagrams.phonon_self_energy(q, e, g=g, kT=kT, occupations=f,
+    omega=w + 1j * eta1)
 
 Dw = D0[..., None] - Pi0[..., None] + Piw
 

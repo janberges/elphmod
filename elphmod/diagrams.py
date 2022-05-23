@@ -258,7 +258,7 @@ def polarization(e, U, kT=0.025, eps=1e-10, subspace=None,
 def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
         occupations=occupations.fermi_dirac, fluctuations=False, Delta=None,
         Delta_diff=False, Delta_occupations=occupations.gauss, Delta_kT=0.025,
-        comm=comm):
+        g=None, G=None, symmetrize=True, comm=comm):
     r"""Calculate phonon self-energy.
 
     .. math::
@@ -295,6 +295,14 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
         Smoothened Heaviside function to realize excluded energy window.
     Delta_kT : float
         Temperature to smoothen Heaviside function.
+    g : ndarray
+        Electron-phonon coupling on one side of the bubble. If given, `g2` is
+        ignored.
+    G : ndarray
+        Electron-phonon coupling on the other side of the bubble. If absent, `g`
+        is used.
+    symmetrize : bool
+        Symmetrize phonon self-energy with respect to swapping `g` and `G`?
 
     Returns
     -------
@@ -314,13 +322,22 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
     nbnd = e.shape[-1]
     e = np.reshape(e, (nk[0], nk[1], nk[2], nbnd))
 
-    if g2 is None:
-        g2 = np.ones((nQ, 1))
+    if g is None:
+        if g2 is None:
+            g2 = np.ones((nQ, 1))
+        else:
+            g2 = np.reshape(g2, (nQ, -1, nk[0], nk[1], nk[2], nbnd, nbnd))
 
+        phshape = g2.shape[1:2]
     else:
-        g2 = np.reshape(g2, (nQ, -1, nk[0], nk[1], nk[2], nbnd, nbnd))
+        g = np.reshape(g, (nQ, -1, nk[0], nk[1], nk[2], nbnd, nbnd))
 
-    nmodes = g2.shape[1]
+        if G is None:
+            G = g
+        else:
+            G = np.reshape(G, g.shape)
+
+        phshape = g.shape[1:2] * 2
 
     x = e / kT
 
@@ -353,11 +370,12 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
 
     omega = np.array(omega)
 
-    my_Pi = np.empty((sizes[comm.rank], nmodes) + omega.shape,
-        dtype=float if np.isrealobj(g2) and np.isrealobj(omega) else complex)
+    my_Pi = np.empty((sizes[comm.rank],) + phshape + omega.shape,
+        dtype=float if np.isrealobj(omega) and np.isrealobj(g2)
+            and np.isrealobj(g) and np.isrealobj(G) else complex)
 
     if fluctuations:
-        my_Pi_k = np.empty((sizes[comm.rank], nmodes) + omega.shape
+        my_Pi_k = np.empty((sizes[comm.rank],) + phshape + omega.shape
             + (nk[0], nk[1], nk[2], nbnd, nbnd), dtype=my_Pi.dtype)
 
     dfde = np.empty(omega.shape + (nk[0], nk[1], nk[2], nbnd, nbnd),
@@ -405,29 +423,36 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
 
                     dfde[..., m, n] *= envelope
 
-        for nu in range(nmodes):
-            Pi_k = g2[iq, nu] * dfde
+        for nu in np.ndindex(*phshape):
+            if g is None:
+                Pi_k = g2[iq][nu] * dfde
+            else:
+                G2 = g[iq, nu[0]].conj() * G[iq, nu[1]]
 
-            my_Pi[my_iq, nu] = prefactor * Pi_k.sum(axis=tuple(range(-5, 0)))
+                if G is not g and symmetrize:
+                    G2 += G[iq, nu[0]].conj() * g[iq, nu[1]]
+                    G2 /= 2
+
+                Pi_k = G2 * dfde
+
+            my_Pi[my_iq][nu] = prefactor * Pi_k.sum(axis=tuple(range(-5, 0)))
 
             if fluctuations:
-                my_Pi_k[my_iq, nu] = 2 * Pi_k
+                my_Pi_k[my_iq][nu] = 2 * Pi_k
 
         status.update()
 
-    Pi = np.empty((nQ, nmodes) + omega.shape, dtype=my_Pi.dtype)
+    Pi = np.empty((nQ,) + phshape + omega.shape, dtype=my_Pi.dtype)
 
-    comm.Allgatherv(my_Pi, (Pi, sizes * nmodes * omega.size))
+    comm.Allgatherv(my_Pi, (Pi, comm.allgather(my_Pi.size)))
 
     if fluctuations:
-        Pi_k = np.empty((nQ, nmodes) + omega.shape + nk_orig + (nbnd, nbnd),
+        Pi_k = np.empty((nQ,) + phshape + omega.shape + nk_orig + (nbnd, nbnd),
             dtype=my_Pi_k.dtype)
 
-        comm.Allgatherv(my_Pi_k,
-            (Pi_k, sizes * nmodes * omega.size * nk.prod() * nbnd * nbnd))
+        comm.Allgatherv(my_Pi_k, (Pi_k, comm.allgather(my_Pi_k.size)))
 
         return Pi, Pi_k
-
     else:
         return Pi
 
