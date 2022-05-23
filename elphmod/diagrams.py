@@ -1021,8 +1021,27 @@ def double_fermi_surface_average(q, e, g2=None, kT=0.025,
 
     return enum, deno
 
+def grand_potential(e, kT=0.025, occupations=occupations.fermi_dirac):
+    r"""Calculate (zeroth order of) grand potential.
+
+    Parameters
+    ----------
+    e : ndarray
+        Electron dispersion on uniform mesh. The Fermi level must be at zero.
+    kT : float
+        Smearing temperature.
+    occupations : function
+        Particle distribution as a function of energy divided by `kT`.
+
+    Returns
+    -------
+    real
+        Grand potential.
+    """
+    return 2 * kT / np.prod(e.shape[:-1]) * np.log(occupations(-e / kT)).sum()
+
 def first_order(e, g, kT=0.025, U=None, eps=1e-10,
-        occupations=occupations.fermi_dirac, comm=comm):
+        occupations=occupations.fermi_dirac):
     r"""Calculate first-order diagram of grand potential.
 
     Parameters
@@ -1073,7 +1092,7 @@ def first_order(e, g, kT=0.025, U=None, eps=1e-10,
     return 2.0 / nk.prod() * np.einsum(indices, f, g)
 
 def triangle(q, Q, e, gq, gQ, gqQ, kT=0.025, eps=1e-10,
-        occupations=occupations.fermi_dirac, comm=comm):
+        occupations=occupations.fermi_dirac):
     r"""Calculate triangle diagram (third order of grand potential).
 
     .. math::
