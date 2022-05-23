@@ -1021,7 +1021,7 @@ def double_fermi_surface_average(q, e, g2=None, kT=0.025,
 
     return enum, deno
 
-def first_order(e, g, kT=0.025, eps=1e-10,
+def first_order(e, g, kT=0.025, U=None, eps=1e-10,
         occupations=occupations.fermi_dirac, comm=comm):
     r"""Calculate first-order diagram of grand potential.
 
@@ -1033,6 +1033,10 @@ def first_order(e, g, kT=0.025, eps=1e-10,
         Electron-phonon coupling for selected q point.
     kT : float
         Smearing temperature.
+    U : ndarray
+        Eigenvectors of Wannier Hamiltonian belonging to considered bands. If
+        present (absent), the coupling `g` is assumed to be given in the same
+        basis as `U` (eigenbasis of the Hamiltonian).
     eps : float
         Smallest allowed absolute value of divisor.
     occupations : function
@@ -1048,9 +1052,25 @@ def first_order(e, g, kT=0.025, eps=1e-10,
 
     nbnd = e.shape[-1]
     e = np.reshape(e, (nk[0], nk[1], nk[2], nbnd))
-    g = np.reshape(g, (-1, nk[0], nk[1], nk[2], nbnd, nbnd))
 
-    return 2.0 / nk.prod() * np.einsum('xijkmm,ijkm->x', g, occupations(e / kT))
+    if U is not None:
+        U = np.reshape(U, (nk[0], nk[1], nk[2], -1, nbnd))
+        norb = U.shape[3]
+
+        g = np.reshape(g, (-1, nk[0], nk[1], nk[2], norb, norb))
+    else:
+        g = np.reshape(g, (-1, nk[0], nk[1], nk[2], nbnd, nbnd))
+
+    f = occupations(e / kT)
+
+    if U is not None:
+        f = np.einsum('ijkam,ijkm,ijkbm->ijkab', U, f, U.conj())
+
+        indices = 'ijkab,xijkba->x'
+    else:
+        indices = 'ijkm,xijkmm->x'
+
+    return 2.0 / nk.prod() * np.einsum(indices, f, g)
 
 def triangle(q, Q, e, gq, gQ, gqQ, kT=0.025, eps=1e-10,
         occupations=occupations.fermi_dirac, comm=comm):
