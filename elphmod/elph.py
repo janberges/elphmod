@@ -423,7 +423,7 @@ class Model(object):
         elph.Rg = np.array(sorted(set().union(*comm.allgather(Rg))))
         elph.Rk = np.array(sorted(set().union(*comm.allgather(Rk))))
 
-        elph.node, self.images, elph.data = MPI.shared_array((len(elph.Rg),
+        elph.node, elph.images, elph.data = MPI.shared_array((len(elph.Rg),
             elph.ph.size, len(elph.Rk), elph.el.size, elph.el.size),
             dtype=complex, shared_memory=shared_memory)
 
@@ -450,7 +450,7 @@ class Model(object):
                 status.update()
 
         if elph.node.rank == 0:
-            self.images.Allreduce(MPI.MPI.IN_PLACE, elph.data.view(dtype=float))
+            elph.images.Allreduce(MPI.MPI.IN_PLACE, elph.data.view(dtype=float))
 
         return elph
 
