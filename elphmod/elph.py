@@ -450,7 +450,11 @@ class Model(object):
                 status.update()
 
         if elph.node.rank == 0:
-            elph.images.Allreduce(MPI.MPI.IN_PLACE, elph.data.view(dtype=float))
+            # Reduce chunk-wise to avoid integer overflow for message size:
+
+            for g in range(len(elph.Rg)):
+                elph.images.Allreduce(MPI.MPI.IN_PLACE,
+                    elph.data[g].view(dtype=float))
 
         return elph
 
