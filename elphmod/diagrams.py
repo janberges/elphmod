@@ -387,7 +387,7 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
 
     dynamic = np.any(omega != 0)
 
-    status = misc.StatusBar(sizes[comm.rank],
+    status = misc.StatusBar(sizes[comm.rank] * np.prod(phshape),
         title='calculate %s phonon self-energy'
             % ('dynamic' if dynamic else 'static'))
 
@@ -440,7 +440,7 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
             if fluctuations:
                 my_Pi_k[my_iq][nu] = 2 * Pi_k
 
-        status.update()
+            status.update()
 
     Pi = np.empty((nQ,) + phshape + omega.shape, dtype=my_Pi.dtype)
 
