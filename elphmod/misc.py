@@ -37,9 +37,31 @@ kB = kBSI / eVSI # Boltzmann constant (eV/K)
 # [1] 2018 CODATA recommended values
 
 class StatusBar(object):
+    """Progress bar that does without carriage return or backspace.
+
+    Parameters
+    ----------
+    count : int
+        Number of times the progress bar will be updated.
+    width : int, default 60
+        Number of text columns the progress bar will span.
+    title : str, default 'progress'
+        Title line of the progress bar. Should be shorter than `width`.
+
+    Attributes
+    ----------
+    in_progress : StatusBar
+        Instance of the active progress bar or ``False`` for the first process;
+        always ``True`` for the other processes. Used to ensure that only one
+        progress bar is output at a time.
+    """
+    in_progress = comm.rank != 0
+
     def __init__(self, count, width=60, title='progress'):
-        if comm.rank:
+        if StatusBar.in_progress:
             return
+
+        StatusBar.in_progress = self
 
         self.counter = 0
         self.count = count
@@ -50,7 +72,9 @@ class StatusBar(object):
         sys.stdout.write('\n')
 
     def update(self):
-        if comm.rank:
+        """Update progress bar."""
+
+        if StatusBar.in_progress is not self:
             return
 
         self.counter += 1
@@ -65,6 +89,8 @@ class StatusBar(object):
 
         if self.counter == self.count:
             sys.stdout.write('\n')
+
+            StatusBar.in_progress = False
 
 def hello():
     if verbosity:
