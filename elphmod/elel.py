@@ -18,6 +18,9 @@ class Model(object):
     ----------
     uijkl : str
         File with Coulomb tensor in orbital basis on uniform q mesh.
+    vijkl_full, vijkl_redu : str
+        Files with full and reduced bare Coulomb tensors. The difference is
+        added as a correction to the Coulomb tensor provided via `uijkl`.
     nq : int
         Dimension of q mesh.
     no : int
@@ -45,11 +48,18 @@ class Model(object):
 
         return np.einsum('Rab,R->ab', self.data, np.exp(-1j * self.R.dot(q)))
 
-    def __init__(self, uijkl=None, nq=None, no=None, angle=120):
+    def __init__(self, uijkl=None, vijkl_full=None, vijkl_redu=None,
+            nq=None, no=None, angle=120):
+
         if uijkl is None:
             return
 
         Wq = read_orbital_Coulomb_interaction(uijkl, nq, no, dd=True)
+
+        if vijkl_full is not None and vijkl_redu is not None:
+            Wq += read_orbital_Coulomb_interaction(vijkl_full, nq, no, dd=True)
+            Wq -= read_orbital_Coulomb_interaction(vijkl_redu, nq, no, dd=True)
+
         Wq = Wq.reshape((nq, nq, 1, no, no))
 
         WR = np.fft.ifftn(Wq, axes=(0, 1, 2))
