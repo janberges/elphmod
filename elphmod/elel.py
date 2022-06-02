@@ -181,19 +181,31 @@ class Model(object):
 
         return elel
 
-def read_local_Coulomb_tensor(filename, no):
+def read_local_Coulomb_tensor(filename, no, dd=False):
     """Read local Coulomb tensor from VASP."""
 
-    U = np.empty((no, no, no, no), dtype=complex)
+    if dd:
+        U = np.empty((no, no), dtype=complex)
+    else:
+        U = np.empty((no, no, no, no), dtype=complex)
 
-    with open(filename) as data:
-        for line in data:
-            columns = line.split()
+    if comm.rank == 0:
+        with open(filename) as data:
+            for line in data:
+                try:
+                    columns = line.split()
 
-            i, j, k, l = [int(n) - 1 for n in columns[:4]]
-            Re, Im = [float(n) for n in columns[4:]]
+                    i, j, k, l = [int(n) - 1 for n in columns[:4]]
+                    Re, Im = [float(n) for n in columns[4:]]
 
-            U[i, j, k, l] = float(Re) + 1j * float(Im)
+                    if not dd:
+                        U[i, j, k, l] = float(Re) + 1j * float(Im)
+                    elif i == j and k == l:
+                        U[i, k] = float(Re) + 1j * float(Im)
+                except (ValueError, IndexError):
+                    continue
+
+    comm.Bcast(U)
 
     return U
 
