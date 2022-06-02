@@ -982,20 +982,21 @@ def read_EPW_output(epw_out, q, nq, nmodes, nk, bands=1, eps=1e-4,
                     next(data)
                     next(data)
 
-                    for _ in range(bands * bands * nmodes):
-                        columns = next(data).split()
+                    for jbnd in range(bands):
+                        for ibnd in range(bands):
+                            for nu in range(nnmodes):
+                                columns = next(data).split()
 
-                        jbnd, ibnd, nu = [int(i) - 1 for i in columns[:3]]
-
-                        if epf:
-                            elph[iq, nu, k1, k2, ibnd, jbnd] = complex(
-                                float(columns[-2]), float(columns[-1]))
-                        elif defpot:
-                            elph[iq, nu, k1, k2, ibnd, jbnd] = float(
-                                columns[-1]) * np.sqrt(2 * float(columns[-2]))
-                        else:
-                            elph[iq, nu, k1, k2, ibnd, jbnd] = float(
-                                columns[-1])
+                                if epf:
+                                    elph[iq, nu, k1, k2, ibnd, jbnd] = complex(
+                                        float(columns[-2]), float(columns[-1]))
+                                elif defpot:
+                                    elph[iq, nu, k1, k2, ibnd, jbnd] = float(
+                                        columns[-1]) * np.sqrt(
+                                            2 * float(columns[-2]))
+                                else:
+                                    elph[iq, nu, k1, k2, ibnd, jbnd] = float(
+                                        columns[-1])
 
         if np.isnan(elph).any():
             print('Warning: EPW output incomplete!')
@@ -1050,13 +1051,13 @@ def read_prtgkk(epw_out, nq, nmodes, nk, nbnd):
                     next(lines)
                     next(lines)
 
-                    for _ in range(nbnd * nbnd * nmodes):
-                        columns = next(lines).split()
+                    for jbnd in range(nbnd):
+                        for ibnd in range(nbnd):
+                            for nu in range(nnmodes):
+                                columns = next(lines).split()
 
-                        jbnd, ibnd, nu = [int(i) - 1 for i in columns[:3]]
-
-                        w[iq, nu] = float(columns[-2])
-                        g[iq, nu, ik, ibnd, jbnd] = float(columns[-1])
+                                w[iq, nu] = float(columns[-2])
+                                g[iq, nu, ik, ibnd, jbnd] = float(columns[-1])
 
     comm.Bcast(w)
     comm.Bcast(g)
