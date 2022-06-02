@@ -48,6 +48,16 @@ class Model(object):
 
         return np.einsum('Rab,R->ab', self.data, np.exp(-1j * self.R.dot(q)))
 
+    def WR(self, R1=0, R2=0, R3=0):
+        """Get density-density Coulomb matrix for arbitrary lattice vector."""
+
+        index = misc.vector_index(self.R, (R1, R2, R3))
+
+        if index is None:
+            return np.zeros_like(self.data[0])
+        else:
+            return self.data[index]
+
     def __init__(self, uijkl=None, vijkl_full=None, vijkl_redu=None,
             nq=None, no=None, angle=120):
 
