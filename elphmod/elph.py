@@ -984,7 +984,7 @@ def read_EPW_output(epw_out, q, nq, nmodes, nk, bands=1, eps=1e-4,
 
                     for jbnd in range(bands):
                         for ibnd in range(bands):
-                            for nu in range(nnmodes):
+                            for nu in range(nmodes):
                                 columns = next(data).split()
 
                                 if epf:
@@ -1053,7 +1053,7 @@ def read_prtgkk(epw_out, nq, nmodes, nk, nbnd):
 
                     for jbnd in range(nbnd):
                         for ibnd in range(nbnd):
-                            for nu in range(nnmodes):
+                            for nu in range(nmodes):
                                 columns = next(lines).split()
 
                                 w[iq, nu] = float(columns[-2])
