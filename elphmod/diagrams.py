@@ -1092,7 +1092,7 @@ def first_order(e, g, kT=0.025, U=None, eps=1e-10,
     return 2.0 / nk.prod() * np.einsum(indices, f, g)
 
 def triangle(q, Q, e, gq, gQ, gqQ, kT=0.025, eps=1e-10,
-        occupations=occupations.fermi_dirac):
+        occupations=occupations.fermi_dirac, fluctuations=False):
     r"""Calculate triangle diagram (third order of grand potential).
 
     .. math::
@@ -1147,6 +1147,8 @@ def triangle(q, Q, e, gq, gQ, gqQ, kT=0.025, eps=1e-10,
         Smallest allowed absolute value of divisor.
     occupations : function
         Particle distribution as a function of energy divided by `kT`.
+    fluctuations : bool
+        Return integrand too (for fluctuation analysis)?
 
     Returns
     -------
@@ -1161,8 +1163,9 @@ def triangle(q, Q, e, gq, gQ, gqQ, kT=0.025, eps=1e-10,
     tmp[:len(Q)] = Q
     Q = tmp
 
+    nk_orig = e.shape[:-1]
     nk = np.ones(3, dtype=int)
-    nk[:len(e.shape[:-1])] = e.shape[:-1]
+    nk[:len(nk_orig)] = nk_orig
 
     nbnd = e.shape[-1]
     e = np.reshape(e, (nk[0], nk[1], nk[2], nbnd))
@@ -1247,6 +1250,12 @@ def triangle(q, Q, e, gq, gQ, gqQ, kT=0.025, eps=1e-10,
     for i in range(3):
         gqQ = np.roll(gqQ, shift=-Q[i], axis=i)
 
-    chi = np.einsum('abcijk,ijkba,ijkca,ijkbc', chi, gq.conj(), gQ, gqQ)
+    chi_k = np.einsum('abcijk,ijkba,ijkca,ijkbc->ijkabc',
+        chi, gq.conj(), gQ, gqQ)
 
-    return prefactor * chi.sum()
+    chi = prefactor * chi_k.sum()
+
+    if fluctuations:
+        return chi, 4 * chi_k.reshape(nk_orig + (nbnd,) * 3)
+    else:
+        return chi
