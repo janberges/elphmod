@@ -3,13 +3,16 @@
 # Copyright (C) 2017-2022 elphmod Developers
 # This program is free software under the terms of the GNU GPLv3 or later.
 
-import math
 import numpy as np
-import sys
+
+try:
+    from scipy.special import erf
+except ImportError:
+    import math
+
+    erf = np.vectorize(math.erf)
 
 xmax = 709.0 # approx. log([max. double] / 2 - 1)
-
-not_doc = 'sphinx' not in sys.modules
 
 def fermi_dirac(x):
     """Calculate Fermi function."""
@@ -40,10 +43,7 @@ fermi_dirac.delta_prime = fermi_dirac_delta_prime
 def gauss(x):
     """Calculate Gaussian step function."""
 
-    return 0.5 * (1 - math.erf(x))
-
-if not_doc:
-    gauss = np.vectorize(gauss)
+    return 0.5 * (1 - erf(x))
 
 def gauss_delta(x):
     """Calculate negative derivative of Gaussian step function."""
@@ -63,10 +63,7 @@ def marzari_vanderbilt(x):
 
     y = x + 1 / np.sqrt(2)
 
-    return (math.erf(-y) + 1) / 2 + np.exp(-y * y) / np.sqrt(2 * np.pi)
-
-if not_doc:
-    marzari_vanderbilt = np.vectorize(marzari_vanderbilt)
+    return (erf(-y) + 1) / 2 + np.exp(-y * y) / np.sqrt(2 * np.pi)
 
 def marzari_vanderbilt_delta(x):
     """Calculate negative derivative of Marzari-Vanderbilt step function."""
@@ -142,9 +139,6 @@ def methfessel_paxton_general(x, N=0):
 
     return S, D, P
 
-if not_doc:
-    methfessel_paxton_general = np.vectorize(methfessel_paxton_general)
-
 def methfessel_paxton(x):
     """Calculate first-order Methfessel-Paxton step function."""
 
@@ -195,18 +189,26 @@ def heaviside(x):
 def heaviside_delta(x):
     """Calculate negative derivative of (reflected) Heaviside function."""
 
-    return 0.0 if x else np.inf
+    delta = np.array(x)
 
-if not_doc:
-    heaviside_delta = np.vectorize(heaviside_delta)
+    zero = delta == 0
+
+    delta[zero] = np.inf
+    delta[~zero] = 0.0
+
+    return delta
 
 def heaviside_delta_prime(x):
     """Calculate negative 2nd derivative of (reflected) Heaviside function."""
 
-    return 0.0 if x else -math.copysign(np.inf, x)
+    delta_prime = np.array(x)
 
-if not_doc:
-    heaviside_delta_prime = np.vectorize(heaviside_delta_prime)
+    zero = delta_prime == 0
+
+    delta_prime[zero] = -np.copysign(np.inf, delta_prime[zero])
+    delta_prime[~zero] = 0.0
+
+    return delta_prime
 
 heaviside.delta = heaviside_delta
 heaviside.delta_prime = heaviside_delta_prime
@@ -216,31 +218,21 @@ def fermi_dirac_matsubara(x, nmats=1000):
 
     inu = 1j * (2 * np.arange(nmats) + 1) * np.pi
 
-    return 0.5 + 2 * np.sum(1.0 / (inu - x)).real
-
-if not_doc:
-    fermi_dirac_matsubara = np.vectorize(fermi_dirac_matsubara)
+    return 0.5 + 2 * np.sum(np.subtract.outer(inu, x) ** -1, axis=0).real
 
 def fermi_dirac_matsubara_delta(x, nmats=1000):
     """Calculate negative derivative of Fermi function as Matsubara sum."""
 
     inu = 1j * (2 * np.arange(nmats) + 1) * np.pi
 
-    return 2 * np.sum(-1.0 / (inu - x) ** 2).real
-
-if not_doc:
-    fermi_dirac_matsubara_delta = np.vectorize(fermi_dirac_matsubara_delta)
+    return -2 * np.sum(np.subtract.outer(inu, x) ** -2, axis=0).real
 
 def fermi_dirac_matsubara_delta_prime(x, nmats=1000):
     """Calculate negative 2nd derivative of Fermi function as Matsubara sum."""
 
     inu = 1j * (2 * np.arange(nmats) + 1) * np.pi
 
-    return 2 * np.sum(-2.0 / (inu - x) ** 3).real
-
-if not_doc:
-    fermi_dirac_matsubara_delta_prime = np.vectorize(
-        fermi_dirac_matsubara_delta_prime)
+    return -4 * np.sum(np.subtract.outer(inu, x) ** -3, axis=0).real
 
 fermi_dirac_matsubara.delta = fermi_dirac_matsubara_delta
 fermi_dirac_matsubara.delta_prime = fermi_dirac_matsubara_delta_prime

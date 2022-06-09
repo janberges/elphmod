@@ -9,5 +9,4 @@ Free local memory after data has been gathered in global memory.
 Read (and write?) dynamical matrices and force constants in XML format.
 Drop Python-2 support in favor of things like (nq, nph, *nk, nel, nel)?
 Replace status arguments etc. by global elphmod(.misc).verbosity.
-Speed up calculation of Methfessel-Paxton smearing?
 Change sign convention in phononic Fourier transform? Many side effects!
