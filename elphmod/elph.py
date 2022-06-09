@@ -319,7 +319,9 @@ class Model(object):
         """Update short-range part of real-space coupling."""
 
         if self.g0 is None:
-            info('Run "sample_orig" before "prepare_long_range"!', error=True)
+            info('Run "sample_orig" before changing Z, Q, etc.!', error=True)
+
+        self.ph.prepare_long_range()
 
         g = MPI.SharedArray(self.g0.shape, dtype=complex,
             shared_memory=shared_memory)

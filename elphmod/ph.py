@@ -282,8 +282,7 @@ class Model(object):
 
         if self.divide_mass:
             for na in range(self.nat):
-                self.D0_lr[3 * na:3 * na + 3, :] /= np.sqrt(self.M[na])
-                self.D0_lr[:, 3 * na:3 * na + 3] /= np.sqrt(self.M[na])
+                self.D0_lr[3 * na:3 * na + 3, 3 * na:3 * na + 3] /= self.M[na]
 
                 self.z[na] /= np.sqrt(self.M[na])
 
@@ -351,7 +350,9 @@ class Model(object):
         """Update short-range part of interatomic force constants."""
 
         if self.D0 is None:
-            info('Run "sample_orig" before "prepare_long_range"!', error=True)
+            info('Run "sample_orig" before changing Z, Q, etc.!', error=True)
+
+        self.prepare_long_range()
 
         D = self.D0 - dispersion.sample(self.D_lr, self.q0)
 
