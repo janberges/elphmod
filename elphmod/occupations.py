@@ -189,7 +189,7 @@ def heaviside(x):
 def heaviside_delta(x):
     """Calculate negative derivative of (reflected) Heaviside function."""
 
-    delta = np.array(x)
+    delta = np.copy(x)
 
     zero = delta == 0
 
@@ -201,7 +201,7 @@ def heaviside_delta(x):
 def heaviside_delta_prime(x):
     """Calculate negative 2nd derivative of (reflected) Heaviside function."""
 
-    delta_prime = np.array(x)
+    delta_prime = np.copy(x)
 
     zero = delta_prime == 0
 
