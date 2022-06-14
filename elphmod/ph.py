@@ -972,8 +972,22 @@ def write_flfrc(flfrc, phid, amass, at, tau, atom_order, epsil=None, zeu=None):
                                             phid[na1, na2, m1, m2, m3, j1, j2]))
 
 def read_quadrupole_fmt(quadrupole_fmt):
-    """Read file *quadrupole.fmt* suitable for ``epw.x``."""
+    """Read file *quadrupole.fmt* suitable for ``epw.x``.
 
+    Parameters
+    ----------
+    quadrupole_fmt : str
+        File name.
+
+    Returns
+    -------
+    Q : ndarray
+        Quadrupole tensor.
+
+    See Also
+    --------
+    write_quadrupole_fmt : Inverse function.
+    """
     Q = []
 
     with open(quadrupole_fmt) as data:
@@ -981,6 +995,9 @@ def read_quadrupole_fmt(quadrupole_fmt):
 
         for line in data:
             cols = line.split()
+
+            if not cols:
+                continue
 
             na, i = [int(col) - 1 for col in cols[:2]]
 
@@ -1000,6 +1017,30 @@ def read_quadrupole_fmt(quadrupole_fmt):
             Q[na][i, 1, 0] = Qxy
 
     return np.array(Q)
+
+def write_quadrupole_fmt(quadrupole_fmt, Q):
+    """Write file *quadrupole.fmt* suitable for ``epw.x``.
+
+    Parameters
+    ----------
+    quadrupole_fmt : str
+        File name.
+    Q : ndarray
+        Quadrupole tensor.
+
+    See Also
+    --------
+    read_quadrupole_fmt : Inverse function.
+    """
+    with open(quadrupole_fmt, 'w') as data:
+        data.write(('%4s %3s' + ' %14s' * 6 + '\n')
+            % ('atom', 'dir', 'Qxx', 'Qyy', 'Qzz', 'Qyz', 'Qxz', 'Qxy'))
+
+        for na in range(Q.shape[0]):
+            for i in range(Q.shape[1]):
+                data.write(('%4d %3d' + ' %14.10f' * 6 + '\n') % (na + 1, i + 1,
+                    Q[na, i, 0, 0], Q[na, i, 1, 1], Q[na, i, 2, 2],
+                    Q[na, i, 1, 2], Q[na, i, 0, 2], Q[na, i, 0, 1]))
 
 def asr(phid):
     """Apply simple acoustic sum rule correction to force constants."""
