@@ -6,6 +6,8 @@
 # Some routines in this file follow wan2bloch.f90 of EPW v5.3.1.
 # Copyright (C) 2010-2016 S. Ponce', R. Margine, C. Verdi, F. Giustino
 
+"""Electron-phonon coupling from EPW."""
+
 import numpy as np
 
 from . import bravais, dispersion, misc, MPI

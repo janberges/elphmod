@@ -3,7 +3,7 @@
 # Copyright (C) 2017-2022 elphmod Developers
 # This program is free software under the terms of the GNU GPLv3 or later.
 
-"""Load all modules at package import."""
+"""Python modules for electron-phonon models."""
 
 __version__ = '0.13'
 

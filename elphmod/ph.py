@@ -3,6 +3,8 @@
 # Copyright (C) 2017-2022 elphmod Developers
 # This program is free software under the terms of the GNU GPLv3 or later.
 
+"""Mass-spring models from Quantum ESPRESSO."""
+
 import numpy as np
 
 from . import bravais, dispersion, misc, MPI

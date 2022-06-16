@@ -3,6 +3,8 @@
 # Copyright (C) 2017-2022 elphmod Developers
 # This program is free software under the terms of the GNU GPLv3 or later.
 
+"""Step and delta smearing functions."""
+
 import numpy as np
 
 try:

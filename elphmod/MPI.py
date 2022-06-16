@@ -3,6 +3,8 @@
 # Copyright (C) 2017-2022 elphmod Developers
 # This program is free software under the terms of the GNU GPLv3 or later.
 
+"""Work distribution and shared memory."""
+
 import sys
 import numpy as np
 
