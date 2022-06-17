@@ -10,6 +10,7 @@ from __future__ import division
 import numpy as np
 
 from . import misc, MPI, occupations
+
 comm = MPI.comm
 info = MPI.info
 

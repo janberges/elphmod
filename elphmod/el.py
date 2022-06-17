@@ -5,9 +5,12 @@
 
 """Tight-binding models from Wannier90."""
 
+from __future__ import division
+
 import numpy as np
 
 from . import bravais, dispersion, misc, MPI, occupations
+
 comm = MPI.comm
 info = MPI.info
 

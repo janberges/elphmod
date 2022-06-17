@@ -10,6 +10,7 @@ from __future__ import division
 import numpy as np
 
 from . import misc, MPI
+
 comm = MPI.comm
 
 deg = np.pi / 180
@@ -2318,4 +2319,3 @@ def cartesian_to_crystal(R_CARTESIAN, a1, a2, a3):
     for ii in np.arange(R_CARTESIAN.shape[0]):
         R_CRYSTAL[ii, :] = np.dot(A_Matrix_Inverse, R_CARTESIAN[ii, :])
     return R_CRYSTAL
-

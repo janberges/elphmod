@@ -5,10 +5,13 @@
 
 """Coulomb interaction from VASP."""
 
+from __future__ import division
+
 import sys
 import numpy as np
 
 from . import bravais, dispersion, misc, MPI
+
 comm = MPI.comm
 
 class Model(object):

@@ -5,9 +5,12 @@
 
 """2D tetrahedron methods."""
 
+from __future__ import division
+
 import numpy as np
 
 from . import bravais, misc, MPI
+
 comm = MPI.comm
 
 def hexDOS(energies, minimum=None, maximum=None):

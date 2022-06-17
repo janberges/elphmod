@@ -5,9 +5,12 @@
 
 """BZ plots, fatbands, etc."""
 
+from __future__ import division
+
 import numpy as np
 
 from . import bravais, MPI, misc
+
 comm = MPI.comm
 
 def choose_backend():

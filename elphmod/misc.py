@@ -5,10 +5,13 @@
 
 """Constants, status bars, parsing, etc."""
 
+from __future__ import division
+
 import numpy as np
 import sys
 
 from . import __version__, MPI
+
 comm = MPI.comm
 info = MPI.info
 

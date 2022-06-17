@@ -5,9 +5,12 @@
 
 """Diagonalization on paths and meshes."""
 
+from __future__ import division
+
 import numpy as np
 
 from . import bravais, misc, MPI
+
 comm = MPI.comm
 
 def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,

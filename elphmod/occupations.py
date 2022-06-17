@@ -5,6 +5,8 @@
 
 """Step and delta smearing functions."""
 
+from __future__ import division
+
 import numpy as np
 
 try:
