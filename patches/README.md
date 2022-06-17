@@ -5,8 +5,8 @@ version of Quantum ESPRESSO (QE). This directory contains the corresponding
 patches for different versions of QE. To apply them, go to the QE repository
 and run, e.g., the following commands:
 
-    git checkout qe-7.0
-    git apply /path/to/elphmod/patches/qe-7.0.patch
+    git checkout qe-7.1
+    git apply /path/to/elphmod/patches/qe-7.1.patch
     ./configure
     make pw pp ph epw
 
