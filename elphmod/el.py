@@ -473,9 +473,10 @@ def read_hrdat(seedname, divide_ndegen=True):
             data = open('%s_hr.dat' % seedname)
             tb = False
         except FileNotFoundError:
+            print('Warning: Hamiltonian read from "%s_tb.dat"!' % seedname)
+
             data = open('%s_tb.dat' % seedname)
             tb = True
-            print('Warning: Hamiltonian read from "%s_tb.dat"!' % seedname)
 
         # read all words of current line:
 
