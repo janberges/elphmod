@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # Copyright (C) 2017-2022 elphmod Developers
 # This program is free software under the terms of the GNU GPLv3 or later.
 
@@ -264,17 +262,3 @@ def smearing(name='gaussian'):
         return marzari_vanderbilt
     if name in {'fermi-dirac', 'f-d', 'fd'}:
         return fermi_dirac
-
-if __name__ == '__main__':
-    # check if int[a, b] df = f(b) - f(a):
-
-    a, b = 5 * (1 - 2 * np.random.random(2))
-
-    x, dx = np.linspace(a, b, 10000, retstep=True)
-    y, dy = methfessel_paxton_general(x, N=1)
-
-    dy[0] /= 2
-    dy[-1] /= 2
-
-    print('int[a, b] df = %.7f' % (-dy.sum() * dx))
-    print(' f(b) - f(a) = %.7f' % (y[-1] - y[0]))
