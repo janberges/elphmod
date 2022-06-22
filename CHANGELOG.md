@@ -1,5 +1,15 @@
 # Changes
 
+## v0.14
+
+* QE-7.1 support (cDFPT patch)
+* Module docstrings
+* More efficient smearing functions
+* Fluctuation diagnostics of triangle diagram
+* No nested progress bars
+* Changeable long- and corresponding short-range phonons and coupling
+* Automatic detection of two-dimensional systems (`lr2d`)
+
 ## v0.13
 
 * Phonon self-energy as a function of *separate* vertices

@@ -1,3 +1,4 @@
+Use "assume_isolated = '2D'" in all examples with 2D systems.
 Consider that minima and maxima of bitmaps fall on pixel edges, not centers.
 Use info function from MPI module to raise errors and warnings.
 Disentangle two-dimensional bands with spin degree of freedom.
