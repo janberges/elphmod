@@ -85,8 +85,25 @@ def marzari_vanderbilt_delta_prime(x):
 marzari_vanderbilt.delta = marzari_vanderbilt_delta
 marzari_vanderbilt.delta_prime = marzari_vanderbilt_delta_prime
 
-def methfessel_paxton_general(x, N=0):
-    r"""Calculate Methfessel-Paxton step function and its negative derivative.
+def hermite_polynomials(x, N=100):
+    r"""Generate Hermite polynomials.
+
+    .. math::
+
+        H_0(x) &= 1 \\
+        H_1(x) &= 2 x \\
+        H_{n + 1}(x) &= 2 x H_n(x) - 2 n H_{n - 1}(x)
+    """
+    H = 0
+    h = np.ones_like(x)
+
+    for n in range(N):
+        yield h
+
+        h, H = 2 * x * h - 2 * n * H, h
+
+def methfessel_paxton_term(x, order=1, diff=0):
+    r"""Calculate Methfessel-Paxton term (without zeroth order).
 
     From Phys. Rev. B 40, 3616 (1989):
 
@@ -97,64 +114,41 @@ def methfessel_paxton_general(x, N=0):
         D_N(x) &= -S'(N, x) = \sum{n = 0}^N A_n H_{2 n}(x) \exp(-x^2) \\
         A_n &= \frac{(-1)^n}{\sqrt \pi n! 4^n}
 
-    Hermite polynomials:
-
-    .. math::
-
-        H_0(x) &= 1 \\
-        H_1(x) &= 2 x \\
-        H_{n + 1}(x) &= 2 x H_n(x) - 2 n H_{n - 1}(x) \\
-
-    For ``N = 0``, the Gaussian step function is returned.
-
     This routine has been adapted from Quantum ESPRESSO:
 
     * Step function: Modules/wgauss.f90
     * Delta function: Modules/w0gauss.f90
     """
-    S = gauss(x)
-    D = gauss_delta(x)
-    P = gauss_delta_prime(x)
-
-    # In the following, our Hermite polynomials (`H` and `h`) are defined such
-    # that they contain the factor exp(-x^2) / sqrt(pi) = D(0, x). On the other
-    # hand, our coefficient A(n) (`a`) does not contain the factor 1 / sqrt(pi).
-
-    H = 0 # H(-1, x)
-    h = D # H( 0, x)
-
     a = 1.0
-    m = 0
+    s = 0.0
+    h = hermite_polynomials(x)
 
-    for n in range(1, N + 1):
-        H = 2 * x * h - 2 * m * H # H(1, x), H(3, x), ...
-        m += 1
+    for n in range(diff):
+        a *= -1
+        next(h)
 
-        h = 2 * x * H - 2 * m * h # H(2, x), H(4, x), ...
-        m += 1
-
+    for n in range(1, order + 1):
         a /= -4 * n
+        next(h)
 
-        S += a * H
-        D += a * h
-        P -= a * (2 * x * h - 2 * m * H) # H(3, x), H(5, x), ...
+        s += a * next(h)
 
-    return S, D, P
+    return s * gauss_delta(x)
 
-def methfessel_paxton(x):
-    """Calculate first-order Methfessel-Paxton step function."""
+def methfessel_paxton(x, N=1):
+    """Calculate Methfessel-Paxton step function."""
 
-    return methfessel_paxton_general(x, N=1)[0]
+    return gauss(x) + methfessel_paxton_term(x, order=N, diff=0)
 
-def methfessel_paxton_delta(x):
-    """Calculate negative derivative of first-order MP step function."""
+def methfessel_paxton_delta(x, N=1):
+    """Calculate negative derivative of Methfessel-Paxton step function."""
 
-    return methfessel_paxton_general(x, N=1)[1]
+    return gauss_delta(x) - methfessel_paxton_term(x, order=N, diff=1)
 
-def methfessel_paxton_delta_prime(x):
-    """Calculate negative 2nd derivative of first-order MP step function."""
+def methfessel_paxton_delta_prime(x, N=1):
+    """Calculate negative 2nd derivative of Methfessel-Paxton step function."""
 
-    return methfessel_paxton_general(x, N=1)[2]
+    return gauss_delta_prime(x) - methfessel_paxton_term(x, order=N, diff=2)
 
 methfessel_paxton.delta = methfessel_paxton_delta
 methfessel_paxton.delta_prime = methfessel_paxton_delta_prime
