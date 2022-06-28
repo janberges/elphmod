@@ -52,28 +52,26 @@ fermi_dirac.delta = fermi_dirac_delta
 fermi_dirac.delta_prime = fermi_dirac_delta_prime
 fermi_dirac.entropy = fermi_dirac_entropy
 
-def double_fermi_dirac(x, mu1, mu2):
+def double_fermi_dirac(x, d):
     """Calculate double Fermi function."""
 
-    return (fermi_dirac(x - mu1) + fermi_dirac(x - mu2)) / 2
+    return (fermi_dirac(x - d) + fermi_dirac(x + d)) / 2
 
-def double_fermi_dirac_delta(x, mu1, mu2):
+def double_fermi_dirac_delta(x, d):
     """Calculate negative derivative of double Fermi function."""
 
-    return (fermi_dirac.delta(x - mu1) + fermi_dirac.delta(x - mu2)) / 2
+    return (fermi_dirac.delta(x - d) + fermi_dirac.delta(x + d)) / 2
 
-def double_fermi_dirac_delta_prime(x, mu1, mu2):
+def double_fermi_dirac_delta_prime(x, d):
     """Calculate negative 2nd derivative of double Fermi function."""
 
-    return (fermi_dirac.delta_prime(x - mu1)
-        + fermi_dirac.delta_prime(x - mu2)) / 2
+    return (fermi_dirac.delta_prime(x - d) + fermi_dirac.delta_prime(x + d)) / 2
 
-def double_fermi_dirac_entropy(x, mu1, mu2):
+def double_fermi_dirac_entropy(x, d):
     """Calculate double-Fermi-Dirac generalized electronic entropy."""
 
-    return (fermi_dirac.entropy(x - mu1) + fermi_dirac.entropy(x - mu2)
-        + mu1 * fermi_dirac(x - mu1) + mu2 * fermi_dirac(x - mu2)
-        - mu1 - mu2) / 2
+    return (fermi_dirac.entropy(x - d) + fermi_dirac.entropy(x + d)
+        + d * (fermi_dirac(x - d) - fermi_dirac(x + d))) / 2
 
 double_fermi_dirac.delta = double_fermi_dirac_delta
 double_fermi_dirac.delta_prime = double_fermi_dirac_delta_prime
