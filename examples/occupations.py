@@ -7,7 +7,7 @@ import numpy as np
 if MPI.comm.rank:
     raise SystemExit
 
-x, dx = np.linspace(-5, 5, 1000, retstep=True)
+x, dx = np.linspace(-10, 10, 2001, retstep=True)
 
 style = dict(color='lightgray', linestyle='dashed')
 
@@ -74,5 +74,26 @@ plt.plot(X, -np.diff(occupations.lorentz(x), 2) / dx ** 2, 'k--')
 
 plt.xlabel(r'$x$')
 plt.ylabel(r"$\delta'(x)$")
+plt.legend()
+plt.show()
+
+print('Plot step functions..')
+
+plt.axvline(x=0.0, **style)
+plt.axhline(y=0.0, **style)
+
+plt.plot(x, occupations.fermi_dirac.entropy(x), label='Fermi-Dirac')
+plt.plot(x, occupations.gauss.entropy(x), label='Gauss')
+plt.plot(x, occupations.marzari_vanderbilt.entropy(x),
+    label='Marzari-Vanderbilt')
+plt.plot(x, occupations.methfessel_paxton.entropy(x), label='Methfessel-Paxton')
+
+plt.plot(x, -dx * np.cumsum(x * occupations.fermi_dirac.delta(x)), 'k--')
+plt.plot(x, -dx * np.cumsum(x * occupations.gauss.delta(x)), 'k--')
+plt.plot(x, -dx * np.cumsum(x * occupations.marzari_vanderbilt.delta(x)), 'k--')
+plt.plot(x, -dx * np.cumsum(x * occupations.methfessel_paxton.delta(x)), 'k--')
+
+plt.xlabel(r'$x$')
+plt.ylabel(r'$-\int_{-\infty}^x y \delta(y) dy$')
 plt.legend()
 plt.show()

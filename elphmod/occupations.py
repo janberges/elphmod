@@ -39,8 +39,16 @@ def fermi_dirac_delta_prime(x):
 
     return -np.sinh(x) / (2 * (np.cosh(x) + 1) ** 2)
 
+def fermi_dirac_entropy(x):
+    """Calculate electronic entropy."""
+
+    f = fermi_dirac(x)
+
+    return x * (f - 1) - np.log(f)
+
 fermi_dirac.delta = fermi_dirac_delta
 fermi_dirac.delta_prime = fermi_dirac_delta_prime
+fermi_dirac.entropy = fermi_dirac_entropy
 
 def gauss(x):
     """Calculate Gaussian step function."""
@@ -57,8 +65,14 @@ def gauss_delta_prime(x):
 
     return -2 * x * np.exp(-x * x) / np.sqrt(np.pi)
 
+def gauss_entropy(x):
+    """Calculate Gaussian generalized electronic entropy."""
+
+    return gauss_delta(x) / 2
+
 gauss.delta = gauss_delta
 gauss.delta_prime = gauss_delta_prime
+gauss.entropy = gauss_entropy
 
 def marzari_vanderbilt(x):
     """Calculate Marzari-Vanderbilt (cold smearing) step function."""
@@ -82,8 +96,16 @@ def marzari_vanderbilt_delta_prime(x):
     return (np.sqrt(2) - 2 * y
         * (np.sqrt(2) * y + 1)) * np.exp(-y * y) / np.sqrt(np.pi)
 
+def marzari_vanderbilt_entropy(x):
+    """Calculate Marzari-Vanderbilt generalized electronic entropy."""
+
+    y = x + 1 / np.sqrt(2)
+
+    return y * np.exp(-y * y) / np.sqrt(2 * np.pi)
+
 marzari_vanderbilt.delta = marzari_vanderbilt_delta
 marzari_vanderbilt.delta_prime = marzari_vanderbilt_delta_prime
+marzari_vanderbilt.entropy = marzari_vanderbilt_entropy
 
 def hermite_polynomials(x, N=100):
     r"""Generate Hermite polynomials.
@@ -150,8 +172,14 @@ def methfessel_paxton_delta_prime(x, N=1):
 
     return gauss_delta_prime(x) - methfessel_paxton_term(x, order=N, diff=2)
 
+def methfessel_paxton_entropy(x, N=1):
+    """Calculate Methfessel-Paxton generalized electronic entropy."""
+
+    return -methfessel_paxton_term(x, order=N, diff=1) / 2
+
 methfessel_paxton.delta = methfessel_paxton_delta
 methfessel_paxton.delta_prime = methfessel_paxton_delta_prime
+methfessel_paxton.entropy = methfessel_paxton_entropy
 
 def lorentz(x):
     """Calculate Lorentz step function.
@@ -206,8 +234,14 @@ def heaviside_delta_prime(x):
 
     return delta_prime
 
+def heaviside_entropy(x):
+    """Calculate negative Heaviside generalized electronic entropy."""
+
+    return np.zeros_like(x)
+
 heaviside.delta = heaviside_delta
 heaviside.delta_prime = heaviside_delta_prime
+heaviside.entropy = heaviside_entropy
 
 def fermi_dirac_matsubara(x, nmats=1000):
     """Calculate Fermi function as Matsubara sum."""
