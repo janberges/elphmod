@@ -982,7 +982,6 @@ def read_Fermi_level(pw_scf_out):
         with open(pw_scf_out) as data:
             for line in data:
                 if 'the Fermi energy is' in line:
-                    print(line)
                     eF = float(line.split()[-2])
                 elif 'highest occupied level' in line:
                     eF = float(line.split()[-1])
