@@ -214,4 +214,3 @@ file.close()
 #     [Start_Pos[1]+A2[1],Start_Pos[1]+A2[1]+A1[1]], color='black')
 # plt.plot([Start_Pos[0]+A1[0],Start_Pos[0]+A2[0]+A1[0]],
 #     [Start_Pos[1]+A1[1],Start_Pos[1]+A2[1]+A1[1]], color='black')
-

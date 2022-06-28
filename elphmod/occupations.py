@@ -42,6 +42,8 @@ def fermi_dirac_delta_prime(x):
 def fermi_dirac_entropy(x):
     """Calculate electronic entropy."""
 
+    x = np.sign(x) * np.minimum(np.absolute(x), xmax)
+
     f = fermi_dirac(x)
 
     return x * (f - 1) - np.log(f)

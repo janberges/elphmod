@@ -1147,6 +1147,7 @@ def eband_from_qe_pwo(pw_scf_out, subset=None):
 
     smearing_line = lines[line_index].split()
     N_k = int(smearing_line[4])
+    f = occupations.smearing(smearing_line[5])
     kT = float(smearing_line[9])
 
     k_Points = np.empty([N_k, 4])
@@ -1208,28 +1209,28 @@ def eband_from_qe_pwo(pw_scf_out, subset=None):
         for ik in range(N_k):
             for iband in range(N_states):
                 eband[ik, iband] = (energies[ik, iband] * k_Points[ik, 3]
-                    * occupations.fermi_dirac((energies[ik, iband] - mu) / kT))
+                    * f((energies[ik, iband] - mu) / kT))
     else:
         for ik in range(N_k):
             for iband in subset:
                 eband[ik, iband] = (energies[ik, iband] * k_Points[ik, 3]
-                    * occupations.fermi_dirac((energies[ik, iband] - mu) / kT))
+                    * f((energies[ik, iband] - mu) / kT))
 
     eband = eband.sum() / misc.Ry
 
     return eband
-    
+
 def demet_from_qe_pwo(pw_scf_out, subset=None):
     """Calculate the '-TS' contribution of the total free energy from Quantum ESPRESSO.
-    In Quantum ESPRESSO 'demet' is calculated in 'gweights.f90'. 
+
+    In Quantum ESPRESSO 'demet' is calculated in 'gweights.f90'.
 
     Parameters
     ----------
     pw_scf_out : str
         The name of the output file (typically 'pw.out').
     subset : list or array
-        List of indices to pick only a subset of the bands
-        for the integration
+        List of indices to pick only a subset of the bands for the integration.
 
     Returns
     -------
@@ -1249,6 +1250,7 @@ def demet_from_qe_pwo(pw_scf_out, subset=None):
 
     smearing_line = lines[line_index].split()
     N_k = int(smearing_line[4])
+    f = occupations.smearing(smearing_line[5])
     kT = float(smearing_line[9])
 
     k_Points = np.empty([N_k, 4])
@@ -1309,30 +1311,14 @@ def demet_from_qe_pwo(pw_scf_out, subset=None):
     if subset == None:
         for ik in range(N_k):
             for iband in range(N_states):
-                
-                x = (mu - energies[ik, iband]) / kT
-                if abs(x) <= 36:
-                    f = 1.0 / (1.0 + np.exp( -x) )
-                    onemf = 1.0-f
-                    w1gauss = f*np.log(f) + onemf*np.log(onemf)
-                    
-                else:
-                    w1gauss = 0
+                w1gauss = -f.entropy((energies[ik, iband] - mu) / kT)
                 demet[ik, iband] = (k_Points[ik, 3] * kT * w1gauss)
 
     else:
         for ik in range(N_k):
             for iband in subset:
-                x = (mu - energies[ik, iband]) / kT
-                if abs(x) <= 36:
-                    f = 1.0 / (1.0 + np.exp( -x) )
-                    onemf = 1.0-f
-                    w1gauss = f*np.log(f) + onemf*np.log(onemf)
-                    
-                else:
-                    w1gauss = 0
+                w1gauss = -f.entropy((energies[ik, iband] - mu) / kT)
                 demet[ik, iband] = (k_Points[ik, 3] * kT * w1gauss)
-                    
 
     demet = demet.sum() / misc.Ry
 
