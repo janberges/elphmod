@@ -1218,6 +1218,125 @@ def eband_from_qe_pwo(pw_scf_out, subset=None):
     eband = eband.sum() / misc.Ry
 
     return eband
+    
+def demet_from_qe_pwo(pw_scf_out, subset=None):
+    """Calculate the '-TS' contribution of the total free energy from Quantum ESPRESSO.
+    In Quantum ESPRESSO 'demet' is calculated in 'gweights.f90'. 
+
+    Parameters
+    ----------
+    pw_scf_out : str
+        The name of the output file (typically 'pw.out').
+    subset : list or array
+        List of indices to pick only a subset of the bands
+        for the integration
+
+    Returns
+    -------
+    demet : float
+        The -TS contribution of the total free energy.
+    """
+    f = open(pw_scf_out, 'r')
+
+    lines = f.readlines()
+
+    # read number of k points and smearing:
+
+    for ii in np.arange(len(lines)):
+        if lines[ii].find('     number of k points=') == 0:
+
+            line_index = ii
+
+    smearing_line = lines[line_index].split()
+    N_k = int(smearing_line[4])
+    kT = float(smearing_line[9])
+
+    k_Points = np.empty([N_k, 4])
+
+    for ii in np.arange(N_k):
+        (kb, einsb, eq, bra, kx, ky, kz, wk_s, eq2,
+            wk) = lines[line_index + 2 + ii].split()
+
+        kx = float(kx)
+        ky = float(ky)
+        kz = float(kz[:-2])
+
+        wk = float(wk)
+
+        k_Points[ii, 0] = kx
+        k_Points[ii, 1] = ky
+        k_Points[ii, 2] = kz
+        k_Points[ii, 3] = wk
+
+    # read number of Kohn-Sham states:
+
+    for ii in np.arange(len(lines)):
+        if lines[ii].find('     number of Kohn-Sham') == 0:
+            KS_index = ii
+
+    number, of, KS_s, states, N_states = lines[KS_index].split()
+
+    N_states = int(N_states)
+
+    # read all energies for all the different k points and Kohn-Sham States:
+
+    for ii in np.arange(len(lines)):
+        if lines[ii].find('     End of') == 0:
+            state_start_index = ii + 4
+
+    energies = np.zeros((N_k, N_states))
+
+    # the states are written in columns of size 8
+    # with divmod we check how many rows we have
+    state_lines = divmod(N_states, 8)[0]
+    if divmod(N_states, 8)[1] != 0:
+        state_lines += 1
+
+    for ik in np.arange(N_k):
+        energies_per_k = []
+        for istate in range(state_lines):
+            energies_per_k.extend(lines[state_start_index
+                + istate + (state_lines + 3) * ik].split())
+
+        energies[ik] = np.array(energies_per_k)
+
+    kT *= misc.Ry
+
+    mu = read_Fermi_level(pw_scf_out)
+
+    demet = np.zeros(energies.shape)
+
+    if subset == None:
+        for ik in range(N_k):
+            for iband in range(N_states):
+                
+                x = (mu - energies[ik, iband]) / kT
+                if abs(x) <= 36:
+                    f = 1.0 / (1.0 + np.exp( -x) )
+                    onemf = 1.0-f
+                    w1gauss = f*np.log(f) + onemf*np.log(onemf)
+                    
+                else:
+                    w1gauss = 0
+                demet[ik, iband] = (k_Points[ik, 3] * kT * w1gauss)
+
+    else:
+        for ik in range(N_k):
+            for iband in subset:
+                x = (mu - energies[ik, iband]) / kT
+                if abs(x) <= 36:
+                    f = 1.0 / (1.0 + np.exp( -x) )
+                    onemf = 1.0-f
+                    w1gauss = f*np.log(f) + onemf*np.log(onemf)
+                    
+                else:
+                    w1gauss = 0
+                demet[ik, iband] = (k_Points[ik, 3] * kT * w1gauss)
+                    
+
+    demet = demet.sum() / misc.Ry
+
+    return demet
 
 def read_decayH(file):
     """Read *decay.H* output from EPW.
