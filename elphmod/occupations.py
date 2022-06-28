@@ -52,31 +52,6 @@ fermi_dirac.delta = fermi_dirac_delta
 fermi_dirac.delta_prime = fermi_dirac_delta_prime
 fermi_dirac.entropy = fermi_dirac_entropy
 
-def double_fermi_dirac(x, d):
-    """Calculate double Fermi function."""
-
-    return (fermi_dirac(x - d) + fermi_dirac(x + d)) / 2
-
-def double_fermi_dirac_delta(x, d):
-    """Calculate negative derivative of double Fermi function."""
-
-    return (fermi_dirac.delta(x - d) + fermi_dirac.delta(x + d)) / 2
-
-def double_fermi_dirac_delta_prime(x, d):
-    """Calculate negative 2nd derivative of double Fermi function."""
-
-    return (fermi_dirac.delta_prime(x - d) + fermi_dirac.delta_prime(x + d)) / 2
-
-def double_fermi_dirac_entropy(x, d):
-    """Calculate double-Fermi-Dirac generalized electronic entropy."""
-
-    return (fermi_dirac.entropy(x - d) + fermi_dirac.entropy(x + d)
-        + d * (fermi_dirac(x - d) - fermi_dirac(x + d))) / 2
-
-double_fermi_dirac.delta = double_fermi_dirac_delta
-double_fermi_dirac.delta_prime = double_fermi_dirac_delta_prime
-double_fermi_dirac.entropy = double_fermi_dirac_entropy
-
 def gauss(x):
     """Calculate Gaussian step function."""
 
@@ -207,6 +182,31 @@ def methfessel_paxton_entropy(x, N=1):
 methfessel_paxton.delta = methfessel_paxton_delta
 methfessel_paxton.delta_prime = methfessel_paxton_delta_prime
 methfessel_paxton.entropy = methfessel_paxton_entropy
+
+def double_fermi_dirac(x, d):
+    """Calculate double Fermi function."""
+
+    return (fermi_dirac(x - d) + fermi_dirac(x + d)) / 2
+
+def double_fermi_dirac_delta(x, d):
+    """Calculate negative derivative of double Fermi function."""
+
+    return (fermi_dirac.delta(x - d) + fermi_dirac.delta(x + d)) / 2
+
+def double_fermi_dirac_delta_prime(x, d):
+    """Calculate negative 2nd derivative of double Fermi function."""
+
+    return (fermi_dirac.delta_prime(x - d) + fermi_dirac.delta_prime(x + d)) / 2
+
+def double_fermi_dirac_entropy(x, d):
+    """Calculate double-Fermi-Dirac generalized electronic entropy."""
+
+    return (fermi_dirac.entropy(x - d) + fermi_dirac.entropy(x + d)
+        + d * (fermi_dirac(x - d) - fermi_dirac(x + d))) / 2
+
+double_fermi_dirac.delta = double_fermi_dirac_delta
+double_fermi_dirac.delta_prime = double_fermi_dirac_delta_prime
+double_fermi_dirac.entropy = double_fermi_dirac_entropy
 
 def lorentz(x):
     """Calculate Lorentz step function.
