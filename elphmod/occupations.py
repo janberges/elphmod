@@ -45,7 +45,7 @@ fermi_dirac.delta_prime = fermi_dirac_delta_prime
 def gauss(x):
     """Calculate Gaussian step function."""
 
-    return 0.5 * (1 - erf(x))
+    return (1 - erf(x)) / 2
 
 def gauss_delta(x):
     """Calculate negative derivative of Gaussian step function."""
@@ -65,7 +65,7 @@ def marzari_vanderbilt(x):
 
     y = x + 1 / np.sqrt(2)
 
-    return (erf(-y) + 1) / 2 + np.exp(-y * y) / np.sqrt(2 * np.pi)
+    return (1 - erf(y)) / 2 + np.exp(-y * y) / np.sqrt(2 * np.pi)
 
 def marzari_vanderbilt_delta(x):
     """Calculate negative derivative of Marzari-Vanderbilt step function."""
