@@ -53,35 +53,27 @@ fermi_dirac.delta_prime = fermi_dirac_delta_prime
 fermi_dirac.entropy = fermi_dirac_entropy
 
 def double_fermi_dirac(x, mu1, mu2):
-    """Calculate Double Fermi function."""
+    """Calculate double Fermi function."""
 
-    x = np.minimum(x, xmax)
+    return (fermi_dirac(x - mu1) + fermi_dirac(x - mu2)) / 2
 
-    return 0.5 / (np.exp(x-mu1) + 1) + 0.5 / (np.exp(x-mu2) + 1)
+def double_fermi_dirac_delta(x, mu1, mu2):
+    """Calculate negative derivative of double Fermi function."""
 
-def double_fermi_dirac_delta(x,mu1,mu2):
-    """Calculate negative derivative of Fermi function."""
-
-    x = np.minimum(np.absolute(x), xmax)
-
-    return 0.5 / (2 * np.cosh(x-mu1) + 2) + 0.5 / (2 * np.cosh(x-mu2) + 2)
+    return (fermi_dirac.delta(x - mu1) + fermi_dirac.delta(x - mu2)) / 2
 
 def double_fermi_dirac_delta_prime(x, mu1, mu2):
-    """Calculate negative 2nd derivative of Fermi function."""
+    """Calculate negative 2nd derivative of double Fermi function."""
 
-    x = np.sign(x) * np.minimum(np.absolute(x), xmax)
-
-    return -0.5*np.sinh(x-mu1) / (2 * (np.cosh(x-mu1) + 1) ** 2) - 0.5*np.sinh(x-mu2) / (2 * (np.cosh(x-mu2) + 1) ** 2)
+    return (fermi_dirac.delta_prime(x - mu1)
+        + fermi_dirac.delta_prime(x - mu2)) / 2
 
 def double_fermi_dirac_entropy(x, mu1, mu2):
-    """Calculate electronic entropy."""
+    """Calculate double-Fermi-Dirac generalized electronic entropy."""
 
-    x = np.sign(x) * np.minimum(np.absolute(x), xmax)
-
-    double1 = 0.25*(mu1 - np.log(4.0) - 2.0 * np.log(np.cosh((x - mu1)/2.0)) + x * np.tanh((x - mu1)/2.0))
-    double2 = 0.25*(mu2 - np.log(4.0) - 2.0 * np.log(np.cosh((x - mu2)/2.0)) + x * np.tanh((x - mu2)/2.0))
-
-    return -(double1 + double2)
+    return (fermi_dirac.entropy(x - mu1) + fermi_dirac.entropy(x - mu2)
+        + mu1 * fermi_dirac(x - mu1) + mu2 * fermi_dirac(x - mu2)
+        - mu1 - mu2) / 2
 
 double_fermi_dirac.delta = double_fermi_dirac_delta
 double_fermi_dirac.delta_prime = double_fermi_dirac_delta_prime
@@ -202,12 +194,12 @@ def methfessel_paxton(x, N=1):
 def methfessel_paxton_delta(x, N=1):
     """Calculate negative derivative of Methfessel-Paxton step function."""
 
-    return gauss_delta(x) - methfessel_paxton_term(x, order=N, diff=1)
+    return gauss.delta(x) - methfessel_paxton_term(x, order=N, diff=1)
 
 def methfessel_paxton_delta_prime(x, N=1):
     """Calculate negative 2nd derivative of Methfessel-Paxton step function."""
 
-    return gauss_delta_prime(x) - methfessel_paxton_term(x, order=N, diff=2)
+    return gauss.delta_prime(x) - methfessel_paxton_term(x, order=N, diff=2)
 
 def methfessel_paxton_entropy(x, N=1):
     """Calculate Methfessel-Paxton generalized electronic entropy."""
