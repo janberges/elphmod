@@ -544,10 +544,8 @@ def unfolding_weights(k, R, U0, U, blocks0=None, blocks=None, sgn=-1):
     status = misc.StatusBar(sizes[comm.rank], title='unfold bands')
 
     for my_ik, ik in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
-        for n in range(bands):
-            my_w[my_ik, n] = sum(abs(sum(
-                np.dot(U0[ik, blocks0[ir], m].conj(), U[ik, blocks[ir], n])
-                * np.exp(sgn * 1j * np.dot(k[ik], R[ir]))
+        my_w[my_ik] = sum(abs(sum(np.exp(sgn * 1j * np.dot(k[ik], R[ir]))
+            * np.dot(U0[ik, blocks0[ir], m].conj(), U[ik, blocks[ir]])
                 for ir in range(len(R)))) ** 2
                 for m in range(bands0))
 
