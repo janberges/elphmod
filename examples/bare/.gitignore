@@ -1,0 +1,6 @@
+*.UPF
+*.out
+dyn*
+ifc
+input_tmp.in
+work
