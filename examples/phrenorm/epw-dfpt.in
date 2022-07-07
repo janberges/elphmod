@@ -1,0 +1,30 @@
+TaS2
+&INPUTEPW
+    prefix = 'TaS2'
+    outdir = 'work/'
+    dvscf_dir = 'dfpt.save'
+
+    wannierize = .true.
+    elph = .true.
+    use_ws = .true.
+    epwwrite = .true.
+    lpolar = .false.
+    system_2d = .false.
+
+    nbndsub = 3
+    bands_skipped = 'exclude_bands = 1:8'
+
+    proj(1) = 'Ta: dz2; dx2-y2; dxy'
+
+    dis_win_min = 1.0
+    dis_froz_max = 5.0
+
+    num_iter = 0
+    wdata(1) = 'dis_num_iter 10000'
+
+    nk1 = 4, nk2 = 4, nk3 = 1
+    nq1 = 2, nq2 = 2, nq3 = 1
+
+    nkf1 = 4, nkf2 = 4, nkf3 = 1
+    nqf1 = 2, nqf2 = 2, nqf3 = 1
+/

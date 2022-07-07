@@ -28,6 +28,15 @@ index b8f005982..1b071abed 100644
 +  ENDIF
 +  !
    IF (use_ws) THEN
+diff --git a/EPW/src/epw_readin.f90 b/EPW/src/epw_readin.f90
+index 88e4c9f3f..1b789576b 100644
+--- a/EPW/src/epw_readin.f90
++++ b/EPW/src/epw_readin.f90
+@@ -810,3 +810,3 @@
+     WRITE(stdout, '(5x,a)') "WARNING - 2D - WARNING - 2D - WARNING - 2D - WARNING - 2D"
+-    CALL errore('epw_readin', '2D interpolation is under developement.', 1)
++    CALL errore('epw_readin', '2D interpolation is under developement.', 0)
+   ENDIF
 diff --git a/LR_Modules/Makefile b/LR_Modules/Makefile
 index 15ea9b388..a6f7c8e22 100644
 --- a/LR_Modules/Makefile
@@ -344,6 +353,34 @@ index e9a9a20de..b49204365 100644
 +  CALL setup_cdfpt_subspace
 +  !
    RETURN
+diff --git a/PHonon/PH/prepare_q.f90 b/PHonon/PH/prepare_q.f90
+index 12c739998..b10d58316 100644
+--- a/PHonon/PH/prepare_q.f90
++++ b/PHonon/PH/prepare_q.f90
+@@ -43,2 +43,3 @@ SUBROUTINE prepare_q(auxdyn, do_band, do_iq, setup_pw, iq)
+   USE qpoint,          ONLY : xq
++  USE cdfpt,           ONLY : lcdfpt, bare
+   USE control_lr,      ONLY : lgamma
+@@ -139,3 +140,3 @@ SUBROUTINE prepare_q(auxdyn, do_band, do_iq, setup_pw, iq)
+         !
+-        IF ( .NOT. (lgauss .OR. ltetra)) THEN
++        IF (.NOT. (lgauss .OR. ltetra) .OR. lcdfpt .OR. bare) THEN
+            !
+diff --git a/PHonon/PH/solve_e.f90 b/PHonon/PH/solve_e.f90
+index d22fc071a..f1020cc28 100644
+--- a/PHonon/PH/solve_e.f90
++++ b/PHonon/PH/solve_e.f90
+@@ -62,2 +62,3 @@ subroutine solve_e
+   USE eqv,                   ONLY : dpsi, dvpsi
++  USE cdfpt,                 ONLY : lcdfpt, bare
+   USE control_lr,            ONLY : nbnd_occ, lgamma
+@@ -157,4 +158,4 @@ subroutine solve_e
+   !
+-  if ( (lgauss .or. ltetra) .or..not.lgamma) call errore ('solve_e', &
+-       'called in the wrong case', 1)
++  if ((lgauss .or. ltetra) .and. .not. (lcdfpt .or. bare) .or. .not. lgamma) &
++     CALL errore('solve_e', 'called in the wrong case', 1)
+   !
 diff --git a/PHonon/PH/solve_linter.f90 b/PHonon/PH/solve_linter.f90
 index fed13a888..acdabd541 100644
 --- a/PHonon/PH/solve_linter.f90

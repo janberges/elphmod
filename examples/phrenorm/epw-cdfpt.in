@@ -2,12 +2,14 @@ TaS2
 &INPUTEPW
     prefix = 'TaS2'
     outdir = 'work/'
-    dvscf_dir = 'save'
+    dvscf_dir = 'cdfpt.save'
 
-    wannierize = .true.
+    wannierize = .false.
     elph = .true.
     use_ws = .true.
     epwwrite = .true.
+    lpolar = .true.
+    system_2d = .true.
 
     nbndsub = 3
     bands_skipped = 'exclude_bands = 1:8'

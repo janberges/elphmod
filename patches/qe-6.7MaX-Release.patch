@@ -344,6 +344,34 @@ index 59d22f45a..aaf86c145 100644
 +  CALL setup_cdfpt_subspace
 +  !
    RETURN
+diff --git a/PHonon/PH/prepare_q.f90 b/PHonon/PH/prepare_q.f90
+index 12c739998..b10d58316 100644
+--- a/PHonon/PH/prepare_q.f90
++++ b/PHonon/PH/prepare_q.f90
+@@ -43,2 +43,3 @@ SUBROUTINE prepare_q(auxdyn, do_band, do_iq, setup_pw, iq)
+   USE qpoint,          ONLY : xq
++  USE cdfpt,           ONLY : lcdfpt, bare
+   USE control_lr,      ONLY : lgamma
+@@ -139,3 +140,3 @@ SUBROUTINE prepare_q(auxdyn, do_band, do_iq, setup_pw, iq)
+         !
+-        IF ( .NOT. (lgauss .OR. ltetra)) THEN
++        IF (.NOT. (lgauss .OR. ltetra) .OR. lcdfpt .OR. bare) THEN
+            !
+diff --git a/PHonon/PH/solve_e.f90 b/PHonon/PH/solve_e.f90
+index d2411bb4c..989c86535 100644
+--- a/PHonon/PH/solve_e.f90
++++ b/PHonon/PH/solve_e.f90
+@@ -62,2 +62,3 @@ subroutine solve_e
+   USE eqv,                   ONLY : dpsi, dvpsi
++  USE cdfpt,                 ONLY : lcdfpt, bare
+   USE control_lr,            ONLY : nbnd_occ, lgamma
+@@ -164,4 +165,4 @@ subroutine solve_e
+   !
+-  if ( (lgauss .or. ltetra) .or..not.lgamma) call errore ('solve_e', &
+-       'called in the wrong case', 1)
++  if ((lgauss .or. ltetra) .and. .not. (lcdfpt .or. bare) .or. .not. lgamma) &
++     CALL errore('solve_e', 'called in the wrong case', 1)
+   !
 diff --git a/PHonon/PH/solve_linter.f90 b/PHonon/PH/solve_linter.f90
 index 97d69aa28..255d83dfb 100644
 --- a/PHonon/PH/solve_linter.f90

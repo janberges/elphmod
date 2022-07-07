@@ -1,6 +1,7 @@
 *.bib
 *.bvec
 *.chk
+*.dyn*
 *.epmatwp
 *.fmt
 *.ifc
@@ -11,6 +12,7 @@
 *.out
 *.pdos_atm*
 *.pdos_tot
+*.save
 *.ukk
 *.upf
 *.win
@@ -18,9 +20,7 @@
 *_hr.dat
 *_wsvec.dat
 decay.*
-dyn*
 ifc
 input_tmp.in
-save
 wigner.dat
 work

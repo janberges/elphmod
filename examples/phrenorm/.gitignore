@@ -2,6 +2,7 @@
 *.bib
 *.bvec
 *.chk
+*.dyn*
 *.epmatwp
 *.fmt
 *.ifc
@@ -10,6 +11,7 @@
 *.mmn
 *.nnkp
 *.out
+*.save
 *.ukk
 *.win
 *.wout
@@ -17,9 +19,7 @@
 *_wsvec.dat
 decay.*
 !decay.py
-dyn*
 ifc
 input_tmp.in
-save
 wigner.dat
 work

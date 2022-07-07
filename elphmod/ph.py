@@ -200,7 +200,7 @@ class Model(object):
         self.lr = lr and self.eps is not None and self.Z is not None
 
         if self.lr:
-            lr2d_guess = self.nq[2] == 1
+            lr2d_guess = self.nq[0] != self.nq[2] == 1 != self.nq[1]
 
             self.lr2d = lr2d_guess if lr2d is None else lr2d
 

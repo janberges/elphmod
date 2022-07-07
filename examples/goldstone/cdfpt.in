@@ -3,7 +3,7 @@ N2
     outdir = 'work'
     prefix = 'N2'
 
-    fildyn = 'dyn'
+    fildyn = 'cdfpt.dyn'
     fildvscf = 'dvscf'
 
     ldisp = .true.

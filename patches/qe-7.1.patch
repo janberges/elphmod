@@ -27,6 +27,15 @@ index fc889df08..eed5c10b2 100644
 +  ENDIF
 +  !
    IF (use_ws) THEN
+diff --git a/EPW/src/epw_readin.f90 b/EPW/src/epw_readin.f90
+index 6b2161a65..b9fcef5bb 100644
+--- a/EPW/src/epw_readin.f90
++++ b/EPW/src/epw_readin.f90
+@@ -878,3 +878,3 @@
+     WRITE(stdout, '(5x,a)') "WARNING - 2D - WARNING - 2D - WARNING - 2D - WARNING - 2D"
+-    CALL errore('epw_readin', '2D interpolation is under developement.', 1)
++    CALL errore('epw_readin', '2D interpolation is under developement.', 0)
+   ENDIF
 diff --git a/LR_Modules/Makefile b/LR_Modules/Makefile
 index c7795e96b..89c9172c6 100644
 --- a/LR_Modules/Makefile
@@ -358,6 +367,34 @@ index 3aeaae1b1..8b00cd59b 100644
 +  CALL setup_cdfpt_subspace
 +  !
    RETURN
+diff --git a/PHonon/PH/prepare_q.f90 b/PHonon/PH/prepare_q.f90
+index 72b283565..e16fa9c2b 100644
+--- a/PHonon/PH/prepare_q.f90
++++ b/PHonon/PH/prepare_q.f90
+@@ -45,2 +45,3 @@ SUBROUTINE prepare_q(auxdyn, do_band, do_iq, setup_pw, iq)
+   USE qpoint,          ONLY : xq
++  USE cdfpt,           ONLY : lcdfpt, bare
+   USE control_lr,      ONLY : lgamma
+@@ -140,3 +141,3 @@ SUBROUTINE prepare_q(auxdyn, do_band, do_iq, setup_pw, iq)
+         !
+-        IF ( .NOT. (lgauss .OR. ltetra)) THEN
++        IF (.NOT. (lgauss .OR. ltetra) .OR. lcdfpt .OR. bare) THEN
+            !
+diff --git a/PHonon/PH/solve_e.f90 b/PHonon/PH/solve_e.f90
+index 7dc22c076..bfe5426e1 100644
+--- a/PHonon/PH/solve_e.f90
++++ b/PHonon/PH/solve_e.f90
+@@ -59,2 +59,3 @@ subroutine solve_e
+   USE qpoint,                ONLY : nksq, ikks
++  USE cdfpt,                 ONLY : lcdfpt, bare
+   USE control_lr,            ONLY : lgamma
+@@ -146,4 +147,4 @@ subroutine solve_e
+   !
+-  if ( (lgauss .or. ltetra) .or..not.lgamma) call errore ('solve_e', &
+-       'called in the wrong case', 1)
++  if ((lgauss .or. ltetra) .and. .not. (lcdfpt .or. bare) .or. .not. lgamma) &
++     CALL errore('solve_e', 'called in the wrong case', 1)
+   !
 diff --git a/install/makedeps.sh b/install/makedeps.sh
 index c1c46b177..dde105e5d 100755
 --- a/install/makedeps.sh

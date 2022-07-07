@@ -1,0 +1,32 @@
+graphene
+&INPUTEPW
+    prefix = 'graphene'
+    outdir = 'work/'
+    dvscf_dir = 'dfpt.save'
+
+    wannierize = .true.
+    elph = .true.
+    use_ws = .true.
+    epwwrite = .true.
+    lpolar = .false.
+    system_2d = .false.
+
+    nbndsub = 2
+
+    efermi_read = .true.
+    fermi_energy = 1.3995
+
+    proj(1) = 'C: pz'
+
+    dis_froz_max = 4.0
+    dis_froz_min = -1.5
+
+    num_iter = 0
+    wdata(1) = 'dis_num_iter 10000'
+
+    nk1 = 6, nk2 = 6, nk3 = 1
+    nq1 = 2, nq2 = 2, nq3 = 1
+
+    nkf1 = 6, nkf2 = 6, nkf3 = 1
+    nqf1 = 2, nqf2 = 2, nqf3 = 1
+/

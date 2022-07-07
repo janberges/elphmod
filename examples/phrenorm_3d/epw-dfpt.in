@@ -1,0 +1,30 @@
+polonium
+&INPUTEPW
+    prefix = 'polonium'
+    outdir = 'work/'
+    dvscf_dir = 'dfpt.save'
+
+    wannierize = .true.
+    elph = .true.
+    use_ws = .true.
+    epwwrite = .true.
+    lpolar = .false.
+
+    nbndsub = 3
+    bands_skipped = 'exclude_bands = 1:6'
+
+    proj(1) = 'Po: p'
+
+    dis_win_min = 3.0
+    dis_win_max = 14.0
+    dis_froz_max = 12.0
+
+    num_iter = 0
+    wdata(1) = 'dis_num_iter 10000'
+
+    nk1 = 4, nk2 = 4, nk3 = 4
+    nq1 = 2, nq2 = 2, nq3 = 2
+
+    nkf1 = 4, nkf2 = 4, nkf3 = 4
+    nqf1 = 2, nqf2 = 2, nqf3 = 2
+/

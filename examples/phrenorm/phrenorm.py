@@ -66,7 +66,7 @@ info('Renormalize phonons')
 
 D = elphmod.dispersion.sample(ph['cdfpt'].D, q)
 
-ph['pp'] = copy.copy(ph['cdfpt'])
+ph['pp'] = copy.copy(ph['dfpt'])
 
 elphmod.ph.q2r(ph['pp'], D + Pi, q, nq, apply_asr_simple=True)
 

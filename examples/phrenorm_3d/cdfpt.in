@@ -3,7 +3,7 @@ polonium
     prefix = 'polonium'
     outdir = 'work'
 
-    fildyn = 'dyn'
+    fildyn = 'cdfpt.dyn'
     fildvscf = 'dvscf'
 
     ldisp = .true.

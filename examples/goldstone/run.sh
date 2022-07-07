@@ -15,7 +15,7 @@ mpirun pw.x < pw.in | tee pw.out
 for method in dfpt cdfpt
 do
     mpirun ph.x -ndiag 1 < $method.in | tee $method.out
-    echo "&INPUT fildyn='dyn' flfrc='$method.ifc' /" | mpirun -n 1 q2r.x
+    echo "&INPUT fildyn='$method.dyn' flfrc='$method.ifc' /" | mpirun -n 1 q2r.x
     cp -rT work/_ph0/N2.phsave $method.phsave
 done
 

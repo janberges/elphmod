@@ -3,7 +3,7 @@ graphene
     prefix = 'graphene'
     outdir = 'work'
 
-    fildyn = 'dyn'
+    fildyn = 'dfpt.dyn'
     fildvscf = 'dvscf'
 
     ldisp = .true.

@@ -2,12 +2,13 @@ polonium
 &INPUTEPW
     prefix = 'polonium'
     outdir = 'work/'
-    dvscf_dir = 'save'
+    dvscf_dir = 'cdfpt.save'
 
-    wannierize = .true.
+    wannierize = .false.
     elph = .true.
     use_ws = .true.
     epwwrite = .true.
+    lpolar = .true.
 
     nbndsub = 3
     bands_skipped = 'exclude_bands = 1:6'

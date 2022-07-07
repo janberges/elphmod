@@ -17,13 +17,12 @@ do
     mpirun pw.x -nk $nk < scf.in | tee scf.out
     mpirun ph.x -nk $nk < $method.in | tee $method.out
 
-    mpirun q2r.x < q2r.in | tee q2r.out
-    ../../bin/ph2epw
+    mpirun q2r.x < q2r-$method.in | tee q2r-$method.out
+    fildyn=$method.dyn dvscf_dir=$method.save ../../bin/ph2epw
 
     mpirun pw.x -nk $nk < nscf.in | tee nscf.out
-    mpirun -n $nk epw.x -nk $nk < epw.in | tee epw.out
+    mpirun -n $nk epw.x -nk $nk < epw-$method.in | tee epw-$method.out
 
-    mv ifc $method.ifc
     mv work/TaS2.epmatwp $method.epmatwp
 done
 
