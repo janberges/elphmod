@@ -134,7 +134,7 @@ class Model(object):
 
             comm.Allreduce(my_g, self.gq)
 
-            if self.ph.lr and np.any(q != 0):
+            if self.ph.lr:
                 g_lr = self.g_lr(q1, q2, q3)
 
                 for a in range(self.el.size):
@@ -341,7 +341,7 @@ class Model(object):
         g = MPI.SharedArray(self.g0.shape, dtype=complex,
             shared_memory=shared_memory)
 
-        g_lr = dispersion.sample(self.g_lr, self.ph.q0[1:])
+        g_lr = dispersion.sample(self.g_lr, self.ph.q0)
 
         for _ in range(len(self.el.nk)):
             g_lr = g_lr[..., np.newaxis]
@@ -350,7 +350,7 @@ class Model(object):
             g[...] = self.g0[...]
 
             for a in range(self.el.size):
-                g[1:, ..., a, a] -= g_lr
+                g[..., a, a] -= g_lr
 
         g.Bcast()
 
