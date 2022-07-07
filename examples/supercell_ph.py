@@ -20,7 +20,8 @@ A = np.dot(N, a)
 ph = elphmod.ph.Model('data/NbSe2_cDFPT.ifc', apply_asr_simple=True)
 Ph = ph.supercell(*N)
 
-q, x, GMKG = elphmod.bravais.path('GMKG', ibrav=4, N=150)
+path = 'GMKG'
+q, x, corners = elphmod.bravais.path(path, ibrav=4, N=150)
 Q = np.dot(np.dot(q, b), A.T)
 
 w2, u = elphmod.dispersion.dispersion(ph.D, q, vectors=True)
@@ -46,5 +47,5 @@ if elphmod.MPI.comm.rank == 0:
 
     plt.ylabel('Phonon energy (meV)')
     plt.xlabel('Wave vector')
-    plt.xticks(x[GMKG], 'GMKG')
+    plt.xticks(x[corners], path)
     plt.show()

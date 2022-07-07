@@ -20,7 +20,8 @@ A = np.dot(N, a)
 el = elphmod.el.Model('data/NbSe2')
 El = el.supercell(*N)
 
-k, x, GMKG = elphmod.bravais.path('GMKG', ibrav=4, N=150)
+path = 'GMKG'
+k, x, corners = elphmod.bravais.path(path, ibrav=4, N=150)
 K = np.dot(np.dot(k, b), A.T)
 
 e, u = elphmod.dispersion.dispersion(el.H, k, vectors=True)
@@ -44,5 +45,5 @@ if elphmod.MPI.comm.rank == 0:
 
     plt.ylabel('Electron energy (eV)')
     plt.xlabel('Wave vector')
-    plt.xticks(x[GMKG], 'GMKG')
+    plt.xticks(x[corners], path)
     plt.show()

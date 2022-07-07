@@ -8,7 +8,8 @@ import matplotlib.pyplot as plt
 
 elel = elphmod.elel.Model('data/U.ijkl', nq=2, no=1)
 
-q, x, GMKG = elphmod.bravais.path('GMKG', ibrav=4, N=150)
+path = 'GMKG'
+q, x, corners = elphmod.bravais.path(path, ibrav=4, N=150)
 
 W = elphmod.dispersion.dispersion(elel.W, q)
 
@@ -16,5 +17,5 @@ if elphmod.MPI.comm.rank == 0:
     plt.plot(x, W)
     plt.ylabel('Coulomb interaction (eV)')
     plt.xlabel('Wave vector')
-    plt.xticks(x[GMKG], 'GMKG')
+    plt.xticks(x[corners], path)
     plt.show()

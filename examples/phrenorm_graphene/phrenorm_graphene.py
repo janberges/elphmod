@@ -22,7 +22,8 @@ info('Prepare wave vectors')
 q = sorted(elphmod.bravais.irreducibles(nq))
 q = 2 * np.pi * np.array(q, dtype=float) / nq
 
-path, x, GMKG = elphmod.bravais.path('GMKG', ibrav=4, N=200)
+path = 'GMKG'
+q_path, x, corners = elphmod.bravais.path(path, ibrav=4, N=200)
 
 info('Prepare electrons')
 
@@ -66,7 +67,7 @@ elphmod.ph.q2r(ph['cdfpt+pi'], D + Pi, q, nq)
 
 info('Plot electrons')
 
-e = elphmod.dispersion.dispersion(el.H, path)
+e = elphmod.dispersion.dispersion(el.H, q_path)
 e -= mu
 
 if comm.rank == 0:
@@ -75,7 +76,7 @@ if comm.rank == 0:
 
     plt.ylabel('Electron energy (eV)')
     plt.xlabel('Wave vector')
-    plt.xticks(x[GMKG], 'GMKG')
+    plt.xticks(x[corners], path)
     plt.show()
 
 info('Plot cDFPT, DFPT and renormalized phonons')
@@ -83,7 +84,7 @@ info('Plot cDFPT, DFPT and renormalized phonons')
 for method, label, style in [('dfpt', 'DFPT', 'r'), ('cdfpt', 'cDFPT', 'g'),
         ('cdfpt+pi', r'cDFPT+$\Pi$', 'b:')]:
 
-    w2 = elphmod.dispersion.dispersion(ph[method].D, path)
+    w2 = elphmod.dispersion.dispersion(ph[method].D, q_path)
 
     w = elphmod.ph.sgnsqrt(w2) * elphmod.misc.Ry * 1e3
 
@@ -94,6 +95,6 @@ for method, label, style in [('dfpt', 'DFPT', 'r'), ('cdfpt', 'cDFPT', 'g'),
 if comm.rank == 0:
     plt.ylabel('Phonon energy (meV)')
     plt.xlabel('Wave vector')
-    plt.xticks(x[GMKG], 'GMKG')
+    plt.xticks(x[corners], path)
     plt.legend()
     plt.show()

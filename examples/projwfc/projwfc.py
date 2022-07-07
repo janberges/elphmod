@@ -21,7 +21,8 @@ width = 0.5 * elphmod.el.proj_sum(proj, orbitals, 's', 'p{x, y}', 'pz')
 pwi = elphmod.bravais.read_pwi('scf.in')
 mu = elphmod.el.read_Fermi_level('scf.out')
 
-K, X, GMKG = elphmod.bravais.path('GMKG', N=100, **pwi)
+path = 'GMKG'
+K, X, corners = elphmod.bravais.path(path, N=100, **pwi)
 X *= x[-1] / X[-1]
 
 el = elphmod.el.Model('graphene')
@@ -33,7 +34,7 @@ if elphmod.MPI.comm.rank != 0:
 
 plt.ylabel('Electron energy (eV)')
 plt.xlabel('Wave vector')
-plt.xticks(X[GMKG], 'GMKG')
+plt.xticks(X[corners], path)
 
 for n in range(eps.shape[1]):
     fatbands = elphmod.plot.compline(x, eps[:, n], width[:, n, :])

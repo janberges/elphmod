@@ -18,12 +18,13 @@ width = 0.5 * elphmod.el.proj_sum(proj, orbitals, 's', 'p', 'd', 'x')
 if elphmod.MPI.comm.rank != 0:
     raise SystemExit
 
-K, X, GXRMG = elphmod.bravais.path('GXRMG', ibrav=1)
+path = 'GXRMG'
+K, X, corners = elphmod.bravais.path(path, ibrav=1)
 X *= x[-1] / X[-1]
 
 plt.ylabel('Electron energy (eV)')
 plt.xlabel('Wave vector')
-plt.xticks(X[GXRMG], 'GXRMG')
+plt.xticks(X[corners], path)
 
 for n in range(eps.shape[1]):
     fatbands = elphmod.plot.compline(x, eps[:, n], width[:, n, :])

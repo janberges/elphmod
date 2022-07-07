@@ -12,7 +12,8 @@ comm = elphmod.MPI.comm
 pwi = elphmod.bravais.read_pwi('scf.in')
 mu = elphmod.el.read_Fermi_level('scf.out')
 
-k, x, GMKG = elphmod.bravais.path('GMKG', **pwi, N=100 * np.sqrt(3) * pwi['a'])
+path = 'GMKG'
+k, x, corners = elphmod.bravais.path(path, **pwi, N=100 * np.sqrt(3) * pwi['a'])
 x *= 2 * np.pi
 
 for seedname, ref, res in ('ws_yes', 'm', 'k--'), ('ws_no', 'g', 'k:'):
@@ -33,6 +34,6 @@ for seedname, ref, res in ('ws_yes', 'm', 'k--'), ('ws_no', 'g', 'k:'):
 if comm.rank == 0:
     plt.ylabel('Electron energy (eV)')
     plt.xlabel('Wave vector')
-    plt.xticks(x[GMKG], 'GMKG')
+    plt.xticks(x[corners], path)
     plt.legend()
     plt.show()

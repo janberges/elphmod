@@ -28,7 +28,8 @@ elph.data *= elphmod.misc.Ry / elphmod.misc.a0
 
 ElPh = elph.supercell(*N, shared_memory=False)
 
-k, x, GMKG = elphmod.bravais.path('GMKG', ibrav=4, N=300)
+path = 'GMKG'
+k, x, corners = elphmod.bravais.path(path, ibrav=4, N=300)
 K = np.dot(np.dot(k, b), A.T)
 
 I = elphmod.MPI.comm.Split(elphmod.MPI.comm.rank)
@@ -62,5 +63,5 @@ if elphmod.MPI.comm.rank == 0:
 
     plt.ylabel('Electron-phonon coupling ($\mathrm{eV/\AA}$)')
     plt.xlabel('Wave vector')
-    plt.xticks(x[GMKG], 'GMKG')
+    plt.xticks(x[corners], path)
     plt.show()

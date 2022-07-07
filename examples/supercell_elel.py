@@ -20,7 +20,8 @@ A = np.dot(N, a)
 elel = elphmod.elel.Model('data/U.ijkl', nq=2, no=1)
 ElEl = elel.supercell(*N)
 
-q, x, GMKG = elphmod.bravais.path('GMKG', ibrav=4, N=150)
+path = 'GMKG'
+q, x, corners = elphmod.bravais.path(path, ibrav=4, N=150)
 Q = np.dot(np.dot(q, b), A.T)
 
 v, u = elphmod.dispersion.dispersion(elel.W, q, vectors=True)
@@ -44,5 +45,5 @@ if elphmod.MPI.comm.rank == 0:
 
     plt.ylabel('Coulomb interaction (eV)')
     plt.xlabel('Wave vector')
-    plt.xticks(x[GMKG], 'GMKG')
+    plt.xticks(x[corners], path)
     plt.show()
