@@ -292,7 +292,7 @@ class Model(object):
                 if self.Q is not None:
                     self.q[na] /= np.sqrt(self.M[na])
 
-    def generate_long_range(self, q1=0, q2=0, q3=0, eps=1e-8):
+    def generate_long_range(self, q1=0, q2=0, q3=0, eps=1e-10):
         r"""Generate long-range terms.
 
         Parameters

@@ -1274,7 +1274,7 @@ def Fourier_interpolation(data, angle=60, sign=-1, hr_file=None, function=True):
 
     return dict((tuple(point), value) for point, value in zip(points, values))
 
-def path(points, N=30, recvec=None, qe=False, **kwargs):
+def path(points, N=30, recvec=None, qe=False, moveG=0, **kwargs):
     """Generate arbitrary path through Brillouin zone.
 
     Parameters
@@ -1288,6 +1288,9 @@ def path(points, N=30, recvec=None, qe=False, **kwargs):
         List of reciprocal lattice vectors.
     qe : bool, default False
         Also return path in QE input format?
+    moveG : float, default 0
+        Move Gamma point to the closest nonzero point multiplied by this value.
+        This is useful, e.g., to plot phonon dispersions with TO-LO splitting.
     **kwargs
         Arguments passed to :func:`primitives`, e.g., parameters from
         'func'`read_pwi`, particularly the Bravais-lattice index `ibrav`.
@@ -1368,17 +1371,30 @@ def path(points, N=30, recvec=None, qe=False, **kwargs):
 
     for i in range(len(points) - 1):
         dx = np.linalg.norm(points_cart[i + 1] - points_cart[i])
-        n = int(round(N * dx))
+        n = max(1, int(round(N * dx)))
 
         x1 = x0 + dx
 
-        for j in range(0 if i == 0 else 1, n + 1):
+        j0 = 0 if i == 0 or moveG and np.all(points[i] == 0) else 1
+
+        for j in range(j0, n + 1):
             k.append((j * points[i + 1] + (n - j) * points[i]) / n)
             x.append((j * x1 + (n - j) * x0) / n)
 
         x0 = x1
 
         corners.append(len(k) - 1)
+
+    if moveG:
+        for i in range(len(points)):
+            if np.all(points[i] == 0):
+                if i == 0:
+                    k[corners[i]] += moveG * k[corners[i] + 1]
+                else:
+                    k[corners[i]] += moveG * k[corners[i] - 1]
+
+                    if i != len(corners) - 1:
+                        k[corners[i] + 1] += moveG * k[corners[i] + 2]
 
     if qe:
         kwargs['ktyp'] = 'crystal_b'

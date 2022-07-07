@@ -31,7 +31,7 @@ q = 2 * np.pi * np.array([[[(q1, q2, q3)
 
 q_flat = np.reshape(q, (-1, 3))
 
-path, x, GXRMG = elphmod.bravais.path('GXRMG', ibrav=1)
+path, x, GXRMG = elphmod.bravais.path('GXRMG', ibrav=1, moveG=1e-3)
 
 info('Prepare electrons')
 
