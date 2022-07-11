@@ -280,12 +280,12 @@ class Model(object):
 
         for na1 in range(self.nat):
             for na2 in range(self.nat):
-                self.D0_lr[3 * na1:3 * na1 + 3, 3 * na1:3 * na1 + 3] -= (
-                    Dq0_lr[3 * na1:3 * na1 + 3, 3 * na2:3 * na2 + 3])
+                self.D0_lr[group(na1), group(na1)] -= (
+                    Dq0_lr[group(na1), group(na2)])
 
         if self.divide_mass:
             for na in range(self.nat):
-                self.D0_lr[3 * na:3 * na + 3, 3 * na:3 * na + 3] /= self.M[na]
+                self.D0_lr[group(na), group(na)] /= self.M[na]
 
                 self.z[na] /= np.sqrt(self.M[na])
 
@@ -1259,8 +1259,7 @@ def short_range_model(phid, amass, at, tau, eps=1e-7, divide_mass=True,
                                     np.zeros((3 * nat, 3 * nat)),
                                     np.zeros((nat, nat))]
 
-                            const[R][0][3 * na1:3 * na1 + 3,
-                                        3 * na2:3 * na2 + 3] = C
+                            const[R][0][group(na1), group(na2)] = C
 
                             const[R][1][na1, na2] = length
 
@@ -1429,8 +1428,8 @@ def q2r(ph, D_irr=None, q_irr=None, nq=None, D_full=None, angle=60,
                     phase = np.exp(1j * np.array(np.dot(q0 - q, r)))
 
                     for n in range(ph.nat):
-                        D[3 * n:3 * n + 3, :] *= phase[n].conj()
-                        D[:, 3 * n:3 * n + 3] *= phase[n]
+                        D[group(n), :] *= phase[n].conj()
+                        D[:, group(n)] *= phase[n]
 
                     Q1 = int(round(np.dot(q, a1) * scale))
                     Q2 = int(round(np.dot(q, a2) * scale))
