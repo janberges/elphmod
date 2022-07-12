@@ -332,6 +332,10 @@ class Model(object):
         if self.g0 is None:
             info('Run "sample_orig" before changing Z, Q, etc.!', error=True)
 
+        if not self.ph.lr:
+            q2r(self, self.ph.nq, self.el.nk, self.g0)
+            return
+
         self.ph.prepare_long_range()
 
         g = MPI.SharedArray(self.g0.shape, dtype=complex,

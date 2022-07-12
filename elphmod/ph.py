@@ -18,7 +18,8 @@ class Model(object):
     Parameters
     ----------
     flfrc : str
-        File with interatomic force constants from ``q2r.x``.
+        File with interatomic force constants from ``q2r.x`` or prefix of files
+        with dynamical matrices from ``ph.x``.
     quadrupole_fmt : str
         File with quadrupole tensors in format suitable for ``epw.x``.
     apply_asr : bool
@@ -163,9 +164,41 @@ class Model(object):
 
         if comm.rank == 0:
             if flfrc is None:
-                model = phid.copy(), amass, at, tau, atom_order, epsil, zeu
+                model = (phid.copy(), amass, at, tau, atom_order, epsil, zeu,
+                    phid.shape[2:5], None, None)
             else:
-                model = read_flfrc(flfrc)
+                try:
+                    model = read_flfrc(flfrc)
+                    model += [model[0].shape[2:5], None, None]
+
+                except FileNotFoundError:
+                    nq, q0 = read_q('%s0' % flfrc)
+
+                    for iq0 in range(len(q0)):
+                        fildyn = '%s%d' % (flfrc, iq0 + 1)
+
+                        if iq0:
+                            q, D = read_flfrc(fildyn)[0]
+                        else:
+                            ((q, D), amass, at, tau, atom_order,
+                                epsil, zeu) = read_flfrc(fildyn)
+
+                            q0 = np.empty(nq + (3,), dtype=float)
+                            D0 = np.empty(nq + (3 * len(amass),) * 2,
+                                dtype=complex)
+
+                        for iq in range(len(q)):
+                            q[iq] = np.dot(at, q[iq])
+
+                            i = tuple(np.round(q[iq] * nq).astype(int) % nq)
+
+                            q0[i] = q[iq] * 2 * np.pi
+                            D0[i] = D[iq]
+
+                    q0 = q0.reshape((-1,) + q0.shape[3:])
+                    D0 = D0.reshape((-1,) + D0.shape[3:])
+
+                    model = amass, at, tau, atom_order, epsil, zeu, nq, q0, D0
 
             if quadrupole_fmt is not None:
                 Q = read_quadrupole_fmt(quadrupole_fmt)
@@ -182,23 +215,16 @@ class Model(object):
 
         model = comm.bcast(model)
 
-        self.nq = comm.bcast(model[0].shape[2:5])
-        self.q0 = None
-        self.D0 = None
-
         self.Q = comm.bcast(Q)
 
-        self.M, self.a, self.r, self.atom_order, self.eps, self.Z = model[1:]
-        self.R, self.data, self.l = short_range_model(*model[:-3],
-            divide_mass=divide_mass, divide_ndegen=divide_ndegen)
-        self.size = self.data.shape[1]
-        self.nat = self.size // 3
+        (self.M, self.a, self.r, self.atom_order, self.eps, self.Z, self.nq,
+            self.q0, self.D0) = model[-9:]
+
+        self.nat = len(self.atom_order)
+        self.size = 3 * self.nat
+
         self.divide_mass = divide_mass
         self.divide_ndegen = divide_ndegen
-
-        if apply_asr or apply_rsr:
-            sum_rule_correction(self, asr=apply_asr, rsr=apply_rsr,
-                divide_mass=divide_mass)
 
         self.lr = lr and self.eps is not None and self.Z is not None
 
@@ -212,6 +238,15 @@ class Model(object):
                     % ('two' if self.lr2d else 'three'))
 
             self.prepare_long_range()
+
+        if self.D0 is None:
+            self.R, self.data, self.l = short_range_model(*model[:-6],
+                divide_mass=divide_mass, divide_ndegen=divide_ndegen)
+        else:
+            self.update_short_range()
+
+        if apply_asr or apply_rsr:
+            sum_rule_correction(self, asr=apply_asr, rsr=apply_rsr)
 
     def prepare_long_range(self, alpha=1.0, G_max=28.0):
         """Prepare calculation of long-range terms for polar materials.
@@ -354,9 +389,12 @@ class Model(object):
 
     def update_short_range(self):
         """Update short-range part of interatomic force constants."""
-
         if self.D0 is None:
             info('Run "sample_orig" before changing Z, Q, etc.!', error=True)
+
+        if not self.lr:
+            q2r(self, nq=self.nq, D_full=self.D0)
+            return
 
         self.prepare_long_range()
 
@@ -659,8 +697,11 @@ def read_q(fildyn0):
     """Read list of irreducible q points from *fildyn0*."""
 
     with open(fildyn0) as data:
-        return [list(map(float, line.split()[:2]))
-            for line in data if '.' in line]
+        nq = tuple(map(int, next(data).split()))
+        nQ = int(next(data))
+        q = [list(map(float, line.split())) for line in data]
+
+    return nq, q
 
 def write_q(fildyn0, q, nq):
     """Write list of irreducible q points to *fildyn0*."""
@@ -683,17 +724,17 @@ def fildyn_freq(fildyn='matdyn'):
     if comm.rank != 0:
         return
 
-    nq = len(read_q('%s0' % fildyn))
+    nq, q0 = read_q('%s0' % fildyn)
 
     with open('%s.freq' % fildyn, 'w') as freq:
-        for iq in range(nq):
+        for iq in range(len(q0)):
             (q, D), amass, at, tau, atom_order, epsil, zeu = read_flfrc('%s%d'
                 % (fildyn, iq + 1))
 
             w = sgnsqrt(np.linalg.eigvalsh(D[0])) * misc.Ry / misc.cmm1
 
             if iq == 0:
-                freq.write(' &plot nbnd=%4d, nks=%4d /\n' % (len(w), nq))
+                freq.write(' &plot nbnd=%4d, nks=%4d /\n' % (len(w), len(q0)))
 
             freq.write('%20.6f %9.6f %9.6f\n' % tuple(q[0]))
 
