@@ -53,6 +53,11 @@ class Model(object):
         Degeneracies of Wigner-Seitz points.
     data : ndarray
         Corresponding electron-phonon matrix elements.
+    divide_mass : bool
+        Has real-space coupling been divided by atomic masses?
+    divide_ndegen : bool
+        Has real-space coupling been divided by degeneracy of Wigner-Seitz
+        point?
     node, images : MPI.Intracomm
         Communicators between processes that share memory or same ``node.rank``
         if `shared_memory`.
@@ -212,6 +217,9 @@ class Model(object):
         self.q = None
         self.g0 = None
 
+        self.divide_mass = divide_mass
+        self.divide_ndegen = divide_ndegen
+
         # read lattice vectors within Wigner-Seitz cell:
 
         if wigner is None:
@@ -253,7 +261,7 @@ class Model(object):
             # undo supercell double counting:
 
             if divide_ndegen:
-                self.divide_ndegen(self.data)
+                self.divide_degeneracy(self.data)
 
             # divide by square root of atomic masses:
 
@@ -276,7 +284,7 @@ class Model(object):
 
         self.Rk0 = misc.vector_index(self.Rk, (0, 0, 0))
 
-    def divide_ndegen(self, g):
+    def divide_degeneracy(self, g):
         """Divide real-space coupling by degeneracy of Wigner-Seitz point.
 
         Parameters
@@ -737,7 +745,7 @@ def transform(g, q, nk, U=None, u=None, broadcast=True, shared_memory=False):
 
     return g
 
-def q2r(elph, nq, nk, g, divide_mass=True, divide_ndegen=True):
+def q2r(elph, nq, nk, g):
     """Fourier-transform electron-phonon coupling from reciprocal to real space.
 
     Parameters
@@ -748,12 +756,6 @@ def q2r(elph, nq, nk, g, divide_mass=True, divide_ndegen=True):
         Number of q and k points along axes, i.e., shapes of uniform meshes.
     g : ndarray
         Electron-phonon coupling on complete uniform q- and k-point meshes.
-    divide_mass : bool
-        Divide electron-phonon coupling by square root of atomic masses?
-    divide_ndegen : bool
-        Divide real-space coupling by degeneracy of Wigner-Seitz point? Only
-        ``True`` yields correct couplings. ``False`` should only be used for
-        debugging.
     """
     nq_orig = nq
     nq = np.ones(3, dtype=int)
@@ -789,10 +791,10 @@ def q2r(elph, nq, nk, g, divide_mass=True, divide_ndegen=True):
             for irk, (k1, k2, k3) in enumerate(elph.Rk % nk):
                 elph.data[irg, :, irk] = data[..., g1, g2, g3, k1, k2, k3]
 
-        if divide_ndegen:
-            elph.divide_ndegen(elph.data)
+        if elph.divide_ndegen:
+            elph.divide_degeneracy(elph.data)
 
-        if not divide_mass:
+        if not elph.divide_mass:
             for x in range(elph.ph.size):
                 elph.data[:, x] *= np.sqrt(elph.ph.M[x // 3])
 

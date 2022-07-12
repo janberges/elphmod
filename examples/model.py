@@ -133,8 +133,8 @@ Rg = np.insert(Rg, obj=2, values=0, axis=1)
 dg = dg.swapaxes(0, 1).reshape((1, el.size, ph.nat, len(Rg)))
 
 elph = elphmod.elph.Model(Rk=Rk, dk=dk.copy(), Rg=Rg, dg=dg.copy(),
-    el=el, ph=ph)
-elphmod.elph.q2r(elph, nq, nk, g, divide_mass=False, divide_ndegen=False)
+    el=el, ph=ph, divide_mass=False, divide_ndegen=False)
+elphmod.elph.q2r(elph, nq, nk, g)
 elph.standardize(eps=1e-10)
 
 if elphmod.MPI.comm.rank == 0:
