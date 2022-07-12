@@ -57,6 +57,9 @@ class Model(object):
         Divide force constants by degeneracy of Wigner-Seitz point? Only
         ``True`` yields correct phonons. ``False`` should only be used for
         debugging.
+    ifc : str
+        Name of file with interatomic force constants to be created if `flfrc`
+        is prefix of files with dynamical matrices. Used to emulate ``q2r.x``.
 
     Attributes
     ----------
@@ -160,7 +163,7 @@ class Model(object):
         apply_asr_simple=False, apply_zasr=False, apply_rsr=False, lr=True,
         lr2d=None, phid=np.zeros((1, 1, 1, 1, 1, 3, 3)), amass=np.ones(1),
         at=np.eye(3), tau=np.zeros((1, 3)), atom_order=['X'], epsil=None,
-        zeu=None, Q=None, divide_mass=True, divide_ndegen=True):
+        zeu=None, Q=None, divide_mass=True, divide_ndegen=True, ifc=None):
 
         if comm.rank == 0:
             if flfrc is None:
@@ -243,7 +246,7 @@ class Model(object):
             self.R, self.data, self.l = short_range_model(*model[:-6],
                 divide_mass=divide_mass, divide_ndegen=divide_ndegen)
         else:
-            self.update_short_range()
+            self.update_short_range(flfrc=ifc)
 
         if apply_asr or apply_rsr:
             sum_rule_correction(self, asr=apply_asr, rsr=apply_rsr)
@@ -387,20 +390,26 @@ class Model(object):
 
         self.D0 = dispersion.sample(self.D, self.q0)
 
-    def update_short_range(self):
-        """Update short-range part of interatomic force constants."""
+    def update_short_range(self, flfrc=None):
+        """Update short-range part of interatomic force constants.
+
+        Parameters
+        ----------
+        flfrc : str
+            Filename where short-range force constants are written.
+        """
         if self.D0 is None:
             info('Run "sample_orig" before changing Z, Q, etc.!', error=True)
 
         if not self.lr:
-            q2r(self, nq=self.nq, D_full=self.D0)
+            q2r(self, nq=self.nq, D_full=self.D0, flfrc=flfrc)
             return
 
         self.prepare_long_range()
 
         D = self.D0 - dispersion.sample(self.D_lr, self.q0)
 
-        q2r(self, nq=self.nq, D_full=D)
+        q2r(self, nq=self.nq, D_full=D, flfrc=flfrc)
 
     def symmetrize(self):
         r"""Symmetrize dynamical matrix.
