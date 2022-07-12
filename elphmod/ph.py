@@ -447,6 +447,26 @@ class Model(object):
 
         q2r(self, nq=self.nq, D_full=D, flfrc=flfrc)
 
+    def sum_force_constants(self):
+        """Calculate sum of absolute values of short-range force constants.
+
+        For the optimal range-separation parameter this value is minimal.
+        """
+        C_all = abs(self.data).reshape(-1, self.nat, 3, self.nat, 3)
+        C_all = C_all.sum(axis=(0, 2, 4))
+
+        C_self = abs(self.C()).reshape(self.nat, 3, self.nat, 3)
+        C_self = np.diag(np.diag(C_self.sum(axis=(1, 3))))
+
+        cost = C_all - C_self
+
+        if self.divide_mass:
+            for na in range(self.nat):
+                cost[na, :] *= np.sqrt(self.M[na])
+                cost[:, na] *= np.sqrt(self.M[na])
+
+        return(cost.sum() / (2 * np.prod(self.nq)))
+
     def symmetrize(self):
         r"""Symmetrize dynamical matrix.
 
@@ -1592,6 +1612,12 @@ def q2r(ph, D_irr=None, q_irr=None, nq=None, D_full=None, angle=60,
 
     if apply_asr_simple:
         asr(phid)
+
+    if ph.L is not None:
+        S = abs(phid).sum() - np.trace(abs(phid))[0, 0, 0].sum()
+        S /= 2 * np.prod(nq)
+
+        info('Sum of force constants: %g Hartree/Bohr^2 (L = %g)' % (S, ph.L))
 
     if flfrc:
         write_flfrc(flfrc, phid, ph.M, ph.a, ph.r, ph.atom_order, ph.eps, ph.Z)

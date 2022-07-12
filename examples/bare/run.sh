@@ -14,6 +14,5 @@ nk=2
 
 mpirun pw.x -nk $nk < pw.in | tee pw.out
 mpirun ph.x -nk $nk < ph.in | tee ph.out
-mpirun q2r.x < q2r.in | tee q2r.out
 
 mpirun python3 bare.py

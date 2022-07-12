@@ -5,12 +5,20 @@
 
 import elphmod
 import matplotlib.pyplot as plt
+import scipy.optimize
 
 comm = elphmod.MPI.comm
 
 colors = ['skyblue', 'dodgerblue', 'orange']
 
-ph = elphmod.ph.Model('ifc')
+ph = elphmod.ph.Model('dyn')
+
+def cost(L):
+    ph.L, = L
+    ph.update_short_range()
+    return ph.sum_force_constants()
+
+scipy.optimize.minimize(cost, [10.0])
 
 q, x, GMKG = elphmod.bravais.GMKG(300, corner_indices=True)
 
