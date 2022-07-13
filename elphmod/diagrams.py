@@ -259,7 +259,7 @@ def polarization(e, U, kT=0.025, eps=1e-10, subspace=None,
 def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
         occupations=occupations.fermi_dirac, fluctuations=False, Delta=None,
         Delta_diff=False, Delta_occupations=occupations.gauss, Delta_kT=0.025,
-        g=None, G=None, symmetrize=True, comm=comm):
+        g=None, G=None, symmetrize=True, U=0.0, comm=comm):
     r"""Calculate phonon self-energy.
 
     .. math::
@@ -304,6 +304,10 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
         is used.
     symmetrize : bool
         Symmetrize phonon self-energy with respect to swapping `g` and `G`?
+    U : ndarray
+        Contact interaction (a matrix in band indices) to model the effect of
+        excitons. Only used if `g` is present. Associated terms are currently
+        excluded from the integrand provided for fluctuation diagnostics.
 
     Returns
     -------
@@ -370,6 +374,8 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
     sizes, bounds = MPI.distribute(nQ, bounds=True, comm=comm)
 
     omega = np.array(omega)
+
+    U = np.array(U)
 
     my_Pi = np.empty((sizes[comm.rank],) + phshape + omega.shape,
         dtype=float if np.isrealobj(omega) and np.isrealobj(g2)
@@ -442,6 +448,21 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
                 my_Pi_k[my_iq][nu] = 2 * Pi_k
 
             status.update()
+
+        if np.any(U != 0):
+            axes = tuple(range(-5, -2))
+
+            chi0 = prefactor * dfde.sum(axis=axes)
+
+            W = U / (1 - chi0 * U)
+
+            PiL = [prefactor * (g[iq, nu].conj() * dfde).sum(axis=axes)
+                for nu in range(g.shape[1])]
+
+            PiR = [prefactor * (dfde * G[iq, nu]).sum(axis=axes)
+                for nu in range(G.shape[1])]
+
+            my_Pi[my_iq] += np.einsum('u...mn,...mn,v...mn->uv...', PiL, W, PiR)
 
     Pi = np.empty((nQ,) + phshape + omega.shape, dtype=my_Pi.dtype)
 
