@@ -696,17 +696,17 @@ def stack(*points, **kwargs):
     return min(stackings, key=np.std)
 
 def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
-    """Perform linear interpolation on triangular or rectangular lattice.
+    """Perform linear interpolation in one or two dimensions.
 
     The edges are interpolated using periodic boundary conditions.
 
     Parameters
     ----------
     data : ndarray
-        Data on uniform triangular or rectangular lattice.
+        Data on uniform 1D or 2D (triangular or rectangular) lattice.
     angle : number
         Angle between lattice vectors in degrees.
-    axes : 2-tuple of int
+    axes : int or 2-tuple of int
         Axes of `data` along which to interpolate (lattice vectors).
     period : number
         If the values of `data` are defined on a periodic axis (i.e., only with
@@ -727,6 +727,9 @@ def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
     resize : Compress or stretch data via linear interpolation.
     Fourier_interpolation : Alternative interpolation routine.
     """
+    if not hasattr(axes, '__len__'):
+        axes = (axes,)
+
     # move lattice axes to the front:
 
     order = tuple(axes) + tuple(n for n in range(data.ndim) if n not in axes)
@@ -735,19 +738,35 @@ def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
 
     # interpret "fractional indices":
 
-    N, M = data.shape[:2]
-
-    def split(n, m):
+    def split(n, N):
         n0, dn = divmod(n, 1)
-        m0, dm = divmod(m, 1)
         n0 = int(n0) % N
-        m0 = int(m0) % M
 
-        return (n0, dn), (m0, dm)
+        return n0, dn
 
     # define interpolation routines for different lattices:
 
-    if angle == 60:
+    N = data.shape[0]
+
+    if len(axes) > 1:
+        M = data.shape[1]
+
+    if len(axes) == 1:
+        #  ______
+        # A  a1  B
+        #
+        def interpolant(n):
+            n0, dn = split(n, N)
+
+            A = data[n0]
+            B = data[(n0 + 1) % N]
+
+            if period:
+                A, B = stack(A, B, period=period)
+
+            return (1 - dn) * A + dn * B
+
+    elif angle == 60:
         #
         #     B______C'
         #     /\    /
@@ -756,7 +775,8 @@ def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
         #  C  a1  A
         #
         def interpolant(n, m):
-            (n0, dn), (m0, dm) = split(n, m)
+            n0, dn = split(n, N)
+            m0, dm = split(m, M)
 
             A = data[(n0 + 1) % N, m0]
             B = data[n0, (m0 + 1) % M]
@@ -785,7 +805,8 @@ def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
         #   A  a1  B
         #
         def interpolant(n, m):
-            (n0, dn), (m0, dm) = split(n, m)
+            n0, dn = split(n, N)
+            m0, dm = split(m, M)
 
             A = data[n0, m0]
             B = data[(n0 + 1) % N, m0]
@@ -807,7 +828,8 @@ def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
         #     A  a1  C'
         #
         def interpolant(n, m):
-            (n0, dn), (m0, dm) = split(n, m)
+            n0, dn = split(n, N)
+            m0, dm = split(m, M)
 
             A = data[n0, m0]
             B = data[(n0 + 1) % N, (m0 + 1) % M]
