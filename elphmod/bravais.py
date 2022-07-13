@@ -853,13 +853,13 @@ def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
 
     return np.vectorize(interpolant)
 
-def resize(data, shape=None, angle=60, axes=(0, 1), period=None, periodic=True):
-    """Resize array via linear interpolation along two axes.
+def resize(data, shape, angle=60, axes=(0, 1), period=None, periodic=True):
+    """Resize array via linear interpolation along one or two axes.
 
     Parameters
     ----------
-    shape : 2-tuple of int
-        New lattice shape. Defaults to the original shape.
+    shape : int or 2-tuple of int
+        New lattice shape.
     shape, angle, axes, period
         Parameters for :func:`linear_interpolation`.
     periodic : bool, default True
@@ -874,6 +874,12 @@ def resize(data, shape=None, angle=60, axes=(0, 1), period=None, periodic=True):
     --------
     linear_interpolation
     """
+    if not hasattr(shape, '__len__'):
+        shape = (shape,)
+
+    if not hasattr(axes, '__len__'):
+        axes = (axes,)
+
     # move lattice axes to the front:
 
     order = tuple(axes) + tuple(n for n in range(data.ndim) if n not in axes)
@@ -882,35 +888,33 @@ def resize(data, shape=None, angle=60, axes=(0, 1), period=None, periodic=True):
 
     # set up interpolation function:
 
-    interpolant = linear_interpolation(data, angle, axes=(0, 1), period=period)
+    interpolant = linear_interpolation(data, angle, axes=range(len(shape)),
+        period=period)
 
     # apply interpolation function at new lattice points in parallel:
-
-    if shape is None:
-        shape = data.shape[:2]
 
     size = np.prod(shape)
     sizes, bounds = MPI.distribute(size, bounds=True)
 
-    my_new_data = np.empty((sizes[comm.rank],) + data.shape[2:],
+    my_new_data = np.empty((sizes[comm.rank],) + data.shape[len(shape):],
         dtype=data.dtype)
 
     if periodic:
-        scale_x = data.shape[0] / shape[0]
-        scale_y = data.shape[1] / shape[1]
+        scale = np.divide(data.shape[:len(shape)], shape)
     else:
-        scale_x = (data.shape[0] - 1) / (shape[0] - 1)
-        scale_y = (data.shape[1] - 1) / (shape[1] - 1)
+        scale = np.subtract(data.shape[:len(shape)], 1) / np.subtract(shape, 1)
 
     for n, m in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
-        x = m // shape[1]
-        y = m % shape[1]
+        if len(shape) == 2:
+            m = m // shape[1], m % shape[1]
 
-        my_new_data[n] = interpolant(x * scale_x, y * scale_y)
+        my_new_data[n] = interpolant(*np.multiply(m, scale))
 
-    new_data = np.empty(tuple(shape) + data.shape[2:], dtype=data.dtype)
+    new_data = np.empty(tuple(shape) + data.shape[len(shape):],
+        dtype=data.dtype)
 
-    comm.Allgatherv(my_new_data, (new_data, sizes * np.prod(data.shape[2:])))
+    comm.Allgatherv(my_new_data,
+        (new_data, sizes * np.prod(data.shape[len(shape):])))
 
     # restore original order of axes and return:
 
