@@ -673,27 +673,39 @@ def stack(*points, **kwargs):
     """
     period = kwargs.get('period', 2 * np.pi)
 
-    # map points onto interval [0, period]:
+    # map points onto interval [0, period):
 
     points = np.array(points) % period
 
+    # bring input into uniform shape:
+
+    shape = points.shape
+
+    points = points.reshape((points.shape[0], -1))
+
     # generate list of indices that would sort points:
 
-    order = np.argsort(points)
+    order = np.argsort(points, axis=0)
 
     # save "stacking", shift lowest point up by one period, and repeat:
 
-    stackings = np.empty((points.size, points.size), dtype=points.dtype)
+    stackings = np.empty(points.shape[:1] + points.shape, dtype=points.dtype)
 
     stackings[0] = points
 
-    for n in range(points.size - 1):
+    corresponding = np.arange(points.shape[1]) # vectorized equivalent of ":"
+
+    for n in range(points.shape[0] - 1):
         stackings[n + 1] = stackings[n]
-        stackings[n + 1, order[n]] += period
+        stackings[n + 1, order[n], corresponding] += period
 
     # return most localized stacking:
 
-    return min(stackings, key=np.std)
+    localized = np.argmin(np.std(stackings, axis=1), axis=0)
+
+    return stackings[localized, :, corresponding].T.reshape(shape)
+
+    # re "corresponding" and ".T" see NumPy's "Advanced indexing" and "NEP 21"
 
 def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
     """Perform linear interpolation in one or two dimensions.
