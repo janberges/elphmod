@@ -1484,7 +1484,7 @@ def read_pp_density(filename):
         total charge calculate with charge density rho
 
     """
-    with open(file) as data:
+    with open(filename) as data:
         # read all words of current line:
 
         def cells():
@@ -1515,7 +1515,7 @@ def read_pp_density(filename):
         kin_energy_cutoff = float(tmp[2])
 
         # calculate unit cell and brillouin zone volume
-        A = elphmod.bravais.primitives(ibrav)
+        A = bravais.primitives(ibrav)
         A[2,2] = celldm[2]
         uc_volume = np.linalg.det(A)*celldm[0]**3
 #        B1, B2, B3 = elphmod.bravais.reciprocals(*A)
