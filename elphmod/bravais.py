@@ -707,7 +707,7 @@ def stack(*points, **kwargs):
 
     # re "corresponding" and ".T" see NumPy's "Advanced indexing" and "NEP 21"
 
-def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
+def linear_interpolation(data, angle=60, axes=(0, 1), period=None, polar=False):
     """Perform linear interpolation in one or two dimensions.
 
     The edges are interpolated using periodic boundary conditions.
@@ -725,6 +725,9 @@ def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
         respect to the modulo operation), the period of this axis. This is used
         in combination with `stack` to always interpolate across the shortest
         distance of two neighboring points.
+    polar : bool
+        Interpolate complex values linearly in polar coordinates? This is
+        helpful if neighboring data points have arbitrary complex phases.
 
     Returns
     -------
@@ -739,6 +742,15 @@ def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
     resize : Compress or stretch data via linear interpolation.
     Fourier_interpolation : Alternative interpolation routine.
     """
+    if polar and np.iscomplexobj(data):
+        r = linear_interpolation(abs(data), angle, axes, period=period)
+        p = linear_interpolation(np.angle(data), angle, axes, period=2 * np.pi)
+
+        def interpolant(*args, **kwargs):
+            return r(*args, **kwargs) * np.exp(1j * p(*args, **kwargs))
+
+        return interpolant
+
     if not hasattr(axes, '__len__'):
         axes = (axes,)
 
@@ -865,14 +877,15 @@ def linear_interpolation(data, angle=60, axes=(0, 1), period=None):
 
     return np.vectorize(interpolant)
 
-def resize(data, shape, angle=60, axes=(0, 1), period=None, periodic=True):
+def resize(data, shape, angle=60, axes=(0, 1), period=None, polar=False,
+        periodic=True):
     """Resize array via linear interpolation along one or two axes.
 
     Parameters
     ----------
     shape : int or 2-tuple of int
         New lattice shape.
-    shape, angle, axes, period
+    shape, angle, axes, period, polar
         Parameters for :func:`linear_interpolation`.
     periodic : bool, default True
         Interpolate between last and first data point of each axis?
@@ -901,7 +914,7 @@ def resize(data, shape, angle=60, axes=(0, 1), period=None, periodic=True):
     # set up interpolation function:
 
     interpolant = linear_interpolation(data, angle, axes=range(len(shape)),
-        period=period)
+        period=period, polar=polar)
 
     # apply interpolation function at new lattice points in parallel:
 
