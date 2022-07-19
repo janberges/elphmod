@@ -1544,14 +1544,12 @@ def read_pp_density(filename):
 
         tot_charge = rho.sum() / nr_points * uc_volume
 
+        rho = rho.reshape(np.prod(FFT_dim[:3]))
+
         return rho, tot_charge
 
 def read_rhoG_density(filename, ibrav, a = 1.0, b = 1.0, c = 1.0):
-    """Read the ``formatted`` charge density output from Quantum ESPRESSO.
-    Modify the subroutine ``write_rhog()`` from the module ``io_base.f90``,
-    to get the formatted output.
-    This function should at some point read the unformatted, i.e. binary
-    charge density as well.
+    """Read the charge density output from Quantum ESPRESSO.
 
     The purpose of rho(G) is to calculate the charge density
     in real space rho(r) or the Hartree energy ehart.
@@ -1574,59 +1572,47 @@ def read_rhoG_density(filename, ibrav, a = 1.0, b = 1.0, c = 1.0):
         number of reciprocal lattice vectors
     uc_volume: float
         unit cell volume
-
     """
-    with open(filename) as data:
-        # read all words of current line:
+    with open(filename, 'rb') as f:
+        # Moves the cursor 4 bytes to the right
+        f.seek(4)
 
-        def cells():
-            for line in data:
-                words = line.split()
+        gamma_only = bool(np.fromfile(f, dtype='int32', count=1)[0])
+        ngm_g = np.fromfile(f, dtype='int32', count=1)[0]
+        ispin = np.fromfile(f, dtype='int32', count=1)[0]
 
-                if words:
-                    return words
+        # Move the cursor 8 byte to the right
+        f.seek(8, 1)
 
-        # read number of G vectors (global), nspin
-        tmp = cells()
-        ngm_g, nspin = list(map(int, tmp[1:]))
+        b1 = np.fromfile(f, dtype='float64', count=3)
+        b2 = np.fromfile(f, dtype='float64', count=3)
+        b3 = np.fromfile(f, dtype='float64', count=3)
 
-        # read reciprocal lattice vectors (unit?)
-        tmp = cells()
-        b1 = np.array(list(map(float, tmp[:3])))
-        b2 = np.array(list(map(float, tmp[3:6])))
-        b3 = np.array(list(map(float, tmp[6:9])))
+        # Move the cursor 8 byte to the right
+        f.seek(8,1)
 
-        # read miller indices (h,k,l)
-        tmp = cells()
-        mill_g = np.empty((3,ngm_g))
+        mill_g = np.fromfile(f, dtype='int32', count=3*ngm_g)
+        mill_g = mill_g.reshape((ngm_g, 3))
 
-        for ii in range(ngm_g):
-            mill_g[0,ii] = int(tmp[ii*3+0])
-            mill_g[1,ii] = int(tmp[ii*3+1])
-            mill_g[2,ii] = int(tmp[ii*3+2])
+        # Move the cursor 8 byte to the right
+        f.seek(8,1)
 
-        # read rho(G)
-        tmp = cells()
-        rho_g = np.empty(ngm_g, dtype = complex)
-        for ii in range(ngm_g):
-            tmp[ii] = tmp[ii].split(',')
-            tmp[ii][0] = tmp[ii][0].replace('(', '')
-            tmp[ii][1] = tmp[ii][1].replace(')', '')
-            rho_g[ii] = float(tmp[ii][0]) + 1j*float(tmp[ii][1])
+        rho_g = np.zeros( (ngm_g), dtype="complex128")
+        rho_g = np.fromfile(f, dtype='complex128', count=ngm_g)
 
         # get primitive lattice vectors
         #(must be the same as scf output)
         A = bravais.primitives(ibrav, a = a, b = b , c = c)
         A /= (a)
 
-        uc_volume = np.linalg.det(A)*(a/misc.a0)**3
-
         B1, B2, B3 = bravais.reciprocals(*A)
+
+        # calculate unit cell volume (for Hartree energy)
+        uc_volume = np.linalg.det(A)*(a/misc.a0)**3
 
         # calculate reciprocal G vectors
         g_vect = np.empty((ngm_g,3))
         for ii in range(ngm_g):
-#            g_vect[ii] = mill_g[0,ii] * b1 + mill_g[1,ii] * b2 + mill_g[2,ii] * b3
-            g_vect[ii] = mill_g[0,ii] * B1 + mill_g[1,ii] * B2 + mill_g[2,ii] * B3
+            g_vect[ii] = mill_g[ii,0] * B1 + mill_g[ii,1] * B2 + mill_g[ii,2] * B3
 
         return rho_g, g_vect, ngm_g, uc_volume
