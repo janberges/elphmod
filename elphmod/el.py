@@ -1089,7 +1089,108 @@ def read_wannier90_eig_file(seedname, num_bands, nkpts):
 
     return eig
 
-def eband_from_qe_pwo(pw_scf_out, subset=None):
+def read_eps_nk_from_qe_pwo(pw_scf_out):
+    """Read electronic eigenenergies (eps_nk), kpoints
+    and calculate the occupations.
+
+    Parameters
+    ----------
+    pw_scf_out : str
+        name of the output file (typically 'pw.out' or 'scf.out')
+
+    Returns
+    -------
+    energies : ndarray
+        electronic eigenenergies (eps_nk) from scf output
+        shape: (nk, nbnd)
+    kpoints : ndarray
+        kpoints and weights from scf output, shape (nk,4),
+        where the 4th column are the weights
+    f_occ : ndarray
+        occupations of eps_nk (same shape as energies)
+    smearing_type : str
+        type of smearing (for example 'Fermi-Dirac')
+    mu : float
+        chemical potential in eV
+    kT : float
+        kT (degauss) in eV
+    """
+    scf_file = open(pw_scf_out, 'r')
+    lines = scf_file.readlines()
+    scf_file.close()
+
+    # read number of k points and smearing:
+
+    for ii in np.arange(len(lines)):
+        if lines[ii].find('     number of k points=') == 0:
+
+            line_index = ii
+
+    smearing_line = lines[line_index].split()
+    nk = int(smearing_line[4])
+    smearing_type = smearing_line[5]
+    f = occupations.smearing(smearing_type)
+    kT = float(smearing_line[9])
+
+    k_Points = np.empty([nk, 4])
+
+    for ii in np.arange(nk):
+        (kb, einsb, eq, bra, kx, ky, kz, wk_s, eq2,
+            wk) = lines[line_index + 2 + ii].split()
+
+        kx = float(kx)
+        ky = float(ky)
+        kz = float(kz[:-2])
+
+        wk = float(wk)
+
+        k_Points[ii, 0] = kx
+        k_Points[ii, 1] = ky
+        k_Points[ii, 2] = kz
+        k_Points[ii, 3] = wk
+
+    # read number of Kohn-Sham states:
+
+    for ii in np.arange(len(lines)):
+        if lines[ii].find('     number of Kohn-Sham') == 0:
+            KS_index = ii
+
+    nbnd = int(lines[KS_index].split()[4])
+
+    # read all energies for all the different k points and Kohn-Sham States:
+
+    for ii in np.arange(len(lines)):
+        if lines[ii].find('     End of') == 0:
+            state_start_index = ii + 4
+
+    energies = np.zeros((nk, nbnd))
+    f_occ = np.zeros((nk, nbnd))
+
+    # the states are written in columns of size 8
+    # with divmod we check how many rows we have
+    state_lines = divmod(nbnd, 8)[0]
+    if divmod(nbnd, 8)[1] != 0:
+        state_lines += 1
+
+    for ik in np.arange(nk):
+        energies_per_k = []
+        for istate in range(state_lines):
+            energies_per_k.extend(lines[state_start_index
+                + istate + (state_lines + 3) * ik].split())
+
+        energies[ik] = np.array(energies_per_k)
+
+    # kT: from Ry to eV
+    kT *= misc.Ry
+    # read chemical potential
+    mu = read_Fermi_level(pw_scf_out)
+    # calculate occupations for all energies (eps_nk)
+    f_occ = f((energies- mu) / kT)
+
+
+    return energies, k_Points, f_occ, smearing_type, mu, kT
+
+def eband(pw_scf_out, subset=None):
     """Calculate ``eband`` part of one-electron energy.
 
     The 'one-electron contribution' energy in the Quantum ESPRESSO PWscf output
@@ -1119,102 +1220,33 @@ def eband_from_qe_pwo(pw_scf_out, subset=None):
                 /'     sum bands                 =',F17.8,' Ry' &
                 /'     one-electron contribution =',F17.8,' Ry' &
 
-    At some point, we should add the ``deband`` routine as well...
 
     Parameters
     ----------
     pw_scf_out : str
-        The name of the output file (typically 'pw.out').
-    subset : list or array
-        List of indices to pick only a subset of the bands
-        for the integration
+        name of the output file (typically 'pw.out' or 'scf.out')
 
     Returns
     -------
     eband : float
         The band energy.
     """
-    f = open(pw_scf_out, 'r')
 
-    lines = f.readlines()
-
-    # read number of k points and smearing:
-
-    for ii in np.arange(len(lines)):
-        if lines[ii].find('     number of k points=') == 0:
-
-            line_index = ii
-
-    smearing_line = lines[line_index].split()
-    N_k = int(smearing_line[4])
-    f = occupations.smearing(smearing_line[5])
-    kT = float(smearing_line[9])
-
-    k_Points = np.empty([N_k, 4])
-
-    for ii in np.arange(N_k):
-        (kb, einsb, eq, bra, kx, ky, kz, wk_s, eq2,
-            wk) = lines[line_index + 2 + ii].split()
-
-        kx = float(kx)
-        ky = float(ky)
-        kz = float(kz[:-2])
-
-        wk = float(wk)
-
-        k_Points[ii, 0] = kx
-        k_Points[ii, 1] = ky
-        k_Points[ii, 2] = kz
-        k_Points[ii, 3] = wk
-
-    # read number of Kohn-Sham states:
-
-    for ii in np.arange(len(lines)):
-        if lines[ii].find('     number of Kohn-Sham') == 0:
-            KS_index = ii
-
-    number, of, KS_s, states, N_states = lines[KS_index].split()
-
-    N_states = int(N_states)
-
-    # read all energies for all the different k points and Kohn-Sham States:
-
-    for ii in np.arange(len(lines)):
-        if lines[ii].find('     End of') == 0:
-            state_start_index = ii + 4
-
-    energies = np.zeros((N_k, N_states))
-
-    # the states are written in columns of size 8
-    # with divmod we check how many rows we have
-    state_lines = divmod(N_states, 8)[0]
-    if divmod(N_states, 8)[1] != 0:
-        state_lines += 1
-
-    for ik in np.arange(N_k):
-        energies_per_k = []
-        for istate in range(state_lines):
-            energies_per_k.extend(lines[state_start_index
-                + istate + (state_lines + 3) * ik].split())
-
-        energies[ik] = np.array(energies_per_k)
-
-    kT *= misc.Ry
-
-    mu = read_Fermi_level(pw_scf_out)
-
+    energies, kpoints, f_occ, smearing_type, mu, kT = read_eps_nk_from_qe_pwo(pw_scf_out)
+    nk, nbnd = energies.shape
     eband = np.zeros(energies.shape)
 
     if subset == None:
-        for ik in range(N_k):
-            for iband in range(N_states):
-                eband[ik, iband] = (energies[ik, iband] * k_Points[ik, 3]
-                    * f((energies[ik, iband] - mu) / kT))
+        for ik in range(nk):
+            # weights wk
+            wk = kpoints[ik, 3]
+            for iband in range(nbnd):
+                eband[ik, iband] = (energies[ik, iband] * wk * f_occ[ik,iband])
     else:
-        for ik in range(N_k):
+        for ik in range(nk):
+            wk = kpoints[ik, 3]
             for iband in subset:
-                eband[ik, iband] = (energies[ik, iband] * k_Points[ik, 3]
-                    * f((energies[ik, iband] - mu) / kT))
+                eband[ik, iband] = (energies[ik, iband] * wk * f_occ[ik,iband])
 
     eband = eband.sum() / misc.Ry
 
@@ -1237,88 +1269,26 @@ def demet_from_qe_pwo(pw_scf_out, subset=None):
     demet : float
         The -TS contribution of the total free energy.
     """
-    f = open(pw_scf_out, 'r')
 
-    lines = f.readlines()
-
-    # read number of k points and smearing:
-
-    for ii in np.arange(len(lines)):
-        if lines[ii].find('     number of k points=') == 0:
-
-            line_index = ii
-
-    smearing_line = lines[line_index].split()
-    N_k = int(smearing_line[4])
-    f = occupations.smearing(smearing_line[5])
-    kT = float(smearing_line[9])
-
-    k_Points = np.empty([N_k, 4])
-
-    for ii in np.arange(N_k):
-        (kb, einsb, eq, bra, kx, ky, kz, wk_s, eq2,
-            wk) = lines[line_index + 2 + ii].split()
-
-        kx = float(kx)
-        ky = float(ky)
-        kz = float(kz[:-2])
-
-        wk = float(wk)
-
-        k_Points[ii, 0] = kx
-        k_Points[ii, 1] = ky
-        k_Points[ii, 2] = kz
-        k_Points[ii, 3] = wk
-
-    # read number of Kohn-Sham states:
-
-    for ii in np.arange(len(lines)):
-        if lines[ii].find('     number of Kohn-Sham') == 0:
-            KS_index = ii
-
-    number, of, KS_s, states, N_states = lines[KS_index].split()
-
-    N_states = int(N_states)
-
-    # read all energies for all the different k points and Kohn-Sham States:
-
-    for ii in np.arange(len(lines)):
-        if lines[ii].find('     End of') == 0:
-            state_start_index = ii + 4
-
-    energies = np.zeros((N_k, N_states))
-
-    # the states are written in columns of size 8
-    # with divmod we check how many rows we have
-    state_lines = divmod(N_states, 8)[0]
-    if divmod(N_states, 8)[1] != 0:
-        state_lines += 1
-
-    for ik in np.arange(N_k):
-        energies_per_k = []
-        for istate in range(state_lines):
-            energies_per_k.extend(lines[state_start_index
-                + istate + (state_lines + 3) * ik].split())
-
-        energies[ik] = np.array(energies_per_k)
-
-    kT *= misc.Ry
-
-    mu = read_Fermi_level(pw_scf_out)
-
+    energies, kpoints, f_occ, smearing_type, mu, kT = read_eps_nk_from_qe_pwo(pw_scf_out)
+    nk, nbnd = energies.shape
     demet = np.zeros(energies.shape)
 
+    f = occupations.smearing(smearing_type)
+
     if subset == None:
-        for ik in range(N_k):
-            for iband in range(N_states):
+        for ik in range(nk):
+            wk = kpoints[ik, 3]
+            for iband in range(nbnd):
                 w1gauss = -f.entropy((energies[ik, iband] - mu) / kT)
-                demet[ik, iband] = (k_Points[ik, 3] * kT * w1gauss)
+                demet[ik, iband] = (wk * kT * w1gauss)
 
     else:
-        for ik in range(N_k):
+        for ik in range(nk):
+            wk = kpoints[ik, 3]
             for iband in subset:
                 w1gauss = -f.entropy((energies[ik, iband] - mu) / kT)
-                demet[ik, iband] = (k_Points[ik, 3] * kT * w1gauss)
+                demet[ik, iband] = (wk * kT * w1gauss)
 
     demet = demet.sum() / misc.Ry
 
