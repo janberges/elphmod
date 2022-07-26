@@ -856,7 +856,7 @@ def read_atomic_projections_old(atomic_proj_xml, order=False, from_fermi=True,
     return x, k, eps, abs(proj) ** 2
 
 def read_projwfc_out(projwfc_out):
-    """Identify orbitals in *atomic_proj.xml* via output of ``projwfc.x``
+    """Identify orbitals in *atomic_proj.xml* via output of ``projwfc.x``.
 
     Parameters
     ----------
@@ -1090,30 +1090,29 @@ def read_wannier90_eig_file(seedname, num_bands, nkpts):
     return eig
 
 def read_eps_nk_from_qe_pwo(pw_scf_out):
-    """Read electronic eigenenergies (eps_nk), kpoints
-    and calculate the occupations.
+    """Read electronic eigenenergies and k points and calculate the occupations.
 
     Parameters
     ----------
     pw_scf_out : str
-        name of the output file (typically 'pw.out' or 'scf.out')
+        Name of the output file (typically ``'pw.out'`` or ``'scf.out'``).
 
     Returns
     -------
     energies : ndarray
-        electronic eigenenergies (eps_nk) from scf output
-        shape: (nk, nbnd)
+        Electronic eigenenergies (``eps_nk``) from ``scf`` output, shape ``(nk,
+        nbnd)``.
     kpoints : ndarray
-        kpoints and weights from scf output, shape (nk,4),
-        where the 4th column are the weights
+        k points and weights from ``scf`` output, shape ``(nk, 4)``, where the
+        4th column contains the weights.
     f_occ : ndarray
-        occupations of eps_nk (same shape as energies)
+        Occupations of ``eps_nk`` (same shape as `energies`).
     smearing_type : str
-        type of smearing (for example 'Fermi-Dirac')
+        Type of smearing (for example ``'Fermi-Dirac'``).
     mu : float
-        chemical potential in eV
+        Chemical potential in eV.
     kT : float
-        kT (degauss) in eV
+        Value of smearing (``degauss``) in eV.
     """
     scf_file = open(pw_scf_out, 'r')
     lines = scf_file.readlines()
@@ -1185,8 +1184,7 @@ def read_eps_nk_from_qe_pwo(pw_scf_out):
     # read chemical potential
     mu = read_Fermi_level(pw_scf_out)
     # calculate occupations for all energies (eps_nk)
-    f_occ = f((energies- mu) / kT)
-
+    f_occ = f((energies - mu) / kT)
 
     return energies, k_Points, f_occ, smearing_type, mu, kT
 
@@ -1220,19 +1218,18 @@ def eband(pw_scf_out, subset=None):
                 /'     sum bands                 =',F17.8,' Ry' &
                 /'     one-electron contribution =',F17.8,' Ry' &
 
-
     Parameters
     ----------
     pw_scf_out : str
-        name of the output file (typically 'pw.out' or 'scf.out')
+        Name of the output file (typically ``'pw.out'`` or ``'scf.out'``).
 
     Returns
     -------
     eband : float
         The band energy.
     """
-
-    energies, kpoints, f_occ, smearing_type, mu, kT = read_eps_nk_from_qe_pwo(pw_scf_out)
+    energies, kpoints, f_occ, smearing_type, mu, kT = read_eps_nk_from_qe_pwo(
+        pw_scf_out)
     nk, nbnd = energies.shape
     eband = np.zeros(energies.shape)
 
@@ -1241,36 +1238,36 @@ def eband(pw_scf_out, subset=None):
             # weights wk
             wk = kpoints[ik, 3]
             for iband in range(nbnd):
-                eband[ik, iband] = (energies[ik, iband] * wk * f_occ[ik,iband])
+                eband[ik, iband] = energies[ik, iband] * wk * f_occ[ik, iband]
     else:
         for ik in range(nk):
             wk = kpoints[ik, 3]
             for iband in subset:
-                eband[ik, iband] = (energies[ik, iband] * wk * f_occ[ik,iband])
+                eband[ik, iband] = energies[ik, iband] * wk * f_occ[ik, iband]
 
     eband = eband.sum() / misc.Ry
 
     return eband
 
 def demet_from_qe_pwo(pw_scf_out, subset=None):
-    """Calculate the '-TS' contribution of the total free energy from Quantum ESPRESSO.
+    """Calculate the entropy contribution :math:`-TS` to the total free energy.
 
-    In Quantum ESPRESSO 'demet' is calculated in 'gweights.f90'.
+    In Quantum ESPRESSO ``demet`` is calculated in ``gweights.f90``.
 
     Parameters
     ----------
     pw_scf_out : str
-        The name of the output file (typically 'pw.out').
+        The name of the output file (typically ``'pw.out'``).
     subset : list or array
         List of indices to pick only a subset of the bands for the integration.
 
     Returns
     -------
     demet : float
-        The -TS contribution of the total free energy.
+        The :math:`-TS` contribution to the total free energy.
     """
-
-    energies, kpoints, f_occ, smearing_type, mu, kT = read_eps_nk_from_qe_pwo(pw_scf_out)
+    energies, kpoints, f_occ, smearing_type, mu, kT = read_eps_nk_from_qe_pwo(
+        pw_scf_out)
     nk, nbnd = energies.shape
     demet = np.zeros(energies.shape)
 
@@ -1281,14 +1278,14 @@ def demet_from_qe_pwo(pw_scf_out, subset=None):
             wk = kpoints[ik, 3]
             for iband in range(nbnd):
                 w1gauss = -f.entropy((energies[ik, iband] - mu) / kT)
-                demet[ik, iband] = (wk * kT * w1gauss)
+                demet[ik, iband] = wk * kT * w1gauss
 
     else:
         for ik in range(nk):
             wk = kpoints[ik, 3]
             for iband in subset:
                 w1gauss = -f.entropy((energies[ik, iband] - mu) / kT)
-                demet[ik, iband] = (wk * kT * w1gauss)
+                demet[ik, iband] = wk * kT * w1gauss
 
     demet = demet.sum() / misc.Ry
 
@@ -1375,18 +1372,17 @@ def decayH(seedname, **kwargs):
     return R, H
 
 def read_energy_contributions_scf_out(filename):
-    """Read energy contributions to the total energy
-    from Quantum ESPRESSO's scf output file.
+    """Read energy contributions to the total energy ``scf`` output file.
 
     Parameters
     ----------
     filename : str
-        scf output file name.
+        Name of Quantum ESPRESSO's ``scf`` output file.
 
     Returns
     -------
     dict
-        energy contributions.
+        Energy contributions.
     """
     if comm.rank == 0:
         energies = dict()
@@ -1432,14 +1428,17 @@ def read_energy_contributions_scf_out(filename):
     return energies
 
 def read_pp_density(filename):
-    """Read file *filout* with charge density generated by ``pp.x``
+    r"""Read file *filout* with charge density generated by ``pp.x``.
 
-    Calculate total charge (tot_charge)
-    tot_charge = \int rho(r) dx dy dz =
-               = \sum_{ijk} rho(i,j,k) * \Omega / (nr1*nr2*nr3),
+    Calculate total charge
 
-    where \Omega = unit cell volume, nr*=FFT grid dimensions, i,j,k run over
-    FFT real-space grid points.
+    .. math::
+
+        Q = \int \rho(\vec r) dx dy dz =
+            = \frac \Omega {n_1 n_2 n_3} \sum_{i j k} \rho_{i j k},
+
+    where :math:`\Omega` is the unit-cell volume, :math:`n_r` are the FFT grid
+    dimensions, and :math:`i, j, k` run over FFT real-space grid points.
 
     Parameters
     ----------
@@ -1449,10 +1448,10 @@ def read_pp_density(filename):
     Returns
     -------
     rho : ndarray
-        electron charge density rho on FFT real-space grid point
+        Electronic charge density :math:`\rho_{i j k}` on FFT real-space grid
+        points.
     tot_charge: float
-        total charge calculate with charge density rho
-
+        Total charge calculated from charge density :math:`\rho_{i j k}`.
     """
     with open(filename) as data:
         # read all words of current line:
@@ -1486,8 +1485,8 @@ def read_pp_density(filename):
 
         # calculate unit cell and brillouin zone volume
         A = bravais.primitives(ibrav)
-        A[2,2] = celldm[2]
-        uc_volume = np.linalg.det(A)*celldm[0]**3
+        A[2, 2] = celldm[2]
+        uc_volume = np.linalg.det(A) * celldm[0] ** 3
 #        B1, B2, B3 = elphmod.bravais.reciprocals(*A)
 #        B = np.stack((B1,B2,B3), axis=0)
 #        print(B)
@@ -1502,15 +1501,15 @@ def read_pp_density(filename):
             valence.append(float(tmp[2]))
 
         # read tau table
-        tau = table(nat)[0:4,1:4]
+        tau = table(nat)[0:4, 1:4]
 
         # read rho table
         # total number of real-space grid points:
         nr_points = np.prod(FFT_dim[:3])
         # separated into columns of 5:
-        if divmod(nr_points,5)[1] != 0:
+        if divmod(nr_points, 5)[1] != 0:
             print('Warning: Total number of grid points is not divisible by 5')
-        rho = table(divmod(nr_points,5)[0])
+        rho = table(divmod(nr_points, 5)[0])
 
         tot_charge = rho.sum() / nr_points * uc_volume
 
@@ -1518,30 +1517,32 @@ def read_pp_density(filename):
 
         return rho, tot_charge
 
-def read_rhoG_density(filename, ibrav, a = 1.0, b = 1.0, c = 1.0):
-    """Read the charge density output from Quantum ESPRESSO.
+def read_rhoG_density(filename, ibrav, a=1.0, b=1.0, c=1.0):
+    r"""Read the charge density output from Quantum ESPRESSO.
 
-    The purpose of rho(G) is to calculate the charge density
-    in real space rho(r) or the Hartree energy ehart.
+    The purpose of :math:`\rho(\vec G)` is to calculate the charge density in
+    real space :math:`\rho(\vec r)` or the Hartree energy ``ehart``.
 
     Parameters
     ----------
     filename : str
-        output file name
-    ibrav    : integer
-        bravais lattice index (see pw.x input description)
-    a,b,c    : float
-        bravais lattice parameters
+        Output file name.
+    ibrav : integer
+        Bravais lattice index (see ``pw.x`` input description).
+    a, b, c : float
+        Bravais lattice parameters.
+
     Returns
     -------
-    rho_g    : ndarray
-        electron charge density rho(G) on reciprocal-space grid point
-    g_vect   : ndarray
-        reciprocal lattice vectors G
-    ngm_g    : integer
-        number of reciprocal lattice vectors
-    uc_volume: float
-        unit cell volume
+    rho_g : ndarray
+        Electronic charge density :math:`\rho(\vec G)` on reciprocal-space grid
+        points.
+    g_vect : ndarray
+        Reciprocal lattice vectors :math:`\vec G`.
+    ngm_g : integer
+        Number of reciprocal lattice vectors.
+    uc_volume : float
+        Unit-cell volume.
     """
     with open(filename, 'rb') as f:
         # Moves the cursor 4 bytes to the right
@@ -1559,30 +1560,31 @@ def read_rhoG_density(filename, ibrav, a = 1.0, b = 1.0, c = 1.0):
         b3 = np.fromfile(f, dtype='float64', count=3)
 
         # Move the cursor 8 byte to the right
-        f.seek(8,1)
+        f.seek(8, 1)
 
-        mill_g = np.fromfile(f, dtype='int32', count=3*ngm_g)
+        mill_g = np.fromfile(f, dtype='int32', count=3 * ngm_g)
         mill_g = mill_g.reshape((ngm_g, 3))
 
         # Move the cursor 8 byte to the right
-        f.seek(8,1)
+        f.seek(8, 1)
 
-        rho_g = np.zeros( (ngm_g), dtype="complex128")
+        rho_g = np.zeros((ngm_g), dtype='complex128')
         rho_g = np.fromfile(f, dtype='complex128', count=ngm_g)
 
         # get primitive lattice vectors
         #(must be the same as scf output)
-        A = bravais.primitives(ibrav, a = a, b = b , c = c)
-        A /= (a)
+        A = bravais.primitives(ibrav, a=a, b=b, c=c)
+        A /= a
 
         B1, B2, B3 = bravais.reciprocals(*A)
 
         # calculate unit cell volume (for Hartree energy)
-        uc_volume = np.linalg.det(A)*(a/misc.a0)**3
+        uc_volume = np.linalg.det(A) * (a / misc.a0) ** 3
 
         # calculate reciprocal G vectors
-        g_vect = np.empty((ngm_g,3))
+        g_vect = np.empty((ngm_g, 3))
         for ii in range(ngm_g):
-            g_vect[ii] = mill_g[ii,0] * B1 + mill_g[ii,1] * B2 + mill_g[ii,2] * B3
+            g_vect[ii] = (mill_g[ii, 0] * B1 + mill_g[ii, 1] * B2
+                + mill_g[ii, 2] * B3)
 
         return rho_g, g_vect, ngm_g, uc_volume

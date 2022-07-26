@@ -420,43 +420,42 @@ def orbital2band(U, H, nq, nk, band=0, status=False, share=False, dd=False):
 
     return V
 
-def hartree_energy(rho_g, g_vect, ngm_g, uc_volume, a = 1.0):
-    """Calculate the hartree energy in units of Rydberg.
-    This function is basically a copy of Quantum ESPRESSO's
-    subroutine ``v_h`` from ``v_of_rho.f90``.
+def hartree_energy(rho_g, g_vect, ngm_g, uc_volume, a=1.0):
+    r"""Calculate the Hartree energy in units of Rydberg.
 
-    All input parameters can be obtained from reading
-    the formatted charge density output.
-    Use function elphmod.el.read_rhoG_density()
-    for this purpose.
+    This function is basically a copy of Quantum ESPRESSO's subroutine ``v_h``
+    from ``v_of_rho.f90``.
+
+    All input parameters can be obtained from reading the formatted
+    charge-density output. Use :func:`el.read_rhoG_density` for this purpose.
 
     Parameters
     ----------
-    rho_g    : ndarray
-        electron charge density rho(G) on reciprocal-space grid point
-    g_vect   : ndarray
-        reciprocal lattice vectors G
-    ngm_g    : integer
-        number of reciprocal lattice vectors
+    rho_g : ndarray
+        Electronic charge density :math:`\rho(\vec G)` on reciprocal-space grid
+        points.
+    g_vect : ndarray
+        Reciprocal lattice vectors :math:`\vec G`.
+    ngm_g : integer
+        Number of reciprocal lattice vectors.
     uc_volume: float
-        unit cell volume
+        Unit-cell volume.
+
     Returns
     -------
-    ehart    : float
-        hartree energy in units of Rydberg
-
+    ehart : float
+        Hartree energy in units of Rydberg.
     """
     ehart = 0.0
-    for ig in range(1,ngm_g):
-        fac = 1.0 / np.linalg.norm(g_vect[ig])**2
+    for ig in range(1, ngm_g):
+        fac = 1.0 / np.linalg.norm(g_vect[ig]) ** 2
         rgtot_re = rho_g[ig].real
         rgtot_im = rho_g[ig].imag
-        ehart = ehart + ( rgtot_re**2 + rgtot_im**2 ) * fac
+        ehart = ehart + (rgtot_re ** 2 + rgtot_im ** 2) * fac
 
     e2 = 2.0
-    fpi = 4*np.pi
-    tpiba2 = (2*np.pi / (a/misc.a0)) ** 2
-
+    fpi = 4 * np.pi
+    tpiba2 = (2 * np.pi / (a / misc.a0)) ** 2
 
     fac = e2 * fpi / tpiba2
     ehart = ehart * fac

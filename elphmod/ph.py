@@ -723,7 +723,7 @@ def write_q(fildyn0, q, nq):
             data.write('%19.15f%19.15f%19.15f\n' % (qxy[0], qxy[1], 0.0))
 
 def fildyn_freq(fildyn='matdyn'):
-    """Create *fildyn.freq* as created by Quantum ESPRESSO's ``ph.x``
+    """Create *fildyn.freq* as created by Quantum ESPRESSO's ``ph.x``.
 
     Parameters
     ----------
@@ -933,7 +933,7 @@ def write_flfrc(flfrc, phid, amass, at, tau, atom_order, epsil=None, zeu=None):
     """Write force constants in real or reciprocal space.
 
     Parameters
-    -------
+    ----------
     flfrc : str
         File name.
     phid : ndarray or tuple of list of ndarray
