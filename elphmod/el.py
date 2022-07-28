@@ -1066,7 +1066,7 @@ def read_wannier90_eig_file(seedname, num_bands, nkpts):
     num_bands : int
         Number of bands in your pseudopotential.
     nkpts : int
-        Number of k-points in your Wannier90 calculations.
+        Number of k points in your Wannier90 calculations.
         For example 1296 for 36x36x1.
 
     Returns
@@ -1488,9 +1488,9 @@ def read_pp_density(filename):
         A[2, 2] = celldm[2]
         uc_volume = np.linalg.det(A) * celldm[0] ** 3
 #        B1, B2, B3 = elphmod.bravais.reciprocals(*A)
-#        B = np.stack((B1,B2,B3), axis=0)
+#        B = np.stack((B1, B2, B3), axis=0)
 #        print(B)
-#        print(np.linalg.det(B)*(2*np.pi/celldm[0])**3)
+#        print(np.linalg.det(B) * (2 * np.pi / celldm[0]) ** 3)
 
         # read valence table
         at = []
@@ -1574,7 +1574,7 @@ def read_rhoG_density(filename, ibrav, a=1.0, b=1.0, c=1.0):
         rho_g = np.fromfile(f, dtype='complex128', count=ngm_g)
 
         # get primitive lattice vectors
-        #(must be the same as scf output)
+        # (must be the same as scf output)
         A = bravais.primitives(ibrav, a=a, b=b, c=c)
         A /= a
 
@@ -1591,11 +1591,13 @@ def read_rhoG_density(filename, ibrav, a=1.0, b=1.0, c=1.0):
 
         return rho_g, g_vect, ngm_g, uc_volume, mill_g
 
-def read_wfc(filename, ibrav, a = 1.0, b = 1.0, c = 1.0):
+def read_wfc(filename, ibrav, a=1.0, b=1.0, c=1.0):
     r"""Read the wave function output from Quantum ESPRESSO.
 
-    \psi_{n \vec k}(\vec r) =
-    \frac{1}{\sqrt{V}} \sum_{\vec G} c_{n,\vec{k+G}} \, e^{i (\vec{k+G}) \vec{r}}
+    .. math::
+
+        \psi_{n \vec k}(\vec r) = \frac 1 {\sqrt V} \sum_{\vec G}
+            c_{n, \vec k + \vec G} \E^{\I (\vec k + \vec G) \vec r}
 
     Parameters
     ----------
@@ -1609,13 +1611,13 @@ def read_wfc(filename, ibrav, a = 1.0, b = 1.0, c = 1.0):
     Returns
     -------
     evc : ndarray
-        Electronic wave function :math:`c_{n,\vec{k+G}}`.
+        Electronic wave function :math:`c_{n, \vec k + \vec G}`.
     igwx : integer
         Number of reciprocal lattice vectors.
     xk : ndarray
-        k-point
+        k point.
     k_plus_G : ndarray
-        K-point plus reciprocal lattice vectors :math:`\vec G`.
+        k point plus reciprocal lattice vectors :math:`\vec G`.
     g_vect : ndarray
         Reciprocal lattice vectors :math:`\vec G`.
     mill_g : ndarray
@@ -1646,43 +1648,47 @@ def read_wfc(filename, ibrav, a = 1.0, b = 1.0, c = 1.0):
         b2 = np.fromfile(f, dtype='float64', count=3)
         b3 = np.fromfile(f, dtype='float64', count=3)
 
-        f.seek(8,1)
+        f.seek(8, 1)
 
-        mill_g = np.fromfile(f, dtype='int32', count=3*igwx)
+        mill_g = np.fromfile(f, dtype='int32', count=3 * igwx)
         mill_g = mill_g.reshape((igwx, 3))
 
-        evc = np.zeros( (nbnd, npol*igwx), dtype="complex128")
+        evc = np.zeros((nbnd, npol * igwx), dtype='complex128')
 
-        f.seek(8,1)
+        f.seek(8, 1)
         for i in range(nbnd):
-            evc[i,:] = np.fromfile(f, dtype='complex128', count=npol*igwx)
+            evc[i, :] = np.fromfile(f, dtype='complex128', count=npol * igwx)
             f.seek(8, 1)
 
-        # delta_mn = \sum_G \psi(m,G)*  \psi(n,G)
-        # print(((evc[1,:].conj()*evc[0,:]).sum()).real)
+        # delta_mn = \sum_G \psi(m, G) * \psi(n, G)
+        # print((evc[1, :].conj() * evc[0, :]).sum().real)
 
         # get primitive lattice vectors
-        #(must be the same as scf output)
-        A = bravais.primitives(ibrav, a = a, b = b , c = c)
-        A /= (a)
+        # (must be the same as scf output)
+        A = bravais.primitives(ibrav, a=a, b=b, c=c)
+        A /= a
 
         # reciprocal lattice vectors for G
         B1, B2, B3 = bravais.reciprocals(*A)
 
         # transform k point
         alat = a / misc.a0
-        xk  = xk * (alat / (2*np.pi))
+        xk = xk * alat / (2 * np.pi)
 
 #        # normalize wfcs
-#        uc_volume = np.linalg.det(A)*alat**3
+#        uc_volume = np.linalg.det(A) * alat ** 3
 #        evc /= np.sqrt(uc_volume)
 
         # calculate reciprocal G vectors
-        g_vect = np.empty((igwx,3))
-        k_plus_G = np.empty((igwx,3))
+        g_vect = np.empty((igwx, 3))
+        k_plus_G = np.empty((igwx, 3))
+
         for ii in range(igwx):
-            g_vect[ii] = mill_g[ii,0] * B1 + mill_g[ii,1] * B2 + mill_g[ii,2] * B3
-#            g_vect[ii] = mill_g[ii,0] * b1 + mill_g[ii,1] * b2 + mill_g[ii,2] * b3
+            g_vect[ii] = (mill_g[ii, 0] * B1 + mill_g[ii, 1] * B2
+                + mill_g[ii, 2] * B3)
+#            g_vect[ii] = (mill_g[ii, 0] * b1 + mill_g[ii, 1] * b2
+#                + mill_g[ii, 2] * b3)
 
             k_plus_G[ii] = xk + g_vect[ii]
+
     return evc, igwx, xk, k_plus_G, g_vect, mill_g
