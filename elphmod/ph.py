@@ -53,6 +53,8 @@ class Model(object):
         Quadrupole tensors if `quadrupole_fmt` is omitted.
     L : float
         Range-separation parameter for two-dimensional electrostatics.
+    perp : bool
+        Yield out-of-plane long-range terms if `L` is nonzero?
     divide_mass : bool
         Divide force constants and Born effective charges by atomic masses?
     divide_ndegen : bool
@@ -89,6 +91,8 @@ class Model(object):
         Quadrupole tensors divided by square root of atomic masses.
     L : float
         Range-separation parameter for two-dimensional electrostatics.
+    perp : bool
+        Yield out-of-plane long-range terms if `L` is nonzero?
     data : ndarray
         Interatomic force constants divided by atomic masses.
     divide_mass : bool
@@ -167,8 +171,8 @@ class Model(object):
         apply_asr_simple=False, apply_zasr=False, apply_rsr=False, lr=True,
         lr2d=None, phid=np.zeros((1, 1, 1, 1, 1, 3, 3)), amass=np.ones(1),
         at=np.eye(3), tau=np.zeros((1, 3)), atom_order=['X'], epsil=None,
-        zeu=None, Q=None, L=None, divide_mass=True, divide_ndegen=True,
-        ifc=None):
+        zeu=None, Q=None, L=None, perp=True, divide_mass=True,
+        divide_ndegen=True, ifc=None):
 
         if comm.rank == 0:
             if flfrc is None:
@@ -225,6 +229,7 @@ class Model(object):
 
         self.Q = comm.bcast(Q)
         self.L = comm.bcast(L)
+        self.perp = comm.bcast(perp)
 
         (self.M, self.a, self.r, self.atom_order, self.eps, self.Z, self.nq,
             self.q0, self.D0) = model[-9:]
@@ -342,7 +347,7 @@ class Model(object):
                 if self.Q is not None:
                     self.q[na] /= np.sqrt(self.M[na])
 
-    def generate_long_range(self, q1=0, q2=0, q3=0, perp=True, eps=1e-10):
+    def generate_long_range(self, q1=0, q2=0, q3=0, perp=None, eps=1e-10):
         r"""Generate long-range terms.
 
         Parameters
@@ -350,7 +355,7 @@ class Model(object):
         q : ndarray
             q point in reciprocal lattice units :math:`q_i \in [0, 2 \pi)`.
         perp : bool
-            Yield out-of-plane terms?
+            Yield out-of-plane terms? Defaults to attribute :attr:`perp`.
         eps : float
             Tolerance for vanishing lattice vectors.
 
@@ -361,6 +366,9 @@ class Model(object):
         ndarray
             Direction-dependent term.
         """
+        if perp is None:
+            perp = self.perp
+
         for G in self.G:
             K = G + q1 * self.b[0] + q2 * self.b[1] + q3 * self.b[2]
 
