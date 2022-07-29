@@ -1,5 +1,15 @@
 # Changes
 
+## v0.15
+
+* Handling of wave functions and charge density from QE
+* 1D linear interpolation
+* Phonon models from dynamical-matrix files (skip `q2r.x`)
+* Long-range terms of dynamical matrices and coupling from cDFPT
+* Faster band unfolding
+* Calculation of band and entropy contributions from PWscf output
+* Generalized entropy for all smearing functions
+
 ## v0.14
 
 * QE-7.1 support (cDFPT patch)

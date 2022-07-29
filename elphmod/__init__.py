@@ -3,7 +3,7 @@
 
 """Python modules for electron-phonon models."""
 
-__version__ = '0.14'
+__version__ = '0.15'
 
 from . import MPI
 from . import bravais
