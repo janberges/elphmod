@@ -277,8 +277,8 @@ class Model(object):
         * Coupling: Verdi and Giustino, Phys. Rev. Lett. 115, 176401 (2015)
         * 2D case: Sohier, Calandra, and Mauri, Phys. Rev. B 94, 085415 (2016)
         * Quadrupoles: Ponce' et al., Phys. Rev. Research 3, 043022 (2021)
-        * New 2D phonons: Royo and Stengel, Phys. Rev. X 11, 041027 (2021)
-        * New 2D coupling: Ponce' et al., in preparation (2022)
+        * Improved 2D phonons: Royo and Stengel, Phys. Rev. X 11, 041027 (2021)
+        * Improved 2D coupling: Ponce' et al., arXiv:2207.10190 (2022)
 
         Parameters
         ----------
