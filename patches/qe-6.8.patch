@@ -367,7 +367,7 @@ index 12c739998..b10d58316 100644
 +        IF (.NOT. (lgauss .OR. ltetra) .OR. lcdfpt .OR. bare) THEN
             !
 diff --git a/PHonon/PH/solve_e.f90 b/PHonon/PH/solve_e.f90
-index d22fc071a..f1020cc28 100644
+index d22fc071a..e39a36c21 100644
 --- a/PHonon/PH/solve_e.f90
 +++ b/PHonon/PH/solve_e.f90
 @@ -62,2 +62,3 @@ subroutine solve_e
@@ -381,6 +381,15 @@ index d22fc071a..f1020cc28 100644
 +  if ((lgauss .or. ltetra) .and. .not. (lcdfpt .or. bare) .or. .not. lgamma) &
 +     CALL errore('solve_e', 'called in the wrong case', 1)
    !
+@@ -264,4 +265,6 @@ subroutine solve_e
+ 
+-           call cgsolve_all (ch_psi_all,cg_psi,et(1,ikk),dvpsi,dpsi, &
+-              h_diag,npwx,npw,thresh,ik,lter,conv_root,anorm,nbnd_occ(ikk),npol)
++           IF (.NOT. bare) THEN
++              call cgsolve_all (ch_psi_all,cg_psi,et(1,ikk),dvpsi,dpsi, &
++                 h_diag,npwx,npw,thresh,ik,lter,conv_root,anorm,nbnd_occ(ikk),npol)
++           ENDIF
+ 
 diff --git a/PHonon/PH/solve_linter.f90 b/PHonon/PH/solve_linter.f90
 index fed13a888..acdabd541 100644
 --- a/PHonon/PH/solve_linter.f90
