@@ -62,32 +62,38 @@ class Model(object):
             return self.data[index]
 
     def __init__(self, uijkl=None, vijkl_full=None, vijkl_redu=None,
-            nq=None, no=None, angle=120):
+            nq=None, no=None, Wmat=None, angle=120):
 
-        if uijkl is None:
-            return
+        if Wmat is not None:
+            R, WR = read_Wmat(Wmat, num_wann = no)
+            self.R = R
+            self.data = WR
+            self.size = no
+        else:
+            if uijkl is None:
+                return
 
-        Wq = read_orbital_Coulomb_interaction(uijkl, nq, no, dd=True)
+            Wq = read_orbital_Coulomb_interaction(uijkl, nq, no, dd=True)
 
-        if vijkl_full is not None and vijkl_redu is not None:
-            Wq += read_orbital_Coulomb_interaction(vijkl_full, nq, no, dd=True)
-            Wq -= read_orbital_Coulomb_interaction(vijkl_redu, nq, no, dd=True)
+            if vijkl_full is not None and vijkl_redu is not None:
+                Wq += read_orbital_Coulomb_interaction(vijkl_full, nq, no, dd=True)
+                Wq -= read_orbital_Coulomb_interaction(vijkl_redu, nq, no, dd=True)
 
-        Wq = Wq.reshape((nq, nq, 1, no, no))
+            Wq = Wq.reshape((nq, nq, 1, no, no))
 
-        WR = np.fft.ifftn(Wq, axes=(0, 1, 2))
+            WR = np.fft.ifftn(Wq, axes=(0, 1, 2))
 
-        irvec, ndegen, wslen = bravais.wigner_seitz(nq, angle=angle)
+            irvec, ndegen, wslen = bravais.wigner_seitz(nq, angle=angle)
 
-        self.R = np.zeros((len(irvec), 3), dtype=int)
-        self.data = np.empty((len(irvec), no, no), dtype=complex)
+            self.R = np.zeros((len(irvec), 3), dtype=int)
+            self.data = np.empty((len(irvec), no, no), dtype=complex)
 
-        self.R[:, :2] = irvec
+            self.R[:, :2] = irvec
 
-        for i in range(len(self.R)):
-            self.data[i] = WR[tuple(self.R[i] % nq)] / ndegen[i]
+            for i in range(len(self.R)):
+                self.data[i] = WR[tuple(self.R[i] % nq)] / ndegen[i]
 
-        self.size = no
+            self.size = no
 
     def supercell(self, N1=1, N2=1, N3=1):
         """Map localized model for electron-electron interaction onto supercell.
@@ -463,3 +469,53 @@ def hartree_energy(rho_g, g_vect, ngm_g, uc_volume, a=1.0):
     ehart = ehart * 0.5 * uc_volume
 
     return ehart
+
+def read_Wmat(filename, num_wann):
+    r"""Read Coulomb matrix elements from "dat.Wmat" (RESPACK)
+
+    Parameters
+    ----------
+    filename : str
+        Name of the file.
+    num_wann : integer
+        Number of Wannier orbitals.
+
+    Returns
+    -------
+    ndarray
+        Lattice vectors.
+    ndarray
+        Direct (screened) Coulomb matrix elements.
+    """
+    respack_file = open(filename)
+    lines = respack_file.readlines()
+    respack_file.close()
+
+    block = 1 + num_wann**2 + 1
+    # nR: number of lattice vectors R
+    nR = int((len(lines) - 3) / block)
+    R = np.empty((nR,3))
+    Rcount = 0
+
+    # allocate W matrix
+    W = np.empty((nR,num_wann,num_wann), dtype = complex)
+    for line in range(3,len(lines)):
+        # read lattice vectors R
+        if len(lines[line].split()) == 3:
+            R1, R2, R3 = lines[line].split()
+            R[Rcount][0] = float(R1)
+            R[Rcount][1] = float(R2)
+            R[Rcount][2] = float(R3)
+        # read matrix elements
+        if len(lines[line].split()) == 4:
+            n, m, Wreal, Wimag = lines[line].split()
+            n = int(n) - 1
+            m = int(m) - 1
+            Wreal = float(Wreal)
+            Wimag = float(Wimag)
+
+            W[Rcount][n,m] = Wreal + 1j*Wimag
+        if len(lines[line].split()) == 0:
+            Rcount += 1
+
+    return R, W
