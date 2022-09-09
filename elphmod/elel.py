@@ -65,7 +65,7 @@ class Model(object):
             nq=None, no=None, Wmat=None, angle=120):
 
         if Wmat is not None:
-            R, WR = read_Wmat(Wmat, num_wann = no)
+            R, WR = read_Wmat(Wmat, num_wann=no)
             self.R = R
             self.data = WR
             self.size = no
@@ -491,15 +491,15 @@ def read_Wmat(filename, num_wann):
     lines = respack_file.readlines()
     respack_file.close()
 
-    block = 1 + num_wann**2 + 1
+    block = 1 + num_wann ** 2 + 1
     # nR: number of lattice vectors R
     nR = int((len(lines) - 3) / block)
-    R = np.empty((nR,3))
+    R = np.empty((nR, 3))
     Rcount = 0
 
     # allocate W matrix
-    W = np.empty((nR,num_wann,num_wann), dtype = complex)
-    for line in range(3,len(lines)):
+    W = np.empty((nR, num_wann, num_wann), dtype=complex)
+    for line in range(3, len(lines)):
         # read lattice vectors R
         if len(lines[line].split()) == 3:
             R1, R2, R3 = lines[line].split()
@@ -514,7 +514,7 @@ def read_Wmat(filename, num_wann):
             Wreal = float(Wreal)
             Wimag = float(Wimag)
 
-            W[Rcount][n,m] = Wreal + 1j*Wimag
+            W[Rcount][n, m] = Wreal + 1j * Wimag
         if len(lines[line].split()) == 0:
             Rcount += 1
 

@@ -523,7 +523,7 @@ class Model(object):
         N, (N1, N2, N3), (B1, B2, B3), ph.cells = bravais.supercell(N1, N2, N3)
 
         ph.M = np.tile(self.M, N)
-        ph.a = np.dot(np.array([N1, N2, N3]), self.a)
+        ph.a = np.dot((N1, N2, N3), self.a)
         ph.atom_order = list(self.atom_order) * N
         ph.size = self.size * N
         ph.nat = self.nat * N
