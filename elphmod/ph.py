@@ -809,7 +809,7 @@ def fildyn_freq(fildyn='matdyn'):
             if iq == 0:
                 freq.write(' &plot nbnd=%4d, nks=%4d /\n' % (len(w), len(q0)))
 
-            freq.write('%20.6f %9.6f %9.6f\n' % tuple(q[0]))
+            freq.write('%20.6f %9.6f %9.6f\n' % tuple(q0[iq]))
 
             for nu, wnu in enumerate(w, 1):
                 freq.write('%10.4f' % wnu)
