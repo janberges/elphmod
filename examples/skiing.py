@@ -33,16 +33,14 @@ u = scipy.optimize.minimize(E2, u).x
 u /= u.max()
 
 if elphmod.MPI.comm.rank == 0:
-    Nb = np.array([X == 'Nb' for X in ph.atom_order])
-
     ax = plt.axes(projection='3d')
     ax.set_box_aspect(np.ptp(ph.r, axis=0))
     ax.set_axis_off()
 
-    ax.scatter(*ph.r[Nb].T, s=100.0, c='k')
-    ax.scatter(*ph.r[~Nb].T, s=50.0, c='y')
+    ax.scatter(*ph.r.T, s=100.0, c=['#%02x%02x%02x' % elphmod.misc.colors[X]
+        for X in ph.atom_order])
 
-    ax.quiver(*ph.r.T, *u.reshape(ph.r.shape).T)
+    ax.quiver(*ph.r.T, *u.reshape(ph.r.shape).T, color='k')
 
     for n in range(ph.nat):
         ax.text(*ph.r[n], str(n))
