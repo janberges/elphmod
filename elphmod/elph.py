@@ -524,14 +524,18 @@ class Model(object):
         Parameters
         ----------
         eps : float
-            Threshold for "nonzero" matrix elements.
+            Threshold for "nonzero" matrix elements in units of the maximum
+            matrix element.
         """
         if comm.rank == 0:
+            if eps:
+                self.data[abs(self.data) < eps * abs(self.data).max()] = 0.0
+
             const = dict()
 
             for g in range(len(self.Rg)):
                 for k in range(len(self.Rk)):
-                    if np.any(abs(self.data[g, :, k]) > eps):
+                    if np.any(self.data[g, :, k] != 0):
                         R = tuple(self.Rg[g]) + tuple(self.Rk[k])
 
                         if R in const:
