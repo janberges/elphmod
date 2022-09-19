@@ -398,7 +398,7 @@ class Model(object):
         """
         return sample(g=self.g, *args, **kwargs)
 
-    def supercell(self, N1=1, N2=1, N3=1, shared_memory=False):
+    def supercell(self, N1=1, N2=1, N3=1, shared_memory=False, sparse=False):
         """Map localized model for electron-phonon coupling onto supercell.
 
         Parameters
@@ -407,6 +407,9 @@ class Model(object):
             Supercell lattice vectors in units of primitive lattice vectors.
         shared_memory : bool, default False
             Store mapped coupling in shared memory?
+        sparse : bool, default False
+            Only calculate q = k = 0 coupling as a list of sparse matrices to
+            save memory? The result is stored in the attribute :attr:`gs`.
 
         Returns
         -------
@@ -430,6 +433,12 @@ class Model(object):
 
         counter = 0 # counter for parallelization
 
+        if sparse:
+            import scipy.sparse as sp
+
+            elph.gs = np.array([sp.dok_array((elph.el.size, elph.el.size),
+                dtype=complex) for x in range(elph.ph.size)])
+
         status = misc.StatusBar(len(self.Rg) * len(self.Rk),
             title='map coupling onto supercell (1/2)')
 
@@ -451,11 +460,6 @@ class Model(object):
                     K2, k2 = divmod(np.dot(K, B2), N)
                     K3, k3 = divmod(np.dot(K, B3), N)
 
-                    Rg.add((G1, G2, G3))
-                    Rk.add((K1, K2, K3))
-
-                    R = G1, G2, G3, K1, K2, K3
-
                     indices = g1 * N1 + g2 * N2 + g3 * N3
                     n = elph.cells.index(tuple(indices // N))
                     indices = k1 * N1 + k2 * N2 + k3 * N3
@@ -464,6 +468,18 @@ class Model(object):
                     A = n * self.ph.size
                     B = i * self.el.size
                     C = j * self.el.size
+
+                    if sparse:
+                        for x in range(self.ph.size):
+                            elph.gs[A + x][
+                                B:B + self.el.size,
+                                C:C + self.el.size] = self.data[g, x, k]
+                        continue
+
+                    Rg.add((G1, G2, G3))
+                    Rk.add((K1, K2, K3))
+
+                    R = G1, G2, G3, K1, K2, K3
 
                     if R not in const:
                         const[R] = np.zeros((elph.ph.size,
@@ -511,6 +527,9 @@ class Model(object):
             for g in range(len(elph.Rg)):
                 elph.images.Allreduce(MPI.MPI.IN_PLACE,
                     elph.data[g].view(dtype=float))
+
+        if sparse:
+            elph.gs = comm.allreduce(elph.gs)
 
         return elph
 
