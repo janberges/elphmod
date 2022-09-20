@@ -968,6 +968,9 @@ def read_flfrc(flfrc):
 
                 else:
                     break
+
+            q = np.array(q)
+            D = np.array(D)
         else:
             # read macroscopic dielectric function and effective charges:
 
