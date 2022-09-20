@@ -34,7 +34,7 @@ w2, u = elphmod.dispersion.dispersion(ph.D, q, vectors=True)
 
 LA = np.argwhere(elphmod.ph.polarization(u, q)[0, :, 0] > 0.5).min()
 
-g2 = abs(elph.sample(q=q, U=U[..., :1], u=u[..., LA:LA + 1])) ** 2
+g2 = abs(elph.sample(q, U=U[..., :1], u=u[..., LA:LA + 1])) ** 2
 
 info('Calculate phonon self-energy and bare electronic susceptibility')
 

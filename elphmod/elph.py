@@ -323,7 +323,7 @@ class Model(object):
         if self.ph.q0 is None:
             self.ph.sample_orig()
 
-        self.g0 = self.sample(q=self.ph.q0, nk=self.el.nk,
+        self.g0 = self.sample(self.ph.q0, self.el.nk,
             shared_memory=shared_memory)
 
     def update_short_range(self, shared_memory=True):
@@ -396,7 +396,7 @@ class Model(object):
         --------
         sample
         """
-        return sample(g=self.g, *args, **kwargs)
+        return sample(self.g, *args, **kwargs)
 
     def supercell(self, N1=1, N2=1, N3=1, shared_memory=False, sparse=False):
         """Map localized model for electron-phonon coupling onto supercell.

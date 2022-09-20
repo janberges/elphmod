@@ -42,7 +42,7 @@ e, U = elphmod.dispersion.dispersion_full_nosym(el.H, nk, vectors=True)
 D0 = elphmod.dispersion.sample(ph.D, q)
 w0 = elphmod.ph.sgnsqrt(np.linalg.eigvalsh(D0))
 
-g = elph.sample(q=q, U=U)
+g = elph.sample(q, U=U)
 
 info('Calculate retarded displacement-displacement correlation function..')
 

@@ -50,7 +50,7 @@ for method in sorted(ph):
     elph = elphmod.elph.Model('%s.epmatwp' % method, 'wigner.dat',
         el, ph[method])
 
-    g[method] = elph.sample(q=q, U=U, u=None) * elphmod.misc.Ry ** 1.5
+    g[method] = elph.sample(q, U=U, u=None) * elphmod.misc.Ry ** 1.5
 
 info('Calculate phonon self-energy')
 
