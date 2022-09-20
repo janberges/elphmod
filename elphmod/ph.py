@@ -221,7 +221,7 @@ class Model(object):
                 asr(model[0])
 
             if apply_zasr:
-                zasr(model[-1])
+                zasr(model[-4])
         else:
             model = None
 
