@@ -1064,7 +1064,7 @@ def wigner_seitz_x(x, nk, at=None, tau=None, epsilon=1e-8):
     nk : int
         Number of points per dimension.
     at, tau : ndarray
-        Geometry as returned by :func:`ph.read_flfrc` and :func:`ph.model`.
+        Geometry as returned by :func:`ph.read_flfrc` and :func:`ph.Model`.
     epsilon : float
         Maximum absolute difference of "equal" floats.
 
