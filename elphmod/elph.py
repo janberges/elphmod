@@ -610,6 +610,10 @@ class Model(object):
         if self.node.rank == 0:
             self.images.Bcast(self.data.view(dtype=float))
 
+        self.q = None
+        self.gq = np.empty((self.ph.size, len(self.Rk),
+            self.el.size, self.el.size), dtype=complex)
+
         comm.Barrier()
 
 def sample(g, q, nk=None, U=None, u=None, broadcast=True, shared_memory=False):
