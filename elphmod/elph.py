@@ -473,7 +473,7 @@ class Model(object):
                         for x in range(self.ph.size):
                             elph.gs[A + x][
                                 B:B + self.el.size,
-                                C:C + self.el.size] = self.data[g, x, k]
+                                C:C + self.el.size] += self.data[g, x, k]
                         continue
 
                     Rg.add((G1, G2, G3))
