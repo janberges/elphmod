@@ -199,6 +199,11 @@ class Model(object):
                             D0 = np.empty(nq + (3 * len(amass),) * 2,
                                 dtype=complex)
 
+                        if divide_mass:
+                            for na in range(len(amass)):
+                                D[:, group(na), :] /= np.sqrt(amass[na])
+                                D[:, :, group(na)] /= np.sqrt(amass[na])
+
                         for iq in range(len(q)):
                             q[iq] = np.dot(at, q[iq])
 
@@ -451,7 +456,7 @@ class Model(object):
 
         if not self.lr:
             q2r(self, nq=self.nq, D_full=self.D0, flfrc=flfrc,
-                apply_asr_simple=apply_asr_simple)
+                apply_asr_simple=apply_asr_simple, divide_mass=self.divide_mass)
             return
 
         self.prepare_long_range()
@@ -459,7 +464,7 @@ class Model(object):
         D = self.D0 - dispersion.sample(self.D_lr, self.q0)
 
         q2r(self, nq=self.nq, D_full=D, flfrc=flfrc,
-            apply_asr_simple=apply_asr_simple)
+            apply_asr_simple=apply_asr_simple, divide_mass=self.divide_mass)
 
     def sum_force_constants(self):
         """Calculate sum of absolute values of short-range force constants.
@@ -810,6 +815,10 @@ def fildyn_freq(fildyn='matdyn'):
             (q, D), amass, at, tau, atom_order, epsil, zeu = read_flfrc('%s%d'
                 % (fildyn, iq + 1))
 
+            for na in range(len(amass)):
+                D[:, group(na), :] /= np.sqrt(amass[na])
+                D[:, :, group(na)] /= np.sqrt(amass[na])
+
             w = sgnsqrt(np.linalg.eigvalsh(D[0])) * misc.Ry / misc.cmm1
 
             if iq == 0:
@@ -946,10 +955,6 @@ def read_flfrc(flfrc):
                                 for j2 in range(3):
                                     D[-1][group(na1), group(na2)][j1, j2] \
                                         = complex(*values[group(j2, 2)])
-
-                    for na in range(len(amass)):
-                        D[-1][group(na), :] /= np.sqrt(amass[na])
-                        D[-1][:, group(na)] /= np.sqrt(amass[na])
 
                 elif 'dielectric tensor' in line:
                     epsil = table(3)
