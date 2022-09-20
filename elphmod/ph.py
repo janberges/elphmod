@@ -217,7 +217,7 @@ class Model(object):
 
             # optionally, apply acoustic sum rule:
 
-            if apply_asr_simple:
+            if apply_asr_simple and model[-1] is None:
                 asr(model[0])
 
             if apply_zasr:
@@ -257,7 +257,8 @@ class Model(object):
             self.R, self.data, self.l = short_range_model(*model[:-6],
                 divide_mass=divide_mass, divide_ndegen=divide_ndegen)
         else:
-            self.update_short_range(flfrc=ifc)
+            self.update_short_range(flfrc=ifc,
+                apply_asr_simple=apply_asr_simple)
 
         if apply_asr or apply_rsr:
             sum_rule_correction(self, asr=apply_asr, rsr=apply_rsr)
@@ -434,26 +435,31 @@ class Model(object):
 
         self.D0 = dispersion.sample(self.D, self.q0)
 
-    def update_short_range(self, flfrc=None):
+    def update_short_range(self, flfrc=None, apply_asr_simple=False):
         """Update short-range part of interatomic force constants.
 
         Parameters
         ----------
         flfrc : str
             Filename where short-range force constants are written.
+        apply_asr_simple : bool
+            Apply simple acoustic sum rule correction to short-range force
+            constants?
         """
         if self.D0 is None:
             info('Run "sample_orig" before changing Z, Q, etc.!', error=True)
 
         if not self.lr:
-            q2r(self, nq=self.nq, D_full=self.D0, flfrc=flfrc)
+            q2r(self, nq=self.nq, D_full=self.D0, flfrc=flfrc,
+                apply_asr_simple=apply_asr_simple)
             return
 
         self.prepare_long_range()
 
         D = self.D0 - dispersion.sample(self.D_lr, self.q0)
 
-        q2r(self, nq=self.nq, D_full=D, flfrc=flfrc)
+        q2r(self, nq=self.nq, D_full=D, flfrc=flfrc,
+            apply_asr_simple=apply_asr_simple)
 
     def sum_force_constants(self):
         """Calculate sum of absolute values of short-range force constants.
