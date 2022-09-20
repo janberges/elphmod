@@ -359,14 +359,15 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
             delta = Delta_occupations.delta(x1) + Delta_occupations.delta(x2)
             delta /= -Delta_kT
 
-    e = np.tile(e, (2, 2, 2, 1))
-    f = np.tile(f, (2, 2, 2, 1))
+    if np.any(q != 0):
+        e = np.tile(e, (2, 2, 2, 1))
+        f = np.tile(f, (2, 2, 2, 1))
 
-    if Delta is not None:
-        Theta = np.tile(Theta, (2, 2, 2, 1))
+        if Delta is not None:
+            Theta = np.tile(Theta, (2, 2, 2, 1))
 
-        if Delta_diff:
-            delta = np.tile(delta, (2, 2, 2, 1))
+            if Delta_diff:
+                delta = np.tile(delta, (2, 2, 2, 1))
 
     scale = nk / (2 * np.pi)
     prefactor = 2.0 / nk.prod()
