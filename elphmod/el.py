@@ -230,13 +230,17 @@ class Model(object):
 
         comm.Bcast(self.data)
 
-    def supercell(self, N1=1, N2=1, N3=1):
+    def supercell(self, N1=1, N2=1, N3=1, sparse=False):
         """Map tight-binding model onto supercell.
 
         Parameters
         ----------
         N1, N2, N3 : tuple of int or int, default 1
             Supercell lattice vectors in units of primitive lattice vectors.
+        sparse : bool, default False
+            Only calculate k = 0 Hamiltonian as a sparse matrix to save memory?
+            The result, which is assumed to be real, is stored in the attribute
+            :attr:`Hs`.
 
         Returns
         -------
@@ -254,6 +258,17 @@ class Model(object):
         el.size = N * self.size
         el.N = [tuple(N1), tuple(N2), tuple(N3)]
 
+        if sparse:
+            try:
+                from scipy.sparse import dok_array as sparse_array
+            except ImportError:
+                from scipy.sparse import dok_matrix as sparse_array
+
+            el.Hs = sparse_array((el.size, el.size))
+
+            if abs(self.data.imag).sum() / abs(self.data.real).sum() > 1e-6:
+                info('Warning: Significant imaginary part of hopping ignored')
+
         if comm.rank == 0:
             const = dict()
 
@@ -268,13 +283,19 @@ class Model(object):
                     R2, r2 = divmod(np.dot(R, B2), N)
                     R3, r3 = divmod(np.dot(R, B3), N)
 
-                    R = R1, R2, R3
-
                     indices = r1 * N1 + r2 * N2 + r3 * N3
                     j = el.cells.index(tuple(indices // N))
 
                     A = i * self.size
                     B = j * self.size
+
+                    if sparse:
+                        el.Hs[
+                            A:A + self.size,
+                            B:B + self.size] += self.data[n].real
+                        continue
+
+                    R = R1, R2, R3
 
                     if R not in const:
                         const[R] = np.zeros((el.size, el.size), dtype=complex)
@@ -301,6 +322,9 @@ class Model(object):
         comm.Bcast(el.data)
 
         el.cells = comm.bcast(el.cells)
+
+        if sparse:
+            el.Hs = comm.bcast(el.Hs)
 
         return el
 

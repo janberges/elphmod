@@ -422,8 +422,8 @@ class Model(object):
         bravais.supercell
         """
         elph = Model(
-            el=self.el.supercell(N1, N2, N3),
-            ph=self.ph.supercell(N1, N2, N3))
+            el=self.el.supercell(N1, N2, N3, sparse=sparse),
+            ph=self.ph.supercell(N1, N2, N3, sparse=sparse))
 
         N, (N1, N2, N3), (B1, B2, B3), elph.cells = bravais.supercell(
             N1, N2, N3)

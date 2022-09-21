@@ -512,13 +512,16 @@ class Model(object):
 
         comm.Bcast(self.data)
 
-    def supercell(self, N1=1, N2=1, N3=1):
+    def supercell(self, N1=1, N2=1, N3=1, sparse=False):
         """Map mass-spring model onto supercell.
 
         Parameters
         ----------
         N1, N2, N3 : tuple of int or int, default 1
             Supercell lattice vectors in units of primitive lattice vectors.
+        sparse : bool, default False
+            Only calculate q = 0 dynamical matrix as a sparse matrix to save
+            memory? The result is stored in the attribute :attr:`Ds`.
 
         Returns
         -------
@@ -544,6 +547,14 @@ class Model(object):
             for na in range(self.nat)])
         ph.N = [tuple(N1), tuple(N2), tuple(N3)]
 
+        if sparse:
+            try:
+                from scipy.sparse import dok_array as sparse_array
+            except ImportError:
+                from scipy.sparse import dok_matrix as sparse_array
+
+            ph.Ds = sparse_array((ph.size, ph.size))
+
         if comm.rank == 0:
             const = dict()
 
@@ -558,13 +569,17 @@ class Model(object):
                     R2, r2 = divmod(np.dot(R, B2), N)
                     R3, r3 = divmod(np.dot(R, B3), N)
 
-                    R = R1, R2, R3
-
                     indices = r1 * N1 + r2 * N2 + r3 * N3
                     j = ph.cells.index(tuple(indices // N))
 
                     A = i * self.size
                     B = j * self.size
+
+                    if sparse:
+                        ph.Ds[B:B + self.size, A:A + self.size] += self.data[n]
+                        continue
+
+                    R = R1, R2, R3
 
                     if R not in const:
                         const[R] = np.zeros((ph.size, ph.size))
@@ -589,6 +604,9 @@ class Model(object):
 
         comm.Bcast(ph.R)
         comm.Bcast(ph.data)
+
+        if sparse:
+            ph.Ds = comm.bcast(ph.Ds)
 
         return ph
 
