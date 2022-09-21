@@ -35,6 +35,9 @@ except ImportError:
         def Allgatherv(self, send, recv):
             recv[0][...] = send.reshape(recv[0].shape)
 
+        def gather(self, send):
+            return [send]
+
         def allgather(self, send):
             return [send]
 
