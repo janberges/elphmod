@@ -134,8 +134,9 @@ class StatusBar(object):
         self.width = width
         self.progress = 0
 
-        sys.stdout.write((' %s ' % title).center(width, '_'))
-        sys.stdout.write('\n')
+        if self.count:
+            sys.stdout.write((' %s ' % title).center(width, '_'))
+            sys.stdout.write('\n')
 
     def update(self):
         """Update progress bar."""
