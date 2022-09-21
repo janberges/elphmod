@@ -435,9 +435,12 @@ class Model(object):
         counter = 0 # counter for parallelization
 
         if sparse:
-            import scipy.sparse as sp
+            try:
+                from scipy.sparse import dok_array as sparse_array
+            except ImportError:
+                from scipy.sparse import dok_matrix as sparse_array
 
-            elph.gs = np.array([sp.dok_array((elph.el.size, elph.el.size))
+            elph.gs = np.array([sparse_array((elph.el.size, elph.el.size))
                 for x in range(elph.ph.size)])
 
             if abs(self.data.imag).sum() / abs(self.data.real).sum() > 1e-6:
