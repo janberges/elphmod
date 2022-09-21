@@ -409,7 +409,8 @@ class Model(object):
             Store mapped coupling in shared memory?
         sparse : bool, default False
             Only calculate q = k = 0 coupling as a list of sparse matrices to
-            save memory? The result is stored in the attribute :attr:`gs`.
+            save memory? The result, which is assumed to be real, is stored in
+            the attribute :attr:`gs`.
 
         Returns
         -------
@@ -436,8 +437,11 @@ class Model(object):
         if sparse:
             import scipy.sparse as sp
 
-            elph.gs = np.array([sp.dok_array((elph.el.size, elph.el.size),
-                dtype=complex) for x in range(elph.ph.size)])
+            elph.gs = np.array([sp.dok_array((elph.el.size, elph.el.size))
+                for x in range(elph.ph.size)])
+
+            if abs(self.data.imag).sum() / abs(self.data.real).sum() > 1e-6:
+                info('Warning: Significant imaginary part of coupling ignored')
 
         status = misc.StatusBar(len(self.Rg) * len(self.Rk),
             title='map coupling onto supercell (1/2)')
@@ -473,7 +477,7 @@ class Model(object):
                         for x in range(self.ph.size):
                             elph.gs[A + x][
                                 B:B + self.el.size,
-                                C:C + self.el.size] += self.data[g, x, k]
+                                C:C + self.el.size] += self.data[g, x, k].real
                         continue
 
                     Rg.add((G1, G2, G3))
