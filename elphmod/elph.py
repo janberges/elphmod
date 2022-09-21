@@ -565,7 +565,7 @@ class Model(object):
                         if R in const:
                             const[R] += self.data[g, :, k]
                         else:
-                            const[R] = self.data[g, :, k]
+                            const[R] = self.data[g, :, k].copy()
 
             Rg = sorted(set(r[:3] for r in const.keys()))
             Rk = sorted(set(r[3:] for r in const.keys()))
