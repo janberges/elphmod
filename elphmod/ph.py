@@ -512,7 +512,7 @@ class Model(object):
 
         comm.Bcast(self.data)
 
-    def supercell(self, N1=1, N2=1, N3=1, sparse=False):
+    def supercell(self, N1=1, N2=1, N3=1, sparse=False, symmetrize=True):
         """Map mass-spring model onto supercell.
 
         Parameters
@@ -522,6 +522,8 @@ class Model(object):
         sparse : bool, default False
             Only calculate q = 0 dynamical matrix as a sparse matrix to save
             memory? The result is stored in the attribute :attr:`Ds`.
+        symmetrize : bool, default True
+            Make sparse dynamical matrix symmetric?
 
         Returns
         -------
@@ -590,6 +592,9 @@ class Model(object):
 
             ph.R = np.array(list(const.keys()), dtype=int)
             ph.data = np.array(list(const.values()))
+
+            if symmetrize:
+                ph.Ds = (ph.Ds + ph.Ds.transpose()) / 2
 
             count = len(const)
             const.clear()

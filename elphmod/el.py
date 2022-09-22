@@ -230,7 +230,7 @@ class Model(object):
 
         comm.Bcast(self.data)
 
-    def supercell(self, N1=1, N2=1, N3=1, sparse=False):
+    def supercell(self, N1=1, N2=1, N3=1, sparse=False, symmetrize=True):
         """Map tight-binding model onto supercell.
 
         Parameters
@@ -241,6 +241,8 @@ class Model(object):
             Only calculate k = 0 Hamiltonian as a sparse matrix to save memory?
             The result, which is assumed to be real, is stored in the attribute
             :attr:`Hs`.
+        symmetrize : bool, default True
+            Make sparse Hamiltonian symmetric?
 
         Returns
         -------
@@ -306,6 +308,9 @@ class Model(object):
 
             el.R = np.array(list(const.keys()), dtype=int)
             el.data = np.array(list(const.values()))
+
+            if symmetrize:
+                el.Hs = (el.Hs + el.Hs.transpose()) / 2
 
             count = len(const)
             const.clear()
