@@ -309,7 +309,7 @@ class Model(object):
             el.R = np.array(list(const.keys()), dtype=int)
             el.data = np.array(list(const.values()))
 
-            if symmetrize:
+            if sparse and symmetrize:
                 el.Hs = (el.Hs + el.Hs.transpose()) / 2
 
             count = len(const)

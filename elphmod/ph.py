@@ -593,7 +593,7 @@ class Model(object):
             ph.R = np.array(list(const.keys()), dtype=int)
             ph.data = np.array(list(const.values()))
 
-            if symmetrize:
+            if sparse and symmetrize:
                 ph.Ds = (ph.Ds + ph.Ds.transpose()) / 2
 
             count = len(const)
