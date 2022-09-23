@@ -399,7 +399,7 @@ class Model(object):
         return sample(self.g, *args, **kwargs)
 
     def supercell(self, N1=1, N2=1, N3=1, shared_memory=False, sparse=False,
-            symmetrize=True, apply_asr=True):
+            symmetrize=True):
         """Map localized model for electron-phonon coupling onto supercell.
 
         Parameters
@@ -414,8 +414,6 @@ class Model(object):
             the attribute :attr:`gs`.
         symmetrize : bool, default True
             Make sparse coupling symmetric?
-        apply_asr : bool, default True
-            Set sparse coupling for uniform translations to zero?
 
         Returns
         -------
@@ -546,10 +544,6 @@ class Model(object):
             if symmetrize:
                 for x in range(elph.ph.size):
                     elph.gs[x] = (elph.gs[x] + elph.gs[x].transpose()) / 2
-
-            if apply_asr:
-                elph.gs -= np.tile(np.average(elph.gs.reshape((elph.ph.nat, 3)),
-                    axis=0), (elph.ph.nat, 1)).ravel()
 
             import pickle
 
