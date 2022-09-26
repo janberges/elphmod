@@ -1,5 +1,17 @@
 # Changes
 
+See [Git commits](https://github.com/janberges/elphmod/commits) for more
+detailed list of changes.
+
+## v0.16
+
+* Hamiltonian, dynamical matrix, and coupling as sparse matrices
+* Jmol's atom "CPK" colors [https://jmol.sourceforge.net/jscolors]
+* RPA and cRPA Coulomb interaction from RESPACK
+* Example on electron-phonon fluctuation diagnostics
+* 2D long-range electrostatics by Poncé et al. [arXiv:2207.10190]
+* Various bugfixes and optimizations
+
 ## v0.15
 
 * Handling of wave functions and charge density from QE
