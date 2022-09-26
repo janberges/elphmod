@@ -998,7 +998,7 @@ def proj_sum(proj, orbitals, *groups, **kwargs):
             summed[..., n] = proj[..., sorted(indices)].sum(axis=2)
 
         if other:
-            summed[..., -1] = proj.sum(axis=2) - summed[..., :-1].sum(axis=2)
+            summed[..., -1] = 1 - summed[..., :-1].sum(axis=2)
 
     comm.Bcast(summed)
 
