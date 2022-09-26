@@ -65,10 +65,12 @@ class Model(object):
             nq=None, no=None, Wmat=None, angle=120):
 
         if Wmat is not None:
-            R, WR = read_Wmat(Wmat, num_wann=no)
-            self.R = R
-            self.data = WR
-            self.size = no
+            R, Wmat = read_Wmat(Wmat, num_wann=no)
+
+            WR = np.zeros((nq, nq, 1, no, no), dtype=complex)
+
+            for iR, (R1, R2, R3) in enumerate(R):
+                WR[R1 % nq, R2 % nq, 0] = Wmat[iR]
         else:
             if uijkl is None:
                 return
@@ -83,17 +85,17 @@ class Model(object):
 
             WR = np.fft.ifftn(Wq, axes=(0, 1, 2))
 
-            irvec, ndegen, wslen = bravais.wigner_seitz(nq, angle=angle)
+        irvec, ndegen, wslen = bravais.wigner_seitz(nq, angle=angle)
 
-            self.R = np.zeros((len(irvec), 3), dtype=int)
-            self.data = np.empty((len(irvec), no, no), dtype=complex)
+        self.R = np.zeros((len(irvec), 3), dtype=int)
+        self.data = np.empty((len(irvec), no, no), dtype=complex)
 
-            self.R[:, :2] = irvec
+        self.R[:, :2] = irvec
 
-            for i in range(len(self.R)):
-                self.data[i] = WR[tuple(self.R[i] % nq)] / ndegen[i]
+        for i in range(len(self.R)):
+            self.data[i] = WR[tuple(self.R[i] % nq)] / ndegen[i]
 
-            self.size = no
+        self.size = no
 
     def supercell(self, N1=1, N2=1, N3=1):
         """Map localized model for electron-electron interaction onto supercell.
@@ -494,7 +496,7 @@ def read_Wmat(filename, num_wann):
     block = 1 + num_wann ** 2 + 1
     # nR: number of lattice vectors R
     nR = int((len(lines) - 3) / block)
-    R = np.empty((nR, 3))
+    R = np.empty((nR, 3), dtype=int)
     Rcount = 0
 
     # allocate W matrix
@@ -503,9 +505,9 @@ def read_Wmat(filename, num_wann):
         # read lattice vectors R
         if len(lines[line].split()) == 3:
             R1, R2, R3 = lines[line].split()
-            R[Rcount][0] = float(R1)
-            R[Rcount][1] = float(R2)
-            R[Rcount][2] = float(R3)
+            R[Rcount][0] = int(R1)
+            R[Rcount][1] = int(R2)
+            R[Rcount][2] = int(R3)
         # read matrix elements
         if len(lines[line].split()) == 4:
             n, m, Wreal, Wimag = lines[line].split()
