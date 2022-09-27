@@ -362,6 +362,9 @@ class Model(object):
     def symmetrize(self):
         r"""Symmetrize electron-phonon coupling.
 
+        This routine is fast and does not increase the size of the coupling but
+        affects accuracy. Consider using :meth:`standardize` instead.
+
         .. math::
 
             g_{\vec q, \vec k} = g_{-\vec q, \vec k + \vec q}^\dagger,
@@ -555,7 +558,7 @@ class Model(object):
 
         return elph
 
-    def standardize(self, eps=0.0):
+    def standardize(self, eps=0.0, symmetrize=False):
         """Standardize real-space coupling data.
 
         - Keep only nonzero coupling matrices.
@@ -567,6 +570,10 @@ class Model(object):
         eps : float
             Threshold for "nonzero" matrix elements in units of the maximum
             matrix element.
+        symmetrize : bool
+            Symmetrize coupling? This is similar to :meth:`symmetrize` except
+            that no matrix elements are neglected. Instead, missing lattice
+            vectors are added and the resulting coupling may be very large.
         """
         if comm.rank == 0:
             if eps:
@@ -584,6 +591,17 @@ class Model(object):
                         else:
                             const[R] = self.data[g, :, k].copy()
 
+                        if symmetrize:
+                            R = tuple(self.Rg[g]
+                                - self.Rk[k]) + tuple(-self.Rk[k])
+
+                            g_adj = self.data[g, :, k].swapaxes(1, 2).conj()
+
+                            if R in const:
+                                const[R] += g_adj
+                            else:
+                                const[R] = g_adj.copy()
+
             Rg = sorted(set(r[:3] for r in const.keys()))
             Rk = sorted(set(r[3:] for r in const.keys()))
 
@@ -595,14 +613,25 @@ class Model(object):
         ng = comm.bcast(ng)
         nk = comm.bcast(nk)
 
-        self.Rg = self.Rg[:ng]
-        self.Rk = self.Rk[:nk]
+        if ng <= len(self.Rg):
+            self.Rg = self.Rg[:ng]
+        else:
+            self.Rg = np.empty((ng, 3), dtype=int)
 
+        if nk <= len(self.Rk):
+            self.Rk = self.Rk[:nk]
+        else:
+            self.Rk = np.empty((ng, 3), dtype=int)
 
-        self.data = self.data.ravel()
-        self.data = self.data[:ng * self.ph.size * nk * self.el.size ** 2]
-        self.data = self.data.reshape((ng, self.ph.size,
-            nk, self.el.size, self.el.size))
+        shape = ng, self.ph.size, nk, self.el.size, self.el.size
+
+        if np.prod(shape) <= self.data.size:
+            self.data = self.data.ravel()
+            self.data = self.data[:np.prod(shape)]
+            self.data = self.data.reshape(shape)
+        else:
+            self.node, self.images, self.data = MPI.shared_array(shape,
+                dtype=np.complex128, shared_memory=self.node.size > 1)
 
         if comm.rank == 0:
             self.Rg[...] = Rg
@@ -614,6 +643,9 @@ class Model(object):
                 for k in range(len(Rk)):
                     if Rg[g] + Rk[k] in const:
                         self.data[g, :, k] = const[Rg[g] + Rk[k]]
+
+                        if symmetrize:
+                            self.data[g, :, k] /= 2
 
         comm.Bcast(self.Rg)
         comm.Bcast(self.Rk)
