@@ -11,6 +11,9 @@ import numpy as np
 try:
     from mpi4py import MPI
 
+    if MPI.COMM_WORLD.size == 1:
+        raise ImportError
+
 except ImportError:
     class Communicator(object):
         def __init__(self):
