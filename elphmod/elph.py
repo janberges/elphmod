@@ -292,6 +292,9 @@ class Model(object):
         g : ndarray
             Real-space coupling.
         """
+        if self.dk is None or self.dg is None:
+            info('Standardized coupling has no Wigner-Seitz cell!', error=True)
+
         for irk in range(len(self.Rk)):
             for m in range(self.el.size):
                 M = m if self.dk.shape[1] > 1 else 0
@@ -584,9 +587,6 @@ class Model(object):
             Rg = sorted(set(r[:3] for r in const.keys()))
             Rk = sorted(set(r[3:] for r in const.keys()))
 
-            dg = self.dg[..., [misc.vector_index(self.Rg, G) for G in Rg]]
-            dk = self.dk[..., [misc.vector_index(self.Rk, K) for K in Rk]]
-
             ng = len(Rg)
             nk = len(Rk)
         else:
@@ -598,8 +598,6 @@ class Model(object):
         self.Rg = self.Rg[:ng]
         self.Rk = self.Rk[:nk]
 
-        self.dg = np.empty_like(self.dg[..., :ng])
-        self.dk = np.empty_like(self.dk[..., :nk])
 
         self.data = self.data.ravel()
         self.data = self.data[:ng * self.ph.size * nk * self.el.size ** 2]
@@ -609,9 +607,6 @@ class Model(object):
         if comm.rank == 0:
             self.Rg[...] = Rg
             self.Rk[...] = Rk
-
-            self.dg[...] = dg
-            self.dk[...] = dk
 
             self.data[...] = 0.0
 
@@ -623,12 +618,11 @@ class Model(object):
         comm.Bcast(self.Rg)
         comm.Bcast(self.Rk)
 
-        comm.Bcast(self.dg)
-        comm.Bcast(self.dk)
-
         if self.node.rank == 0:
             self.images.Bcast(self.data.view(dtype=float))
 
+        self.dk = None
+        self.dg = None
         self.q = None
         self.gq = np.empty((self.ph.size, len(self.Rk),
             self.el.size, self.el.size), dtype=complex)
