@@ -392,19 +392,25 @@ def supercell(N1=1, N2=1, N3=1):
     cells = []
 
     if comm.rank == 0:
-        if N1[1] == N1[2] == N2[2] == N2[0] == N3[0] == N3[1]: # much faster
-            for n1 in range(N1[0]):
-                for n2 in range(N2[1]):
-                    for n3 in range(N3[2]):
-                        cells.append((n1, n2, n3))
-        else: # general solution
-            for n1 in range(N):
-                for n2 in range(N):
-                    for n3 in range(N):
-                        indices = n1 * N1 + n2 * N2 + n3 * N3
 
-                        if np.all(indices % N == 0):
-                            cells.append(tuple(indices // N))
+        corners = np.array([n1 * N1 + n2 * N2 + n3 * N3
+            for n1 in range(2)
+            for n2 in range(2)
+            for n3 in range(2)])
+
+        n1_lower, n2_lower, n3_lower = corners.min(axis=0)
+        n1_upper, n2_upper, n3_upper = corners.max(axis=0) + 1
+
+        for n1 in range(n1_lower, n1_upper):
+            for n2 in range(n2_lower, n2_upper):
+                for n3 in range(n3_lower, n3_upper):
+                    R = (n1, n2, n3)
+
+                    if (0 <= np.dot(R, B1) < N and
+                        0 <= np.dot(R, B2) < N and
+                        0 <= np.dot(R, B3) < N):
+
+                        cells.append(R)
 
         assert len(cells) == N
 
