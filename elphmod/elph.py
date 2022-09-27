@@ -509,10 +509,11 @@ class Model(object):
         if sparse:
             elph.gs = comm.allreduce(elph.gs)
 
-            import pickle
+            if comm.rank == 0:
+                import pickle
 
-            info('Sparse representation of coupling requires %.6f GB'
-                % (len(pickle.dumps(elph.gs)) / 1e9))
+                print('Sparse representation of coupling requires %.6f GB'
+                    % (len(pickle.dumps(elph.gs)) / 1e9))
 
         return elph
 
