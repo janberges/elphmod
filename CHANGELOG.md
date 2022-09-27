@@ -5,6 +5,7 @@ detailed list of changes.
 
 ## v0.16
 
+* More accurate symmetrization methods
 * More efficient setup of large supercells
 * Hamiltonian, dynamical matrix, and coupling as sparse matrices
 * Jmol's atom "CPK" colors [https://jmol.sourceforge.net/jscolors]

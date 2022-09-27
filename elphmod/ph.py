@@ -486,32 +486,6 @@ class Model(object):
 
         return(cost.sum() / (2 * np.prod(self.nq)))
 
-    def symmetrize(self):
-        r"""Symmetrize dynamical matrix.
-
-        .. math::
-
-            D_{\vec q} = D_{\vec q}^\dagger,
-            D_{\vec R} = D_{-\vec R}^\dagger
-        """
-        if comm.rank == 0:
-            status = misc.StatusBar(len(self.R),
-                title='symmetrize dynamical matrix')
-
-            for n in range(len(self.R)):
-                N = misc.vector_index(self.R, -self.R[n])
-
-                if N is None:
-                    self.data[n] = 0.0
-                else:
-                    self.data[n] += self.data[N].T.conj()
-                    self.data[n] /= 2
-                    self.data[N] = self.data[n].T.conj()
-
-                status.update()
-
-        comm.Bcast(self.data)
-
     def supercell(self, N1=1, N2=1, N3=1, sparse=False, symmetrize=True):
         """Map mass-spring model onto supercell.
 
@@ -741,15 +715,27 @@ class Model(object):
 
         self.r[s] += np.dot(S, self.a)
 
-    def standardize(self):
-        """Standardize mass-spring data.
+    def standardize(self, eps=0.0, symmetrize=False):
+        r"""Standardize mass-spring data.
 
         - Keep only nonzero force-constant matrices.
         - Sum over repeated lattice vectors.
         - Sort lattice vectors.
+        - Optionally symmetrize force constants:
+
+        .. math::
+
+            D_{\vec q} = D_{\vec q}^\dagger,
+            D_{\vec R} = D_{-\vec R}^\dagger
         """
         if comm.rank == 0:
+            if eps:
+                self.data[abs(self.data) < eps * abs(self.data).max()] = 0.0
+
             const = dict()
+
+            status = misc.StatusBar(len(self.R),
+                title='standardize mass-spring data')
 
             for n in range(len(self.R)):
                 if np.any(self.data[n] != 0.0):
@@ -758,13 +744,26 @@ class Model(object):
                     if R in const:
                         const[R] += self.data[n]
                     else:
-                        const[R] = self.data[n]
+                        const[R] = self.data[n].copy()
+
+                    if symmetrize:
+                        R = tuple(-self.R[n])
+
+                        if R in const:
+                            const[R] += self.data[n].T
+                        else:
+                            const[R] = self.data[n].T.copy()
+
+                status.update()
 
             cells = sorted(list(const.keys()))
             count = len(cells)
 
             self.R = np.array(cells, dtype=int)
             self.data = np.array([const[R] for R in cells])
+
+            if symmetrize:
+                self.data /= 2
         else:
             count = None
 
@@ -776,6 +775,11 @@ class Model(object):
 
         comm.Bcast(self.R)
         comm.Bcast(self.data)
+
+    def symmetrize(self):
+        """Symmetrize dynamical matrix."""
+
+        self.standardize(symmetrize=True)
 
     def decay(self):
         """Plot force constants as a function of bond length.

@@ -204,32 +204,6 @@ class Model(object):
                             print('%3d %3d %12.4f' % (m, n,
                                 np.sum(self.W[m] * self.W[n]) * self.dV))
 
-    def symmetrize(self):
-        r"""Symmetrize Hamiltonian.
-
-        .. math::
-
-            H_{\vec k} = H_{\vec k}^\dagger,
-            H_{\vec R} = H_{-\vec R}^\dagger
-        """
-        if comm.rank == 0:
-            status = misc.StatusBar(len(self.R),
-                title='symmetrize Hamiltonian')
-
-            for n in range(len(self.R)):
-                N = misc.vector_index(self.R, -self.R[n])
-
-                if N is None:
-                    self.data[n] = 0.0
-                else:
-                    self.data[n] += self.data[N].T.conj()
-                    self.data[n] /= 2
-                    self.data[N] = self.data[n].T.conj()
-
-                status.update()
-
-        comm.Bcast(self.data)
-
     def supercell(self, N1=1, N2=1, N3=1, sparse=False, symmetrize=True):
         """Map tight-binding model onto supercell.
 
@@ -444,15 +418,35 @@ class Model(object):
 
         self.standardize()
 
-    def standardize(self):
-        """Standardize tight-binding data.
+    def standardize(self, eps=0.0, symmetrize=False):
+        r"""Standardize tight-binding data.
 
         - Keep only nonzero hopping matrices.
         - Sum over repeated lattice vectors.
         - Sort lattice vectors.
+        - Optionally symmetrize hopping:
+
+        .. math::
+
+            H_{\vec k} = H_{\vec k}^\dagger,
+            H_{\vec R} = H_{-\vec R}^\dagger
+
+        Parameters
+        ----------
+        eps : float
+            Threshold for "nonzero" matrix elements in units of the maximum
+            matrix element.
+        symmetrize : bool
+            Symmetrize hopping?
         """
         if comm.rank == 0:
+            if eps:
+                self.data[abs(self.data) < eps * abs(self.data).max()] = 0.0
+
             const = dict()
+
+            status = misc.StatusBar(len(self.R),
+                title='standardize tight-binding data')
 
             for n in range(len(self.R)):
                 if np.any(self.data[n] != 0.0):
@@ -461,13 +455,26 @@ class Model(object):
                     if R in const:
                         const[R] += self.data[n]
                     else:
-                        const[R] = self.data[n]
+                        const[R] = self.data[n].copy()
+
+                    if symmetrize:
+                        R = tuple(-self.R[n])
+
+                        if R in const:
+                            const[R] += self.data[n].T.conj()
+                        else:
+                            const[R] = self.data[n].T.conj()
+
+                status.update()
 
             cells = sorted(list(const.keys()))
             count = len(cells)
 
             self.R = np.array(cells, dtype=int)
             self.data = np.array([const[R] for R in cells])
+
+            if symmetrize:
+                self.data /= 2
         else:
             count = None
 
@@ -479,6 +486,11 @@ class Model(object):
 
         comm.Bcast(self.R)
         comm.Bcast(self.data)
+
+    def symmetrize(self):
+        """Symmetrize Hamiltonian."""
+
+        self.standardize(symmetrize=True)
 
 def read_hrdat(seedname, divide_ndegen=True):
     """Read *_hr.dat* (or *_tb.dat*) file from Wannier90.

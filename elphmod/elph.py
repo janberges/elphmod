@@ -359,42 +359,6 @@ class Model(object):
 
         q2r(self, self.ph.nq, self.el.nk, g)
 
-    def symmetrize(self):
-        r"""Symmetrize electron-phonon coupling.
-
-        This routine is fast and does not increase the size of the coupling but
-        affects accuracy. Consider using :meth:`standardize` instead.
-
-        .. math::
-
-            g_{\vec q, \vec k} = g_{-\vec q, \vec k + \vec q}^\dagger,
-            g_{\vec R, \vec R'} = g_{\vec R - \vec R', -\vec R'}^\dagger
-        """
-        if comm.rank == 0:
-            status = misc.StatusBar(len(self.Rg) * len(self.Rk),
-                title='symmetrize coupling')
-
-            for g in range(len(self.Rg)):
-                for k in range(len(self.Rk)):
-                    G = misc.vector_index(self.Rg, self.Rg[g] - self.Rk[k])
-                    K = misc.vector_index(self.Rk, -self.Rk[k])
-
-                    if G is None or K is None:
-                        self.data[g, :, k] = 0.0
-                    else:
-                        self.data[g, :, k] += self.data[
-                            G, :, K].swapaxes(1, 2).conj()
-                        self.data[g, :, k] /= 2
-                        self.data[G, :, K] = self.data[
-                            g, :, k].swapaxes(1, 2).conj()
-
-                    status.update()
-
-        if self.node.rank == 0:
-            self.images.Bcast(self.data.view(dtype=float))
-
-        comm.Barrier()
-
     def sample(self, *args, **kwargs):
         """Sample coupling.
 
@@ -559,11 +523,17 @@ class Model(object):
         return elph
 
     def standardize(self, eps=0.0, symmetrize=False):
-        """Standardize real-space coupling data.
+        r"""Standardize real-space coupling data.
 
         - Keep only nonzero coupling matrices.
         - Sum over repeated lattice vectors.
         - Sort lattice vectors.
+        - Optionally symmetrize coupling:
+
+        .. math::
+
+            g_{\vec q, \vec k} = g_{-\vec q, \vec k + \vec q}^\dagger,
+            g_{\vec R, \vec R'} = g_{\vec R - \vec R', -\vec R'}^\dagger
 
         Parameters
         ----------
@@ -571,15 +541,16 @@ class Model(object):
             Threshold for "nonzero" matrix elements in units of the maximum
             matrix element.
         symmetrize : bool
-            Symmetrize coupling? This is similar to :meth:`symmetrize` except
-            that no matrix elements are neglected. Instead, missing lattice
-            vectors are added and the resulting coupling may be very large.
+            Symmetrize coupling?
         """
         if comm.rank == 0:
             if eps:
                 self.data[abs(self.data) < eps * abs(self.data).max()] = 0.0
 
             const = dict()
+
+            status = misc.StatusBar(len(self.Rg) * len(self.Rk),
+                title='standardize coupling data')
 
             for g in range(len(self.Rg)):
                 for k in range(len(self.Rk)):
@@ -600,7 +571,9 @@ class Model(object):
                             if R in const:
                                 const[R] += g_adj
                             else:
-                                const[R] = g_adj.copy()
+                                const[R] = g_adj
+
+                    status.update()
 
             Rg = sorted(set(r[:3] for r in const.keys()))
             Rk = sorted(set(r[3:] for r in const.keys()))
@@ -660,6 +633,11 @@ class Model(object):
             self.el.size, self.el.size), dtype=complex)
 
         comm.Barrier()
+
+    def symmetrize(self):
+        """Symmetrize electron-phonon coupling."""
+
+        self.standardize(symmetrize=True)
 
 def sample(g, q, nk=None, U=None, u=None, broadcast=True, shared_memory=False):
     """Sample coupling for given q and k points and transform to band basis.
