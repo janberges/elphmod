@@ -368,8 +368,7 @@ class Model(object):
         """
         return sample(self.g, *args, **kwargs)
 
-    def supercell(self, N1=1, N2=1, N3=1, shared_memory=False, sparse=False,
-            symmetrize=True):
+    def supercell(self, N1=1, N2=1, N3=1, shared_memory=False, sparse=False):
         """Map localized model for electron-phonon coupling onto supercell.
 
         Parameters
@@ -381,9 +380,8 @@ class Model(object):
         sparse : bool, default False
             Only calculate q = k = 0 coupling as a list of sparse matrices to
             save memory? The result, which is assumed to be real, is stored in
-            the attribute :attr:`gs`.
-        symmetrize : bool, default True
-            Make sparse coupling symmetric?
+            the attribute :attr:`gs`. Consider using :meth:`standardize` with
+            nonzero `eps` and `symmetrize` before.
 
         Returns
         -------
@@ -510,10 +508,6 @@ class Model(object):
 
         if sparse:
             elph.gs = comm.allreduce(elph.gs)
-
-            if symmetrize:
-                for x in range(elph.ph.size):
-                    elph.gs[x] = (elph.gs[x] + elph.gs[x].transpose()) / 2
 
             import pickle
 

@@ -204,7 +204,7 @@ class Model(object):
                             print('%3d %3d %12.4f' % (m, n,
                                 np.sum(self.W[m] * self.W[n]) * self.dV))
 
-    def supercell(self, N1=1, N2=1, N3=1, sparse=False, symmetrize=True):
+    def supercell(self, N1=1, N2=1, N3=1, sparse=False):
         """Map tight-binding model onto supercell.
 
         Parameters
@@ -214,9 +214,8 @@ class Model(object):
         sparse : bool, default False
             Only calculate k = 0 Hamiltonian as a sparse matrix to save memory?
             The result, which is assumed to be real, is stored in the attribute
-            :attr:`Hs`.
-        symmetrize : bool, default True
-            Make sparse Hamiltonian symmetric?
+            :attr:`Hs`. Consider using :meth:`standardize` with nonzero `eps`
+            and `symmetrize` before.
 
         Returns
         -------
@@ -282,9 +281,6 @@ class Model(object):
 
             el.R = np.array(list(const.keys()), dtype=int)
             el.data = np.array(list(const.values()))
-
-            if sparse and symmetrize:
-                el.Hs = (el.Hs + el.Hs.transpose()) / 2
 
             count = len(const)
             const.clear()
