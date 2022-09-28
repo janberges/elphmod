@@ -133,14 +133,17 @@ Rg = np.insert(Rg, obj=2, values=0, axis=1)
 dg = dg.swapaxes(0, 1).reshape((1, el.size, ph.nat, len(Rg)))
 
 elph = elphmod.elph.Model(Rk=Rk, dk=dk.copy(), Rg=Rg, dg=dg.copy(),
-    el=el, ph=ph, divide_mass=False, divide_ndegen=False)
+    el=el, ph=ph, divide_mass=False)
 elphmod.elph.q2r(elph, nq, nk, g)
 elph.standardize(eps=1e-10)
 
 if elphmod.MPI.comm.rank == 0:
+    dk = np.ones((ph.nat, ph.nat, len(elph.Rk)), dtype=int)
+    dg = np.ones((ph.nat, len(elph.Rg), 1, el.size), dtype=int)
+
     with open(wigner, 'wb') as data:
-        for obj in [el.size, ph.nat, len(elph.Rk), elph.Rk, elph.dk,
-                len(elph.Rg), elph.Rg, elph.dg.transpose((2, 3, 0, 1))]:
+        for obj in [el.size, ph.nat, len(elph.Rk), elph.Rk, dk,
+                len(elph.Rg), elph.Rg, dg]:
             np.array(obj, dtype=np.int32).tofile(data)
 
     with open(epmatwp, 'wb') as data:
