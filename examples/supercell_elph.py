@@ -5,10 +5,11 @@
 
 import elphmod
 import matplotlib.pyplot as plt
-import model
 import numpy as np
 
 nu = 1 # displacement direction
+
+use_model = True # or run phrenorm_graphene first
 
 N = [ # 3 x 3 (60 degrees instead of 120 degrees)
     [3, 0, 0],
@@ -20,10 +21,19 @@ a = elphmod.bravais.primitives(ibrav=4)
 b = elphmod.bravais.reciprocals(*a)
 A = np.dot(N, a)
 
-el = elphmod.el.Model('data/graphene')
-ph = elphmod.ph.Model('data/graphene.ifc')
-elph = elphmod.elph.Model('data/graphene.epmatwp', 'data/graphene.wigner',
-    el, ph, divide_mass=False)
+if use_model:
+    import model
+
+    el = elphmod.el.Model('data/graphene')
+    ph = elphmod.ph.Model('data/graphene.ifc')
+    elph = elphmod.elph.Model('data/graphene.epmatwp', 'data/graphene.wigner',
+        el, ph, divide_mass=False)
+else:
+    el = elphmod.el.Model('phrenorm_graphene/graphene')
+    ph = elphmod.ph.Model('phrenorm_graphene/dfpt.ifc', apply_asr_simple=True)
+    elph = elphmod.elph.Model('phrenorm_graphene/dfpt.epmatwp',
+        'phrenorm_graphene/wigner.dat', el, ph, divide_mass=False)
+
 elph.data *= elphmod.misc.Ry / elphmod.misc.a0
 
 ElPh = elph.supercell(*N, shared_memory=False)
