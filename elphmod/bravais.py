@@ -1712,7 +1712,8 @@ def write_pwi(pwi, struct):
 
         for key in ['ibrav', 'ntyp', 'nat', 'a', 'b', 'c', 'cosbc', 'cosac',
                 'cosab', 'ecutwfc', 'ecutrho', 'nbnd', 'occupations',
-                'smearing', 'degauss', 'nosym', 'tot_charge']:
+                'smearing', 'degauss', 'nosym', 'tot_charge',
+                'assume_isolated']:
             if key in struct:
                 data.write('%s = %r\n' % (key, struct[key]))
 
