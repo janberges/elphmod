@@ -86,7 +86,7 @@ plt.ylabel(r"$\delta'(x)$")
 plt.legend()
 plt.show()
 
-print('Plot step functions..')
+print('Plot generalized entropy..')
 
 plt.axvline(x=0.0, **style)
 plt.axhline(y=0.0, **style)
