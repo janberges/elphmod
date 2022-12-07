@@ -17,6 +17,7 @@ Modules
    modules/dos
    modules/diagrams
    modules/occupations
+   modules/md
    modules/eliashberg
    modules/plot
    modules/misc
