@@ -43,6 +43,8 @@ class Model(object):
         *seedname_xyz.npy* whensoever the XSF files change.
     check_ortho : bool, default False
         Check if Wannier functions are orthogonal?
+    rydberg : bool, default False
+        Convert energies from eV to Ry?
     shared_memory : bool, default False
         Store Wannier functions in shared memory?
 
@@ -70,6 +72,8 @@ class Model(object):
         Ordered list of atoms if `read_xsf`.
     dV : float, optional
         Volume element/voxel volume belonging to `r` if `read_xsf`.
+    rydberg : bool
+        Have energies been converted from eV to Ry?
     """
     def H(self, k1=0, k2=0, k3=0):
         """Set up Hamilton operator for arbitrary k point."""
@@ -100,7 +104,7 @@ class Model(object):
 
     def __init__(self, seedname=None, divide_ndegen=True, read_xsf=False,
             normalize_wf=False, buffer_wf=False, check_ortho=False,
-            shared_memory=False):
+            rydberg=False, shared_memory=False):
 
         if seedname is None:
             return
@@ -112,6 +116,11 @@ class Model(object):
         self.size = self.data.shape[1]
         self.nk = tuple(2 * self.R[np.all(self.R[:, x] == 0, axis=1)].max() or 1
             for x in [[1, 2], [2, 0], [0, 1]])
+
+        if rydberg:
+            self.data /= misc.Ry
+
+        self.rydberg = rydberg
 
         supvecs = read_wsvecdat('%s_wsvec.dat' % seedname)
 
@@ -232,6 +241,8 @@ class Model(object):
 
         el.size = N * self.size
         el.N = [tuple(N1), tuple(N2), tuple(N3)]
+
+        el.rydberg = self.rydberg
 
         if sparse:
             try:
