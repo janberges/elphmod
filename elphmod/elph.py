@@ -399,6 +399,8 @@ class Model(object):
         N, (N1, N2, N3), (B1, B2, B3), elph.cells = bravais.supercell(
             N1, N2, N3)
 
+        elph.divide_mass = self.divide_mass
+
         Rg = set()
         Rk = set()
         const = dict()

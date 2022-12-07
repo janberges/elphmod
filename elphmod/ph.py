@@ -522,6 +522,7 @@ class Model(object):
             for n1, n2, n3 in ph.cells
             for na in range(self.nat)])
         ph.N = [tuple(N1), tuple(N2), tuple(N3)]
+        ph.divide_mass = self.divide_mass
 
         if sparse:
             try:
