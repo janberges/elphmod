@@ -1344,7 +1344,8 @@ def path(points, N=30, recvec=None, qe=False, moveG=0, **kwargs):
     ----------
     points : ndarray
         List of high-symmetry points in crystal coordinates. Some well-known
-        labels such as ``G`` (|Ggr|), ``M``, or ``K`` may also be used.
+        labels such as ``G`` (|Ggr|), ``M``, or ``K`` may also be used. Mostly,
+        the definitions follow http://lamp.tu-graz.ac.at/~hadley/ss1/bzones/.
     N : float
         Number of points per :math:`2 \pi / a`.
     recvec : ndarray, optional
@@ -1392,6 +1393,13 @@ def path(points, N=30, recvec=None, qe=False, moveG=0, **kwargs):
             'L': [0.0, 0.5, 0.5],
             'K': [1.0 / 3.0, 1.0 / 3.0, 0.0],
             'H': [1.0 / 3.0, 1.0 / 3.0, 0.5],
+            },
+        6: { # tetragonal (st)
+            'X': [0.5, 0.0, 0.0],
+            'M': [0.5, 0.5, 0.0],
+            'Z': [0.0, 0.0, 0.5],
+            'R': [0.5, 0.0, 0.5],
+            'A': [0.5, 0.5, 0.5],
             },
         8: { # orthorhombic
             'X': [0.5, 0.0, 0.0],
