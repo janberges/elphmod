@@ -20,7 +20,8 @@ class Driver(object):
     ----------
     elph : object
         Localized model for electron-phonon coupling. Initialize ``el`` with
-        ``rydberg=True`` and ``ph`` and ``elph`` with ``divide_mass=False``.
+        ``rydberg=True`` and ``ph`` and ``elph`` with ``divide_mass=False`` and
+        map everthing to the appropriate supercell before (``elph.supercell``).
     kT : float
         Smearing temperature in Ry.
     f : function
@@ -29,6 +30,12 @@ class Driver(object):
         Number of electrons per primitive cell.
     nk, nq : tuple of int
         Shape of k and q mesh.
+    supercell : ndarray, optional
+        Supercell lattice vectors as multiples of primitive lattice vectors. If
+        given, the simulation is performed on a supercell for q = k = 0. Sparse
+        matrices are used for Hamiltonian, dynamical matrix, and electron-phonon
+        coupling to save memory. The calculation of phonons is not implemented.
+        Note that `elph` should belong to the primitive cell in this case.
 
     Attributes
     ----------
@@ -46,8 +53,10 @@ class Driver(object):
         Unperturbed electron Hamiltonian in orbital basis.
     d0 : ndarray
         Electron-phonon coupling in orbital basis.
+    sparse : bool
+        Is the simulation performed on a supercell using sparse matrices?
     """
-    def __init__(self, elph, kT, f, n, nk, nq):
+    def __init__(self, elph, kT, f, n, nk, nq, supercell=None):
         if not elph.el.rydberg:
             info("Initialize 'el' with 'rydberg=True'!", error=True)
 
@@ -85,12 +94,39 @@ class Driver(object):
 
         self.u = np.zeros(self.elph.ph.size)
 
+        self.sparse = False
         self.diagonalize()
 
         C = dispersion.sample(self.elph.ph.D, self.q)
 
         self.C0 = 0.0
         self.C0 = C - self.hessian()
+
+        if supercell is not None:
+            self.elph.ph = copy.copy(self.elph.ph)
+
+            ph.q2r(self.elph.ph, nq=nq, D_full=self.C0, divide_mass=False)
+
+            self.elph = self.elph.supercell(*supercell, sparse=True)
+
+            self.H0 = self.elph.el.Hs.toarray()
+            self.C0 = self.elph.ph.Ds.toarray()[np.newaxis]
+            self.d0 = self.elph.gs
+
+            for x in range(self.elph.ph.size):
+                self.d0[x] = self.d0[x].tobsr()
+
+            self.n *= len(self.elph.cells)
+            self.u = np.tile(self.u, len(self.elph.cells))
+
+            self.nk = np.ones(3, dtype=int)
+            self.nq = np.ones(3, dtype=int)
+
+            self.k = np.zeros((1, 1, 1, 3))
+            self.q = np.zeros((1, 3))
+
+            self.sparse = True
+            self.diagonalize()
 
         self.F0 = 0.0
         self.F0 = -self.jacobian(show=False)
@@ -139,7 +175,10 @@ class Driver(object):
 
         self.center_mass()
 
-        H = self.H0 + np.einsum('xijkmn,x->ijkmn', self.d0[0], self.u)
+        if self.sparse:
+            H = self.H0 + self.u.dot(self.d0).toarray()
+        else:
+            H = self.H0 + np.einsum('xijkmn,x->ijkmn', self.d0[0], self.u)
 
         self.e, self.U = np.linalg.eigh(H)
 
@@ -185,8 +224,15 @@ class Driver(object):
         show : bool
             Print free energy?
         """
-        F = diagrams.first_order(self.e, self.d0[0], self.kT,
-            U=self.U, occupations=self.f).real
+        if self.sparse:
+            f = np.einsum('am,m,bm->ab',
+                self.U.conj(), self.f(self.e / self.kT), self.U).real
+
+            F = np.array([2 * self.d0[x].multiply(f).sum()
+                for x in range(self.elph.ph.size)])
+        else:
+            F = diagrams.first_order(self.e, self.d0[0], self.kT,
+                U=self.U, occupations=self.f).real
 
         F += self.C0[0].real.dot(self.u)
 
@@ -207,6 +253,9 @@ class Driver(object):
         show : bool
             Print free energy?
         """
+        if self.sparse:
+            raise NotImplementedError
+
         self.d = np.empty_like(self.d0)
 
         for iq in range(len(self.q)):

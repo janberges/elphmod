@@ -10,6 +10,8 @@ import scipy.optimize
 
 comm = elphmod.MPI.comm
 
+sparse = False # use sparse matrices to be able to simulate large cells?
+
 N = 6
 nk = 6
 nq = 6
@@ -24,10 +26,15 @@ elph = elphmod.elph.Model('data/graphene.epmatwp', 'data/graphene.wigner',
 
 elph.data *= 1.5 # otherwise the system is stable
 
-elph = elph.supercell(N, N)
+if not sparse:
+    elph = elph.supercell(N, N)
+
+    nk //= N
+    nq //= N
 
 driver = elphmod.md.Driver(elph, kT=kT0, f=elphmod.occupations.fermi_dirac,
-    n=elph.el.size, nk=(nk // N,) * 2, nq=(nq // N,) * 2)
+    nk=(nk, nk), nq=(nq, nq), supercell=(N, N) if sparse else None,
+    n=elph.el.size)
 
 driver.kT = kT
 
@@ -40,18 +47,19 @@ scipy.optimize.minimize(driver.free_energy, driver.u, jac=driver.jacobian,
 
 driver.plot()
 
-ph = driver.phonons()
+if not sparse:
+    ph = driver.phonons()
 
-path = 'GMKG'
-q, x, corners = elphmod.bravais.path(path, ibrav=4, N=150)
+    path = 'GMKG'
+    q, x, corners = elphmod.bravais.path(path, ibrav=4, N=150)
 
-w2 = elphmod.dispersion.dispersion(ph.D, q)
+    w2 = elphmod.dispersion.dispersion(ph.D, q)
 
-if comm.rank == 0:
-    w = elphmod.ph.sgnsqrt(w2) * elphmod.misc.Ry * 1e3
+    if comm.rank == 0:
+        w = elphmod.ph.sgnsqrt(w2) * elphmod.misc.Ry * 1e3
 
-    plt.plot(x, w, 'k')
-    plt.ylabel('Phonon energy (meV)')
-    plt.xlabel('Wave vector')
-    plt.xticks(x[corners], path)
-    plt.show()
+        plt.plot(x, w, 'k')
+        plt.ylabel('Phonon energy (meV)')
+        plt.xlabel('Wave vector')
+        plt.xticks(x[corners], path)
+        plt.show()
