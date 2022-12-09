@@ -323,6 +323,7 @@ class Driver(object):
         ax.set_box_aspect(np.ptp(r, axis=0) + 2 * padding)
         ax.set_axis_off()
 
+        plt.subplots_adjust(left=0, right=1, bottom=0, top=1)
         plt.show()
 
     def __call__(self, a, r):
