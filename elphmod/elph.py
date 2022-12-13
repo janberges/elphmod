@@ -636,6 +636,45 @@ class Model(object):
 
         self.standardize(symmetrize=True)
 
+    def asr(self, report=True):
+        """Apply acoustic sum rule correction to electron-phonon coupling.
+
+        This will suppress all coupling of electrons to acoustic phonon modes.
+        The matrix elements are subject to a constant relative change so that
+        zeros remain zeros and the largest values change the most. There might
+        be a better way to accomplish this.
+
+        report : bool
+            Print sums before and after correction?
+        """
+        if comm.rank == 0:
+            shape = self.data.shape
+
+            self.data = self.data.reshape((len(self.Rg) * self.ph.nat, -1))
+
+            zero = self.data.sum(axis=0)
+
+            if report:
+                print('Acoustic sum (before): %g' % abs(zero).max())
+
+            norm = abs(self.data).sum(axis=0)
+
+            norm[norm == 0] = 1.0 # corresponding "zero" really 0 by definition
+
+            self.data -= abs(self.data) / norm * zero
+
+            if report:
+                zero = self.data.sum(axis=0)
+
+                print('Acoustic sum (after): %g' % abs(zero).max())
+
+            self.data = self.data.reshape(shape)
+
+        if self.node.rank == 0:
+            self.images.Bcast(self.data.view(dtype=float))
+
+        comm.Barrier()
+
 def sample(g, q, nk=None, U=None, u=None, broadcast=True, shared_memory=False):
     """Sample coupling for given q and k points and transform to band basis.
 
