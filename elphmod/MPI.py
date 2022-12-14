@@ -5,8 +5,8 @@
 
 from __future__ import division
 
-import sys
 import numpy as np
+import sys
 
 try:
     from mpi4py import MPI
@@ -250,6 +250,58 @@ class SharedArray(np.ndarray):
             self.images.Bcast(self)
 
         comm.Barrier()
+
+class Buffer(object):
+    """Wrapper for ``pickle`` in parallel context.
+
+    Parameters
+    ----------
+    buf : str, default None
+        Name of buffer file with pickled object. By default, the buffer is not
+        used and :meth:`get` and :meth:`set` do nothing and return ``None``.
+    """
+    def __init__(self, buf=None):
+        import pickle
+
+        self.pickle = pickle # not ideal but reduces startup time
+        self.buf = buf
+
+    def get(self):
+        """Read object from buffer and broadcast it.
+
+        Returns
+        -------
+        object
+            Object if buffer exists, ``None`` otherwise.
+        """
+        if self.buf is None:
+            return
+
+        obj = None
+
+        if comm.rank == 0:
+            try:
+                with open(self.buf, 'rb') as data:
+                    obj = self.pickle.load(data)
+            except FileNotFoundError:
+                obj = None
+
+        return comm.bcast(obj)
+
+    def set(self, obj):
+        """Write object to buffer on single processor.
+
+        Parameters
+        ----------
+        object
+            Object to write.
+        """
+        if self.buf is None:
+            return
+
+        if comm.rank == 0:
+            with open(self.buf, 'wb') as data:
+                self.pickle.dump(obj, data)
 
 def load(filename, shared_memory=False, comm=comm):
     """Read and broadcast NumPy data."""
