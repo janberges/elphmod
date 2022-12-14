@@ -511,6 +511,11 @@ class Model(object):
         if sparse:
             elph.gs = comm.allreduce(elph.gs)
 
+            # DOK/CSR format efficient for matrix construction/calculations:
+
+            for x in range(elph.ph.size):
+                elph.gs[x] = elph.gs[x].tocsr()
+
             if comm.rank == 0:
                 import pickle
 

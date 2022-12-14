@@ -113,9 +113,6 @@ class Driver(object):
             self.C0 = self.elph.ph.Ds.toarray()[np.newaxis]
             self.d0 = self.elph.gs
 
-            for x in range(self.elph.ph.size):
-                self.d0[x] = self.d0[x].tobsr()
-
             self.n *= len(self.elph.cells)
             self.u = np.tile(self.u, len(self.elph.cells))
 
