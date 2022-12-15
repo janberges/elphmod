@@ -343,6 +343,47 @@ class Driver(object):
         plt.subplots_adjust(left=0, right=1, bottom=0, top=1)
         plt.show()
 
+    def to_xyz(self, xyz, append=False):
+        """Save current atomic positions.
+
+        Parameters
+        ----------
+        xyz : str
+            Name of .xyz file.
+        append : bool, default False
+            Append rather than overwrite positions?
+        """
+        if comm.rank == 0:
+            with open(xyz, 'a' if append else 'w') as data:
+                data.write('%d\n' % self.elph.ph.nat)
+                data.write(('# CELL{H}:' + ' %.10g' * 9 + '\n')
+                    % tuple(self.elph.ph.a.ravel(order='F')))
+
+                pos = self.elph.ph.r + self.u.reshape(self.elph.ph.r.shape)
+
+                for X, r in zip(self.elph.ph.atom_order, pos):
+                    data.write(('%8s' + ' %12.5e' * 3 + '\n')
+                        % (X, r[0], r[1], r[2]))
+
+    def from_xyz(self, xyz):
+        """Load saved atomic positions if compatible.
+
+        Parameters
+        ----------
+        xyz : str
+            Name of .xyz file.
+        """
+        if comm.rank == 0:
+            atm = np.loadtxt(xyz, skiprows=2, dtype=str, usecols=0)
+            pos = np.loadtxt(xyz, skiprows=2, dtype=float, usecols=(1, 2, 3))
+
+            if np.all(atm == self.elph.ph.atom_order):
+                self.u = (pos - self.elph.ph.r).ravel()
+            else:
+                print("Error: Cannot use incompatible '%s'" % xyz)
+
+        comm.Bcast(self.u)
+
     def __call__(self, a, r):
         """Interface driver with i-PI.
 
