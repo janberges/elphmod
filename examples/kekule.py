@@ -6,6 +6,7 @@
 import elphmod
 import matplotlib.pyplot as plt
 import model
+import numpy as np
 import scipy.optimize
 
 comm = elphmod.MPI.comm
@@ -63,3 +64,21 @@ if not sparse:
         plt.xlabel('Wave vector')
         plt.xticks(x[corners], path)
         plt.show()
+
+u0 = driver.u.copy()
+
+alpha = np.linspace(-1.5, 1.5, 301)
+E = np.empty_like(alpha)
+
+for i in range(len(alpha)):
+    driver.u = alpha[i] * u0
+    E[i] = driver.free_energy()
+
+if comm.rank == 0:
+    E -= E[np.argmin(abs(alpha))]
+    E *= 1e3 * elphmod.misc.Ry / len(driver.elph.cells)
+
+    plt.plot(alpha, E, 'k')
+    plt.ylabel('Free energy (meV/cell)')
+    plt.xlabel('Lattice distortion (relaxed displacement)')
+    plt.show()
