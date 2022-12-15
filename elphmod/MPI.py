@@ -261,9 +261,9 @@ class Buffer(object):
         used and :meth:`get` and :meth:`set` do nothing and return ``None``.
     """
     def __init__(self, buf=None):
+        global pickle
         import pickle
 
-        self.pickle = pickle # not ideal but reduces startup time
         self.buf = buf
 
     def get(self):
@@ -282,7 +282,7 @@ class Buffer(object):
         if comm.rank == 0:
             try:
                 with open(self.buf, 'rb') as data:
-                    obj = self.pickle.load(data)
+                    obj = pickle.load(data)
             except FileNotFoundError:
                 obj = None
 
@@ -301,7 +301,7 @@ class Buffer(object):
 
         if comm.rank == 0:
             with open(self.buf, 'wb') as data:
-                self.pickle.dump(obj, data)
+                pickle.dump(obj, data)
 
 def load(filename, shared_memory=False, comm=comm):
     """Read and broadcast NumPy data."""
