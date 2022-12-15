@@ -128,6 +128,8 @@ class Driver(object):
         self.F0 = 0.0
         self.F0 = -self.jacobian(show=False)
 
+        self.interactive = False
+
     def random_displacements(self, amplitude=0.01):
         """Displace atoms randomly from unperturbed positions.
 
@@ -193,6 +195,9 @@ class Driver(object):
         """
         if u is not None:
             self.u = u
+
+        if self.interactive:
+            self.update_plot()
 
         self.diagonalize()
 
@@ -310,11 +315,13 @@ class Driver(object):
 
         return model
 
-    def plot(self, scale=10.0, padding=1.0):
+    def plot(self, interactive=False, scale=10.0, padding=1.0):
         """Plot crystal structure and displacements.
 
         Parameters
         ----------
+        interactive : bool, default False
+            Shall the plot be updated?
         scale : float, default 10.0
             Displacement scaling factor.
         padding : float
@@ -323,25 +330,51 @@ class Driver(object):
         if comm.rank != 0:
             return
 
+        global plt
         import matplotlib.pyplot as plt
 
-        r = self.elph.ph.r + self.u.reshape(self.elph.ph.r.shape)
+        self.interactive = interactive
+        self.scale = scale
 
-        ax = plt.axes(projection='3d')
+        u = self.u.reshape(self.elph.ph.r.shape).T
+        r = self.elph.ph.r.T + u
 
-        ax.scatter(*r.T, s=100.0, c=['#%02x%02x%02x' % misc.colors[X]
-            for X in self.elph.ph.atom_order])
+        self.axes = plt.axes(projection='3d')
 
-        ax.quiver(*r.T, *scale * self.u.reshape(r.shape).T, color='gray')
+        self.scatter = self.axes.scatter(*r, s=100.0, c=['#%02x%02x%02x'
+            % misc.colors[X] for X in self.elph.ph.atom_order])
 
-        for i, lim in enumerate([ax.set_xlim, ax.set_ylim, ax.set_zlim]):
-            lim(r[:, i].min() - padding, r[:, i].max() + padding)
+        self.quiver = self.axes.quiver(*r, *self.scale * u, color='gray')
 
-        ax.set_box_aspect(np.ptp(r, axis=0) + 2 * padding)
-        ax.set_axis_off()
+        lims = [self.axes.set_xlim, self.axes.set_ylim, self.axes.set_zlim]
+
+        for i, lim in enumerate(lims):
+            lim(self.elph.ph.r[:, i].min() - padding,
+                self.elph.ph.r[:, i].max() + padding)
+
+        self.axes.set_box_aspect(np.ptp(self.elph.ph.r, axis=0) + 2 * padding)
+        self.axes.set_axis_off()
+
+        if self.interactive:
+            plt.ion()
+        else:
+            plt.ioff()
 
         plt.subplots_adjust(left=0, right=1, bottom=0, top=1)
         plt.show()
+
+    def update_plot(self):
+        """Update open plot."""
+
+        u = self.u.reshape(self.elph.ph.r.shape).T
+        r = self.elph.ph.r.T + u
+
+        self.scatter._offsets3d = tuple(r)
+
+        self.quiver.remove()
+        self.quiver = self.axes.quiver(*r, *self.scale * u, color='gray')
+
+        plt.pause(1e-3)
 
     def to_xyz(self, xyz, append=False):
         """Save current atomic positions.
