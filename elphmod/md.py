@@ -8,7 +8,7 @@ from __future__ import division
 import copy
 import numpy as np
 
-from . import MPI, diagrams, dispersion, misc, ph
+from . import bravais, diagrams, dispersion, el, misc, MPI, ph
 
 comm = MPI.comm
 info = MPI.info
@@ -276,17 +276,37 @@ class Driver(object):
 
         return C
 
-    def phonons(self, divide_mass=True):
+    def electrons(self, seedname='supercell'):
+        """Set up tight-binding model for current structure.
+
+        Parameters
+        ----------
+        seedname : str
+            Prefix of file with Hamiltonian in Wannier90 format.
+        """
+        H = np.einsum('...an,...n,...bn->...ab', self.U, self.e, self.U.conj())
+        H *= misc.Ry
+
+        bravais.Fourier_interpolation(H, hr_file='%s_hr.dat' % seedname)
+
+        return el.Model(seedname)
+
+    def phonons(self, divide_mass=True, **kwargs):
         """Set up mass-spring model for current structure.
 
+        Parameters
+        ----------
         divide_mass : bool
             Divide force constants by atomic masses?
+        **kwargs
+            Parameters passed to :func:`ph.q2r`.
         """
         model = copy.copy(self.elph.ph)
         model.divide_mass = divide_mass
         model.r += self.u.reshape((-1, 3))
 
-        ph.q2r(model, D_full=self.hessian(), nq=self.nq, divide_mass=False)
+        ph.q2r(model, D_full=self.hessian(), nq=self.nq, divide_mass=False,
+            **kwargs)
 
         return model
 
