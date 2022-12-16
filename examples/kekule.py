@@ -67,6 +67,9 @@ if not sparse:
 
 u1 = driver.u.copy()
 
+if not np.any(abs(u1) > 1e-2):
+    raise SystemExit
+
 alpha = np.linspace(-1.5, 1.5, 301)
 E = np.empty_like(alpha)
 
@@ -77,25 +80,28 @@ for i in range(len(alpha)):
     driver.u = alpha[i] * u1
     E[i] = driver.free_energy()
 
-    if i == i0:
-        c0 = 0.5 * u1.T.dot(driver.hessian()[0].real).dot(u1)
-    elif i == i1:
-        c1 = 0.5 * u1.T.dot(driver.hessian()[0].real).dot(u1)
+    if not sparse:
+        if i == i0:
+            c0 = 0.5 * u1.T.dot(driver.hessian()[0].real).dot(u1)
+        elif i == i1:
+            c1 = 0.5 * u1.T.dot(driver.hessian()[0].real).dot(u1)
 
 if comm.rank == 0:
     scale = 1e3 * elphmod.misc.Ry / len(driver.elph.cells)
 
     E -= E[i0]
     E *= scale
-    c0 *= scale
-    c1 *= scale
 
     plt.plot(alpha, E, 'k')
 
-    ylim = plt.ylim()
-    plt.plot(alpha, c0 * (alpha - alpha[i0]) ** 2 + E[i0], 'k:')
-    plt.plot(alpha, c1 * (alpha - alpha[i1]) ** 2 + E[i1], 'k--')
-    plt.ylim(ylim)
+    if not sparse:
+        c0 *= scale
+        c1 *= scale
+
+        ylim = plt.ylim()
+        plt.plot(alpha, c0 * (alpha - alpha[i0]) ** 2 + E[i0], 'k:')
+        plt.plot(alpha, c1 * (alpha - alpha[i1]) ** 2 + E[i1], 'k--')
+        plt.ylim(ylim)
 
     plt.ylabel('Free energy (meV/cell)')
     plt.xlabel('Lattice distortion (relaxed displacement)')
