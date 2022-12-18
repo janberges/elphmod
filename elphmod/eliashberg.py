@@ -7,7 +7,7 @@ from __future__ import division
 
 import numpy as np
 
-from . import bravais, dos, misc
+from . import bravais, diagrams, dos, misc, occupations
 
 def Tc(lamda, wlog, mustar=0.1):
     """Calculate critical temperature using McMillan's formula.
@@ -29,7 +29,8 @@ def Tc(lamda, wlog, mustar=0.1):
     return wlog / (1.20 * misc.kB) * np.exp(-1.04 * (1 + lamda)
         / max(1e-3, (lamda - mustar * (1 + 0.62 * lamda))))
 
-def McMillan(nq, e, w2, g2, eps=1e-10, mustar=0.0):
+def McMillan(nq, e, w2, g2, eps=1e-10, mustar=0.0, tetra=False, kT=0.025,
+        f=occupations.fermi_dirac):
     r"""Calculate parameters and result of McMillan's formula.
 
     Parameters
@@ -47,6 +48,15 @@ def McMillan(nq, e, w2, g2, eps=1e-10, mustar=0.0):
         coupling are set to zero.
     mustar : float
         Coulomb pseudopotential.
+    tetra : bool
+        Calculate double Fermi-surface average and density of states using 2D
+        tetrahedron methods? Otherwise summations over broadened delta functions
+        are performed.
+    kT : float
+        Smearing temperature. Only used if `tetra` is ``False``.
+    f : function
+        Particle distribution as a function of energy divided by `kT`. Only used
+        if `tetra` is ``False``.
 
     Returns
     -------
@@ -65,28 +75,36 @@ def McMillan(nq, e, w2, g2, eps=1e-10, mustar=0.0):
 
     weights = np.array([len(bravais.images(q1, q2, nq)) for q1, q2 in q])
 
-    q *= nk // nq
+    if tetra:
+        q *= nk // nq
 
-    g2dd = np.zeros((nQ, nph))
-    dd = np.zeros(nQ)
+        g2dd = np.zeros((nQ, nph))
+        dd = np.zeros(nQ)
 
-    for iq, (q1, q2) in enumerate(q):
-        E = np.roll(np.roll(e, shift=-q1, axis=0), shift=-q2, axis=1)
+        for iq, (q1, q2) in enumerate(q):
+            E = np.roll(np.roll(e, shift=-q1, axis=0), shift=-q2, axis=1)
 
-        g2_fun = bravais.linear_interpolation(g2[iq], axes=(1, 2))
+            g2_fun = bravais.linear_interpolation(g2[iq], axes=(1, 2))
+
+            for n in range(nel):
+                for m in range(nel):
+                    intersections = dos.double_delta(e[:, :, n], E[:, :, m])(0)
+
+                    for (k1, k2), weight in intersections.items():
+                        g2dd[iq] += weight * g2_fun(k1, k2)[:, n, m]
+                        dd[iq] += weight
+
+        N0 = 0
 
         for n in range(nel):
-            for m in range(nel):
-                intersections = dos.double_delta(e[:, :, n], E[:, :, m])(0)
+            N0 += dos.hexDOS(e[:, :, n])(0)
+    else:
+        g2dd, dd = diagrams.double_fermi_surface_average(q, e, g2, kT, f)
 
-                for (k1, k2), weight in intersections.items():
-                    g2dd[iq] += weight * g2_fun(k1, k2)[:, n, m]
-                    dd[iq] += weight
+        N0 = f.delta(e / kT).sum() / kT / np.prod(e.shape[:-1])
 
-    N0 = 0
-
-    for n in range(nel):
-        N0 += dos.hexDOS(e[:, :, n])(0)
+    g2dd *= weights[:, np.newaxis]
+    dd *= weights
 
     w2 = w2.copy()
 
@@ -95,11 +113,9 @@ def McMillan(nq, e, w2, g2, eps=1e-10, mustar=0.0):
     w2[dangerous] = eps
     g2dd[dangerous] = 0.0
 
-    r2 = g2dd / w2
+    V = g2dd / w2
 
-    lamda = N0 * np.dot(weights, r2).sum() / np.dot(weights, dd)
-
-    wlog = np.exp(np.dot(weights, r2 * np.log(w2) / 2).sum()
-        / np.dot(weights, r2).sum())
+    lamda = N0 * V.sum() / dd.sum()
+    wlog = np.exp((V * np.log(w2) / 2).sum() / V.sum())
 
     return lamda, wlog, Tc(lamda, wlog, mustar)
