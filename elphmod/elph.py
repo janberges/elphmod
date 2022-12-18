@@ -680,7 +680,8 @@ class Model(object):
 
         comm.Barrier()
 
-def sample(g, q, nk=None, U=None, u=None, broadcast=True, shared_memory=False):
+def sample(g, q, nk=None, U=None, u=None, squared=False, broadcast=True,
+        shared_memory=False):
     """Sample coupling for given q and k points and transform to band basis.
 
     One purpose of this routine is full control of the complex phase.
@@ -703,6 +704,9 @@ def sample(g, q, nk=None, U=None, u=None, broadcast=True, shared_memory=False):
     u : ndarray, optional
         Phonon eigenvectors for given q points.
         If present, transform from displacement to band basis.
+    squared : bool
+        Sample squared complex modulus instead? This is more memory-efficient
+        than sampling the complex coupling and taking the squared modulus later.
     broadcast : bool
         Broadcast result from rank 0 to all processes?
     shared_memory : bool, optional
@@ -734,7 +738,7 @@ def sample(g, q, nk=None, U=None, u=None, broadcast=True, shared_memory=False):
         nph = u.shape[-1]
 
     my_g = np.empty((sizes[row.rank], nph, nk[0], nk[1], nk[2], nel, nel),
-        dtype=complex)
+        dtype=float if squared else complex)
 
     status = misc.StatusBar(sizes[comm.rank] * nk.prod(),
         title='sample coupling')
@@ -767,12 +771,17 @@ def sample(g, q, nk=None, U=None, u=None, broadcast=True, shared_memory=False):
                         if u is not None:
                             gqk = np.einsum('xab,xu->uab', gqk, u[iq])
 
+                        if squared:
+                            gqk *= gqk.conj()
+                            gqk = gqk.real
+
                         my_g[my_iq, :, K1, K2, K3, :, :] = gqk
 
                     status.update()
 
     node, images, g = MPI.shared_array((len(q), nph) + nk_orig + (nel, nel),
-        dtype=complex, shared_memory=shared_memory, single_memory=not broadcast)
+        dtype=my_g.dtype, shared_memory=shared_memory,
+        single_memory=not broadcast)
 
     if col.rank == 0:
         row.Gatherv(my_g, (g, row.gather(my_g.size)))
