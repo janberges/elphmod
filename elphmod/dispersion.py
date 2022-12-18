@@ -357,18 +357,53 @@ def dispersion_full(matrix, size, angle=60, vectors=False, gauge=False,
 
     return v_mesh
 
-def dispersion_full_nosym(matrix, size, *args, **kwargs):
+def dispersion_full_nosym(matrix, size, vectors=False, order=False,
+        *args, **kwargs):
     """Diagonalize Hamiltonian or dynamical matrix on uniform k-point mesh.
 
     Use this routine to get eigenvectors less symmetric than the eigenvalues!
     """
+    # set up k-point mesh:
+
     if comm.rank == 0:
         k = [[(k1, k2) for k2 in range(size)] for k1 in range(size)]
         k = 2 * np.pi * np.array(k, dtype=float) / size
     else:
         k = None
 
-    return dispersion(matrix, k, *args, **kwargs)
+    # calculate dispersion:
+
+    v = dispersion(matrix, k, vectors=vectors, order=False, *args, **kwargs)
+
+    if vectors:
+        v, V = v
+
+    # order/disentangle bands:
+
+    if order:
+        _, o = dispersion_full(matrix, size, vectors=False, order=True,
+            *args, **kwargs)
+
+        for k1 in range(size):
+            for k2 in range(size):
+                v[k1, k2] = v[k1, k2, o[k1, k2]]
+
+                if vectors:
+                    for n in range(V.shape[2]):
+                        V[k1, k2, n] = V[k1, k2, n, o[k1, k2]]
+
+    # return results:
+
+    if vectors and order:
+        return v, V, o
+
+    if vectors:
+        return v, V
+
+    if order:
+        return v, o
+
+    return v
 
 def sample(matrix, k, **kwargs):
     """Calculate Hamiltonian or dynamical matrix for given k points.

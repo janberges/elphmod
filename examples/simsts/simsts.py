@@ -20,14 +20,8 @@ info('Set up and diagonalize Wannier Hamiltonian..')
 el = elphmod.el.Model('graphene', read_xsf=True, normalize_wf=True,
     check_ortho=True)
 
-_, order = elphmod.dispersion.dispersion_full(el.H, nk, order=True)
-e, U = elphmod.dispersion.dispersion_full_nosym(el.H, nk, vectors=True)
-
-for k1 in range(nk):
-    for k2 in range(nk):
-        e[k1, k2] = e[k1, k2, order[k1, k2]]
-        for n in range(el.size):
-            U[k1, k2, n] = U[k1, k2, n, order[k1, k2]]
+e, U, order = elphmod.dispersion.dispersion_full_nosym(el.H, nk,
+    vectors=True, order=True)
 
 e -= elphmod.el.read_Fermi_level('scf.out')
 
