@@ -55,6 +55,10 @@ class Driver(object):
         Electron-phonon coupling in orbital basis.
     sparse : bool
         Is the simulation performed on a supercell using sparse matrices?
+    interactive : bool, default False
+        Shall plots be updated interactively?
+    scale : float, default 10.0
+        Displacement scaling factor for plots.
     """
     def __init__(self, elph, kT, f, n, nk, nq, supercell=None):
         if not elph.el.rydberg:
@@ -129,6 +133,7 @@ class Driver(object):
         self.F0 = -self.jacobian(show=False)
 
         self.interactive = False
+        self.scale = 10.0
 
     def random_displacements(self, amplitude=0.01):
         """Displace atoms randomly from unperturbed positions.
@@ -315,16 +320,18 @@ class Driver(object):
 
         return model
 
-    def plot(self, interactive=False, scale=10.0, padding=1.0):
+    def plot(self, interactive=None, scale=None, padding=1.0):
         """Plot crystal structure and displacements.
 
         Parameters
         ----------
-        interactive : bool, default False
-            Shall the plot be updated?
-        scale : float, default 10.0
-            Displacement scaling factor.
-        padding : float
+        interactive : bool, optional
+            Shall the plot be updated? If given, this sets the eponymous
+            attribute, which is used by default.
+        scale : float, optional
+            Displacement scaling factor. If given, this sets the eponymous
+            attribute, which is used by default.
+        padding : float, optional
             Padding between crystal and plotting box in angstrom.
         """
         if comm.rank != 0:
@@ -333,8 +340,11 @@ class Driver(object):
         global plt
         import matplotlib.pyplot as plt
 
-        self.interactive = interactive
-        self.scale = scale
+        if interactive is not None:
+            self.interactive = interactive
+
+        if scale is not None:
+            self.scale = scale
 
         u = self.u.reshape(self.elph.ph.r.shape).T
         r = self.elph.ph.r.T + u
