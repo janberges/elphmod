@@ -46,7 +46,7 @@ driver.plot(interactive=True)
 scipy.optimize.minimize(driver.free_energy, driver.u, jac=driver.jacobian,
     method='BFGS', tol=1e-8)
 
-driver.plot()
+driver.plot(interactive=False)
 
 if not sparse:
     ph = driver.phonons()
