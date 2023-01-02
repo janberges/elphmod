@@ -114,8 +114,8 @@ class Model(object):
 
         self.R, self.data = read_hrdat(seedname, divide_ndegen)
         self.size = self.data.shape[1]
-        self.nk = tuple(2 * self.R[np.all(self.R[:, x] == 0, axis=1)].max() or 1
-            for x in [[1, 2], [2, 0], [0, 1]])
+        self.nk = tuple(2 * self.R[np.all(self.R[:, x] == 0,
+            axis=1)].max(initial=1) for x in [[1, 2], [2, 0], [0, 1]])
 
         if rydberg:
             self.data /= misc.Ry
