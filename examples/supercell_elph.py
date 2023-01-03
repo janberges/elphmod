@@ -17,10 +17,6 @@ N = [ # 3 x 3 (60 degrees instead of 120 degrees)
     [0, 0, 1],
     ]
 
-a = elphmod.bravais.primitives(ibrav=4)
-b = elphmod.bravais.reciprocals(*a)
-A = np.dot(N, a)
-
 if use_model:
     import model
 
@@ -40,7 +36,7 @@ ElPh = elph.supercell(*N, shared_memory=False)
 
 path = 'GMKG'
 k, x, corners = elphmod.bravais.path(path, ibrav=4, N=300)
-K = np.dot(np.dot(k, b), A.T)
+K = np.dot(np.dot(k, elphmod.bravais.reciprocals(*elph.ph.a)), ElPh.ph.a.T)
 
 I = elphmod.MPI.comm.Split(elphmod.MPI.comm.rank)
 

@@ -13,16 +13,12 @@ N = [ # 3 x 3 (60 degrees instead of 120 degrees)
     [0, 0, 1],
     ]
 
-a = elphmod.bravais.primitives(ibrav=4)
-b = elphmod.bravais.reciprocals(*a)
-A = np.dot(N, a)
-
 ph = elphmod.ph.Model('data/NbSe2_cDFPT.ifc', apply_asr_simple=True)
 Ph = ph.supercell(*N)
 
 path = 'GMKG'
 q, x, corners = elphmod.bravais.path(path, ibrav=4, N=150)
-Q = np.dot(np.dot(q, b), A.T)
+Q = np.dot(np.dot(q, elphmod.bravais.reciprocals(*ph.a)), Ph.a.T)
 
 w2, u = elphmod.dispersion.dispersion(ph.D, q, vectors=True)
 W2, U = elphmod.dispersion.dispersion(Ph.D, Q, vectors=True)
