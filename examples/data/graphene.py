@@ -23,10 +23,12 @@ Cz = -98.2 * Npm
 
 beta = 2.0
 
-hr_dat = 'data/graphene_hr.dat'
-flfrc = 'data/graphene.ifc'
-epmatwp = 'data/graphene.epmatwp'
-wigner = 'data/graphene.wigner'
+stem = __file__[:-3]
+
+hr_dat = '%s_hr.dat' % stem
+flfrc = '%s.ifc' % stem
+epmatwp = '%s.epmatwp' % stem
+wigner = '%s.wigner' % stem
 
 at = elphmod.bravais.primitives(ibrav=4, a=a, c=15.0, bohr=True)
 r = np.dot([[2.0, 1.0, 0.0], [1.0, 2.0, 0.0]], at) / 3
