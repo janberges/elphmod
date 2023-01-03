@@ -132,8 +132,8 @@ Rk = np.insert(Rk, obj=2, values=0, axis=1)
 Rg = np.insert(Rg, obj=2, values=0, axis=1)
 dg = dg.swapaxes(0, 1).reshape((1, el.size, ph.nat, len(Rg)))
 
-elph = elphmod.elph.Model(Rk=Rk, dk=dk.copy(), Rg=Rg, dg=dg.copy(),
-    el=el, ph=ph, divide_mass=False)
+elph = elphmod.elph.Model(Rk=Rk, dk=dk, Rg=Rg, dg=dg, el=el, ph=ph,
+    divide_mass=False)
 elphmod.elph.q2r(elph, nq, nk, g)
 elph.standardize(eps=1e-10)
 
