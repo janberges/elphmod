@@ -36,6 +36,8 @@ class Driver(object):
         matrices are used for Hamiltonian, dynamical matrix, and electron-phonon
         coupling to save memory. The calculation of phonons is not implemented.
         Note that `elph` should belong to the primitive cell in this case.
+    unscreen : bool, default True
+        Unscreen phonons? Otherwise, they are assumed to be unscreened already.
 
     Attributes
     ----------
@@ -60,7 +62,7 @@ class Driver(object):
     scale : float, default 10.0
         Displacement scaling factor for plots.
     """
-    def __init__(self, elph, kT, f, n, nk, nq, supercell=None):
+    def __init__(self, elph, kT, f, n, nk, nq, supercell=None, unscreen=True):
         if not elph.el.rydberg:
             info("Initialize 'el' with 'rydberg=True'!", error=True)
 
@@ -101,10 +103,12 @@ class Driver(object):
         self.sparse = False
         self.diagonalize()
 
-        C = dispersion.sample(self.elph.ph.D, self.q)
-
         self.C0 = 0.0
-        self.C0 = C - self.hessian()
+
+        if unscreen:
+            self.C0 -= self.hessian()
+
+        self.C0 += dispersion.sample(self.elph.ph.D, self.q)
 
         if supercell is not None:
             self.elph.ph = copy.copy(self.elph.ph)
