@@ -28,8 +28,8 @@ class Driver(object):
         Particle distribution as a function of energy divided by `kT`.
     n : float
         Number of electrons per primitive cell.
-    nk, nq : tuple of int
-        Shape of k and q mesh.
+    nk, nq : tuple of int, optional
+        Shape of k and q mesh. By default, only k = q = 0 is used.
     supercell : ndarray, optional
         Supercell lattice vectors as multiples of primitive lattice vectors. If
         given, the simulation is performed on a supercell for q = k = 0. Sparse
@@ -62,7 +62,8 @@ class Driver(object):
     scale : float, default 10.0
         Displacement scaling factor for plots.
     """
-    def __init__(self, elph, kT, f, n, nk, nq, supercell=None, unscreen=True):
+    def __init__(self, elph, kT, f, n, nk=(1,), nq=(1,), supercell=None,
+            unscreen=True):
         if not elph.el.rydberg:
             info("Initialize 'el' with 'rydberg=True'!", error=True)
 
