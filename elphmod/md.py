@@ -8,7 +8,7 @@ from __future__ import division
 import copy
 import numpy as np
 
-from . import bravais, diagrams, dispersion, el, misc, MPI, ph
+from . import bravais, diagrams, dispersion, el, misc, MPI, occupations, ph
 
 comm = MPI.comm
 info = MPI.info
@@ -159,6 +159,14 @@ class Driver(object):
         self.u -= np.tile(np.average(self.u.reshape((-1, 3)), axis=0),
             self.elph.ph.nat)
 
+    def find_Fermi_level(self):
+        """Update chemical potential."""
+
+        self.mu = occupations.find_Fermi_level(self.n, self.e, self.kT, self.f,
+            self.mu)
+
+        return self.mu
+
     def find_chemical_potential(self, eps=1e-10, damp=1e-2):
         """Update Fermi level via fixed-point iteration.
 
@@ -190,7 +198,7 @@ class Driver(object):
 
         self.e, self.U = np.linalg.eigh(H)
 
-        self.e -= self.find_chemical_potential()
+        self.e -= self.find_Fermi_level()
 
     def free_energy(self, u=None, show=True):
         """Calculate free energy.

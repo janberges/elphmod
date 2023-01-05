@@ -317,3 +317,55 @@ def smearing(name='gaussian'):
         return marzari_vanderbilt
     if name in {'fermi-dirac', 'f-d', 'fd'}:
         return fermi_dirac
+
+def find_Fermi_level(n, e, kT=0.025, f=fermi_dirac, mu=None, tol=1e-5,
+        eps=1e-10):
+    """Determine chemical potential via fixed-point iteration.
+
+    See Eqs. 4.21 and 4.22 of https://janber.de/theses/Master_Jan_Berges.pdf.
+
+    Parameters
+    ----------
+    n : float
+        Number of electrons (with spin) per unit cell.
+    e : ndarray
+        Electronic energies for representative k points.
+    kT : float
+        Smearing temperature.
+    f : function
+        Electron distribution as a function of energy divided by `kT`.
+    mu : float
+        Initial guess for chemical potential. By default, an estimate based on
+        the assumption of a constant density of states is used.
+    tol : float
+        Tolerance for the number of electrons.
+    eps : float
+        Smallest allowed absolute value of divisor.
+    """
+    # map number of electrons to whole system and spinless electrons:
+
+    scale = 0.5 * e.size / e.shape[-1]
+    n *= scale
+    tol *= scale
+
+    # make initial guess for chemical potential:
+
+    if mu is None:
+        mu = (e.min() * (e.size - n) + e.max() * n) / e.size
+
+    # solve fixed-point equation:
+
+    while True:
+        xi = e - mu
+        f0 = f(0.0)
+        fx = f(xi / kT)
+        w = f0 - fx
+
+        ok = abs(xi) > eps
+        w[ok] /= xi[ok]
+        w[~ok] = f.delta(0.0) / kT
+
+        if abs(fx.sum() - n) < tol:
+            return mu
+
+        mu = (n - e.size * f0 + (e * w).sum()) / w.sum()
