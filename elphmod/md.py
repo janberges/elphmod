@@ -77,7 +77,7 @@ class Driver(object):
         self.f = f
 
         self.n = n
-        self.mu = 0.0
+        self.mu = None
 
         self.nk = np.ones(3, dtype=int)
         self.nk[:len(nk)] = nk
@@ -167,25 +167,6 @@ class Driver(object):
             self.mu)
 
         return self.mu
-
-    def find_chemical_potential(self, eps=1e-10, damp=1e-2):
-        """Update Fermi level via fixed-point iteration.
-
-        Parameters
-        ----------
-        eps : float
-            Tolerance for the electron number.
-        damp : float
-            Damping factor in the fixed-point equation. Large values may prevent
-            convergence; small values will slow down convergence.
-        """
-        while True:
-            n = 2 * self.f((self.e - self.mu) / self.kT).sum() / self.nk.prod()
-
-            if abs(self.n - n) < eps:
-                return self.mu
-
-            self.mu += (self.n / n - 1) * damp
 
     def diagonalize(self):
         """Diagonalize Hamiltonian of perturbed system."""
