@@ -14,7 +14,7 @@
 * `dos` - 2D tetrahedron methods
 * `diagrams` - susceptibilities, self-energies, etc.
 * `occupations` - step and delta smearing functions
-* `md` - charge-density-wave dynamics on supercells
+* `md` - charge-density-wave dynamics using i-PI
 * `eliashberg` - parameters for McMillan's formula
 * `plot` - BZ plots, fatbands, etc.
 * `misc` - constants, status bars, parsing, etc.
