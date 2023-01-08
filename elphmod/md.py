@@ -255,7 +255,7 @@ class Driver(object):
             Print free energy?
         """
         if self.sparse:
-            raise NotImplementedError
+            raise NotImplementedError('Dense matrices required.')
 
         self.d = np.empty_like(self.d0)
 
@@ -289,6 +289,12 @@ class Driver(object):
             Prefix of file with Hamiltonian in Wannier90 format.
         """
         H = np.einsum('...an,...n,...bn->...ab', self.U, self.e, self.U.conj())
+
+        if self.nk[0] == self.nk[1] and self.nk[2] == 1:
+            H = H.reshape((self.nk[0],) * 2 + (self.elph.el.size,) * 2)
+        else:
+            raise NotImplementedError('N x N x 1 k-point mesh required.')
+
         H *= misc.Ry
 
         bravais.Fourier_interpolation(H, hr_file='%s_hr.dat' % seedname)
