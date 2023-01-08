@@ -38,6 +38,8 @@ class Driver(object):
         Note that `elph` should belong to the primitive cell in this case.
     unscreen : bool, default True
         Unscreen phonons? Otherwise, they are assumed to be unscreened already.
+    **kwargs
+        Attributes to be set initially.
 
     Attributes
     ----------
@@ -61,9 +63,15 @@ class Driver(object):
         Shall plots be updated interactively?
     scale : float, default 10.0
         Displacement scaling factor for plots.
+    size : float, default 100.0
+        Marker size for atoms in points squared.
+    basis : list of list, default None
+        For each basis atom in the first primitive cell, indices of orbitals
+        located at this atom. Matching atom and orbital orders as ensured by
+        :meth:`elph.Model.supercell` are required.
     """
     def __init__(self, elph, kT, f, n, nk=(1,), nq=(1,), supercell=None,
-            unscreen=True):
+            unscreen=True, **kwargs):
         if not elph.el.rydberg:
             info("Initialize 'el' with 'rydberg=True'!", error=True)
 
@@ -139,6 +147,11 @@ class Driver(object):
 
         self.interactive = False
         self.scale = 10.0
+        self.size = 100.0
+        self.basis = None
+
+        for name, value in kwargs.items():
+            setattr(self, name, value)
 
     def random_displacements(self, amplitude=0.01):
         """Displace atoms randomly from unperturbed positions.
@@ -320,7 +333,37 @@ class Driver(object):
 
         return model
 
-    def plot(self, interactive=None, scale=None, padding=1.0):
+    def density(self):
+        """Calculate electron density for all orbitals.
+
+        Returns
+        -------
+        ndarray
+            Electron density. Should add up to the number of electrons.
+        """
+        return 2 * np.sum(np.average(np.reshape(abs(self.U) ** 2
+            * self.f(self.e[..., np.newaxis, :] / self.kT),
+            (-1, self.elph.el.size, self.elph.el.size)), axis=0), axis=-1)
+
+    def density_per_atom(self):
+        """Calculate electron density per atom."""
+
+        if self.basis is None:
+            info('Orbitals located at basis atoms unknown!', error=True)
+
+        nat = len(self.basis)
+        norb = self.elph.el.size * nat // self.elph.ph.nat
+
+        rho_at = np.zeros(self.elph.ph.nat)
+        rho_orb = self.density()
+
+        for na, orbitals in enumerate(self.basis):
+            for no in orbitals:
+                rho_at[na::nat] += rho_orb[no::norb]
+
+        return rho_at
+
+    def plot(self, interactive=None, scale=None, padding=1.0, size=100.0):
         """Plot crystal structure and displacements.
 
         Parameters
@@ -333,6 +376,8 @@ class Driver(object):
             attribute, which is used by default.
         padding : float, optional
             Padding between crystal and plotting box in angstrom.
+        size : float, optional
+            Marker size for atoms.
         """
         if comm.rank != 0:
             return
@@ -346,12 +391,21 @@ class Driver(object):
         if scale is not None:
             self.scale = scale
 
+        if size is not None:
+            self.size = size
+
         u = self.u.reshape(self.elph.ph.r.shape).T
         r = self.elph.ph.r.T + u
 
         self.axes = plt.axes(projection='3d')
 
-        self.scatter = self.axes.scatter(*r, s=100.0, c=['#%02x%02x%02x'
+        sizes = self.size
+
+        if self.basis is not None:
+            rho = self.density_per_atom()
+            sizes *= rho / rho.max()
+
+        self.scatter = self.axes.scatter(*r, s=sizes, c=['#%02x%02x%02x'
             % misc.colors[X] for X in self.elph.ph.atom_order])
 
         self.quiver = self.axes.quiver(*r, *self.scale * u, color='gray')
@@ -380,6 +434,10 @@ class Driver(object):
         r = self.elph.ph.r.T + u
 
         self.scatter._offsets3d = tuple(r)
+
+        if self.basis is not None:
+            rho = self.density_per_atom()
+            self.scatter.set_sizes(self.size * rho / rho.max())
 
         self.quiver.remove()
         self.quiver = self.axes.quiver(*r, *self.scale * u, color='gray')

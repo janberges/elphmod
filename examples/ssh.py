@@ -28,7 +28,7 @@ if not sparse:
 
 driver = elphmod.md.Driver(elph, kT=kT, f=elphmod.occupations.fermi_dirac,
     nk=(nk,), nq=(nq,), supercell=(N,) if sparse else None, n=elph.el.size,
-    unscreen=False)
+    unscreen=False, basis=[[0]])
 
 driver.random_displacements(amplitude=0.05)
 
