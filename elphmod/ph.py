@@ -523,6 +523,7 @@ class Model(object):
             for na in range(self.nat)])
         ph.N = [tuple(N1), tuple(N2), tuple(N3)]
         ph.divide_mass = self.divide_mass
+        ph.divide_ndegen = self.divide_ndegen
 
         ph.lr = self.lr
         ph.L = self.L

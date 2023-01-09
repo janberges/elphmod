@@ -400,6 +400,7 @@ class Model(object):
             N1, N2, N3)
 
         elph.divide_mass = self.divide_mass
+        elph.divide_ndegen = self.divide_ndegen
 
         Rg = set()
         Rk = set()
