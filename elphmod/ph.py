@@ -524,6 +524,25 @@ class Model(object):
         ph.N = [tuple(N1), tuple(N2), tuple(N3)]
         ph.divide_mass = self.divide_mass
 
+        ph.lr = self.lr
+        ph.L = self.L
+        ph.perp = self.perp
+        ph.eps = self.eps
+
+        if self.Z is None:
+            ph.Z = None
+        else:
+            ph.Z = np.tile(self.Z, (N, 1, 1))
+
+        if self.Q is None:
+            ph.Q = None
+        else:
+            ph.Q = np.tile(self.Q, (N, 1, 1, 1))
+
+        if self.lr:
+            ph.lr2d = self.lr2d
+            ph.prepare_long_range()
+
         if sparse:
             try:
                 from scipy.sparse import dok_array as sparse_array
