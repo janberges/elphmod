@@ -27,7 +27,6 @@ To install the latest version of elphmod:
 
 Alternatively, to install the latest development version:
 
-    python3 -m pip install --upgrade pip setuptools wheel
     python3 -m pip install git+https://github.com/janberges/elphmod
 
 elphmod can optionally be run in parallel via MPI (with shared-memory support).
@@ -53,12 +52,8 @@ using Sphinx:
 
     cd doc
     make html
-    firefox html/index.html
 
-Please also have a look at the examples:
-
-    cd examples
-    mpirun python3 electrons.py
+Please also have a look at the [examples](examples).
 
 ## Licence
 
