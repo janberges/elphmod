@@ -208,10 +208,10 @@ class Driver(object):
         if u is not None:
             self.u = u
 
+        self.diagonalize()
+
         if self.interactive:
             self.update_plot()
-
-        self.diagonalize()
 
         prefactor = 2.0 / self.nk.prod()
 
