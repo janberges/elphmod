@@ -53,7 +53,7 @@ using Sphinx:
     cd doc
     make html
 
-Please also have a look at the [examples](examples).
+Please also have a look at the examples.
 
 ## Licence
 
