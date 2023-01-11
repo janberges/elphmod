@@ -485,6 +485,46 @@ class Driver(object):
 
         comm.Bcast(self.u)
 
+    def to_pwi(self, pwi, **kwargs):
+        """Save current atomic positions etc. to PWscf input file.
+
+        Parameters
+        ----------
+        pwi : str
+            File name.
+        **kwargs
+            Keyword arguments with further parameters to be written.
+        """
+        species = sorted(set(self.elph.ph.atom_order))
+        a = np.linalg.norm(self.elph.ph.a[0])
+
+        pw = dict()
+
+        pw['ibrav'] = 0
+        pw['ntyp'] = len(species)
+        pw['nat'] = self.elph.ph.nat
+        pw['a'] = a * misc.a0
+
+        pw['at_species'] = species
+        pw['mass'] = [self.elph.ph.M[self.elph.ph.atom_order.index(X)]
+            for X in species]
+        pw['pp'] = ['%s.upf' % X for X in species]
+
+        pw['coords'] = 'crystal'
+        pw['at'] = self.elph.ph.atom_order
+        pw['r'] = bravais.cartesian_to_crystal(self.elph.ph.r
+            + self.u.reshape(self.elph.ph.r.shape), *self.elph.ph.a)
+
+        pw['cell_units'] = 'alat'
+        pw['r_cell'] = self.elph.ph.a / a
+
+        pw['ktyp'] = 'automatic'
+        pw['k_points'] = tuple(self.nk) + (0, 0, 0)
+
+        pw.update(kwargs)
+
+        bravais.write_pwi(pwi, pw)
+
     def __call__(self, a, r):
         """Interface driver with i-PI.
 

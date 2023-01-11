@@ -1595,7 +1595,7 @@ def BZ(angle=120, angle0=0):
     return outline
 
 def read_pwi(pwi):
-    """Read input data and crystal structure from PW input file.
+    """Read input data and crystal structure from PWscf input file.
 
     Parameters
     ----------
@@ -1690,7 +1690,7 @@ def read_pwi(pwi):
     return struct
 
 def write_pwi(pwi, struct):
-    """Write crystal structure to PW input file.
+    """Write crystal structure to PWscf input file.
 
     Parameters
     ----------
