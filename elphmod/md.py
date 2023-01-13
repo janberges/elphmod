@@ -430,6 +430,9 @@ class Driver(object):
     def update_plot(self):
         """Update open plot."""
 
+        if comm.rank != 0:
+            return
+
         u = self.u.reshape(self.elph.ph.r.shape).T
         r = self.elph.ph.r.T + u
 
