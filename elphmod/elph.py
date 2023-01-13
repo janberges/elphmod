@@ -681,6 +681,44 @@ class Model(object):
 
         comm.Barrier()
 
+    def decay_epmate(self):
+        """Plot maximum matrix element as a function of hopping distance.
+
+        Use ``divide_mass=False`` to recreate EPW's *decay.epmate* file.
+
+        Returns
+        -------
+        ndarray
+            Distances.
+        ndarray
+            Maximum absolute matrix elements.
+        """
+        d = np.linalg.norm(self.Rk.dot(self.ph.a), axis=1) * misc.a0
+        g = abs(self.data).max(axis=(0, 1, 3, 4))
+
+        nonzero = np.where(g > 0)
+
+        return d[nonzero], g[nonzero]
+
+    def decay_epmatp(self):
+        """Plot maximum matrix element as a function of displacement distance.
+
+        Use ``divide_mass=False`` to recreate EPW's *decay.epmatp* file.
+
+        Returns
+        -------
+        ndarray
+            Distances.
+        ndarray
+            Maximum absolute matrix elements.
+        """
+        d = np.linalg.norm(self.Rg.dot(self.ph.a), axis=1) * misc.a0
+        g = abs(self.data).max(axis=(1, 2, 3, 4))
+
+        nonzero = np.where(g > 0)
+
+        return d[nonzero], g[nonzero]
+
 def sample(g, q, nk=None, U=None, u=None, squared=False, broadcast=True,
         shared_memory=False):
     """Sample coupling for given q and k points and transform to band basis.
