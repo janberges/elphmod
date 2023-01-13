@@ -3,6 +3,16 @@
 See [Git commits](https://github.com/janberges/elphmod/commits) for more
 detailed list of changes.
 
+## v0.17
+
+* Charge-density-wave molecular dynamics using i-PI
+* Animated relaxation of 1D Peierls and 2D Kekulé dimerization
+* Experimental acoustic-sum-rule correction for coupling
+* Parameters of McMillan's formula from smearing method
+* Determination of Fermi level via fixed-point iteration
+* Mapping of Born effective charges etc. to supercells
+* Decay of electron-phonon matrix elements
+
 ## v0.16
 
 * No MPI overhead for serial runs
