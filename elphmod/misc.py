@@ -62,6 +62,11 @@ cmm1 = 100.0 * hSI * cSI / eVSI
 kB = kBSI / eVSI
 """Boltzmann constant (eV/K)."""
 
+# constants in Rydberg atomic units:
+
+uRy = uSI / (2 * meSI)
+"""Atomic mass constant (2 me)."""
+
 colors = collections.defaultdict(lambda: (250, 22, 145),
     H=(255, 255, 255), He=(217, 255, 255), Li=(204, 128, 255),
     Be=(194, 255, 0), B=(255, 181, 181), C=(144, 144, 144),

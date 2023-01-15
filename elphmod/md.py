@@ -507,7 +507,7 @@ class Driver(object):
 
         pw['at_species'] = species
         pw['mass'] = [self.elph.ph.M[self.elph.ph.atom_order.index(X)]
-            for X in species]
+            / misc.uRy for X in species]
         pw['pp'] = ['%s.upf' % X for X in species]
 
         pw['coords'] = 'crystal'

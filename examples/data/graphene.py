@@ -6,12 +6,11 @@
 import numpy as np
 import elphmod
 
-u = elphmod.misc.uSI / (2 * elphmod.misc.meSI)
 Npm = (1e-10 * elphmod.misc.a0) ** 2 / (elphmod.misc.eVSI * elphmod.misc.Ry)
 
 a = 2.46 # AA
 
-M = 12.011 * u
+M = 12.011 * uRy
 
 t = -2.6 / elphmod.misc.Ry
 

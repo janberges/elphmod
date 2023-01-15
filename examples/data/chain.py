@@ -9,7 +9,7 @@ import elphmod
 a = 1.0 # AA
 c = 20.0 # AA
 
-M = elphmod.misc.uSI / (2 * elphmod.misc.meSI)
+M = elphmod.misc.uRy
 
 t = 1.0 / elphmod.misc.Ry
 w0 = 0.05 / elphmod.misc.Ry
