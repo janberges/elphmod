@@ -10,7 +10,7 @@ Npm = (1e-10 * elphmod.misc.a0) ** 2 / (elphmod.misc.eVSI * elphmod.misc.Ry)
 
 a = 2.46 # AA
 
-M = 12.011 * uRy
+M = 12.011 * elphmod.misc.uRy
 
 t = -2.6 / elphmod.misc.Ry
 
