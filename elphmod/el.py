@@ -298,6 +298,11 @@ class Model(object):
         else:
             count = None
 
+        if sparse:
+            el.Hs = comm.bcast(el.Hs)
+
+            return el
+
         count = comm.bcast(count)
 
         if comm.rank != 0:
@@ -308,9 +313,6 @@ class Model(object):
         comm.Bcast(el.data)
 
         el.cells = comm.bcast(el.cells)
-
-        if sparse:
-            el.Hs = comm.bcast(el.Hs)
 
         return el
 

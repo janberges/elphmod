@@ -593,6 +593,11 @@ class Model(object):
         else:
             count = None
 
+        if sparse:
+            ph.Ds = comm.bcast(ph.Ds)
+
+            return ph
+
         count = comm.bcast(count)
 
         if comm.rank != 0:
@@ -601,9 +606,6 @@ class Model(object):
 
         comm.Bcast(ph.R)
         comm.Bcast(ph.data)
-
-        if sparse:
-            ph.Ds = comm.bcast(ph.Ds)
 
         return ph
 

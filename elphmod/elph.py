@@ -473,6 +473,22 @@ class Model(object):
 
                 status.update()
 
+        if sparse:
+            elph.gs = comm.allreduce(elph.gs)
+
+            # DOK/CSR format efficient for matrix construction/calculations:
+
+            for x in range(elph.ph.size):
+                elph.gs[x] = elph.gs[x].tocsr()
+
+            if comm.rank == 0:
+                import pickle
+
+                print('Sparse representation of coupling requires %.6f GB'
+                    % (len(pickle.dumps(elph.gs)) / 1e9))
+
+            return elph
+
         elph.Rg = np.array(sorted(set().union(*comm.allgather(Rg))))
         elph.Rk = np.array(sorted(set().union(*comm.allgather(Rk))))
 
@@ -508,20 +524,6 @@ class Model(object):
             for g in range(len(elph.Rg)):
                 elph.images.Allreduce(MPI.MPI.IN_PLACE,
                     elph.data[g].view(dtype=float))
-
-        if sparse:
-            elph.gs = comm.allreduce(elph.gs)
-
-            # DOK/CSR format efficient for matrix construction/calculations:
-
-            for x in range(elph.ph.size):
-                elph.gs[x] = elph.gs[x].tocsr()
-
-            if comm.rank == 0:
-                import pickle
-
-                print('Sparse representation of coupling requires %.6f GB'
-                    % (len(pickle.dumps(elph.gs)) / 1e9))
 
         return elph
 
