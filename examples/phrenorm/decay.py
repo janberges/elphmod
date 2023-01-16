@@ -15,7 +15,8 @@ R2, H2 = elphmod.el.decayH('TaS2', **pwi)
 
 if elphmod.MPI.comm.rank == 0:
     plt.plot(R1, H1, 'o', color='blue', markersize=10, label='EPW output')
-    plt.plot(R2, H2, 'o', color='orange', label='calculated from Wannier90 data')
+    plt.plot(R2, H2, 'o', color='orange',
+        label='calculated from Wannier90 data')
 
     plt.ylabel('Hopping (eV)')
     plt.xlabel(r'Distance ($\mathrm{\AA}$)')

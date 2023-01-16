@@ -1249,24 +1249,21 @@ def eband(pw_scf_out, subset=None):
 
     Change::
 
-        WRITE( stdout, 9060 ) &
-            ( eband + deband ), ehart, ( etxc - etxcc ), ewld
+        WRITE( stdout, 9062 ) (eband + deband), ehart, ( etxc - etxcc ), ewld
 
     to::
 
-        WRITE( stdout, 9060 ) &
-            eband, ( eband + deband ), ehart, ( etxc - etxcc ), ewld
+        WRITE( stdout, 9062 ) eband, &
+           (eband + deband), ehart, ( etxc - etxcc ), ewld
 
     and::
 
-        9060 FORMAT(/'     The total energy is the sum of the following terms:',/,&
-                /'     one-electron contribution =',F17.8,' Ry' &
+        9062 FORMAT( '     one-electron contribution =',F17.8,' Ry' &
 
     to::
 
-        9060 FORMAT(/'     The total energy is the sum of the following terms:',/,&
-                /'     sum bands                 =',F17.8,' Ry' &
-                /'     one-electron contribution =',F17.8,' Ry' &
+        9062 FORMAT( '     sum bands                 =',F17.8,' Ry' &
+                    /'     one-electron contribution =',F17.8,' Ry' &
 
     Parameters
     ----------

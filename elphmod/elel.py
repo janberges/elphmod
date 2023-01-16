@@ -78,8 +78,10 @@ class Model(object):
             Wq = read_orbital_Coulomb_interaction(uijkl, nq, no, dd=True)
 
             if vijkl_full is not None and vijkl_redu is not None:
-                Wq += read_orbital_Coulomb_interaction(vijkl_full, nq, no, dd=True)
-                Wq -= read_orbital_Coulomb_interaction(vijkl_redu, nq, no, dd=True)
+                Wq += read_orbital_Coulomb_interaction(vijkl_full, nq, no,
+                    dd=True)
+                Wq -= read_orbital_Coulomb_interaction(vijkl_redu, nq, no,
+                    dd=True)
 
             Wq = Wq.reshape((nq, nq, 1, no, no))
 

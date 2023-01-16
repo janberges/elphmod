@@ -10,7 +10,8 @@ import elphmod
 import re
 import numpy as np
 import sys
-from modes_modules import supercell_vectors, permutation_finder, align_structures
+from modes_modules import (supercell_vectors, permutation_finder,
+    align_structures)
 import matplotlib.pyplot as plt
 
 symmetrize = True
