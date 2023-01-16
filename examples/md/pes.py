@@ -11,6 +11,7 @@ sys.path.append('..')
 import data.graphene
 import elphmod
 import subprocess
+import time
 
 el = elphmod.el.Model('../data/graphene', rydberg=True)
 ph = elphmod.ph.Model('../data/graphene.ifc', divide_mass=False)
@@ -25,6 +26,8 @@ driver.random_displacements(amplitude=0.1)
 driver.to_xyz('init.xyz')
 
 subprocess.Popen(['i-pi', 'input.xml'])
+
+time.sleep(2) # wait for i-PI to load and create a socket
 
 driver.plot(interactive=True)
 
