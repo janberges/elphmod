@@ -3,6 +3,8 @@
 # Copyright (C) 2017-2023 elphmod Developers
 # This program is free software under the terms of the GNU GPLv3 or later.
 
+source elphmodenv
+
 url=https://pseudopotentials.quantum-espresso.org/upf_files
 
 for pp in S.pbe-hgh.UPF Ta.pbe-hgh.UPF

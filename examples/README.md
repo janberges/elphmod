@@ -1,7 +1,8 @@
 # elphmod examples
 
 This directory contains examples that demonstrate the different functionalities
-of elphmod. To run them, the scripts `run.sh` can be used.
+of elphmod. To run them, the scripts `run.sh` can be used. `elphmod/elphmod` and
+`elphmod/bin` must be on `sys.path`/`PYTHONPATH` and `PATH`, respectively.
 
 * `coulomb.py` - Coulomb interaction from VASP
 * `dos.py` - density of states via smearing and tetrahedron methods

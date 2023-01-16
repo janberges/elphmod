@@ -3,6 +3,8 @@
 # Copyright (C) 2017-2023 elphmod Developers
 # This program is free software under the terms of the GNU GPLv3 or later.
 
+source elphmodenv
+
 url=https://pseudopotentials.quantum-espresso.org/upf_files
 
 for pp in S.pbe-hgh.UPF Ta.pbe-hgh.UPF
@@ -18,7 +20,7 @@ do
     mpirun ph.x -nk $nk < $method.in | tee $method.out
 
     mpirun q2r.x < q2r-$method.in | tee q2r-$method.out
-    fildyn=$method.dyn dvscf_dir=$method.save ../../bin/ph2epw
+    fildyn=$method.dyn dvscf_dir=$method.save ph2epw
 
     mpirun pw.x -nk $nk < nscf.in | tee nscf.out
     mpirun -n $nk epw.x -nk $nk < epw-$method.in | tee epw-$method.out
