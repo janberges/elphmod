@@ -1656,11 +1656,11 @@ def read_pwi(pwi):
                             struct['r'][n, x] = float(words[1 + x])
 
                 elif key == 'k_points':
-                    struct['ktyp'] = words[1]
+                    struct['ktyp'] = words[1].lower()
 
                     if 'automatic' in struct['ktyp']:
                         struct[key] = list(map(int, next(lines).split()))
-                    else:
+                    elif 'gamma' not in struct['ktyp']:
                         struct['nks'] = int(next(lines))
                         struct[key] = np.empty((struct['nks'], 4))
 
@@ -1750,12 +1750,12 @@ def write_pwi(pwi, struct):
 
         data.write('\n')
 
-        if 'k_points' in struct:
+        if 'ktyp' in struct:
             data.write('K_POINTS %s\n' % struct['ktyp'])
 
             if 'automatic' in struct['ktyp']:
                 data.write('%d %d %d %d %d %d\n' % tuple(struct['k_points']))
-            else:
+            elif 'gamma' not in struct['ktyp']:
                 data.write('%d\n' % struct['nks'])
 
                 for (kx, ky, kz, wk) in struct['k_points']:

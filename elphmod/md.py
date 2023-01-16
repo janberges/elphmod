@@ -521,8 +521,11 @@ class Driver(object):
         pw['cell_units'] = 'alat'
         pw['r_cell'] = self.elph.ph.a / a
 
-        pw['ktyp'] = 'automatic'
-        pw['k_points'] = tuple(self.nk) + (0, 0, 0)
+        if self.nk.prod() == 1:
+            pw['ktyp'] = 'gamma'
+        else:
+            pw['ktyp'] = 'automatic'
+            pw['k_points'] = tuple(self.nk) + (0, 0, 0)
 
         pw.update(kwargs)
 
