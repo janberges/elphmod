@@ -1705,7 +1705,8 @@ def write_pwi(pwi, struct):
     with open(pwi, 'w') as data:
         data.write('&CONTROL\n')
 
-        for key in ['prefix', 'outdir', 'pseudo_dir', 'calculation']:
+        for key in ['title', 'prefix', 'outdir', 'pseudo_dir', 'calculation',
+                'tprnfor', 'tstress']:
             if key in struct:
                 data.write('%s = %r\n' % (key, struct[key]))
 
@@ -1718,10 +1719,10 @@ def write_pwi(pwi, struct):
                 if celldm:
                     data.write('celldm(%d) = %r\n' % (i, celldm))
 
-        for key in ['ibrav', 'ntyp', 'nat', 'a', 'b', 'c', 'cosbc', 'cosac',
-                'cosab', 'ecutwfc', 'ecutrho', 'nbnd', 'occupations',
-                'smearing', 'degauss', 'nosym', 'tot_charge',
-                'assume_isolated']:
+        for key in ['ibrav', 'ntyp', 'nat', 'celldm', 'a', 'b', 'c', 'cosbc',
+                'cosac', 'cosab', 'ecutwfc', 'ecutrho', 'nbnd', 'occupations',
+                'smearing', 'degauss', 'nosym', 'noinv', 'tot_charge',
+                'assume_isolated', 'nspin', 'noncolin', 'lspinorb']:
             if key in struct:
                 data.write('%s = %r\n' % (key, struct[key]))
 
@@ -1729,7 +1730,8 @@ def write_pwi(pwi, struct):
 
         data.write('&ELECTRONS\n')
 
-        for key in ['conv_thr', 'diago_full_acc', 'mixing_beta']:
+        for key in ['conv_thr', 'diagonalization', 'diago_full_acc',
+                'mixing_beta', 'startingpot', 'startingwfc']:
             if key in struct:
                 data.write('%s = %r\n' % (key, struct[key]))
 
