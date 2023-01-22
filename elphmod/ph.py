@@ -133,7 +133,7 @@ class Model(object):
 
         q = np.array([q1, q2, q3])
 
-        # Sign convention in do_q3r.f90 of QE:
+        # Sign convention in do_q2r.f90 of QE:
         # 231  CALL cfft3d ( phid (:,j1,j2,na1,na2), &
         # 232       nr1,nr2,nr3, nr1,nr2,nr3, 1, 1 )
         # 233  phid(:,j1,j2,na1,na2) = &

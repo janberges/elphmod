@@ -81,14 +81,14 @@ class Model(object):
         k = np.array([k1, k2, k3])
 
         # Sign convention in hamiltonian.f90 of Wannier90:
-        # 295  fac=exp(-cmplx_i*rdotk)/real(num_kpts,dp)
-        # 296  ham_r(:,:,irpt)=ham_r(:,:,irpt)+fac*ham_k(:,:,loop_kpt)
+        # 300  fac = exp(-cmplx_i*rdotk)/real(num_kpts, dp)
+        # 301  ham_r(:, :, irpt) = ham_r(:, :, irpt) + fac*ham_k(:, :, loop_kpt)
 
         # Note that the data from Wannier90 can be interpreted like this:
-        # self.data[self.R == R - R', a, b] = <R' a|H|R b> = <R b|H|R' a>
+        # self.data[self.R == R - R', a, b] = <R' a|H|R b>
 
         # Compare this convention [doi:10.26092/elib/250, Eq. 2.35a]:
-        # t(R - R', a, b) = <R a|H|R' b> = <R' b|H|R a>
+        # t(R - R', a, b) = <R a|H|R' b>
 
         return np.einsum('Rab,R->ab', self.data, np.exp(1j * self.R.dot(k)))
 
