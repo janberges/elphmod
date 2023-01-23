@@ -1114,16 +1114,9 @@ def write_flfrc(flfrc, phid, amass, at, tau, atom_order, epsil=None, zeu=None):
     """
     dyn = isinstance(phid, tuple)
 
-    # undo division by atomic masses:
-
     if dyn:
-        q, D = phid
-
-        D = np.copy(D)
-
-        for na in range(len(amass)):
-            D[:, group(na), :] *= np.sqrt(amass[na])
-            D[:, :, group(na)] *= np.sqrt(amass[na])
+        q = phid[0]
+        D = np.array(phid[1])
 
     atm, amass = tuple(zip(*sorted(set(zip(atom_order, amass)))))
 
@@ -1734,7 +1727,7 @@ def q2r(ph, D_irr=None, q_irr=None, nq=None, D_full=None, angle=60,
 
 def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
         write_fildyn0=True, apply_asr=False, apply_asr_simple=False,
-        apply_rsr=False, qe_prefix='', clean=False):
+        apply_rsr=False, divide_mass=True, qe_prefix='', clean=False):
     """Interpolate dynamical matrices given for irreducible wedge of q points.
 
     This function still uses the Quantum ESPRESSO executables ``q2qstar.x`` and
@@ -1775,6 +1768,9 @@ def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
         the self force constant to minus the sum of all other force constants.
     apply_rsr : bool
         Enforce rotation sum rule by overwriting self force constants?
+    divide_mass : bool
+        Have input dynamical matrices been divided by atomic mass? This is
+        independent of ``ph.divide_mass``, which is always respected.
     qe_prefix : str
         String to prepend to names of Quantum ESPRESSO executables.
     clean : bool
@@ -1811,6 +1807,13 @@ def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
         write_q(fildyn + '0', q_cart, nq)
 
     # write and complete 'fildyn1', 'fildyn2', ... with dynamical matrices:
+
+    if divide_mass:
+        D = np.copy(D)
+
+        for na in range(len(amass)):
+            D[:, group(na), :] *= np.sqrt(amass[na])
+            D[:, :, group(na)] *= np.sqrt(amass[na])
 
     sizes, bounds = MPI.distribute(len(q), bounds=True)
 
