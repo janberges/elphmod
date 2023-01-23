@@ -140,7 +140,7 @@ class Model(object):
         # 234       phid(:,j1,j2,na1,na2) / DBLE(nr1*nr2*nr3)
         # The last argument of cfft3d is the sign (+1).
 
-        Dq = np.einsum('Rxy,R->xy', self.data, np.exp(-1j * self.R.dot(q)))
+        Dq = np.einsum('Rxy,R->xy', self.data, np.exp(1j * self.R.dot(q)))
 
         if self.lr:
             Dq += self.D_lr(q1, q2, q3)
@@ -573,7 +573,7 @@ class Model(object):
                     B = j * self.size
 
                     if sparse:
-                        ph.Ds[B:B + self.size, A:A + self.size] += self.data[n]
+                        ph.Ds[A:A + self.size, B:B + self.size] += self.data[n]
                         continue
 
                     R = R1, R2, R3
@@ -581,7 +581,7 @@ class Model(object):
                     if R not in const:
                         const[R] = np.zeros((ph.size, ph.size))
 
-                    const[R][B:B + self.size, A:A + self.size] = self.data[n]
+                    const[R][A:A + self.size, B:B + self.size] = self.data[n]
 
                 status.update()
 
@@ -636,7 +636,7 @@ class Model(object):
 
             for n in range(len(self.R)):
                 for i, cell in enumerate(self.cells):
-                    C = self.data[n, i * ph.size:(i + 1) * ph.size, :ph.size]
+                    C = self.data[n, :ph.size, i * ph.size:(i + 1) * ph.size]
 
                     if np.any(C != 0):
                         R = tuple(np.dot(self.R[n], self.N) + np.array(cell))
@@ -713,17 +713,17 @@ class Model(object):
 
             if j is None:
                 C = np.zeros((self.nat, 3, self.nat, 3))
-                C[s, :, :, :] = self.data[i, s, :, :, :]
+                C[:, :, s, :] = self.data[i, :, :, s, :]
                 C[s, :, s, :] = 0.0
                 new_R.append(R)
                 new_C.append(C)
             else:
                 old_R.remove(j)
-                data[j, s, :, :, :] = self.data[i, s, :, :, :]
+                data[j, :, :, s, :] = self.data[i, :, :, s, :]
                 data[j, s, :, s, :] = self.data[j, s, :, s, :]
 
         for j in old_R:
-            data[j, s, :, :, :] = 0.0
+            data[j, :, :, s, :] = 0.0
             data[j, s, :, s, :] = self.data[j, s, :, s, :]
 
         self.R = np.concatenate((self.R, new_R))
@@ -1285,7 +1285,7 @@ def asr(phid):
 
     for na1 in range(nat):
         phid[na1, na1, 0, 0, 0] = -sum(
-        phid[na2, na1, m1, m2, m3]
+        phid[na1, na2, m1, m2, m3]
             for na2 in range(nat)
             for m1 in range(nr1)
             for m2 in range(nr2)
@@ -1321,29 +1321,29 @@ def sum_rule_correction(ph, asr=True, rsr=True, eps=1e-15, report=True):
 
     def acoustic_sum():
         zero = 0.0
-        for l in range(ph.nat):
+        for k in range(ph.nat):
             for x in range(3):
                 for y in range(3):
                     S = 0.0
                     for n in range(len(R)):
-                        for k in range(ph.nat):
+                        for l in range(ph.nat):
                             S += C[n, k, x, l, y]
                     zero += abs(S)
         return zero
 
     def rotation_sum():
         zero = 0.0
-        for l in range(ph.nat):
+        for k in range(ph.nat):
             for x1 in range(3):
                 for x2 in range(3):
                     for y in range(3):
                         S = 0.0
                         for n in range(len(R)):
-                            for k in range(ph.nat):
+                            for l in range(ph.nat):
                                 S += (C[n, k, x1, l, y]
-                                    * (R[n, x2] + ph.r[k, x2]))
+                                    * (R[n, x2] + ph.r[l, x2]))
                                 S -= (C[n, k, x2, l, y]
-                                    * (R[n, x1] + ph.r[k, x1]))
+                                    * (R[n, x1] + ph.r[l, x1]))
                         zero += abs(S)
         return zero
 
@@ -1368,24 +1368,24 @@ def sum_rule_correction(ph, asr=True, rsr=True, eps=1e-15, report=True):
     c = []
 
     if asr:
-        for l in range(ph.nat):
+        for k in range(ph.nat):
             for x in range(3):
                 for y in range(3):
                     c.append(np.zeros_like(C))
                     for n in range(len(R)):
-                        for k in range(ph.nat):
+                        for l in range(ph.nat):
                             c[-1][n, k, x, l, y] += 1.0
 
     if rsr:
-        for l in range(ph.nat):
+        for k in range(ph.nat):
             for x1 in range(3):
                 for x2 in range(3):
                     for y in range(3):
                         c.append(np.zeros_like(C))
                         for n in range(len(R)):
-                            for k in range(ph.nat):
-                                c[-1][n, k, x1, l, y] += R[n, x2] + ph.r[k, x2]
-                                c[-1][n, k, x2, l, y] -= R[n, x1] + ph.r[k, x1]
+                            for l in range(ph.nat):
+                                c[-1][n, k, x1, l, y] += R[n, x2] + ph.r[l, x2]
+                                c[-1][n, k, x2, l, y] -= R[n, x1] + ph.r[l, x1]
 
     # symmetrize constraints (the force constants must be symmetric):
 
@@ -1427,7 +1427,7 @@ def short_range_model(phid, amass, at, tau, eps=1e-7, divide_mass=True,
 
     nat, nr1, nr2, nr3 = phid.shape[1:5]
 
-    supercells = [-1, 0, 1] # indices of central and neighboring supercells
+    supercells = range(-1, 3) # supercell shifts for Wigner-Seitz search
 
     C = np.empty((3, 3))
 
@@ -1446,9 +1446,9 @@ def short_range_model(phid, amass, at, tau, eps=1e-7, divide_mass=True,
                 # determine equivalent unit cells within considered supercells:
 
                 copies = np.array([[
-                        m1 + M1 * nr1,
-                        m2 + M2 * nr2,
-                        m3 + M3 * nr3,
+                        M1 * nr1 - m1,
+                        M2 * nr2 - m2,
+                        M3 * nr3 - m3,
                         ]
                     for M1 in supercells
                     for M2 in supercells
@@ -1463,7 +1463,7 @@ def short_range_model(phid, amass, at, tau, eps=1e-7, divide_mass=True,
                     for na2 in range(nat):
                         # find equivalent bond(s) within Wigner-Seitz cell:
 
-                        bonds = [r + tau[na1] - tau[na2] for r in shifts]
+                        bonds = [r + tau[na2] - tau[na1] for r in shifts]
                         lengths = [np.sqrt(np.dot(r, r)) for r in bonds]
                         length = min(lengths)
 

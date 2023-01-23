@@ -15,4 +15,3 @@ mark are not necessarily a good idea.
 * Read (and write?) dynamical matrices and force constants in XML format.
 * Drop Python-2 support in favor of things like `(nq, nph, *nk, nel, nel)`?
 * Replace status arguments etc. by global `elphmod(.misc).verbosity`.
-* Change sign convention in phononic Fourier transform? Many side effects!
