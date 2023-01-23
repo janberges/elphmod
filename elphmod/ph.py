@@ -628,6 +628,28 @@ class Model(object):
         B3 = np.cross(self.N[0], self.N[1])
         ph.a = np.dot(np.array([B1, B2, B3]).T, self.a) / len(self.cells)
 
+        ph.divide_mass = self.divide_mass
+        ph.divide_ndegen = self.divide_ndegen
+
+        ph.lr = self.lr
+        ph.L = self.L
+        ph.perp = self.perp
+        ph.eps = self.eps
+
+        if self.Z is None:
+            ph.Z = None
+        else:
+            ph.Z = self.Z[:ph.nat]
+
+        if self.Q is None:
+            ph.Q = None
+        else:
+            ph.Q = self.Q[:ph.nat]
+
+        if self.lr:
+            ph.lr2d = self.lr2d
+            ph.prepare_long_range()
+
         if comm.rank == 0:
             const = dict()
 
