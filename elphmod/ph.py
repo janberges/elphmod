@@ -850,6 +850,37 @@ class Model(object):
 
         return l[nonzero], C[nonzero]
 
+    def to_flfrc(self, flfrc, nr1, nr2, nr3):
+        """Save mass-spring model to force-constants file.
+
+        Parameters
+        ----------
+        flfrc : str
+            File name.
+        nr1, nr2, nr3 : int
+            Mesh dimensions.
+        """
+        phid = np.zeros((self.nat, self.nat, nr1, nr2, nr3, 3, 3))
+
+        sizes, bounds = MPI.distribute(len(self.R), bounds=True)
+
+        for n in range(*bounds[comm.rank:comm.rank + 2]):
+            m1, m2, m3 = -self.R[n] % (nr1, nr3, nr3)
+
+            phid[:, :, m1, m2, m3, :, :] += np.reshape(self.data[n],
+                (self.nat, 3, self.nat, 3)).transpose(0, 2, 1, 3)
+
+        comm.Reduce(MPI.MPI.IN_PLACE if comm.rank == 0 else phid, phid)
+
+        if comm.rank == 0:
+            if self.divide_mass:
+                for na in range(self.nat):
+                    phid[na, :] *= np.sqrt(self.M[na])
+                    phid[:, na] *= np.sqrt(self.M[na])
+
+            write_flfrc(flfrc, phid, self.M, self.a, self.r, self.atom_order,
+                self.eps, self.Z)
+
 def group(n, size=3):
     """Create slice of dynamical matrix belonging to `n`-th atom."""
 
@@ -1710,7 +1741,7 @@ def q2r(ph, D_irr=None, q_irr=None, nq=None, D_full=None, angle=60,
             phid[na, :] *= np.sqrt(ph.M[na])
             phid[:, na] *= np.sqrt(ph.M[na])
 
-    if flfrc:
+    if flfrc and comm.rank == 0:
         write_flfrc(flfrc, phid, ph.M, ph.a, ph.r, ph.atom_order, ph.eps, ph.Z)
 
     if apply_asr_simple:
