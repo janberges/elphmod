@@ -1118,7 +1118,8 @@ def write_flfrc(flfrc, phid, amass, at, tau, atom_order, epsil=None, zeu=None):
         q = phid[0]
         D = np.array(phid[1])
 
-    atm, amass = tuple(zip(*sorted(set(zip(atom_order, amass)))))
+    atm, amass = tuple(zip(*sorted(set(zip(atom_order, amass)),
+        key=lambda X: atom_order.index(X[0]))))
 
     with open(flfrc, 'w') as data:
         if dyn:

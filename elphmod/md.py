@@ -506,7 +506,9 @@ class Driver(object):
         **kwargs
             Keyword arguments with further parameters to be written.
         """
-        species = sorted(set(self.elph.ph.atom_order))
+        species = sorted(set(self.elph.ph.atom_order),
+            key=lambda X: self.elph.ph.atom_order.index(X))
+
         a = np.linalg.norm(self.elph.ph.a[0])
 
         pw = dict()
