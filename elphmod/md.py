@@ -7,6 +7,7 @@ from __future__ import division
 
 import copy
 import numpy as np
+import time
 
 from . import bravais, diagrams, dispersion, el, misc, MPI, occupations, ph
 
@@ -205,6 +206,9 @@ class Driver(object):
         show : bool
             Print free energy?
         """
+        if show:
+            t0 = time.time()
+
         if u is not None:
             self.u = u
 
@@ -224,7 +228,7 @@ class Driver(object):
         E += self.F0.dot(self.u)
 
         if show:
-            info('Free energy: %15.9f Ry' % E)
+            info('Free energy: %15.9f Ry; %13.3f s' % (E, time.time() - t0))
 
         return E
 
@@ -238,6 +242,9 @@ class Driver(object):
         show : bool
             Print free energy?
         """
+        if show:
+            t0 = time.time()
+
         if self.sparse:
             f = np.einsum('am,m,bm->ab',
                 self.U.conj(), self.f(self.e / self.kT), self.U).real
@@ -253,7 +260,8 @@ class Driver(object):
         F += self.F0
 
         if show:
-            info('Total force: %15.9f Ry/Bohr' % np.linalg.norm(F))
+            info('Total force: %15.9f Ry/Bohr; %8.3f s'
+                % (np.linalg.norm(F), time.time() - t0))
 
         return F
 
