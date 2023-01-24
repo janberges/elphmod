@@ -1706,7 +1706,7 @@ def write_pwi(pwi, struct):
         data.write('&CONTROL\n')
 
         for key in ['title', 'prefix', 'outdir', 'pseudo_dir', 'calculation',
-                'tprnfor', 'tstress']:
+                'tprnfor', 'tstress', 'nstep', 'forc_conv_thr']:
             if key in struct:
                 data.write('%s = %r\n' % (key, struct[key]))
 
@@ -1722,7 +1722,8 @@ def write_pwi(pwi, struct):
         for key in ['ibrav', 'ntyp', 'nat', 'celldm', 'a', 'b', 'c', 'cosbc',
                 'cosac', 'cosab', 'ecutwfc', 'ecutrho', 'nbnd', 'occupations',
                 'smearing', 'degauss', 'nosym', 'noinv', 'tot_charge',
-                'assume_isolated', 'nspin', 'noncolin', 'lspinorb']:
+                'assume_isolated', 'nspin', 'noncolin', 'lspinorb',
+                'tot_magnetization', 'starting_magnetization']:
             if key in struct:
                 data.write('%s = %r\n' % (key, struct[key]))
 
@@ -1731,11 +1732,31 @@ def write_pwi(pwi, struct):
         data.write('&ELECTRONS\n')
 
         for key in ['electron_maxstep', 'conv_thr', 'diagonalization',
-                'diago_full_acc', 'mixing_beta', 'startingpot', 'startingwfc']:
+                'diago_full_acc', 'mixing_beta', 'startingpot', 'startingwfc',
+                'scf_must_converge']:
             if key in struct:
                 data.write('%s = %r\n' % (key, struct[key]))
 
         data.write('/\n')
+
+        if struct.get('calculation') in {'relax', 'md', 'vc-relax', 'vc-md'}:
+            data.write('&IONS\n')
+
+            for key in ['ion_dynamics', 'upscale']:
+                if key in struct:
+                    data.write('%s = %r\n' % (key, struct[key]))
+
+            data.write('/\n')
+
+            if struct['calculation'] in {'vc-relax', 'vc-md'}:
+                data.write('&CELL\n')
+
+                for key in ['cell_dynamics', 'cell_dofree', 'press',
+                        'press_conv_thr']:
+                    if key in struct:
+                        data.write('%s = %r\n' % (key, struct[key]))
+
+                data.write('/\n')
 
         data.write('ATOMIC_SPECIES\n')
 
