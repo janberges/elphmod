@@ -1129,7 +1129,9 @@ def write_flfrc(flfrc, phid, amass, at, tau, atom_order, epsil=None, zeu=None):
 
         data.write('%3d %4d %2d' % (len(atm), len(atom_order), 0))
 
-        for celldm in 1, 0, 0, 0, 0, 0:
+        alat = np.linalg.norm(at[0])
+
+        for celldm in alat, 0, 0, 0, 0, 0:
             data.write(' %10.7f' % celldm)
 
         data.write('\n')
@@ -1141,7 +1143,7 @@ def write_flfrc(flfrc, phid, amass, at, tau, atom_order, epsil=None, zeu=None):
             data.write(' ')
 
             for y in range(3):
-                data.write(' %14.9f' % at[x, y])
+                data.write(' %14.9f' % (at[x, y] / alat))
 
             data.write('\n')
 
@@ -1156,7 +1158,7 @@ def write_flfrc(flfrc, phid, amass, at, tau, atom_order, epsil=None, zeu=None):
             data.write('%5d %4d' % (na + 1, atm.index(atom_order[na]) + 1))
 
             for x in range(3):
-                data.write(' %17.10f' % tau[na, x])
+                data.write(' %17.10f' % (tau[na, x] / alat))
 
             data.write('\n')
 
