@@ -991,7 +991,7 @@ def read_flfrc(flfrc):
         dyn = tmp[0] == 'Dynamical'
 
         if dyn:
-            next(data) # skip prefix
+            next(data) # skip title
             tmp = cells()
 
         # read crystal structure:
@@ -1004,6 +1004,9 @@ def read_flfrc(flfrc):
         if ibrav:
             at = bravais.primitives(ibrav, celldm=celldm, bohr=True)
         else: # free
+            if dyn:
+                next(data) # skip "Basis vectors"
+
             at = table(3) * celldm[0]
 
         # read palette of atomic species and masses:
