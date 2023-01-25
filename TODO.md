@@ -3,6 +3,7 @@
 The following things should/could be done sooner or later. Items with question
 mark are not necessarily a good idea.
 
+* Correct long-range part added to short-range part mapped to supercell.
 * Use generic (argument agnostic) function to write all QE input files.
 * Use `assume_isolated = '2D'` in all examples with 2D systems.
 * Consider that minima and maxima of bitmaps fall on pixel edges, not centers.
