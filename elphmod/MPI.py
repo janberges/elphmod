@@ -45,7 +45,8 @@ except ImportError:
             return [send]
 
         def Reduce(self, send, recv):
-            recv[...] = send.reshape(recv.shape)
+            if send is not MPI.IN_PLACE:
+                recv[...] = send.reshape(recv.shape)
 
         def Allreduce(self, send, recv):
             if send is not MPI.IN_PLACE:
