@@ -1719,8 +1719,8 @@ def write_pwi(pwi, struct):
                 if celldm:
                     data.write('celldm(%d) = %r\n' % (i, celldm))
 
-        for key in ['ibrav', 'ntyp', 'nat', 'celldm', 'a', 'b', 'c', 'cosbc',
-                'cosac', 'cosab', 'ecutwfc', 'ecutrho', 'nbnd', 'occupations',
+        for key in ['ibrav', 'ntyp', 'nat', 'a', 'b', 'c', 'cosbc', 'cosac',
+                'cosab', 'ecutwfc', 'ecutrho', 'nbnd', 'occupations',
                 'smearing', 'degauss', 'nosym', 'noinv', 'tot_charge',
                 'assume_isolated', 'nspin', 'noncolin', 'lspinorb',
                 'tot_magnetization', 'starting_magnetization']:
