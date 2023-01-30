@@ -228,7 +228,7 @@ class Driver(object):
         E += self.F0.dot(self.u)
 
         if show:
-            info('Free energy: %15.9f Ry; %13.3f s' % (E, time.time() - t0))
+            info('Free energy: %15.9f Ry; %16.6f s' % (E, time.time() - t0))
 
         return E
 
@@ -260,7 +260,7 @@ class Driver(object):
         F += self.F0
 
         if show:
-            info('Total force: %15.9f Ry/Bohr; %8.3f s'
+            info('Total force: %15.9f Ry/Bohr; %11.6f s'
                 % (np.linalg.norm(F), time.time() - t0))
 
         return F
