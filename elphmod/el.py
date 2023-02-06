@@ -619,8 +619,20 @@ def read_wsvecdat(wsvecdat):
     return supvecs
 
 def read_bands(filband):
-    """Read bands from *filband* just like Quantum ESRESSO's ``plotband.x``."""
+    """Read bands from *filband* just like Quantum ESRESSO's ``plotband.x``.
 
+    Parameters
+    ----------
+    filband : str
+        Filename.
+
+    Returns
+    -------
+    k : ndarray
+        k points in Cartesian coordiantes.
+    bands : ndarray
+        Band energies.
+    """
     if comm.rank == 0:
         data = open(filband)
 
@@ -664,6 +676,33 @@ def read_bands(filband):
     comm.Bcast(bands)
 
     return k, x, bands
+
+def write_bands(filband, k, bands):
+    """Write bands to *filband* just like Quantum ESPRESSO's ``plotband.x``.
+
+    Parameters
+    ----------
+    filband : str
+        Filename.
+    k : ndarray
+        k points in Cartesian coordiantes.
+    bands : ndarray
+        Band energies.
+    """
+    if comm.rank != 0:
+        return
+
+    with open(filband, 'w') as data:
+        data.write(' &plot nbnd=%4d, nks=%6d /\n' % (len(bands), len(k)))
+
+        for ik in range(len(k)):
+            data.write('%20.6f %9.6f %9.6f\n' % tuple(k[ik]))
+
+            for n, e in enumerate(bands[:, ik], 1):
+                data.write(' %8.3f' % e)
+
+                if not n % 10 or n == len(bands):
+                    data.write('\n')
 
 def read_bands_plot(filbandgnu, bands):
     """Read bands from *filband.gnu* produced by Quantum ESPRESSO's ``bands.x``.

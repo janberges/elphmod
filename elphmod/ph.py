@@ -936,7 +936,7 @@ def fildyn_freq(fildyn='matdyn'):
             freq.write('%20.6f %9.6f %9.6f\n' % tuple(q0[iq]))
 
             for nu, wnu in enumerate(w, 1):
-                freq.write('%10.4f' % wnu)
+                freq.write(' %9.4f' % wnu)
 
                 if not nu % 6 or nu == len(w):
                     freq.write('\n')
