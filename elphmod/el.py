@@ -677,7 +677,7 @@ def read_bands(filband):
 
     return k, x, bands
 
-def write_bands(filband, k, bands):
+def write_bands(filband, k, bands, fmt='%8.3f', cols=10):
     """Write bands to *filband* just like Quantum ESPRESSO's ``plotband.x``.
 
     Parameters
@@ -688,6 +688,10 @@ def write_bands(filband, k, bands):
         k points in Cartesian coordiantes.
     bands : ndarray
         Band energies.
+    fmt : str
+        Format string for band energies.
+    cols : int
+        Number of band energies per line.
     """
     if comm.rank != 0:
         return
@@ -699,9 +703,9 @@ def write_bands(filband, k, bands):
             data.write('%20.6f %9.6f %9.6f\n' % tuple(k[ik]))
 
             for n, e in enumerate(bands[:, ik], 1):
-                data.write(' %8.3f' % e)
+                data.write(' ' + fmt % e)
 
-                if not n % 10 or n == len(bands):
+                if not n % cols or n == len(bands):
                     data.write('\n')
 
 def read_bands_plot(filbandgnu, bands):
