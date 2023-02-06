@@ -856,7 +856,7 @@ class Model(object):
         Parameters
         ----------
         flfrc : str
-            File name.
+            Filename.
         nr1, nr2, nr3 : int
             Mesh dimensions.
         """
@@ -1125,7 +1125,7 @@ def write_flfrc(flfrc, phid, amass, at, tau, atom_order, epsil=None, zeu=None):
     Parameters
     ----------
     flfrc : str
-        File name.
+        Filename.
     phid : ndarray or tuple of list of ndarray
         Force constants or equivalent q points and corresponding dynamical
         matrices.
@@ -1274,7 +1274,7 @@ def read_quadrupole_fmt(quadrupole_fmt):
     Parameters
     ----------
     quadrupole_fmt : str
-        File name.
+        Filename.
 
     Returns
     -------
@@ -1321,7 +1321,7 @@ def write_quadrupole_fmt(quadrupole_fmt, Q):
     Parameters
     ----------
     quadrupole_fmt : str
-        File name.
+        Filename.
     Q : ndarray
         Quadrupole tensor.
 

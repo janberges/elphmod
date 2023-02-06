@@ -1600,7 +1600,7 @@ def read_pwi(pwi):
     Parameters
     ----------
     pwi : str
-        File name.
+        Filename.
 
     Returns
     -------
@@ -1695,7 +1695,7 @@ def write_pwi(pwi, struct):
     Parameters
     ----------
     pwi : str
-        File name.
+        Filename.
     struct : dict
         Crystal structure.
     """
@@ -1803,7 +1803,7 @@ def read_win(win):
     Parameters
     ----------
     win : str
-        File name.
+        Filename.
 
     Returns
     -------
@@ -1936,7 +1936,7 @@ def write_win(win, struct):
     Parameters
     ----------
     win : str
-        File name.
+        Filename.
     struct : dict
         Input data.
     """
@@ -2010,12 +2010,12 @@ def write_win(win, struct):
         data.write('end kpoints\n')
 
 def read_ph(filename):
-    """Read input parameters from Quantum ESPRESSO's ph file.
+    """Read input parameters from Quantum ESPRESSO's ``ph.x`` input file.
 
     Parameters
     ----------
     filename : str
-        ph file name.
+        Filename.
 
     Returns
     -------
@@ -2030,7 +2030,7 @@ def write_ph(ph, struct):
     Parameters
     ----------
     ph : str
-        File name.
+        Filename.
     struct : dict
         Input data.
     """
@@ -2066,12 +2066,12 @@ def write_ph(ph, struct):
         data.write('/\n')
 
 def read_q2r(filename):
-    """Read input parameters from Quantum ESPRESSO's q2r file.
+    """Read input parameters from Quantum ESPRESSO's ``q2r.x`` input file.
 
     Parameters
     ----------
     filename : str
-        q2r file name.
+        Filename.
 
     Returns
     -------
@@ -2086,7 +2086,7 @@ def write_q2r(q2r, struct):
     Parameters
     ----------
     q2r : str
-        File name.
+        Filename.
     struct : dict
         Input data.
     """
@@ -2103,12 +2103,12 @@ def write_q2r(q2r, struct):
         data.write('/\n')
 
 def read_matdyn(filename):
-    """Read input parameters from Quantum ESPRESSO's matdyn file.
+    """Read input parameters from Quantum ESPRESSO's ``matdyn.x`` input file.
 
     Parameters
     ----------
     filename : str
-        matdyn file name.
+        Filename.
 
     Returns
     -------
@@ -2145,7 +2145,7 @@ def write_matdyn(matdyn, struct):
     Parameters
     ----------
     matdyn : str
-        File name.
+        Filename.
     struct : dict
         Input data.
     """
@@ -2166,12 +2166,12 @@ def write_matdyn(matdyn, struct):
             data.write('%12.9f %12.9f %12.9f %.12g\n' % (kx, ky, kz, wk))
 
 def read_epw(filename):
-    """Read input parameters from Quantum ESPRESSO's epw file.
+    """Read input parameters from Quantum ESPRESSO's ``epw.x`` input file.
 
     Parameters
     ----------
     filename : str
-        epw file name.
+        Filename.
 
     Returns
     -------
@@ -2215,7 +2215,7 @@ def write_epw(epw, struct):
     Parameters
     ----------
     epw : str
-        File name.
+        Filename.
     struct : dict
         Input data.
     """
@@ -2316,7 +2316,7 @@ def readPOSCAR(filename):
     Parameters
     ----------
     filename : str
-        File name.
+        Filename.
 
     Returns
     -------

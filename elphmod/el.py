@@ -1529,7 +1529,7 @@ def read_pp_density(filename):
     Parameters
     ----------
     filename : str
-        filout output file name.
+        Filename.
 
     Returns
     -------
@@ -1612,7 +1612,7 @@ def read_rhoG_density(filename, ibrav, a=1.0, b=1.0, c=1.0):
     Parameters
     ----------
     filename : str
-        Output file name.
+        Filename.
     ibrav : integer
         Bravais lattice index (see ``pw.x`` input description).
     a, b, c : float
@@ -1688,7 +1688,7 @@ def read_wfc(filename, ibrav, a=1.0, b=1.0, c=1.0):
     Parameters
     ----------
     filename : str
-        Output file name.
+        Filename.
     ibrav : integer
         Bravais lattice index (see ``pw.x`` input description).
     a, b, c : float

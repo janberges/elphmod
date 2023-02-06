@@ -502,7 +502,7 @@ class Driver(object):
         Parameters
         ----------
         pwi : str
-            File name.
+            Filename.
         **kwargs
             Keyword arguments with further parameters to be written.
         """
