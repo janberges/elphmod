@@ -280,7 +280,9 @@ def toBZ(data=None, points=1000, interpolation=bravais.linear_interpolation,
 
     sizes, bounds = MPI.distribute(nky * nkx, bounds=True)
 
-    my_image = np.empty(sizes[comm.rank], dtype=data.dtype)
+    my_image = np.empty(sizes[comm.rank],
+        dtype=float if np.isrealobj(data) else complex)
+
     my_image[:] = outside
 
     angle0 *= np.pi / 180
@@ -309,7 +311,7 @@ def toBZ(data=None, points=1000, interpolation=bravais.linear_interpolation,
         my_image[n] = fun[idata](k1 * nk, k2 * nk)
 
     if broadcast or comm.rank == 0:
-        image = np.empty((nky, nkx), dtype=data.dtype)
+        image = np.empty((nky, nkx), dtype=my_image.dtype)
     else:
         image = None
 
