@@ -10,7 +10,6 @@ import numpy as np
 comm = elphmod.MPI.comm
 
 pwi = elphmod.bravais.read_pwi('scf.in')
-mu = elphmod.el.read_Fermi_level('scf.out')
 
 path = 'GMKG'
 k, x, corners = elphmod.bravais.path(path, **pwi, N=100 * np.sqrt(3) * pwi['a'])
