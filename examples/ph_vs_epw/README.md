@@ -1,0 +1,7 @@
+# PHonon vs EPW
+
+This example compares the electron-phonon matrix elements obtained from the
+PHonon and EPW codes. No agreement is expected for degenerate states.
+
+To get the coupling from EPW, you need a modified version of Quantum ESPRESSO.
+You can use the provided [patch](../../patches) to apply the required changes.
