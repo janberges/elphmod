@@ -1659,14 +1659,14 @@ def read_pwi(pwi):
                     struct['ktyp'] = words[1].lower()
 
                     if 'automatic' in struct['ktyp']:
-                        struct[key] = list(map(int, next(lines).split()))
+                        struct[key] = list(map(int, next(lines).split()[:6]))
                     elif 'gamma' not in struct['ktyp']:
                         struct['nks'] = int(next(lines))
                         struct[key] = np.empty((struct['nks'], 4))
 
                         for n in range(struct['nks']):
                             struct[key][n] = list(map(float,
-                                next(lines).split()))
+                                next(lines).split()[:4]))
 
                 elif key == 'cell_parameters':
                     struct['r_cell'] = np.empty((3, 3))
