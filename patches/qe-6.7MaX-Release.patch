@@ -43,10 +43,10 @@ index 7cddef733..e9a1b8bfc 100644
  ch_psi_all.o \
 diff --git a/LR_Modules/cdfpt.f90 b/LR_Modules/cdfpt.f90
 new file mode 100644
-index 000000000..d6bf2eef0
+index 000000000..9acb9b103
 --- /dev/null
 +++ b/LR_Modules/cdfpt.f90
-@@ -0,0 +1,165 @@
+@@ -0,0 +1,164 @@
 +!
 +! Copyright (C) 2001-2016 Quantum ESPRESSO group
 +! This file is distributed under the terms of the
@@ -151,7 +151,7 @@ index 000000000..d6bf2eef0
 +           ENDDO
 +           !
 +           DO ik = 1, nkstot
-+              CALL expand_k_index(ik, xk_proj(:, ik), k1, k2, k3)
++              CALL expand_k_index(xk_proj(:, ik), k1, k2, k3)
 +              !
 +              order(1) = 0
 +              CALL hpsort(nbnd, weights(:, ik), order)
@@ -189,8 +189,8 @@ index 000000000..d6bf2eef0
 +     !
 +     INTEGER :: kk1, kk2, kk3, kq1, kq2, kq3
 +     !
-+     CALL expand_k_index(ikk, xk(:, ikk), kk1, kk2, kk3)
-+     CALL expand_k_index(ikq, xk(:, ikq), kq1, kq2, kq3)
++     CALL expand_k_index(xk(:, ikk), kk1, kk2, kk3)
++     CALL expand_k_index(xk(:, ikq), kq1, kq2, kq3)
 +     !
 +     in_cdfpt_subspace = subspace(ibnd, kk1, kk2, kk3) &
 +        .AND. subspace(jbnd, kq1, kq2, kq3)
@@ -198,10 +198,9 @@ index 000000000..d6bf2eef0
 +  END FUNCTION in_cdfpt_subspace
 +  !
 +  !---------------------------------------------------------------------
-+  SUBROUTINE expand_k_index(ik, xki, k1, k2, k3)
++  SUBROUTINE expand_k_index(xki, k1, k2, k3)
 +     !------------------------------------------------------------------
 +     !
-+     INTEGER, INTENT(IN) :: ik
 +     REAL(DP), INTENT(IN) :: xki(3)
 +     INTEGER, INTENT(OUT) :: k1, k2, k3
 +     !
