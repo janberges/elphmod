@@ -3,6 +3,14 @@
 See [Git commits](https://github.com/janberges/elphmod/commits) for more
 detailed list of changes.
 
+## v0.18
+
+* Electron-phonon matrix elements directly from PHonon code (QE patch)
+* Consistent matrix-elements and Fourier-transform convention for phonons
+* Export of mass-spring models in QE force-constants format (`flfrc`)
+* Export of band structures in QE bands format (`filband`)
+* Some bugfixes and optimizations
+
 ## v0.17
 
 * Charge-density-wave molecular dynamics using i-PI
