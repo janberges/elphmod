@@ -526,6 +526,7 @@ class Model(object):
         ph.divide_ndegen = self.divide_ndegen
 
         ph.lr = self.lr
+        ph.lr2d = self.lr2d
         ph.L = self.L
         ph.perp = self.perp
         ph.eps = self.eps
@@ -541,7 +542,6 @@ class Model(object):
             ph.Q = np.tile(self.Q, (N, 1, 1, 1))
 
         if self.lr:
-            ph.lr2d = self.lr2d
             ph.prepare_long_range()
 
         if sparse:
@@ -632,6 +632,7 @@ class Model(object):
         ph.divide_ndegen = self.divide_ndegen
 
         ph.lr = self.lr
+        ph.lr2d = self.lr2d
         ph.L = self.L
         ph.perp = self.perp
         ph.eps = self.eps
@@ -647,7 +648,6 @@ class Model(object):
             ph.Q = self.Q[:ph.nat]
 
         if self.lr:
-            ph.lr2d = self.lr2d
             ph.prepare_long_range()
 
         if comm.rank == 0:
