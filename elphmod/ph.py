@@ -251,6 +251,8 @@ class Model(object):
 
         self.lr2d = lr2d_guess if lr2d is None else lr2d
 
+        self.scale = None
+
         if self.lr:
             if self.lr2d != lr2d:
                 info('Warning: System is assumed to be %s-dimensional.'
@@ -289,7 +291,8 @@ class Model(object):
         Parameters
         ----------
         alpha : float
-            Ewald parameter.
+            Ewald parameter. This only sets the attribute :attr:`scale` if it is
+            not defined yet.
         G_max : float
             Cutoff for reciprocal lattice vectors.
         """
@@ -309,7 +312,9 @@ class Model(object):
             self.prefactor = 4 * np.pi * e2 / volume
 
         a = np.linalg.norm(self.a[0])
-        self.scale = 4 * alpha * (2 * np.pi / a) ** 2
+
+        if self.scale is None:
+            self.scale = 4 * alpha * (2 * np.pi / a) ** 2
 
         nr = 1 + (np.sqrt(self.scale * G_max)
             / np.linalg.norm(2 * np.pi * self.b, axis=1)).astype(int)
@@ -527,6 +532,7 @@ class Model(object):
 
         ph.lr = self.lr
         ph.lr2d = self.lr2d
+        ph.scale = self.scale
         ph.L = self.L
         ph.perp = self.perp
         ph.eps = self.eps
@@ -633,6 +639,7 @@ class Model(object):
 
         ph.lr = self.lr
         ph.lr2d = self.lr2d
+        ph.scale = self.scale
         ph.L = self.L
         ph.perp = self.perp
         ph.eps = self.eps
