@@ -476,9 +476,15 @@ class Model(object):
         if sparse:
             elph.gs = comm.allreduce(elph.gs)
 
-            # DOK/CSR format efficient for matrix construction/calculations:
+            if elph.ph.lr:
+                g_lr = elph.g_lr().real
 
             for x in range(elph.ph.size):
+                if elph.ph.lr:
+                    elph.gs[x].setdiag(g_lr[x])
+
+                # DOK/CSR format efficient for matrix construction/calculations:
+
                 elph.gs[x] = elph.gs[x].tocsr()
 
             if comm.rank == 0:
