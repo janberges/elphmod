@@ -417,6 +417,12 @@ class Model(object):
             elph.gs = np.array([sparse_array((elph.el.size, elph.el.size))
                 for x in range(elph.ph.size)])
 
+            if elph.ph.lr:
+                g_lr = elph.g_lr().real
+
+                for x in range(elph.ph.size):
+                    elph.gs[x].setdiag(g_lr[x])
+
             if abs(self.data.imag).sum() / abs(self.data.real).sum() > 1e-6:
                 info('Warning: Significant imaginary part of coupling ignored')
 
@@ -476,15 +482,9 @@ class Model(object):
         if sparse:
             elph.gs = comm.allreduce(elph.gs)
 
-            if elph.ph.lr:
-                g_lr = elph.g_lr().real
+            # DOK/CSR format efficient for matrix construction/calculations:
 
             for x in range(elph.ph.size):
-                if elph.ph.lr:
-                    elph.gs[x].setdiag(g_lr[x])
-
-                # DOK/CSR format efficient for matrix construction/calculations:
-
                 elph.gs[x] = elph.gs[x].tocsr()
 
             if comm.rank == 0:
