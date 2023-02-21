@@ -836,7 +836,8 @@ def sample(g, q, nk=None, U=None, u=None, squared=False, broadcast=True,
     col.Barrier() # should not be necessary
 
     if node.rank == 0:
-        images.Bcast(g.view(dtype=float))
+        for iq in range(len(q)):
+            images.Bcast(g[iq].view(dtype=float))
 
     node.Barrier()
 
