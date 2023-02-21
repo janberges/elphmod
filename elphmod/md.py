@@ -371,7 +371,8 @@ class Driver(object):
 
         return rho_at
 
-    def plot(self, interactive=None, scale=None, padding=1.0, size=100.0):
+    def plot(self, interactive=None, scale=None, padding=1.0, size=100.0,
+            label=False):
         """Plot crystal structure and displacements.
 
         Parameters
@@ -386,6 +387,8 @@ class Driver(object):
             Padding between crystal and plotting box in angstrom.
         size : float, optional
             Marker size for atoms.
+        label : bool, optional
+            Show atom indices?
         """
         if comm.rank != 0:
             return
@@ -417,6 +420,10 @@ class Driver(object):
             % misc.colors[X] for X in self.elph.ph.atom_order])
 
         self.quiver = self.axes.quiver(*r, *self.scale * u, color='gray')
+
+        if label:
+            for na in range(self.elph.ph.nat):
+                self.axes.text(*r[:, na], str(na))
 
         lims = [self.axes.set_xlim, self.axes.set_ylim, self.axes.set_zlim]
 
