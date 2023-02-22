@@ -338,7 +338,7 @@ class Driver(object):
         **kwargs
             Parameters passed to :func:`ph.q2r`.
         """
-        model = copy.copy(self.elph.ph)
+        model = copy.deepcopy(self.elph.ph)
         model.divide_mass = divide_mass
         model.r += self.u.reshape((-1, 3))
 
