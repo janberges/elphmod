@@ -1758,10 +1758,9 @@ def q2r(ph, D_irr=None, q_irr=None, nq=None, D_full=None, angle=60,
         asr(phid)
 
     if ph.L is not None:
-        S = abs(phid).sum() - np.trace(abs(phid))[0, 0, 0].sum()
-        S /= 2 * np.prod(nq)
+        S = abs(phid).sum() - np.trace(abs(phid))[0, 0, 0].sum() / np.prod(nq)
 
-        info('Sum of force constants: %g Hartree/Bohr^2 (L = %g)' % (S, ph.L))
+        info('Sum of force constants: %g Ry/Bohr^2 (L = %g Bohr)' % (S, ph.L))
 
     ph.R, ph.data, ph.l = short_range_model(phid, ph.M, ph.a, ph.r,
         divide_mass=ph.divide_mass, divide_ndegen=ph.divide_ndegen)
