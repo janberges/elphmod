@@ -703,6 +703,8 @@ class Model(object):
         *order : int
             New atom order.
         """
+        order = list(order)
+
         self.data = self.data.reshape((len(self.R), self.nat, 3, self.nat, 3))
 
         self.data = self.data[:, order, :, :, :]
