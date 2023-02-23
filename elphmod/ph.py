@@ -715,13 +715,13 @@ class Model(object):
         self.r = np.array([self.r[na] for na in order])
 
         if self.Z is not None:
-            ph.Z = self.Z[order]
+            self.Z = self.Z[order]
 
         if self.Q is not None:
-            ph.Q = self.Q[order]
+            self.Q = self.Q[order]
 
         if self.lr:
-            ph.prepare_long_range()
+            self.prepare_long_range()
 
     def shift_atoms(self, s, S):
         """Move selected atoms across unit-cell boundary.
