@@ -1080,7 +1080,7 @@ def read_flfrc(flfrc):
                 elif 'dielectric tensor' in line:
                     epsil = table(3)
 
-                elif 'effective charges' in line:
+                elif 'effective charges e-u' in line:
                     zeu = np.empty((nat, 3, 3))
 
                     for na in range(nat):
