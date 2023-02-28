@@ -505,6 +505,8 @@ class Model(object):
         elph.gq = np.empty((elph.ph.size, len(elph.Rk),
             elph.el.size, elph.el.size), dtype=complex)
 
+        elph.Rk0 = misc.vector_index(elph.Rk, (0, 0, 0))
+
         if elph.node.rank == 0:
             elph.data[...] = 0.0
 
