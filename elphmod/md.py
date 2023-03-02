@@ -309,7 +309,7 @@ class Driver(object):
         seedname : str
             Prefix of file with Hamiltonian in Wannier90 format.
         step : int, optional
-            Only use data for every `step`th k point along first and second
+            Only use data for every `step`-th k point along first and second
             axis? This reduces the size of the Hamiltonian file.
         """
         H = np.einsum('...an,...n,...bn->...ab', self.U, self.e, self.U.conj())
