@@ -556,7 +556,10 @@ class Model(object):
             except ImportError:
                 from scipy.sparse import dok_matrix as sparse_array
 
-            ph.Ds = sparse_array((ph.size, ph.size))
+            if ph.lr:
+                ph.Ds = sparse_array(ph.D_lr().real)
+            else:
+                ph.Ds = sparse_array((ph.size, ph.size))
 
         if comm.rank == 0:
             const = dict()
