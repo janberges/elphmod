@@ -1,4 +1,4 @@
-# PHonon vs EPW
+# Comparison of couplings from PHonon and EPW
 
 This example compares the electron-phonon matrix elements obtained from the
 PHonon and EPW codes. No agreement is expected for degenerate states.
