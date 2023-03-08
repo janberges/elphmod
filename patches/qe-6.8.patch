@@ -301,7 +301,7 @@ index 268ed5b82..02921cef3 100644
 +  LOGICAL :: elph, elph_mat, elph_simple, elph_epa, elph_defpot
    INTEGER :: elph_nbnd_min, elph_nbnd_max
 diff --git a/PHonon/PH/elphon.f90 b/PHonon/PH/elphon.f90
-index 35f710c56..c82428e9b 100644
+index 35f710c56..d0a39e6c9 100644
 --- a/PHonon/PH/elphon.f90
 +++ b/PHonon/PH/elphon.f90
 @@ -1806 +1806,61 @@ subroutine lint ( nsym, s, minus_q, at, bg, npk, k1,k2,k3, &
@@ -350,7 +350,7 @@ index 35f710c56..c82428e9b 100644
 +     DO jbnd = 1, nbnd
 +        DO ibnd = 1, nbnd
 +           DO ik = 1, nksqtot
-+              d = DOT_PRODUCT(d_pat(jbnd, ibnd, ik, :), CONJG(u(i, :)))
++              d = DOT_PRODUCT(u(i, :), d_pat(jbnd, ibnd, ik, :))
 +              !
 +              CALL expand_k_index(xk(:, &
 +                 MERGE(ik, 2 * ik - 1, lgamma)), k1, k2, k3)
