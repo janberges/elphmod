@@ -3,6 +3,11 @@
 See [Git commits](https://github.com/janberges/elphmod/commits) for more
 detailed list of changes.
 
+## v0.19
+
+* Several bugfixes related to supercells and long-range components
+* Experimental long-range part of sparse dynamical matrix and coupling
+
 ## v0.18
 
 * Electron-phonon matrix elements directly from PHonon code (QE patch)
