@@ -1309,7 +1309,14 @@ def read_flfrc_xml(flfrc):
 
     except ET.ParseError:
         with open(flfrc) as data:
-            root = ET.fromstring(data.read().replace('</root>', '</Root>'))
+            xml = data.read()
+
+            xml = xml.replace('</root>', '</Root>')
+
+            if not xml.rstrip().endswith('</Root>'):
+                xml += '</Root>'
+
+            root = ET.fromstring(xml)
 
     geometry = root.find('GEOMETRY_INFO')
 
