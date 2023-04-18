@@ -43,6 +43,7 @@ More sophisticated examples have their own subdirectory. Most of them require a
 * `phrenorm_3d` - phonon renormalization in polonium
 * `phrenorm_graphene` - phonon renormalization in graphene
 * `ph_vs_epw` - comparison of couplings from PHonon and EPW
+* `projwfc_1d` - projected band structure of carbon chain
 * `projwfc` - projected band structure of graphene
 * `projwfc_3d` - projected band structure of polonium
 * `simstm` - simulated STM image of 1H-TaS2

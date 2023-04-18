@@ -1,0 +1,14 @@
+*.amn
+*.chk
+*.eig
+*.mmn
+*.nnkp
+*.out
+*.pdos_atm*
+*.pdos_tot
+*.upf
+*.werr
+*.wout
+*_hr.dat
+*_wsvec.dat
+work

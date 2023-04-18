@@ -1,0 +1,40 @@
+num_wann 2
+num_bands 3
+
+begin projections
+C: px; py
+end projections
+
+exclude_bands 1
+
+dis_froz_max 0.0
+
+dis_num_iter 10000
+num_iter 0
+
+write_hr true
+
+begin unit_cell_cart
+7.0 0.0 0.00
+0.0 7.0 0.00
+0.0 0.0 1.28
+end unit_cell_cart
+
+begin atoms_frac
+C 0.5 0.5 0.5
+end atoms_frac
+
+mp_grid 1 1 10
+
+begin kpoints
+0.0 0.0 0.0
+0.0 0.0 0.1
+0.0 0.0 0.2
+0.0 0.0 0.3
+0.0 0.0 0.4
+0.0 0.0 0.5
+0.0 0.0 0.6
+0.0 0.0 0.7
+0.0 0.0 0.8
+0.0 0.0 0.9
+end kpoints

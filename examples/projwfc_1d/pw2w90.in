@@ -1,0 +1,5 @@
+&INPUTPP
+    prefix = 'C'
+    outdir = 'work'
+    seedname = 'C'
+/

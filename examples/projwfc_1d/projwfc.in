@@ -1,0 +1,4 @@
+&PROJWFC
+    prefix = 'C'
+    outdir = 'work'
+/
