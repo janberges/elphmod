@@ -184,10 +184,22 @@ class Model(object):
                     model += [model[0].shape[2:5], None, None]
 
                 except FileNotFoundError:
-                    nq, q0 = read_q('%s0' % flfrc)
+                    xml = flfrc.lower().endswith('.xml')
+
+                    if xml:
+                        try:
+                            nq, q0 = read_q('%s0' % flfrc[:-4])
+                        except FileNotFoundError:
+                            nq, q0 = read_q('%s0.xml' % flfrc[:-4])
+                    else:
+                        nq, q0 = read_q('%s0' % flfrc)
 
                     for iq0 in range(len(q0)):
-                        fildyn = '%s%d' % (flfrc, iq0 + 1)
+                        if xml:
+                            fildyn = ('%s%d%s'
+                                % (flfrc[:-4], iq0 + 1, flfrc[-4:]))
+                        else:
+                            fildyn = '%s%d' % (flfrc, iq0 + 1)
 
                         if iq0:
                             q, D = read_flfrc(fildyn)[0]
@@ -981,6 +993,9 @@ def read_flfrc(flfrc):
     --------
     write_flfrc : Inverse function.
     """
+    if flfrc.lower().endswith('.xml'):
+        return read_flfrc_xml(flfrc)
+
     with open(flfrc) as data:
         # read all words of current line:
 
@@ -1045,14 +1060,14 @@ def read_flfrc(flfrc):
 
         tau *= celldm[0]
 
+        amass = amass[ityp]
+
         atom_order = []
 
         for index in ityp:
             atom_order.append(atm[index].strip())
 
         epsil = zeu = None
-
-        amass = amass[ityp]
 
         if dyn:
             # read sections of dynamical-matrix file:
@@ -1279,6 +1294,117 @@ def write_flfrc(flfrc, phid, amass, at, tau, atom_order, epsil=None, zeu=None):
                                         data.write('%4d %3d %3d %19.11E\n'
                                             % (m1 + 1, m2 + 1, m3 + 1, phid
                                                 [na1, na2, m1, m2, m3, j1, j2]))
+
+def read_flfrc_xml(flfrc):
+    """Read force constants in real or reciprocal space from XML files.
+
+    See Also
+    --------
+    read_flfrc : Equivalent function for non-XML files.
+    """
+    import xml.etree.ElementTree as ET
+
+    try:
+        root = ET.parse(flfrc).getroot()
+
+    except ET.ParseError:
+        with open(flfrc) as data:
+            root = ET.fromstring(data.read().replace('</root>', '</Root>'))
+
+    geometry = root.find('GEOMETRY_INFO')
+
+    ntyp = int(geometry.find('NUMBER_OF_TYPES').text)
+    nat = int(geometry.find('NUMBER_OF_ATOMS').text)
+    ibrav = int(geometry.find('BRAVAIS_LATTICE_INDEX').text)
+
+    celldm = list(map(float, geometry.find('CELL_DIMENSIONS').text.split()))
+
+    if ibrav:
+        at = bravais.primitives(ibrav, celldm=celldm, bohr=True)
+    else:
+        at = list(map(float, geometry.find('AT').text.split()))
+        at = np.array(at).reshape((3, 3)) * celldm[0]
+
+    atm = []
+    amass = np.empty(ntyp)
+
+    for nt in range(ntyp):
+        atm.append(geometry.find('TYPE_NAME.%d' % (nt + 1)).text)
+        amass[nt] = float(geometry.find('MASS.%d' % (nt + 1)).text)
+
+    ityp = np.empty(nat, dtype=int)
+    tau = np.empty((nat, 3))
+
+    for na in range(nat):
+        atom = geometry.find('ATOM.%d' % (na + 1))
+
+        ityp[na] = int(atom.attrib['INDEX']) - 1
+        tau[na, :] = list(map(float, atom.attrib['TAU'].split()))
+
+    tau *= celldm[0]
+
+    amass = amass[ityp] * misc.uRy
+
+    atom_order = []
+
+    for index in ityp:
+        atom_order.append(atm[index])
+
+    dielect = root.find('DIELECTRIC_PROPERTIES')
+
+    epsil = dielect.find('EPSILON')
+
+    if epsil is not None:
+        epsil = np.reshape(list(map(float, epsil.text.split())), (3, 3))
+
+    zeu = dielect.find('ZSTAR')
+
+    if zeu is not None:
+        zeu = np.reshape([list(map(float, zeu.find('Z_AT_.%d'
+            % (na + 1)).text.split())) for na in range(nat)], (nat, 3, 3))
+
+    ifc = root.find('INTERATOMIC_FORCE_CONSTANTS')
+
+    if ifc:
+        nr1, nr2, nr3 = map(int, ifc.find('MESH_NQ1_NQ2_NQ3').text.split())
+
+        phid = np.empty((nat, nat, nr1, nr2, nr3, 3, 3))
+
+        for na1 in range(nat):
+            for na2 in range(nat):
+                for m3 in range(nr3):
+                    for m2 in range(nr2):
+                        for m1 in range(nr1):
+                            tmp = ifc.find('s_s1_m1_m2_m3.%d.%d.%d.%d.%d'
+                                % (na1 + 1, na2 + 1, m1 + 1, m2 + 1, m3 + 1))
+
+                            tmp = list(map(float, tmp.find('IFC').text.split()))
+
+                            tmp = np.reshape(tmp, (3, 3)).T
+
+                            phid[na1, na2, m1, m2, m3] = tmp
+    else:
+        nq = int(geometry.find('NUMBER_OF_Q').text)
+
+        q = np.empty((nq, 3))
+        D = np.empty((nq, 3 * nat, 3 * nat), dtype=complex)
+
+        for iq in range(nq):
+            dynmat = root.find('DYNAMICAL_MAT_.%d' % (iq + 1))
+
+            q[iq] = list(map(float, dynmat.find('Q_POINT').text.split()))
+            q[iq] /= celldm[0]
+
+            for na1 in range(nat):
+                for na2 in range(nat):
+                    tmp = np.array(list(map(float, dynmat.find('PHI.%d.%d'
+                        % (na1 + 1, na2 + 1)).text.split())))
+
+                    tmp = np.reshape(tmp[0::2] + 1j * tmp[1::2], (3, 3)).T
+
+                    D[iq, group(na1), group(na2)] = tmp
+
+    return [phid if ifc else (q, D), amass, at, tau, atom_order, epsil, zeu]
 
 def read_quadrupole_fmt(quadrupole_fmt):
     """Read file *quadrupole.fmt* suitable for ``epw.x``.

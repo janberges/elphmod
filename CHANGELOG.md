@@ -3,6 +3,8 @@
 See [Git commits](https://github.com/janberges/elphmod/commits) for more
 detailed list of changes.
 
+* Dynamical matrices and force constants from XML files
+
 ## v0.19
 
 * Several bugfixes related to supercells and long-range components

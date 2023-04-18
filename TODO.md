@@ -3,6 +3,7 @@
 The following things should/could be done sooner or later. Items with question
 mark are not necessarily a good idea.
 
+* Read Wannier-function centres from `_centres.xyz`.
 * Patch version 7.2 of Quantum ESPRESSO.
 * Add long-range argument `lr` to electron-phonon class `elph`?
 * Save `_wsvec.dat` together with `_hr.dat` file (important for small meshes).
@@ -17,6 +18,5 @@ mark are not necessarily a good idea.
 * Save `el.Model`, `ph.Model`, and `elph.Model` to files (`_hr.dat`, `flfrc`).
 * Move I/O functions and numerical constants to separate modules.
 * Free local memory after data has been gathered in global memory.
-* Read (and write?) dynamical matrices and force constants in XML format.
 * Drop Python-2 support in favor of things like `(nq, nph, *nk, nel, nel)`?
 * Replace status arguments etc. by global `elphmod(.misc).verbosity`.
