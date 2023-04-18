@@ -4,7 +4,6 @@ The following things should/could be done sooner or later. Items with question
 mark are not necessarily a good idea.
 
 * Read Wannier-function centres from `_centres.xyz`.
-* Patch version 7.2 of Quantum ESPRESSO.
 * Add long-range argument `lr` to electron-phonon class `elph`?
 * Save `_wsvec.dat` together with `_hr.dat` file (important for small meshes).
 * Remember order of atomic species in header of force-constant files.

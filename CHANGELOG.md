@@ -3,6 +3,7 @@
 See [Git commits](https://github.com/janberges/elphmod/commits) for more
 detailed list of changes.
 
+* QE-7.2 support (cDFPT patch)
 * Dynamical matrices and force constants from XML files
 
 ## v0.19
