@@ -3,7 +3,7 @@ TaS2
     prefix = 'TaS2'
     outdir = 'work'
 
-    fildyn = 'dyn'
+    fildyn = 'dyn.xml'
     fildvscf = 'dvscf'
 
     ldisp = .true.

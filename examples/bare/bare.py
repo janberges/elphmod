@@ -11,7 +11,7 @@ comm = elphmod.MPI.comm
 
 colors = ['skyblue', 'dodgerblue', 'orange']
 
-ph = elphmod.ph.Model('dyn')
+ph = elphmod.ph.Model('dyn.xml')
 
 def cost(L):
     ph.L, = L
