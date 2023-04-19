@@ -9,7 +9,11 @@ set -e
 : ${outdir:=work}
 : ${dvscf_dir:=save}
 
-if test ! -e "$fildyn"1 -o ! -e "$outdir"
+fildyn=${fildyn%.xml}
+
+test -e "$fildyn"1.xml && ext=.xml || ext=""
+
+if test ! -e "$fildyn"1$ext -o ! -e "$outdir"
 then
     echo "Usage: [fildyn=...] [outdir=...] [dvscf_dir=...] ph2epw"
     exit 1
@@ -24,13 +28,14 @@ do
 
     cp -r "$phsave" "$dvscf_dir"
 
-    for dyn in "$fildyn"*
+    for dyn in "$fildyn"*$ext
     do
         n=${dyn#$fildyn}
+        n=${n%$ext}
 
         test $n -eq 0 && continue
 
-        cp "$dyn" "$dvscf_dir/$prefix.dyn_q$n"
+        cp "$dyn" "$dvscf_dir/$prefix.dyn_q$n$ext"
 
         orig="$outdir/_ph0"
 

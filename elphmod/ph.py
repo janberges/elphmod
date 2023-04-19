@@ -18,8 +18,9 @@ class Model(object):
     Parameters
     ----------
     flfrc : str
-        File with interatomic force constants from ``q2r.x`` or prefix of files
-        with dynamical matrices from ``ph.x``.
+        File with interatomic force constants from ``q2r.x`` or common filename
+        part (without appended/inserted q-point number) of dynamical matrices
+        from ``ph.x``. Both the plain-text and XML format are supported.
     quadrupole_fmt : str
         File with quadrupole tensors in format suitable for ``epw.x``.
     apply_asr : bool

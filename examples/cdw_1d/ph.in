@@ -3,7 +3,7 @@ C
     prefix = 'C'
     outdir = 'work'
 
-    fildyn = 'dyn'
+    fildyn = 'dyn.xml'
     fildvscf = 'dvscf'
 
     ldisp = .true.

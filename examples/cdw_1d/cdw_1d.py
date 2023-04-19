@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import scipy.optimize
 
 el = elphmod.el.Model('C', rydberg=True)
-ph = elphmod.ph.Model('dyn', divide_mass=False, apply_asr_simple=True)
+ph = elphmod.ph.Model('dyn.xml', divide_mass=False, apply_asr_simple=True)
 elph = elphmod.elph.Model('work/C.epmatwp', 'wigner.dat',
     el, ph, divide_mass=False)
 
