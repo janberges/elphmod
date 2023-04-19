@@ -1,0 +1,27 @@
+C
+&INPUTEPW
+    prefix = 'C'
+    outdir = 'work/'
+    dvscf_dir = 'save'
+
+    wannierize = .true.
+    elph = .true.
+    use_ws = .true.
+    epwwrite = .true.
+
+    nbndsub = 2
+    bands_skipped = 'exclude_bands 1'
+
+    proj(1) = 'C: px; py'
+
+    dis_froz_max = 0.0
+
+    num_iter = 0
+    wdata(1) = 'dis_num_iter 10000'
+
+    nk1 = 1, nk2 = 1, nk3 = 10
+    nq1 = 1, nq2 = 1, nq3 = 5
+
+    nkf1 = 1, nkf2 = 1, nkf3 = 10
+    nqf1 = 1, nqf2 = 1, nqf3 = 5
+/

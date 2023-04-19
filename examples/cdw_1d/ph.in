@@ -1,0 +1,15 @@
+C
+&INPUTPH
+    prefix = 'C'
+    outdir = 'work'
+
+    fildyn = 'dyn'
+    fildvscf = 'dvscf'
+
+    ldisp = .true.
+    nq1 = 1
+    nq2 = 1
+    nq3 = 5
+
+    tr2_ph = 1e-12
+/

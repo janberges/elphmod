@@ -34,6 +34,7 @@ More sophisticated examples have their own subdirectory. Most of them require a
 [patched](../patches) version of Quantum ESPRESSO.
 
 * `bare` - bare phonon dispersion
+* `cdw_1d` - downfolding and CDW relaxation for carbon chain
 * `fluctuations` - fluctuation diagnostics of phonon anomalies in 1H-TaS2
 * `goldstone` - Goldstone modes of nitrogen molecule
 * `lambda` - electron-phonon coupling for superconductivity
