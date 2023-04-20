@@ -274,8 +274,13 @@ class Model(object):
             self.prepare_long_range()
 
         if self.D0 is None:
-            self.R, self.data, self.l = bravais.short_range_model(*model[:-6],
-                divide_mass=divide_mass, divide_ndegen=divide_ndegen)
+            self.R, self.data, self.l = bravais.short_range_model(model[0],
+                self.a, self.r, sgn=-1, divide_ndegen=divide_ndegen)
+
+            if divide_mass:
+                for na in range(self.nat):
+                    self.data[:, group(na), :] /= np.sqrt(self.M[na])
+                    self.data[:, :, group(na)] /= np.sqrt(self.M[na])
         else:
             self.update_short_range(flfrc=ifc,
                 apply_asr_simple=apply_asr_simple)
@@ -1800,8 +1805,13 @@ def q2r(ph, D_irr=None, q_irr=None, nq=None, D_full=None, angle=60,
 
         info('Sum of force constants: %g Ry/Bohr^2 (L = %g Bohr)' % (S, ph.L))
 
-    ph.R, ph.data, ph.l = bravais.short_range_model(phid, ph.M, ph.a, ph.r,
-        divide_mass=ph.divide_mass, divide_ndegen=ph.divide_ndegen)
+    ph.R, ph.data, ph.l = bravais.short_range_model(phid, ph.a, ph.r,
+        sgn=-1, divide_ndegen=ph.divide_ndegen)
+
+    if divide_mass:
+        for na in range(ph.nat):
+            ph.data[:, group(na), :] /= np.sqrt(ph.M[na])
+            ph.data[:, :, group(na)] /= np.sqrt(ph.M[na])
 
     if apply_asr or apply_rsr:
         sum_rule_correction(ph, asr=apply_asr, rsr=apply_rsr)

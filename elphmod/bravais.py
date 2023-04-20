@@ -1223,11 +1223,35 @@ def read_wigner_file(name, old_ws=False, nat=None):
 
     return data
 
-def short_range_model(phid, amass, at, tau, eps=1e-7, divide_mass=True,
-        divide_ndegen=True):
-    """Map force constants onto Wigner-Seitz cell and divide by masses."""
+def short_range_model(data, at, tau, eps=1e-7, sgn=+1, divide_ndegen=True):
+    """Map hoppings or force constants onto Wigner-Seitz cell.
 
-    nat, nr1, nr2, nr3 = phid.shape[1:5]
+    Parameters
+    ----------
+    data : ndarray
+        Hoppings or force constants on (positive) Fourier-transform mesh. The
+        first two dimensions correspond to the orbitals or atoms, the following
+        three to the mesh axes, and the last two (optional, relevant for force
+        constants only) to Cartesian directions.
+    at : ndarray
+        Bravais lattice vectors.
+    tau : ndarray
+        Positions of basis orbitals or atoms.
+    eps : float
+        Tolerance for orbital or atomic distances to be considered equal.
+    sgn : int
+        Do the lattice vectors shift the first (``-1``) or second (``+1``)
+        orbital/atom?
+    divide_ndegen : bool
+        Divide hoppings for force constants by lattice-vector degeneracy?
+
+    Returns
+    -------
+    """
+    while data.ndim < 7:
+        data = data[..., np.newaxis]
+
+    nbasis, nbasis, nr1, nr2, nr3, ncart, ncart = data.shape
 
     supercells = range(-1, 3) # supercell shifts for Wigner-Seitz search
 
@@ -1248,9 +1272,9 @@ def short_range_model(phid, amass, at, tau, eps=1e-7, divide_mass=True,
                 # determine equivalent unit cells within considered supercells:
 
                 copies = np.array([[
-                        M1 * nr1 - m1,
-                        M2 * nr2 - m2,
-                        M3 * nr3 - m3,
+                        M1 * nr1 + sgn * m1,
+                        M2 * nr2 + sgn * m2,
+                        M3 * nr3 + sgn * m3,
                         ]
                     for M1 in supercells
                     for M2 in supercells
@@ -1261,11 +1285,11 @@ def short_range_model(phid, amass, at, tau, eps=1e-7, divide_mass=True,
 
                 shifts = [np.dot(copy, at) for copy in copies]
 
-                for na1 in range(nat):
-                    for na2 in range(nat):
+                for i in range(nbasis):
+                    for j in range(nbasis):
                         # find equivalent bond(s) within Wigner-Seitz cell:
 
-                        bonds = [r + tau[na2] - tau[na1] for r in shifts]
+                        bonds = [r + tau[j] - tau[i] for r in shifts]
                         lengths = [np.sqrt(np.dot(r, r)) for r in bonds]
                         length = min(lengths)
 
@@ -1273,36 +1297,33 @@ def short_range_model(phid, amass, at, tau, eps=1e-7, divide_mass=True,
 
                         # undo supercell double counting and divide by masses:
 
-                        C[...] = phid[na1, na2, m1, m2, m3]
+                        C[...] = data[i, j, m1, m2, m3]
 
                         if divide_ndegen:
                             C /= len(selected)
 
-                        if divide_mass:
-                            C /= np.sqrt(amass[na1] * amass[na2])
-
-                        # save data for dynamical matrix calculation:
+                        # save mapped lattice vectors and matrix elements:
 
                         for R in selected:
                             R = tuple(R)
 
                             if R not in const:
                                 const[R] = [
-                                    np.zeros((3 * nat, 3 * nat)),
-                                    np.zeros((nat, nat))]
+                                    np.zeros((nbasis * ncart, nbasis * ncart)),
+                                    np.zeros((nbasis, nbasis))]
 
                             const[R][0][
-                                na1 * 3:(na1 + 1) * 3,
-                                na2 * 3:(na2 + 1) * 3] = C
+                                i * ncart:(i + 1) * ncart,
+                                j * ncart:(j + 1) * ncart] = C
 
-                            const[R][1][na1, na2] = length
+                            const[R][1][i, j] = length
 
     # convert dictionary into arrays:
 
     my_count = len(const)
     my_cells = np.array(list(const.keys()), dtype=np.int8)
-    my_const = np.empty((my_count, 3 * nat, 3 * nat))
-    my_bonds = np.empty((my_count, nat, nat))
+    my_const = np.empty((my_count, nbasis * ncart, nbasis * ncart))
+    my_bonds = np.empty((my_count, nbasis, nbasis))
 
     for i, (c, l) in enumerate(const.values()):
         my_const[i] = c
@@ -1314,12 +1335,12 @@ def short_range_model(phid, amass, at, tau, eps=1e-7, divide_mass=True,
     count = my_counts.sum()
 
     cells = np.empty((count, 3), dtype=np.int8)
-    const = np.empty((count, 3 * nat, 3 * nat))
-    bonds = np.empty((count, nat, nat))
+    const = np.empty((count, nbasis * ncart, nbasis * ncart))
+    bonds = np.empty((count, nbasis, nbasis))
 
     comm.Allgatherv(my_cells, (cells, my_counts * 3))
-    comm.Allgatherv(my_const, (const, my_counts * (3 * nat) ** 2))
-    comm.Allgatherv(my_bonds, (bonds, my_counts * nat ** 2))
+    comm.Allgatherv(my_const, (const, my_counts * (nbasis * ncart) ** 2))
+    comm.Allgatherv(my_bonds, (bonds, my_counts * nbasis ** 2))
 
     # (see cdef _p_message message_vector in mpi4py/src/mpi4py/MPI/msgbuffer.pxi
     # for possible formats of second argument 'recvbuf')
