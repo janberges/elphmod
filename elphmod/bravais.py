@@ -1255,7 +1255,7 @@ def short_range_model(data, at, tau, eps=1e-7, sgn=+1, divide_ndegen=True):
 
     supercells = range(-1, 3) # supercell shifts for Wigner-Seitz search
 
-    C = np.empty((3, 3))
+    C = np.empty((ncart, ncart), dtype=data.dtype)
 
     const = dict()
 
@@ -1309,7 +1309,8 @@ def short_range_model(data, at, tau, eps=1e-7, sgn=+1, divide_ndegen=True):
 
                             if R not in const:
                                 const[R] = [
-                                    np.zeros((nbasis * ncart, nbasis * ncart)),
+                                    np.zeros((nbasis * ncart, nbasis * ncart),
+                                        dtype=C.dtype),
                                     np.zeros((nbasis, nbasis))]
 
                             const[R][0][
@@ -1322,7 +1323,8 @@ def short_range_model(data, at, tau, eps=1e-7, sgn=+1, divide_ndegen=True):
 
     my_count = len(const)
     my_cells = np.array(list(const.keys()), dtype=np.int8)
-    my_const = np.empty((my_count, nbasis * ncart, nbasis * ncart))
+    my_const = np.empty((my_count, nbasis * ncart, nbasis * ncart),
+        dtype=C.dtype)
     my_bonds = np.empty((my_count, nbasis, nbasis))
 
     for i, (c, l) in enumerate(const.values()):
@@ -1335,7 +1337,7 @@ def short_range_model(data, at, tau, eps=1e-7, sgn=+1, divide_ndegen=True):
     count = my_counts.sum()
 
     cells = np.empty((count, 3), dtype=np.int8)
-    const = np.empty((count, nbasis * ncart, nbasis * ncart))
+    const = np.empty((count, nbasis * ncart, nbasis * ncart), dtype=C.dtype)
     bonds = np.empty((count, nbasis, nbasis))
 
     comm.Allgatherv(my_cells, (cells, my_counts * 3))
