@@ -72,6 +72,8 @@ class Model(object):
         Ordered list of atoms if `read_xsf`.
     dV : float, optional
         Volume element/voxel volume belonging to `r` if `read_xsf`.
+    divide_ndegen : bool
+        Have hoppings been divided by degeneracy of Wigner-Seitz point?
     rydberg : bool
         Have energies been converted from eV to Ry?
     """
@@ -106,6 +108,9 @@ class Model(object):
             normalize_wf=False, buffer_wf=False, check_ortho=False,
             rydberg=False, shared_memory=False):
 
+        self.divide_ndegen = divide_ndegen
+        self.rydberg = rydberg
+
         if seedname is None:
             return
 
@@ -119,8 +124,6 @@ class Model(object):
 
         if rydberg:
             self.data /= misc.Ry
-
-        self.rydberg = rydberg
 
         supvecs = read_wsvecdat('%s_wsvec.dat' % seedname)
 
@@ -242,6 +245,7 @@ class Model(object):
         el.size = N * self.size
         el.N = [tuple(N1), tuple(N2), tuple(N3)]
 
+        el.divide_ndegen = self.divide_ndegen
         el.rydberg = self.rydberg
 
         if sparse:
@@ -668,6 +672,35 @@ def read_wsvecdat(wsvecdat):
     supvecs = comm.bcast(supvecs)
 
     return supvecs
+
+def k2r(el, H, a, r):
+    """Interpolate Hamilontian matrices on uniform k-point mesh.
+
+    Parameters
+    ----------
+    el : object
+        Tight-binding model.
+    H : ndarray
+        Hamiltonian matrices on complete uniform k-point mesh.
+    a : ndarray
+        Bravais lattice vectors.
+    r : ndarray
+        Positions of orbital centers.
+    """
+    nk = H.shape[:-2]
+
+    nk_orig = tuple(nk)
+    nk = np.ones(3, dtype=int)
+    nk[:len(nk_orig)] = nk_orig
+
+    H = np.reshape(H, (nk[0], nk[1], nk[2], el.size, el.size))
+
+    t = np.fft.ifftn(H.conj(), axes=(0, 1, 2)).conj()
+    t = np.reshape(t, (nk[0], nk[1], nk[2], el.size, 1, el.size, 1))
+    t = np.transpose(t, (3, 5, 0, 1, 2, 4, 6))
+
+    el.R, el.data, l = bravais.short_range_model(t, a, r,
+        sgn=+1, divide_ndegen=el.divide_ndegen)
 
 def read_bands(filband):
     """Read bands from *filband* just like Quantum ESRESSO's ``plotband.x``.
