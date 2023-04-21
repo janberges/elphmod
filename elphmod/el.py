@@ -505,6 +505,17 @@ class Model(object):
 
         self.standardize(symmetrize=True)
 
+    def to_hrdat(self, seedname):
+        """Save tight-binding model to *_hr.dat* file.
+
+        Parameters
+        ----------
+        seedname : str
+            Common prefix of Wannier90 input and output files.
+        """
+        if comm.rank == 0:
+            write_hrdat(seedname, self.R, self.data)
+
 def read_hrdat(seedname, divide_ndegen=True):
     """Read *_hr.dat* (or *_tb.dat*) file from Wannier90.
 
