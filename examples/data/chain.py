@@ -17,15 +17,10 @@ g0 = 0.02 / elphmod.misc.Ry ** 1.5
 
 stem = __file__[:-3]
 
-hr_dat = '%s_hr.dat' % stem
-flfrc = '%s.ifc' % stem
-epmatwp = '%s.epmatwp' % stem
-wigner = '%s.wigner' % stem
-
 at = elphmod.bravais.primitives(ibrav=8, a=a, b=c, c=c, bohr=True)
 r = np.zeros((1, 3))
 
-nk = (3, 3, 1) # elphmod.bravais.Fourier_interpolation requires 2D mesh
+nk = (3, 1, 1) # for electrons
 nq = (2, 1, 1) # for phonons
 nQ = (3, 1, 1) # for coupling
 
@@ -79,13 +74,16 @@ H = elphmod.dispersion.sample(hamiltonian, k)
 D = elphmod.dispersion.sample(dynamical_matrix, q)
 g = elphmod.elph.sample(coupling, Q, nk)
 
-elphmod.bravais.Fourier_interpolation(H * elphmod.misc.Ry, hr_file=hr_dat)
-el = elphmod.el.Model(hr_dat)
+el = elphmod.el.Model()
+el.size = H.shape[-1]
+elphmod.el.k2r(el, H * elphmod.misc.Ry, at, r)
+el.standardize(eps=1e-10)
+el.to_hrdat(stem)
 
 ph = elphmod.ph.Model(phid=np.empty((1, 1) + nq + (3, 3)),
     amass=[M], at=at, tau=r, atom_order=['X'])
 
-elphmod.ph.q2r(ph, D_full=D, flfrc=flfrc)
+elphmod.ph.q2r(ph, D_full=D, flfrc='%s.ifc' % stem)
 
 Rk = np.array([(-1, 0, 0), (0, 0, 0), (1, 0, 0)])
 Rg = Rk.copy()
@@ -102,10 +100,10 @@ if elphmod.MPI.comm.rank == 0:
     dk = np.ones((ph.nat, ph.nat, len(elph.Rk)), dtype=int)
     dg = np.ones((ph.nat, len(elph.Rg), 1, el.size), dtype=int)
 
-    with open(wigner, 'wb') as data:
+    with open('%s.wigner' % stem, 'wb') as data:
         for obj in [el.size, ph.nat, len(elph.Rk), elph.Rk, dk,
                 len(elph.Rg), elph.Rg, dg]:
             np.array(obj, dtype=np.int32).tofile(data)
 
-    with open(epmatwp, 'wb') as data:
+    with open('%s.epmatwp' % stem, 'wb') as data:
         np.swapaxes(elph.data, 3, 4).astype(np.complex128).tofile(data)

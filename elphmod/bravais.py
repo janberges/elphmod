@@ -1349,7 +1349,7 @@ def short_range_model(data, at, tau, eps=1e-7, sgn=+1, divide_ndegen=True):
 
     return cells, const, bonds
 
-def Fourier_interpolation(data, angle=60, sign=-1, hr_file=None, function=True):
+def Fourier_interpolation(data, angle=60, sign=-1, function=True):
     """Perform Fourier interpolation on triangular or rectangular lattice.
 
     Parameters
@@ -1360,8 +1360,6 @@ def Fourier_interpolation(data, angle=60, sign=-1, hr_file=None, function=True):
         Angle between lattice vectors in degrees.
     sign : number
         Sign in exponential function in first Fourier transform.
-    hr_file : str
-        Filename. If given, save *_hr.dat* file as produced by Wannier90.
     function : bool
         Return interpolation function or parameter dictionary?
 
@@ -1411,13 +1409,6 @@ def Fourier_interpolation(data, angle=60, sign=-1, hr_file=None, function=True):
     values = values[:count]
     points = points[:count]
     counts = counts[:count]
-
-    # write "tight-binding model" to disk:
-
-    if hr_file is not None and comm.rank == 0:
-        from . import el
-
-        el.write_hrdat(hr_file.replace('_hr.dat', ''), points, values, counts)
 
     # fix weights of interpolation coefficients:
 

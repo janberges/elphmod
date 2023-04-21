@@ -24,11 +24,6 @@ beta = 2.0
 
 stem = __file__[:-3]
 
-hr_dat = '%s_hr.dat' % stem
-flfrc = '%s.ifc' % stem
-epmatwp = '%s.epmatwp' % stem
-wigner = '%s.wigner' % stem
-
 at = elphmod.bravais.primitives(ibrav=4, a=a, c=15.0, bohr=True)
 r = np.dot([[2.0, 1.0, 0.0], [1.0, 2.0, 0.0]], at) / 3
 
@@ -118,13 +113,16 @@ H = elphmod.dispersion.sample(hamiltonian, k)
 D = elphmod.dispersion.sample(dynamical_matrix, q)
 g = elphmod.elph.sample(coupling, q.reshape((-1, 3)), nk)
 
-elphmod.bravais.Fourier_interpolation(H * elphmod.misc.Ry, hr_file=hr_dat)
-el = elphmod.el.Model(hr_dat)
+el = elphmod.el.Model()
+el.size = H.shape[-1]
+elphmod.el.k2r(el, H * elphmod.misc.Ry, at, r)
+el.standardize(eps=1e-10)
+el.to_hrdat(stem)
 
 ph = elphmod.ph.Model(phid=np.empty((2, 2) + nq + (3, 3)),
     amass=[M] * 2, at=at, tau=r, atom_order=['C'] * 2)
 
-elphmod.ph.q2r(ph, D_full=D, flfrc=flfrc)
+elphmod.ph.q2r(ph, D_full=D, flfrc='%s.ifc' % stem)
 
 Rk, dk, lk = elphmod.bravais.wigner_seitz_x('q', nk[0], at, r)
 Rg, dg, lg = elphmod.bravais.wigner_seitz_x('q', nq[0], at, r)
@@ -142,10 +140,10 @@ if elphmod.MPI.comm.rank == 0:
     dk = np.ones((ph.nat, ph.nat, len(elph.Rk)), dtype=int)
     dg = np.ones((ph.nat, len(elph.Rg), 1, el.size), dtype=int)
 
-    with open(wigner, 'wb') as data:
+    with open('%s.wigner' % stem, 'wb') as data:
         for obj in [el.size, ph.nat, len(elph.Rk), elph.Rk, dk,
                 len(elph.Rg), elph.Rg, dg]:
             np.array(obj, dtype=np.int32).tofile(data)
 
-    with open(epmatwp, 'wb') as data:
+    with open('%s.epmatwp' % stem, 'wb') as data:
         np.swapaxes(elph.data, 3, 4).astype(np.complex128).tofile(data)
