@@ -301,30 +301,37 @@ class Driver(object):
 
         return C
 
-    def electrons(self, seedname='supercell', step=1):
+    def electrons(self, seedname=None, dk1=1, dk2=1, dk3=1):
         """Set up tight-binding model for current structure.
 
         Parameters
         ----------
         seedname : str
             Prefix of file with Hamiltonian in Wannier90 format.
-        step : int, optional
-            Only use data for every `step`-th k point along first and second
-            axis? This reduces the size of the Hamiltonian file.
+        dk1, dk2, dk3 : int, optional
+            Only use data for every `dk`*n*th k point along the *n*th axis? This
+            reduces the size of the Hamiltonian file.
         """
         H = np.einsum('...an,...n,...bn->...ab', self.U, self.e, self.U.conj())
 
-        if self.nk[0] == self.nk[1] and self.nk[2] == 1:
-            H = H.reshape((self.nk[0],) * 2 + (self.elph.el.size,) * 2)
+        if dk1 > 1 or dk2 > 1 or dk3 > 1:
+            if not self.sparse:
+                H = H[::dk1, ::dk2, ::dk3]
 
-            if step > 1:
-                H = H[::step, ::step]
-        else:
-            raise NotImplementedError('N x N x 1 k-point mesh required.')
+        model = copy.deepcopy(self.elph.el)
 
-        H *= misc.Ry
+        assert self.elph.el.cells == self.elph.ph.cells
 
-        bravais.Fourier_interpolation(H, hr_file='%s_hr.dat' % seedname)
+        r = self.elph.ph.r[::self.elph.ph.nat // len(self.elph.ph.cells)]
+        r = np.repeat(r, self.elph.el.size // r.shape[0], axis=0)
+        r -= r[0]
+
+        el.k2r(model, H * misc.Ry, self.elph.ph.a, r)
+
+        model.standardize(eps=1e-10)
+
+        if seedname is not None:
+            model.to_hrdat(seedname)
 
         return el.Model(seedname)
 
