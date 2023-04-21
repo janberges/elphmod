@@ -309,7 +309,7 @@ class Driver(object):
         seedname : str
             Prefix of file with Hamiltonian in Wannier90 format.
         dk1, dk2, dk3 : int, optional
-            Only use data for every `dk`*n*th k point along the *n*th axis? This
+            Only use data for every `dkn`-th k point along the *n*-th axis? This
             reduces the size of the Hamiltonian file.
         """
         H = np.einsum('...an,...n,...bn->...ab', self.U, self.e, self.U.conj())
