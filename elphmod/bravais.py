@@ -1413,34 +1413,9 @@ def Fourier_interpolation(data, angle=60, sign=-1, hr_file=None, function=True):
     # write "tight-binding model" to disk:
 
     if hr_file is not None and comm.rank == 0:
-        import time
+        from . import el
 
-        size = int(np.sqrt(np.prod(data.shape[2:])))
-        H = values.reshape((count, size, size))
-
-        order = np.lexsort((points[:, 1], points[:, 0]))
-
-        with open(hr_file, 'w') as hr:
-            hr.write(time.strftime(' written on %d%b%Y at %H:%M:%S\n'))
-
-            hr.write('%12d\n' % size)
-            hr.write('%12d\n' % count)
-
-            columns = 15
-
-            for n, i in enumerate(order, 1):
-                hr.write('%5d' % counts[i])
-
-                if not n % columns or n == count:
-                    hr.write('\n')
-
-            form = '%5d' * 5 + '%12.6f' * 2 + '\n'
-
-            for i in order:
-                for b in range(size):
-                    for a in range(size):
-                        hr.write(form % (points[i, 0], points[i, 1], 0,
-                            a + 1, b + 1, H[i, a, b].real, H[i, a, b].imag))
+        el.write_hrdat(hr_file.replace('_hr.dat', ''), points, values, counts)
 
     # fix weights of interpolation coefficients:
 
