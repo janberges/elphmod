@@ -320,11 +320,14 @@ class Driver(object):
 
         model = copy.deepcopy(self.elph.el)
 
-        assert self.elph.el.cells == self.elph.ph.cells
+        if hasattr(self.elph.el, 'cells'):
+            assert self.elph.el.cells == self.elph.ph.cells
 
-        r = self.elph.ph.r[::self.elph.ph.nat // len(self.elph.ph.cells)]
-        r = np.repeat(r, self.elph.el.size // r.shape[0], axis=0)
-        r -= r[0]
+            r = self.elph.ph.r[::self.elph.ph.nat // len(self.elph.ph.cells)]
+            r = np.repeat(r, self.elph.el.size // r.shape[0], axis=0)
+            r -= r[0]
+        else:
+            r = np.zeros((self.elph.el.size, 3))
 
         el.k2r(model, H * misc.Ry, self.elph.ph.a, r)
 
