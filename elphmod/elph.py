@@ -645,6 +645,8 @@ class Model(object):
         self.gq = np.empty((self.ph.size, len(self.Rk),
             self.el.size, self.el.size), dtype=complex)
 
+        self.Rk0 = misc.vector_index(self.Rk, (0, 0, 0))
+
         comm.Barrier()
 
     def symmetrize(self):
