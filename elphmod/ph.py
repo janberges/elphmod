@@ -1945,6 +1945,9 @@ def spectral_function(D, omega, eta):
     """Calculate phonon spectral function.
 
     See Eq. 76 by Monacelli et al., J. Phys. Condens. Matter 33, 363001 (2021).
+    We use an additional prefactor of 2 to normalize the frequency integral
+    (from zero to infinity) of the phonon spectral function to the number of
+    modes (for each q point).
 
     Parameters
     ----------
@@ -1971,7 +1974,7 @@ def spectral_function(D, omega, eta):
     for my_w, w in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         G_inv = D[..., w] - (omega[w] + 1j * eta) ** 2 * np.eye(D.shape[-2])
 
-        my_A[my_w] = omega[w] / np.pi * np.trace(np.linalg.inv(G_inv).imag,
+        my_A[my_w] = 2 * omega[w] / np.pi * np.trace(np.linalg.inv(G_inv).imag,
             axis1=-2, axis2=-1)
 
         status.update()

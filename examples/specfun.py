@@ -46,7 +46,7 @@ g = elph.sample(q, U=U)
 
 info('Calculate retarded displacement-displacement correlation function..')
 
-w = np.linspace(w0.min(), w0.max(), len(q))
+w, dw = np.linspace(w0.min(), w0.max(), len(q), retstep=True)
 
 Pi0 = elphmod.diagrams.phonon_self_energy(q, e, g=g, kT=kT, occupations=f)
 
@@ -59,13 +59,25 @@ A = elphmod.ph.spectral_function(Dw, w, eta2)
 
 info('Plot results..')
 
+integral = A.sum(axis=0) * dw
+
 A = elphmod.plot.adjust_pixels(A, GMKG, x[GMKG], width, height)
 
 if comm.rank == 0:
-    plt.imshow(A[::-1], extent=(x[0], x[-1], w[0], w[-1]), cmap='ocean_r')
-    plt.plot(x, w0, 'k')
-    plt.ylabel('Phonon energy (Ry)')
-    plt.xlabel('Wave vector')
-    plt.xticks(x[GMKG], 'GMKG')
-    plt.axis('auto')
+    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True,
+        gridspec_kw=dict(height_ratios=(3, 1)))
+
+    ax1.set_ylabel('Phonon energy (Ry)')
+    ax2.set_ylabel('Integrated phonon spectral function')
+    ax2.set_xlabel('Wave vector')
+    ax2.set_xticks(x[GMKG])
+    ax2.set_xticklabels('GMKG')
+
+    ax1.imshow(A[::-1], extent=(x[0], x[-1], w[0], w[-1]), cmap='ocean_r')
+    ax1.plot(x, w0, 'k')
+    ax1.axis('auto')
+
+    ax2.plot(x, integral)
+    ax2.set_ylim(0.0, 2 * ph.size)
+
     plt.show()
