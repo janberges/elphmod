@@ -13,6 +13,8 @@ info = elphmod.MPI.info
 
 info('Define parameters')
 
+to_screen = True
+
 nk = 60
 width = 300
 height = 300
@@ -22,6 +24,14 @@ f = elphmod.occupations.fermi_dirac
 
 eta1 = 0.001 # broadening of self-energy
 eta2 = 0.0001 # broadening of all modes
+
+# cDFPT dielectric properties:
+# https://arxiv.org/src/2102.10072v2/anc/C2/cDFPT.ph
+
+epsxy = 1.37
+epsz = 1.16
+Z = 0.64
+L = 5.0 # cf. Ponce' et al., Phys. Rev. B 107, 155424 (2023)
 
 info('Load model Hamiltonian for graphene..')
 
@@ -42,15 +52,29 @@ e, U = elphmod.dispersion.dispersion_full_nosym(el.H, nk, vectors=True)
 D0 = elphmod.dispersion.sample(ph.D, q)
 w0 = elphmod.ph.sgnsqrt(np.linalg.eigvalsh(D0))
 
-g = elph.sample(q, U=U)
+g = elph.sample(q, U=U, shared_memory=True)
+
+if not to_screen:
+    ph.lr = True
+    ph.lr2d = True
+
+    ph.eps = np.diag([epsxy, epsxy, epsz])
+    ph.Z = np.repeat(np.diag([Z, Z, 0.0])[np.newaxis], ph.nat, axis=0)
+    ph.L = L
+
+    ph.prepare_long_range()
+
+    G = elph.sample(q, U=U, shared_memory=True)
+else:
+    G = g
 
 info('Calculate retarded displacement-displacement correlation function..')
 
-w, dw = np.linspace(w0.min(), w0.max(), len(q), retstep=True)
+w, dw = np.linspace(0.0, 1.1 * w0.max(), len(q), retstep=True)
 
-Pi0 = elphmod.diagrams.phonon_self_energy(q, e, g=g, kT=kT, occupations=f)
+Pi0 = elphmod.diagrams.phonon_self_energy(q, e, g=g, G=G, kT=kT, occupations=f)
 
-Piw = elphmod.diagrams.phonon_self_energy(q, e, g=g, kT=kT, occupations=f,
+Piw = elphmod.diagrams.phonon_self_energy(q, e, g=g, G=G, kT=kT, occupations=f,
     omega=w + 1j * eta1)
 
 Dw = D0[..., None] - Pi0[..., None] + Piw
@@ -58,6 +82,8 @@ Dw = D0[..., None] - Pi0[..., None] + Piw
 A = elphmod.ph.spectral_function(Dw, w, eta2)
 
 info('Plot results..')
+
+maximum = abs(A).max()
 
 integral = A.sum(axis=0) * dw
 
@@ -73,7 +99,8 @@ if comm.rank == 0:
     ax2.set_xticks(x[GMKG])
     ax2.set_xticklabels('GMKG')
 
-    ax1.imshow(A[::-1], extent=(x[0], x[-1], w[0], w[-1]), cmap='ocean_r')
+    ax1.imshow(A[::-1], extent=(x[0], x[-1], w[0], w[-1]),
+        vmin=-maximum, vmax=maximum, cmap='bwr')
     ax1.plot(x, w0, 'k')
     ax1.axis('auto')
 
