@@ -5,12 +5,13 @@
 
 source elphmodenv
 
-url=http://www.pseudo-dojo.org/pseudos/nc-sr-04_pbe_standard # [1, 2]
+echo 'Using normconserving pseudopotentials from PseudoDojo'
+echo '[1] van Setten et al., Comput. Phys. Commun. 226, 39 (2018)'
+echo '[2] Hamann, Phys. Rev. B 88, 085117 (2013)'
+
+url=http://www.pseudo-dojo.org/pseudos/nc-sr-04_pbe_standard
 pp=Po.upf
 test -e $pp || (wget $url/$pp.gz && gunzip $pp)
-
-# [1] van Setten et al., Comput. Phys. Commun. 226, 39 (2018)
-# [2] Hamann, Phys. Rev. B 88, 085117 (2013)
 
 nk=2
 
