@@ -220,7 +220,7 @@ index 000000000..5b6b1bd28
 +  !
 +END MODULE cdfpt
 diff --git a/LR_Modules/orthogonalize.f90 b/LR_Modules/orthogonalize.f90
-index fa9c4f9fe..63addb39d 100644
+index fa9c4f9fe..9985007cf 100644
 --- a/LR_Modules/orthogonalize.f90
 +++ b/LR_Modules/orthogonalize.f90
 @@ -45,2 +45,3 @@ SUBROUTINE orthogonalize(dvpsi, evq, ikk, ikq, dpsi, npwq, dpsi_computed)
@@ -237,7 +237,7 @@ index fa9c4f9fe..63addb39d 100644
 +              !
 +              IF (lcdfpt) THEN
 +                 IF (in_cdfpt_subspace(ikk, ikq, ibnd, jbnd)) THEN
-+                    ps(jbnd, ibnd) = wg1 * ps(jbnd, ibnd)
++                    wwg(jbnd) = wg1
 +                    CYCLE
 +                 ENDIF
 +              ENDIF
