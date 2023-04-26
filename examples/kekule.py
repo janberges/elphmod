@@ -13,9 +13,9 @@ comm = elphmod.MPI.comm
 
 sparse = False # use sparse matrices to be able to simulate large cells?
 
-N = 1
-nk = 12
-nq = 12
+N = 6
+nk = 6
+nq = 6
 
 kT0 = 2.0
 kT = 0.02
@@ -28,7 +28,7 @@ elph = elphmod.elph.Model('data/graphene.epmatwp', 'data/graphene.wigner',
 elph.data *= 1.5 # otherwise the system is stable
 
 if not sparse:
-    #elph = elph.supercell(N, N)
+    elph = elph.supercell(N, N)
 
     nk //= N
     nq //= N
@@ -36,9 +36,6 @@ if not sparse:
 driver = elphmod.md.Driver(elph, kT=kT0, f=elphmod.occupations.fermi_dirac,
     nk=(nk, nk), nq=(nq, nq), supercell=(N, N) if sparse else None,
     n=elph.el.size)
-
-driver.electrons('test')
-quit()
 
 driver.kT = kT
 
