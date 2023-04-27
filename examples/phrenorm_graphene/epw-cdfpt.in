@@ -14,12 +14,12 @@ graphene
     nbndsub = 2
 
     efermi_read = .true.
-    fermi_energy = 1.3995
+    fermi_energy = -4.1227
 
     proj(1) = 'C: pz'
 
-    dis_froz_max = 4.0
-    dis_froz_min = -1.5
+    dis_froz_max = -1.0
+    dis_froz_min = -7.0
 
     num_iter = 0
     wdata(1) = 'dis_num_iter 10000'
