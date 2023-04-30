@@ -895,7 +895,7 @@ class Model(object):
         sizes, bounds = MPI.distribute(len(self.R), bounds=True)
 
         for n in range(*bounds[comm.rank:comm.rank + 2]):
-            m1, m2, m3 = -self.R[n] % (nr1, nr3, nr3)
+            m1, m2, m3 = -self.R[n] % (nr1, nr2, nr3)
 
             phid[:, :, m1, m2, m3, :, :] += np.reshape(self.data[n],
                 (self.nat, 3, self.nat, 3)).transpose(0, 2, 1, 3)
