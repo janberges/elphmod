@@ -562,6 +562,9 @@ class Model(object):
 
             const = dict()
 
+            const[0, 0, 0, 0, 0, 0] = np.zeros((self.ph.size,
+                self.el.size, self.el.size), dtype=complex)
+
             status = misc.StatusBar(len(self.Rg) * len(self.Rk),
                 title='standardize coupling data')
 
