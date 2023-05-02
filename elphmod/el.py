@@ -1735,28 +1735,27 @@ def read_rhoG_density(filename, ibrav, a=1.0, b=1.0, c=1.0):
         # Moves the cursor 4 bytes to the right
         f.seek(4)
 
-        gamma_only = bool(np.fromfile(f, dtype='int32', count=1)[0])
-        ngm_g = np.fromfile(f, dtype='int32', count=1)[0]
-        ispin = np.fromfile(f, dtype='int32', count=1)[0]
+        gamma_only = bool(np.fromfile(f, dtype=np.int32, count=1)[0])
+        ngm_g = np.fromfile(f, dtype=np.int32, count=1)[0]
+        ispin = np.fromfile(f, dtype=np.int32, count=1)[0]
 
         # Move the cursor 8 byte to the right
         f.seek(8, 1)
 
-        b1 = np.fromfile(f, dtype='float64', count=3)
-        b2 = np.fromfile(f, dtype='float64', count=3)
-        b3 = np.fromfile(f, dtype='float64', count=3)
+        b1 = np.fromfile(f, dtype=np.float64, count=3)
+        b2 = np.fromfile(f, dtype=np.float64, count=3)
+        b3 = np.fromfile(f, dtype=np.float64, count=3)
 
         # Move the cursor 8 byte to the right
         f.seek(8, 1)
 
-        mill_g = np.fromfile(f, dtype='int32', count=3 * ngm_g)
+        mill_g = np.fromfile(f, dtype=np.int32, count=3 * ngm_g)
         mill_g = mill_g.reshape((ngm_g, 3))
 
         # Move the cursor 8 byte to the right
         f.seek(8, 1)
 
-        rho_g = np.zeros((ngm_g), dtype='complex128')
-        rho_g = np.fromfile(f, dtype='complex128', count=ngm_g)
+        rho_g = np.fromfile(f, dtype=np.complex128, count=ngm_g)
 
         # get primitive lattice vectors
         # (must be the same as scf output)
@@ -1812,37 +1811,37 @@ def read_wfc(filename, ibrav, a=1.0, b=1.0, c=1.0):
         # Moves the cursor 4 bytes to the right
         f.seek(4)
 
-        ik = np.fromfile(f, dtype='int32', count=1)[0]
-        xk = np.fromfile(f, dtype='float64', count=3)
-        ispin = np.fromfile(f, dtype='int32', count=1)[0]
-        gamma_only = bool(np.fromfile(f, dtype='int32', count=1)[0])
-        scalef = np.fromfile(f, dtype='float64', count=1)[0]
+        ik = np.fromfile(f, dtype=np.int32, count=1)[0]
+        xk = np.fromfile(f, dtype=np.float64, count=3)
+        ispin = np.fromfile(f, dtype=np.int32, count=1)[0]
+        gamma_only = bool(np.fromfile(f, dtype=np.int32, count=1)[0])
+        scalef = np.fromfile(f, dtype=np.float64, count=1)[0]
 
         # Move the cursor 8 byte to the right
         f.seek(8, 1)
 
-        ngw = np.fromfile(f, dtype='int32', count=1)[0]
-        igwx = np.fromfile(f, dtype='int32', count=1)[0]
-        npol = np.fromfile(f, dtype='int32', count=1)[0]
-        nbnd = np.fromfile(f, dtype='int32', count=1)[0]
+        ngw = np.fromfile(f, dtype=np.int32, count=1)[0]
+        igwx = np.fromfile(f, dtype=np.int32, count=1)[0]
+        npol = np.fromfile(f, dtype=np.int32, count=1)[0]
+        nbnd = np.fromfile(f, dtype=np.int32, count=1)[0]
 
         # Move the cursor 8 byte to the right
         f.seek(8, 1)
 
-        b1 = np.fromfile(f, dtype='float64', count=3)
-        b2 = np.fromfile(f, dtype='float64', count=3)
-        b3 = np.fromfile(f, dtype='float64', count=3)
+        b1 = np.fromfile(f, dtype=np.float64, count=3)
+        b2 = np.fromfile(f, dtype=np.float64, count=3)
+        b3 = np.fromfile(f, dtype=np.float64, count=3)
 
         f.seek(8, 1)
 
-        mill_g = np.fromfile(f, dtype='int32', count=3 * igwx)
+        mill_g = np.fromfile(f, dtype=np.int32, count=3 * igwx)
         mill_g = mill_g.reshape((igwx, 3))
 
-        evc = np.zeros((nbnd, npol * igwx), dtype='complex128')
+        evc = np.zeros((nbnd, npol * igwx), dtype=complex)
 
         f.seek(8, 1)
         for i in range(nbnd):
-            evc[i, :] = np.fromfile(f, dtype='complex128', count=npol * igwx)
+            evc[i, :] = np.fromfile(f, dtype=np.complex128, count=npol * igwx)
             f.seek(8, 1)
 
         # delta_mn = \sum_G \psi(m, G) * \psi(n, G)

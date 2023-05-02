@@ -237,7 +237,7 @@ class Model(object):
         shape = len(self.Rg), ph.size, len(self.Rk), el.size, el.size
 
         self.node, self.images, self.data = MPI.shared_array(shape,
-            dtype=np.complex128, shared_memory=shared_memory)
+            dtype=complex, shared_memory=shared_memory)
 
         if epmatwp is None:
             return
@@ -620,7 +620,7 @@ class Model(object):
             self.data = self.data.reshape(shape)
         else:
             self.node, self.images, self.data = MPI.shared_array(shape,
-                dtype=np.complex128, shared_memory=self.node.size > 1)
+                dtype=complex, shared_memory=self.node.size > 1)
 
         if comm.rank == 0:
             self.Rg[...] = Rg
