@@ -165,6 +165,56 @@ class Model(object):
 
         return elel
 
+    def standardize(self, eps=0.0):
+        r"""Standardize real-space interaction data.
+
+        - Keep only nonzero matrix elements.
+        - Sum over repeated lattice vectors.
+        - Sort lattice vectors.
+
+        Parameters
+        ----------
+        eps : float
+            Threshold for "nonzero" matrix elements in units of the maximum
+            matrix element.
+        """
+        if comm.rank == 0:
+            if eps:
+                self.data[abs(self.data) < eps * abs(self.data).max()] = 0.0
+
+            const = dict()
+
+            status = misc.StatusBar(len(self.R),
+                title='standardize interaction data')
+
+            for n in range(len(self.R)):
+                if np.any(self.data[n] != 0.0):
+                    R = tuple(self.R[n])
+
+                    if R in const:
+                        const[R] += self.data[n]
+                    else:
+                        const[R] = self.data[n].copy()
+
+                status.update()
+
+            cells = sorted(list(const.keys()))
+            count = len(cells)
+
+            self.R = np.array(cells, dtype=int)
+            self.data = np.array([const[R] for R in cells])
+        else:
+            count = None
+
+        count = comm.bcast(count)
+
+        if comm.rank != 0:
+            self.R = np.empty((count, 3), dtype=int)
+            self.data = np.empty((count, self.size, self.size), dtype=complex)
+
+        comm.Bcast(self.R)
+        comm.Bcast(self.data)
+
 def read_local_Coulomb_tensor(filename, no, dd=False):
     """Read local Coulomb tensor from VASP."""
 
