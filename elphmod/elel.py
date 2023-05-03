@@ -114,56 +114,27 @@ class Model(object):
         object
             Localized model for electron-electron interaction for supercell.
         """
-        if not hasattr(N1, '__len__'): N1 = (N1, 0, 0)
-        if not hasattr(N2, '__len__'): N2 = (0, N2, 0)
-        if not hasattr(N3, '__len__'): N3 = (0, 0, N3)
-
-        N1 = np.array(N1)
-        N2 = np.array(N2)
-        N3 = np.array(N3)
-
-        N = np.dot(N1, np.cross(N2, N3))
-
-        B1 = np.cross(N2, N3)
-        B2 = np.cross(N3, N1)
-        B3 = np.cross(N1, N2)
-
         elel = Model()
-        elel.size = N * self.size
-        elel.cells = []
-        elel.N = [tuple(N1), tuple(N2), tuple(N3)]
+
+        supercell = bravais.supercell(N1, N2, N3)
+        elel.cells = supercell[-1]
+
+        elel.size = len(elel.cells) * self.size
 
         if comm.rank == 0:
-            for n1 in range(N):
-                for n2 in range(N):
-                    for n3 in range(N):
-                        indices = n1 * N1 + n2 * N2 + n3 * N3
-
-                        if np.all(indices % N == 0):
-                            elel.cells.append(tuple(indices // N))
-
-            assert len(elel.cells) == N
-
             const = dict()
 
-            status = misc.StatusBar(len(self.R),
+            status = misc.StatusBar(len(elel.cells),
                 title='map interaction onto supercell')
 
-            for n in range(len(self.R)):
-                for i, cell in enumerate(elel.cells):
-                    R = self.R[n] + np.array(cell)
+            for i in range(len(elel.cells)):
+                A = i * self.size
 
-                    R1, r1 = divmod(np.dot(R, B1), N)
-                    R2, r2 = divmod(np.dot(R, B2), N)
-                    R3, r3 = divmod(np.dot(R, B3), N)
+                for n in range(len(self.R)):
+                    R, r = bravais.to_supercell(self.R[n] + elel.cells[i],
+                        supercell)
 
-                    R = R1, R2, R3
-
-                    indices = r1 * N1 + r2 * N2 + r3 * N3
-                    j = elel.cells.index(tuple(indices // N))
-
-                    A = i * self.size
-                    B = j * self.size
+                    B = r * self.size
 
                     if R not in const:
                         const[R] = np.zeros((elel.size, elel.size),

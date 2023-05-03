@@ -240,10 +240,11 @@ class Model(object):
         """
         el = Model()
 
-        N, (N1, N2, N3), (B1, B2, B3), el.cells = bravais.supercell(N1, N2, N3)
+        supercell = bravais.supercell(N1, N2, N3)
+        el.N = list(map(tuple, supercell[1]))
+        el.cells = supercell[-1]
 
-        el.size = N * self.size
-        el.N = [tuple(N1), tuple(N2), tuple(N3)]
+        el.size = len(el.cells) * self.size
 
         el.divide_ndegen = self.divide_ndegen
         el.rydberg = self.rydberg
@@ -262,30 +263,23 @@ class Model(object):
         if comm.rank == 0:
             const = dict()
 
-            status = misc.StatusBar(len(self.R),
+            status = misc.StatusBar(len(el.cells),
                 title='map hoppings onto supercell')
 
-            for n in range(len(self.R)):
-                for i, cell in enumerate(el.cells):
-                    R = self.R[n] + np.array(cell)
+            for i in range(len(el.cells)):
+                A = i * self.size
 
-                    R1, r1 = divmod(np.dot(R, B1), N)
-                    R2, r2 = divmod(np.dot(R, B2), N)
-                    R3, r3 = divmod(np.dot(R, B3), N)
+                for n in range(len(self.R)):
+                    R, r = bravais.to_supercell(self.R[n] + el.cells[i],
+                        supercell)
 
-                    indices = r1 * N1 + r2 * N2 + r3 * N3
-                    j = el.cells.index(tuple(indices // N))
-
-                    A = i * self.size
-                    B = j * self.size
+                    B = r * self.size
 
                     if sparse:
                         el.Hs[
                             A:A + self.size,
                             B:B + self.size] += self.data[n].real
                         continue
-
-                    R = R1, R2, R3
 
                     if R not in const:
                         const[R] = np.zeros((el.size, el.size), dtype=complex)

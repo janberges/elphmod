@@ -533,18 +533,19 @@ class Model(object):
         """
         ph = Model()
 
-        N, (N1, N2, N3), (B1, B2, B3), ph.cells = bravais.supercell(N1, N2, N3)
+        supercell = bravais.supercell(N1, N2, N3)
+        ph.N = list(map(tuple, supercell[1]))
+        ph.cells = supercell[-1]
 
-        ph.M = np.tile(self.M, N)
-        ph.a = np.dot((N1, N2, N3), self.a)
-        ph.atom_order = list(self.atom_order) * N
-        ph.size = self.size * N
-        ph.nat = self.nat * N
+        ph.M = np.tile(self.M, len(ph.cells))
+        ph.a = np.dot(ph.N, self.a)
+        ph.atom_order = list(self.atom_order) * len(ph.cells)
+        ph.size = self.size * len(ph.cells)
+        ph.nat = self.nat * len(ph.cells)
         ph.r = np.array([
             n1 * self.a[0] + n2 * self.a[1] + n3 * self.a[2] + self.r[na]
             for n1, n2, n3 in ph.cells
             for na in range(self.nat)])
-        ph.N = [tuple(N1), tuple(N2), tuple(N3)]
         ph.divide_mass = self.divide_mass
         ph.divide_ndegen = self.divide_ndegen
 
@@ -558,12 +559,12 @@ class Model(object):
         if self.Z is None:
             ph.Z = None
         else:
-            ph.Z = np.tile(self.Z, (N, 1, 1))
+            ph.Z = np.tile(self.Z, (len(ph.cells), 1, 1))
 
         if self.Q is None:
             ph.Q = None
         else:
-            ph.Q = np.tile(self.Q, (N, 1, 1, 1))
+            ph.Q = np.tile(self.Q, (len(ph.cells), 1, 1, 1))
 
         if self.lr:
             ph.prepare_long_range()
@@ -582,28 +583,21 @@ class Model(object):
         if comm.rank == 0:
             const = dict()
 
-            status = misc.StatusBar(len(self.R),
+            status = misc.StatusBar(len(ph.cells),
                 title='map force constants onto supercell')
 
-            for n in range(len(self.R)):
-                for i, cell in enumerate(ph.cells):
-                    R = self.R[n] + np.array(cell)
+            for i in range(len(ph.cells)):
+                A = i * self.size
 
-                    R1, r1 = divmod(np.dot(R, B1), N)
-                    R2, r2 = divmod(np.dot(R, B2), N)
-                    R3, r3 = divmod(np.dot(R, B3), N)
+                for n in range(len(self.R)):
+                    R, r = bravais.to_supercell(self.R[n] + ph.cells[i],
+                        supercell)
 
-                    indices = r1 * N1 + r2 * N2 + r3 * N3
-                    j = ph.cells.index(tuple(indices // N))
-
-                    A = i * self.size
-                    B = j * self.size
+                    B = r * self.size
 
                     if sparse:
                         ph.Ds[A:A + self.size, B:B + self.size] += self.data[n]
                         continue
-
-                    R = R1, R2, R3
 
                     if R not in const:
                         const[R] = np.zeros((ph.size, ph.size))

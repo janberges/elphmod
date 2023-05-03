@@ -392,7 +392,6 @@ def supercell(N1=1, N2=1, N3=1):
     cells = []
 
     if comm.rank == 0:
-
         corners = np.array([n1 * N1 + n2 * N2 + n3 * N3
             for n1 in range(2)
             for n2 in range(2)
@@ -417,6 +416,33 @@ def supercell(N1=1, N2=1, N3=1):
     cells = comm.bcast(cells)
 
     return N, (N1, N2, N3), (B1, B2, B3), cells
+
+def to_supercell(R, supercell):
+    """Map lattice vector to supercell.
+
+    Parameters
+    ----------
+    R : tuple of int
+        Unit-cell lattice vector.
+    supercell : tuple
+        Supercell info returned by :func:`supercell`.
+
+    Returns
+    -------
+    tuple of int
+        Supercell lattice vector.
+    int
+        Index of unit cell within supercell.
+    """
+    N, (N1, N2, N3), (B1, B2, B3), cells = supercell
+
+    R1, r1 = divmod(np.dot(R, B1), N)
+    R2, r2 = divmod(np.dot(R, B2), N)
+    R3, r3 = divmod(np.dot(R, B3), N)
+
+    r = (r1 * N1 + r2 * N2 + r3 * N3) // N
+
+    return (R1, R2, R3), cells.index(tuple(r))
 
 def images(k1, k2, nk, angle=60):
     """Generate symmetry-equivalent k points.

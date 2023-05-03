@@ -396,17 +396,13 @@ class Model(object):
             el=self.el.supercell(N1, N2, N3, sparse=sparse),
             ph=self.ph.supercell(N1, N2, N3, sparse=sparse))
 
-        N, (N1, N2, N3), (B1, B2, B3), elph.cells = bravais.supercell(
-            N1, N2, N3)
+        supercell = bravais.supercell(N1, N2, N3)
+        elph.cells = supercell[-1]
 
         elph.divide_mass = self.divide_mass
         elph.divide_ndegen = self.divide_ndegen
 
-        Rg = set()
-        Rk = set()
         const = dict()
-
-        counter = 0 # counter for parallelization
 
         if sparse:
             try:
@@ -426,35 +422,34 @@ class Model(object):
             if abs(self.data.imag).sum() / abs(self.data.real).sum() > 1e-6:
                 info('Warning: Significant imaginary part of coupling ignored')
 
-        status = misc.StatusBar(len(self.Rg) * len(self.Rk),
-            title='map coupling onto supercell (1/2)')
+        Rg = np.empty((len(self.Rg), 3), dtype=int)
+        Rk = np.empty((len(self.Rk), 3), dtype=int)
 
-        for g in range(len(self.Rg)):
+        rg = np.empty(len(self.Rg), dtype=int)
+        rk = np.empty(len(self.Rk), dtype=int)
+
+        status = misc.StatusBar(-(-len(elph.cells) // comm.size) * len(self.Rg),
+            title='map coupling onto supercell')
+
+        for i in range(len(elph.cells)):
+            if i % comm.size != comm.rank:
+                continue
+
+            for g in range(len(self.Rg)):
+                Rg[g], rg[g] = bravais.to_supercell(self.Rg[g] + elph.cells[i],
+                    supercell)
+
             for k in range(len(self.Rk)):
-                for i, cell in enumerate(elph.cells):
-                    counter += 1
+                Rk[k], rk[k] = bravais.to_supercell(self.Rk[k] + elph.cells[i],
+                    supercell)
 
-                    if counter % comm.size != comm.rank:
-                        continue
+            B = i * self.el.size
 
-                    G = self.Rg[g] + np.array(cell)
-                    K = self.Rk[k] + np.array(cell)
+            for g in range(len(self.Rg)):
+                A = rg[g] * self.ph.size
 
-                    G1, g1 = divmod(np.dot(G, B1), N)
-                    G2, g2 = divmod(np.dot(G, B2), N)
-                    G3, g3 = divmod(np.dot(G, B3), N)
-                    K1, k1 = divmod(np.dot(K, B1), N)
-                    K2, k2 = divmod(np.dot(K, B2), N)
-                    K3, k3 = divmod(np.dot(K, B3), N)
-
-                    indices = g1 * N1 + g2 * N2 + g3 * N3
-                    n = elph.cells.index(tuple(indices // N))
-                    indices = k1 * N1 + k2 * N2 + k3 * N3
-                    j = elph.cells.index(tuple(indices // N))
-
-                    A = n * self.ph.size
-                    B = i * self.el.size
-                    C = j * self.el.size
+                for k in range(len(self.Rk)):
+                    C = rk[k] * self.el.size
 
                     if sparse:
                         for x in range(self.ph.size):
@@ -463,10 +458,7 @@ class Model(object):
                                 C:C + self.el.size] += self.data[g, x, k].real
                         continue
 
-                    Rg.add((G1, G2, G3))
-                    Rk.add((K1, K2, K3))
-
-                    R = G1, G2, G3, K1, K2, K3
+                    R = tuple(Rg[g]) + tuple(Rk[k])
 
                     if R not in const:
                         const[R] = np.zeros((elph.ph.size,
@@ -495,8 +487,11 @@ class Model(object):
 
             return elph
 
-        elph.Rg = np.array(sorted(set().union(*comm.allgather(Rg))))
-        elph.Rk = np.array(sorted(set().union(*comm.allgather(Rk))))
+        elph.Rg = np.array(sorted(set().union(*comm.allgather([R[:3]
+            for R in const]))))
+
+        elph.Rk = np.array(sorted(set().union(*comm.allgather([R[3:]
+            for R in const]))))
 
         elph.node, elph.images, elph.data = MPI.shared_array((len(elph.Rg),
             elph.ph.size, len(elph.Rk), elph.el.size, elph.el.size),
@@ -511,7 +506,7 @@ class Model(object):
             elph.data[...] = 0.0
 
         status = misc.StatusBar(len(elph.Rg) * len(elph.Rk),
-            title='map coupling onto supercell (2/2)')
+            title='convert supercell coupling to standard format')
 
         for g, (G1, G2, G3) in enumerate(elph.Rg):
             for k, (K1, K2, K3) in enumerate(elph.Rk):
@@ -591,8 +586,8 @@ class Model(object):
 
                     status.update()
 
-            Rg = sorted(set(r[:3] for r in const.keys()))
-            Rk = sorted(set(r[3:] for r in const.keys()))
+            Rg = sorted(set(R[:3] for R in const))
+            Rk = sorted(set(R[3:] for R in const))
 
             ng = len(Rg)
             nk = len(Rk)
