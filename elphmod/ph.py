@@ -587,22 +587,22 @@ class Model(object):
                 title='map force constants onto supercell')
 
             for i in range(len(ph.cells)):
-                A = i * self.size
+                X = i * self.size
 
                 for n in range(len(self.R)):
                     R, r = bravais.to_supercell(self.R[n] + ph.cells[i],
                         supercell)
 
-                    B = r * self.size
+                    Y = r * self.size
 
                     if sparse:
-                        ph.Ds[A:A + self.size, B:B + self.size] += self.data[n]
+                        ph.Ds[X:X + self.size, Y:Y + self.size] += self.data[n]
                         continue
 
                     if R not in const:
                         const[R] = np.zeros((ph.size, ph.size))
 
-                    const[R][A:A + self.size, B:B + self.size] = self.data[n]
+                    const[R][X:X + self.size, Y:Y + self.size] = self.data[n]
 
                 status.update()
 

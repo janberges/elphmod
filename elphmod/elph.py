@@ -443,19 +443,19 @@ class Model(object):
                 Rk[k], rk[k] = bravais.to_supercell(self.Rk[k] + elph.cells[i],
                     supercell)
 
-            B = i * self.el.size
+            A = i * self.el.size
 
             for g in range(len(self.Rg)):
-                A = rg[g] * self.ph.size
+                X = rg[g] * self.ph.size
 
                 for k in range(len(self.Rk)):
-                    C = rk[k] * self.el.size
+                    B = rk[k] * self.el.size
 
                     if sparse:
                         for x in range(self.ph.size):
-                            elph.gs[A + x][
-                                B:B + self.el.size,
-                                C:C + self.el.size] += self.data[g, x, k].real
+                            elph.gs[X + x][
+                                A:A + self.el.size,
+                                B:B + self.el.size] += self.data[g, x, k].real
                         continue
 
                     R = tuple(Rg[g]) + tuple(Rk[k])
@@ -465,9 +465,9 @@ class Model(object):
                             elph.el.size, elph.el.size), dtype=complex)
 
                     const[R][
-                        A:A + self.ph.size,
-                        B:B + self.el.size,
-                        C:C + self.el.size] = self.data[g, :, k]
+                        X:X + self.ph.size,
+                        A:A + self.el.size,
+                        B:B + self.el.size] = self.data[g, :, k]
 
                 status.update()
 
