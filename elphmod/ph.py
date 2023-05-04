@@ -433,21 +433,21 @@ class Model(object):
                 exp = np.exp(1j * np.dot(self.r, K))
                 exp = exp[:, np.newaxis]
 
-                dot = np.dot(K, self.z).astype(complex)
+                dot = -1j * np.dot(K, self.z)
 
                 if self.Q is not None:
-                    dot += 0.5j * K.dot(self.q).dot(K)
+                    dot += 0.5 * K.dot(self.q).dot(K)
 
                     if self.lr2d and self.L is not None:
-                        dot -= 0.5j * K_norm * self.q[..., 2, 2] * K_norm
+                        dot -= 0.5 * K_norm * self.q[..., 2, 2] * K_norm
 
                 yield factor, (dot * exp).ravel()
 
                 if self.lr2d and self.L is not None and perp:
-                    dot_perp = (K_norm * self.z[:, 2, :]).astype(complex)
+                    dot_perp = -1j * K_norm * self.z[:, 2, :]
 
                     if self.Q is not None:
-                        dot_perp += 1j * K_norm * self.q[..., 2, :2].dot(K[:2])
+                        dot_perp += K_norm * self.q[..., 2, :2].dot(K[:2])
 
                     yield factor_perp, (dot_perp * exp).ravel()
 
