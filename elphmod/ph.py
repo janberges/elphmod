@@ -1802,7 +1802,7 @@ def q2r(ph, D_irr=None, q_irr=None, nq=None, D_full=None, angle=60,
     ph.R, ph.data, ph.l = bravais.short_range_model(phid, ph.a, ph.r,
         sgn=-1, divide_ndegen=ph.divide_ndegen)
 
-    if divide_mass:
+    if ph.divide_mass:
         for na in range(ph.nat):
             ph.data[:, group(na), :] /= np.sqrt(ph.M[na])
             ph.data[:, :, group(na)] /= np.sqrt(ph.M[na])
