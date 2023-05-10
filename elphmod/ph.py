@@ -154,7 +154,7 @@ class Model(object):
         Dq = self.D0_lr.copy()
 
         for val, vec in self.generate_long_range(q1, q2, q3):
-            Dq += val * np.outer(vec, vec.conj())
+            Dq += val * np.outer(vec.conj(), vec)
 
         return Dq
 
@@ -411,8 +411,6 @@ class Model(object):
                     KrK = np.einsum('i,ij,j', K[:2], self.r_eff[:2, :2], K[:2])
 
                 if self.lr2d and self.L is not None:
-                    KrK_perp = self.r_eff[2, 2]
-
                     K_norm = np.sqrt(KeK)
                     f = 1 - np.tanh(K_norm * self.L / 2)
 
@@ -420,6 +418,8 @@ class Model(object):
                     factor /= 1 + f / K_norm * KrK
 
                     if perp:
+                        KrK_perp = self.r_eff[2, 2]
+
                         factor_perp = -self.prefactor * f / K_norm
                         factor_perp /= 1 - f * K_norm * KrK_perp
                 else:
@@ -430,10 +430,10 @@ class Model(object):
                     else:
                         factor /= KeK
 
-                exp = np.exp(1j * np.dot(self.r, K))
+                exp = np.exp(-1j * np.dot(self.r, K))
                 exp = exp[:, np.newaxis]
 
-                dot = -1j * np.dot(K, self.z)
+                dot = 1j * np.dot(K, self.z)
 
                 if self.Q is not None:
                     dot += 0.5 * K.dot(self.q).dot(K)
@@ -444,7 +444,7 @@ class Model(object):
                 yield factor, (dot * exp).ravel()
 
                 if self.lr2d and self.L is not None and perp:
-                    dot_perp = -1j * K_norm * self.z[:, 2, :]
+                    dot_perp = 1j * K_norm * self.z[:, 2, :]
 
                     if self.Q is not None:
                         dot_perp += K_norm * self.q[..., 2, :2].dot(K[:2])

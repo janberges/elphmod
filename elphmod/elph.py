@@ -193,7 +193,7 @@ class Model(object):
         gq = np.zeros(self.ph.size, dtype=complex)
 
         for val, vec in self.ph.generate_long_range(q1, q2, q3, perp=False):
-            gq += val * vec.conj()
+            gq += val * vec
 
         return gq
 
