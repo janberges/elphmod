@@ -106,7 +106,7 @@ class Driver(object):
 
         self.H0 = dispersion.sample(self.elph.el.H, self.k)
 
-        self.d0 = self.elph.sample(q=self.q, nk=self.nk)
+        self.d0 = self.elph.sample(self.q, self.nk)
 
         self.u = np.zeros(self.elph.ph.size)
 

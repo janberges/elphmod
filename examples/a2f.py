@@ -37,7 +37,7 @@ dangerous = np.where(w2 < eps)
 w2[dangerous] = eps
 w = elphmod.ph.sgnsqrt(w2)
 
-d2 = elphmod.elph.sample(elph.g, q, nk, U, u, squared=True, shared_memory=True)
+d2 = elph.sample(q, U=U, u=u, squared=True, shared_memory=True)
 g2dd, dd = elphmod.diagrams.double_fermi_surface_average(q, e, d2, kTel, f)
 g2dd[dangerous] = 0.0
 g2dd /= 2 * w
