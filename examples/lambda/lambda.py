@@ -4,51 +4,29 @@
 # This program is free software under the terms of the GNU GPLv3 or later.
 
 import elphmod
-import matplotlib.pyplot as plt
 import numpy as np
 
-comm = elphmod.MPI.comm
-info = elphmod.MPI.info
+nk = nq = 36
 
 el = elphmod.el.Model('TaS2')
 mu = elphmod.el.read_Fermi_level('pw.out')
 ph = elphmod.ph.Model('ifc', apply_asr_simple=True)
-elph = elphmod.elph.Model('work/TaS2.epmatwp', 'wigner.dat', el, ph,
-    divide_mass=False) # with this argument, elph.g() returns <k+q|dV/du|k>
+ph.data *= elphmod.misc.Ry ** 2
+elph = elphmod.elph.Model('work/TaS2.epmatwp', 'wigner.dat', el, ph)
+elph.data *= elphmod.misc.Ry ** 1.5
 
-k, x, GMKG = elphmod.bravais.GMKG(corner_indices=True)
+q = sorted(elphmod.bravais.irreducibles(nq))
+q = 2 * np.pi * np.array(q, dtype=float) / nq
 
-e, order = elphmod.dispersion.dispersion(el.H, k, order=True)
-
-if comm.rank == 0:
-    plt.plot(x, e - mu)
-    plt.ylabel('Electron energy (eV)')
-    plt.xlabel('Wave vector')
-    plt.xticks(x[GMKG], 'GMKG')
-    plt.show()
-
-w2, order = elphmod.dispersion.dispersion(ph.D, k, order=True)
-
-if comm.rank == 0:
-    plt.plot(x, elphmod.ph.sgnsqrt(w2) * elphmod.misc.Ry * 1e3)
-    plt.ylabel('Phonon energy (meV)')
-    plt.xlabel('Wave vector')
-    plt.xticks(x[GMKG], 'GMKG')
-    plt.show()
-
-n = 0 # electron band index
-nu = 0 # phonon band index
-k1, k2 = -np.pi, np.pi / 2 # k point
-q1, q2 = 0.0, np.pi # q point
-
-e = np.linalg.eigvalsh(el.H(k1=k2, k2=k2))
+e, U = elphmod.dispersion.dispersion_full_nosym(el.H, nk, vectors=True)
 e -= mu
-info('Electron energy e(k) = %g eV' % e[n])
 
-w2 = np.linalg.eigvalsh(ph.D(q1=q1, q2=q2))
-w = elphmod.ph.sgnsqrt(w2) * elphmod.misc.Ry
-info('Phonon energy w(q) = %g eV' % w[nu])
+w2, u = elphmod.dispersion.dispersion(ph.D, q, vectors=True)
 
-d = elph.g(q1=q1, q2=q2, k1=k1, k2=k2, elbnd=True, phbnd=True)
-d *= elphmod.misc.Ry / elphmod.misc.a0
-info('Deformation potential <k+q|dV/du|k> = %g eV/AA' % abs(d[nu, n, n]))
+d2 = elph.sample(q, U=U[..., :1], u=u, squared=True, shared_memory=True)
+
+lamda, wlog, Tc = elphmod.eliashberg.McMillan(nq, e[..., :1], w2, d2,
+    mustar=0.0, kT=0.3, f=elphmod.occupations.fermi_dirac)
+
+elphmod.MPI.info('lambda = %g, omega_log = %g meV, Tc = %g K'
+    % (lamda, 1e3 * wlog, Tc))
