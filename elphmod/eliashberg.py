@@ -99,6 +99,8 @@ def McMillan(nq, e, w2, g2, eps=1e-10, mustar=0.0, tetra=False, kT=0.025,
         for n in range(nel):
             N0 += dos.hexDOS(e[:, :, n])(0)
     else:
+        q = 2 * np.pi / nq * q
+
         g2dd, dd = diagrams.double_fermi_surface_average(q, e, g2, kT, f)
 
         N0 = f.delta(e / kT).sum() / kT / np.prod(e.shape[:-1])
