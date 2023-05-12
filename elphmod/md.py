@@ -336,7 +336,7 @@ class Driver(object):
         if seedname is not None:
             model.to_hrdat(seedname)
 
-        return el.Model(seedname)
+        return model
 
     def phonons(self, divide_mass=True, **kwargs):
         """Set up mass-spring model for current structure.
