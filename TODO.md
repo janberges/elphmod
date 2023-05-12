@@ -3,6 +3,7 @@
 The following things should/could be done sooner or later. Items with question
 mark are not necessarily a good idea.
 
+* Set `ph.D0` and `elph.g0` when generating models with `q2r`.
 * Read Wannier-function centres from `_centres.xyz`.
 * Add long-range argument `lr` to electron-phonon class `elph`?
 * Save `_wsvec.dat` together with `_hr.dat` file (important for small meshes).

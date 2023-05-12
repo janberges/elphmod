@@ -175,8 +175,13 @@ class Driver(object):
             self.elph.ph.nat)
 
     def find_Fermi_level(self):
-        """Update chemical potential."""
+        """Update chemical potential.
 
+        Returns
+        -------
+        float
+            New chemical potential.
+        """
         self.mu = occupations.find_Fermi_level(self.n, self.e, self.kT, self.f,
             self.mu)
 
@@ -205,6 +210,11 @@ class Driver(object):
             Updated atomic displacements (e.g., from optimization routine).
         show : bool
             Print free energy?
+
+        Returns
+        -------
+        float
+            Free energy in Ry.
         """
         if show:
             t0 = time.time()
@@ -241,6 +251,11 @@ class Driver(object):
             Dummy positional argument for optimization routines.
         show : bool
             Print free energy?
+
+        Returns
+        -------
+        ndarray
+            Negative forces in Ry per Bohr.
         """
         if show:
             t0 = time.time()
@@ -274,6 +289,11 @@ class Driver(object):
             Dummy positional argument for optimization routines.
         show : bool
             Print free energy?
+
+        Returns
+        -------
+        ndarray
+            Force constants in Ry per Bohr squared.
         """
         if self.sparse:
             raise NotImplementedError('Dense matrices required.')
@@ -311,6 +331,11 @@ class Driver(object):
         dk1, dk2, dk3 : int, optional
             Only use data for every `dkn`-th k point along the *n*-th axis? This
             reduces the size of the Hamiltonian file.
+
+        Returns
+        -------
+        object
+            Tight-binding model for the electrons.
         """
         H = np.einsum('...an,...n,...bn->...ab', self.U, self.e, self.U.conj())
 
@@ -347,6 +372,11 @@ class Driver(object):
             Divide force constants by atomic masses?
         **kwargs
             Parameters passed to :func:`ph.q2r`.
+
+        Returns
+        -------
+        object
+            Mass-spring model for the phonons.
         """
         model = copy.deepcopy(self.elph.ph)
         model.divide_mass = divide_mass
