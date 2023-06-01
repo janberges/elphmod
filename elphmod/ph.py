@@ -1506,6 +1506,10 @@ def zasr(Z):
 def sum_rule_correction(ph, asr=True, rsr=True, eps=1e-15, report=True):
     """Apply sum rule correction to force constants.
 
+    Unlike :func:`asr` called by the argument `apply_asr_simple`, the corrected
+    force constants may not fulfill the point-symmetries of the crystal anymore.
+    In turn, the total deviation from the original force constants is minimized.
+
     Parameters
     ----------
     ph : object
@@ -1522,6 +1526,10 @@ def sum_rule_correction(ph, asr=True, rsr=True, eps=1e-15, report=True):
     if comm.rank != 0:
         comm.Bcast(ph.data)
         return
+
+    if report:
+        print('Warning: Sum-rule corrections do not respect point symmetries.')
+        print('Consider simple ASR correction instead (apply_asr_simple).')
 
     # define sums that should be zero:
 
