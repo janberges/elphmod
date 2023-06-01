@@ -420,7 +420,7 @@ class Model(object):
                     elph.gs[x].setdiag(g_lr[x])
 
             if abs(self.data.imag).sum() / abs(self.data.real).sum() > 1e-6:
-                info('Warning: Significant imaginary part of coupling ignored')
+                info('Warning: Significant imaginary part of coupling ignored!')
 
         Rg = np.empty((len(self.Rg), 3), dtype=int)
         Rk = np.empty((len(self.Rk), 3), dtype=int)

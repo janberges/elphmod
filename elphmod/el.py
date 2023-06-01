@@ -258,7 +258,7 @@ class Model(object):
             el.Hs = sparse_array((el.size, el.size))
 
             if abs(self.data.imag).sum() / abs(self.data.real).sum() > 1e-6:
-                info('Warning: Significant imaginary part of hopping ignored')
+                info('Warning: Significant imaginary part of hopping ignored!')
 
         if comm.rank == 0:
             const = dict()
@@ -1687,7 +1687,7 @@ def read_pp_density(filename):
         nr_points = np.prod(FFT_dim[:3])
         # separated into columns of 5:
         if divmod(nr_points, 5)[1] != 0:
-            print('Warning: Total number of grid points is not divisible by 5')
+            print('Warning: Total number of grid points is not divisible by 5!')
         rho = table(divmod(nr_points, 5)[0])
 
         tot_charge = rho.sum() / nr_points * uc_volume

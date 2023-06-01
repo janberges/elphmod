@@ -268,7 +268,7 @@ class Model(object):
 
         if self.lr:
             if self.lr2d != lr2d:
-                info('Warning: System is assumed to be %s-dimensional.'
+                info('Warning: System is assumed to be %s-dimensional!'
                     % ('two' if self.lr2d else 'three'))
 
             self.prepare_long_range()
@@ -1528,7 +1528,7 @@ def sum_rule_correction(ph, asr=True, rsr=True, eps=1e-15, report=True):
         return
 
     if report:
-        print('Warning: Sum-rule corrections do not respect point symmetries.')
+        print('Warning: Sum-rule corrections do not respect point symmetries!')
         print('Consider simple ASR correction instead (apply_asr_simple).')
 
     # define sums that should be zero:
