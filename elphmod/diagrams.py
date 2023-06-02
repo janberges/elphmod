@@ -259,7 +259,7 @@ def polarization(e, U, kT=0.025, eps=1e-10, subspace=None,
 def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
         occupations=occupations.fermi_dirac, fluctuations=False, Delta=None,
         Delta_diff=False, Delta_occupations=occupations.gauss, Delta_kT=0.025,
-        g=None, G=None, symmetrize=True, U=0.0, comm=comm):
+        g=None, G=None, symmetrize=True, diagonal=False, U=0.0, comm=comm):
     r"""Calculate phonon self-energy.
 
     .. math::
@@ -276,7 +276,8 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
     e : ndarray
         Electron dispersion on uniform mesh. The Fermi level must be at zero.
     g2 : ndarray
-        Squared electron-phonon coupling.
+        Squared electron-phonon coupling. The resulting phonon self-energy will
+        be a vector in the space of phonon modes.
     kT : float
         Smearing temperature.
     eps : float
@@ -298,12 +299,15 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
         Temperature to smoothen Heaviside function.
     g : ndarray
         Electron-phonon coupling on one side of the bubble. If given, `g2` is
-        ignored.
+        ignored. The resulting phonon self-energy will be a matrix (an outer
+        product of `g` and `G`) in the space of phonon modes or displacements.
     G : ndarray
         Electron-phonon coupling on the other side of the bubble. If absent, `g`
         is used.
     symmetrize : bool
         Symmetrize phonon self-energy with respect to swapping `g` and `G`?
+    diagonal : bool
+        Neglect off-diagonal elements when using `g` and `G`?
     U : ndarray
         Contact interaction (a matrix in band indices) to model the effect of
         excitons. Only used if `g` is present. Associated terms are currently
@@ -434,6 +438,8 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
         for nu in np.ndindex(*phshape):
             if g is None:
                 Pi_k = g2[iq][nu] * dfde
+            elif diagonal and nu[0] != nu[1]:
+                Pi_k = 0 * dfde
             else:
                 G2 = g[iq, nu[0]].conj() * G[iq, nu[1]]
 
