@@ -832,6 +832,22 @@ def sample(g, q, nk=None, U=None, u=None, squared=False, broadcast=True,
         dtype=my_g.dtype, shared_memory=shared_memory,
         single_memory=not broadcast)
 
+    if node.size == comm.size > 1: # running on single node using shared memory
+
+        # As Gatherv into shared memory can require more memory than expected
+        # and lead to segmentation faults, we use a different approach here.
+
+        if col.rank == 0:
+            for column in range(row.size):
+                if column == row.rank:
+                    g[bounds[row.rank]:bounds[row.rank + 1]] = np.reshape(my_g,
+                        g[bounds[row.rank]:bounds[row.rank + 1]].shape)
+                    del my_g
+
+                row.Barrier()
+
+        return g
+
     if col.rank == 0:
         row.Gatherv(my_g, (g, row.gather(my_g.size)))
 

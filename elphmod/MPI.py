@@ -217,6 +217,11 @@ def shared_array(shape, dtype=float, shared_memory=True, single_memory=False,
             window = MPI.Win.Allocate_shared(size, dtype.itemsize, comm=node)
             buffer, itemsize = window.Shared_query(0)
 
+            if comm.rank == 0:
+                if size > 1e9:
+                    print('About to allocate %.6f GB of shared memory'
+                        % (size / 1e9))
+
     if only_info:
         return node, images, shape, buffer, dtype
     else:
