@@ -3,6 +3,13 @@
 See [Git commits](https://github.com/janberges/elphmod/commits) for more
 detailed list of changes.
 
+## v0.20/2023-06-22
+
+* Bugfix and example related to Eliashberg theory
+* Model input data (electrons, phonons, and coupling) for TaS₂
+* Faster mapping to supercells
+* Tight-binding models from perturbed states on supercells
+* Export of tight-binding model in Wannier90 format (*_hr.dat*)
 * QE-7.2 support (cDFPT patch)
 * Dynamical matrices and force constants from XML files
 
