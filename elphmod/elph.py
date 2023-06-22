@@ -832,7 +832,7 @@ def sample(g, q, nk=None, U=None, u=None, squared=False, broadcast=True,
         dtype=my_g.dtype, shared_memory=shared_memory,
         single_memory=not broadcast)
 
-    if node.size == comm.size > 1: # running on single node using shared memory
+    if node.size == comm.size > 1 and broadcast: # shared memory on single node
 
         # As Gatherv into shared memory can require more memory than expected
         # and lead to segmentation faults, we use a different approach here.
