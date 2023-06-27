@@ -334,7 +334,9 @@ el.to_hrdat(stem)
 ph = elphmod.ph.Model(phid=np.empty((3, 3) + nq + (3, 3)),
     amass=[M, m, m], at=at, tau=r, atom_order=['Ta', 'S', 'S'])
 
-elphmod.ph.q2r(ph, D_full=D, flfrc='%s.ifc' % stem)
+elphmod.ph.q2r(ph, D_full=D)
+ph.standardize(eps=1e-10)
+ph.to_flfrc('%s.ifc' % stem, *nq)
 
 Rk, dk, lk = elphmod.bravais.wigner_seitz_x('q', nk[0], at, r)
 Rg, dg, lg = elphmod.bravais.wigner_seitz_x('q', nQ[0], at, r)

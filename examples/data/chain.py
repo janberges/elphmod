@@ -83,7 +83,9 @@ el.to_hrdat(stem)
 ph = elphmod.ph.Model(phid=np.empty((1, 1) + nq + (3, 3)),
     amass=[M], at=at, tau=r, atom_order=['X'])
 
-elphmod.ph.q2r(ph, D_full=D, flfrc='%s.ifc' % stem)
+elphmod.ph.q2r(ph, D_full=D)
+ph.standardize(eps=1e-10)
+ph.to_flfrc('%s.ifc' % stem, *nq)
 
 Rk = np.array([(-1, 0, 0), (0, 0, 0), (1, 0, 0)])
 Rg = Rk.copy()
