@@ -41,8 +41,8 @@ repository and also install the requirements of examples and documentation:
     git clone https://github.com/janberges/elphmod
     python3 -m pip install -r elphmod/requirements.txt
 
-Also consider adding the absolute paths to `elphmod/elphmod` and `elphmod/bin`
-to the environment variables `PYTHONPATH` and `PATH`, respectively.
+Also consider adding the absolute paths to `elphmod` and `elphmod/bin` to the
+environment variables `PYTHONPATH` and `PATH`, respectively.
 
 ## Documentation
 
