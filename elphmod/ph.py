@@ -507,7 +507,7 @@ class Model(object):
                 cost[na, :] *= np.sqrt(self.M[na])
                 cost[:, na] *= np.sqrt(self.M[na])
 
-        return(cost.sum() / (2 * np.prod(self.nq)))
+        return cost.sum() / (2 * np.prod(self.nq))
 
     def supercell(self, N1=1, N2=1, N3=1, sparse=False):
         """Map mass-spring model onto supercell.
