@@ -55,9 +55,9 @@ r[:, :2] /= 3
 
 a /= elphmod.misc.a0
 
-nk = (4, 4, 1) # for electrons
+nk = (3, 3, 1) # for electrons
 nq = (2, 2, 1) # for phonons
-nQ = (4, 4, 1) # for coupling
+nQ = (3, 3, 1) # for coupling
 
 k = [[[(k1, k2, k3)
     for k3 in range(nk[2])]
@@ -327,7 +327,7 @@ g = elphmod.elph.sample(coupling, Q.reshape((-1, 3)), nk)
 
 el = elphmod.el.Model()
 el.size = H.shape[-1]
-elphmod.el.k2r(el, H * elphmod.misc.Ry, at, r)
+elphmod.el.k2r(el, H * elphmod.misc.Ry, at, r[:1].repeat(3, axis=0))
 el.standardize(eps=1e-10)
 el.to_hrdat(stem)
 
@@ -338,12 +338,14 @@ elphmod.ph.q2r(ph, D_full=D)
 ph.standardize(eps=1e-10)
 ph.to_flfrc('%s.ifc' % stem, *nq)
 
-Rk, dk, lk = elphmod.bravais.wigner_seitz_x('q', nk[0], at, r)
-Rg, dg, lg = elphmod.bravais.wigner_seitz_x('q', nQ[0], at, r)
+Rk, dk, lk = elphmod.bravais.wigner_seitz_x('k', nk[0], at)
+Rg, dg, lg = elphmod.bravais.wigner_seitz_x('g', nQ[0], at, r - r[0])
 
 Rk = np.insert(Rk, obj=2, values=0, axis=1)
 Rg = np.insert(Rg, obj=2, values=0, axis=1)
-dg = dg.swapaxes(0, 1).reshape((1, el.size, ph.nat, len(Rg)))
+
+dk = np.reshape(dk, (1, 1, len(Rk)))
+dg = np.reshape(dg, (1, 1, ph.nat, len(Rg)))
 
 elph = elphmod.elph.Model(Rk=Rk, dk=dk, Rg=Rg, dg=dg, el=el, ph=ph,
     divide_mass=False)

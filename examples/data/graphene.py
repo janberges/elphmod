@@ -27,7 +27,7 @@ stem = __file__[:-3]
 at = elphmod.bravais.primitives(ibrav=4, a=a, c=15.0, bohr=True)
 r = np.dot([[2.0, 1.0, 0.0], [1.0, 2.0, 0.0]], at) / 3
 
-nk = (6, 6, 1)
+nk = (2, 2, 1)
 nq = (2, 2, 1)
 
 k = [[[(k1, k2, k3)
@@ -131,6 +131,7 @@ Rg, dg, lg = elphmod.bravais.wigner_seitz_x('q', nq[0], at, r)
 
 Rk = np.insert(Rk, obj=2, values=0, axis=1)
 Rg = np.insert(Rg, obj=2, values=0, axis=1)
+
 dg = dg.swapaxes(0, 1).reshape((1, el.size, ph.nat, len(Rg)))
 
 elph = elphmod.elph.Model(Rk=Rk, dk=dk, Rg=Rg, dg=dg, el=el, ph=ph,
