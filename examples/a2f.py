@@ -68,12 +68,14 @@ a2F = np.empty(len(omega))
 comm.Allgatherv(my_DOS, (DOS, sizes))
 comm.Allgatherv(my_a2F, (a2F, sizes))
 
-lamda, wlog, Tc = elphmod.eliashberg.McMillan(nq, e, w2, d2, mustar=0.0, kT=kTel, f=f)
+lamda, wlog, Tc = elphmod.eliashberg.McMillan(nq, e, w2, d2, mustar=0.0,
+    kT=kTel, f=f)
 
 if elphmod.MPI.comm.rank == 0:
     nph_int = DOS.sum() * domega
     lamda_int = 2 * (a2F / omega).sum() * domega
-    wlog_int = np.exp(2 / lamda_int * (a2F / omega * np.log(omega)).sum() * domega)
+    wlog_int = np.exp(2 / lamda_int
+        * (a2F / omega * np.log(omega)).sum() * domega)
 
     print('integrals (sums):')
     print('states = %g (%g)' % (nph_int, ph.size))

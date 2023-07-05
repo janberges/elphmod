@@ -120,8 +120,8 @@ t = np.zeros((6, 3, 3))
 dt = np.zeros((6, 9, 3, 3))
 
 for n in range(3):
-    t [2 * n] = hopping(t0, n * 120 * deg)
-    t [2 * n + 1] = hopping(t0.T, (120 * n + 60) * deg)
+    t[2 * n] = hopping(t0, n * 120 * deg)
+    t[2 * n + 1] = hopping(t0.T, (120 * n + 60) * deg)
     dt[2 * n, :2] = derivative(t0, n * 120 * deg)
     dt[2 * n + 1, :2] = derivative(t0.T, (120 * n + 60) * deg)
 
