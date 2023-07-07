@@ -14,11 +14,14 @@ from . import __version__, MPI
 comm = MPI.comm
 info = MPI.info
 
-verbosity = 1
-# 0: suppress all output
-# 1: only print warnings
-# 2: print info messages
-# 3: display status bars
+verbosity = 3
+"""Level of verbosity.
+
+- ``0``: Suppress all output.
+- ``1``: Only print warnings.
+- ``2``: Print info messages.
+- ``3``: Display status bars.
+"""
 
 # exact constants in SI units:
 
@@ -129,7 +132,7 @@ class StatusBar(object):
     in_progress = comm.rank != 0
 
     def __init__(self, count, width=60, title='progress'):
-        if StatusBar.in_progress:
+        if StatusBar.in_progress or verbosity < 3:
             return
 
         StatusBar.in_progress = self
