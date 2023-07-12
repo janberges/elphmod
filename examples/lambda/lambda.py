@@ -23,9 +23,9 @@ e -= mu
 
 w2, u = elphmod.dispersion.dispersion(ph.D, q, vectors=True)
 
-d2 = elph.sample(q, U=U[..., :1], u=u, squared=True, shared_memory=True)
+g2 = elph.sample(q, U=U[..., :1], u=u, squared=True, shared_memory=True)
 
-lamda, wlog, Tc = elphmod.eliashberg.McMillan(nq, e[..., :1], w2, d2,
+lamda, wlog, Tc = elphmod.eliashberg.McMillan(nq, e[..., :1], w2, g2,
     mustar=0.0, kT=0.3, f=elphmod.occupations.fermi_dirac)
 
 elphmod.MPI.info('lambda = %g, omega_log = %g meV, Tc = %g K'

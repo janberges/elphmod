@@ -37,8 +37,8 @@ dangerous = np.where(w2 < eps)
 w2[dangerous] = eps
 w = elphmod.ph.sgnsqrt(w2)
 
-d2 = elph.sample(q, U=U, u=u, squared=True, shared_memory=True)
-g2dd, dd = elphmod.diagrams.double_fermi_surface_average(q, e, d2, kTel, f)
+g2 = elph.sample(q, U=U, u=u, squared=True, shared_memory=True)
+g2dd, dd = elphmod.diagrams.double_fermi_surface_average(q, e, g2, kTel, f)
 g2dd[dangerous] = 0.0
 g2dd /= 2 * w
 
@@ -68,7 +68,7 @@ a2F = np.empty(len(omega))
 comm.Allgatherv(my_DOS, (DOS, sizes))
 comm.Allgatherv(my_a2F, (a2F, sizes))
 
-lamda, wlog, Tc = elphmod.eliashberg.McMillan(nq, e, w2, d2, mustar=0.0,
+lamda, wlog, Tc = elphmod.eliashberg.McMillan(nq, e, w2, g2, mustar=0.0,
     kT=kTel, f=f)
 
 if elphmod.MPI.comm.rank == 0:
