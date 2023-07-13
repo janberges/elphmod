@@ -24,12 +24,20 @@ class Model(object):
     vijkl_full, vijkl_redu : str
         Files with full and reduced bare Coulomb tensors. The difference is
         added as a correction to the Coulomb tensor provided via `uijkl`.
-    nq : int
-        Dimension of q mesh.
+    nq : tuple of int or int
+        Number of q points per dimension. If an integer is given, a 2D mesh with
+        `nq` points in both the first and the second dimension is assumed (for
+        backward compatibility).
     no : int
         Number of orbitals.
-    angle : numbe, optional
-        Angle between lattice vectors.
+    a : ndarray, optional
+        Bravais lattice vectors. By default, a 2D lattice with `angle` between
+        the first and the second basis vector is assumed.
+    r : ndarray, optional
+        Positions of orbital centers. By default, all orbitals are assumed to be
+        located at the origin of the unit cell.
+    angle : number, default 120
+        Angle between lattice vectors in degrees.
 
     Attributes
     ----------
@@ -62,19 +70,34 @@ class Model(object):
             return self.data[index]
 
     def __init__(self, uijkl=None, vijkl_full=None, vijkl_redu=None,
-            nq=None, no=None, Wmat=None, angle=120):
+            nq=None, no=None, Wmat=None, a=None, r=None, angle=120):
+
+        if uijkl is None and Wmat is None:
+            return
+
+        if hasattr(nq, '__len__'):
+            nq_orig = nq
+            nq = np.ones(3, dtype=int)
+            nq[:len(nq_orig)] = nq_orig
+        else:
+            nq = np.array([nq, nq, 1])
+
+        if a is None:
+            a = np.zeros((3, 3))
+            a[:2, :2] = bravais.translations(angle)
+            a[2, 2] = 1.0
+
+        if r is None:
+            r = np.zeros((no, 3))
 
         if Wmat is not None:
             R, Wmat = read_Wmat(Wmat, num_wann=no)
 
-            WR = np.zeros((nq, nq, 1, no, no), dtype=complex)
+            WR = np.zeros((nq[0], nq[1], nq[2], no, no), dtype=complex)
 
             for iR, (R1, R2, R3) in enumerate(R):
-                WR[R1 % nq, R2 % nq, 0] = Wmat[iR]
+                WR[R1 % nq[0], R2 % nq[1], R3 % nq[2]] = Wmat[iR]
         else:
-            if uijkl is None:
-                return
-
             Wq = read_orbital_Coulomb_interaction(uijkl, nq, no, dd=True)
 
             if vijkl_full is not None and vijkl_redu is not None:
@@ -83,19 +106,14 @@ class Model(object):
                 Wq -= read_orbital_Coulomb_interaction(vijkl_redu, nq, no,
                     dd=True)
 
-            Wq = Wq.reshape((nq, nq, 1, no, no))
+            Wq = Wq.reshape((nq[0], nq[1], nq[2], no, no))
 
             WR = np.fft.ifftn(Wq, axes=(0, 1, 2))
 
-        irvec, ndegen, wslen = bravais.wigner_seitz(nq, angle=angle)
+        WR = np.reshape(WR, (nq[0], nq[1], nq[2], no, 1, no, 1))
+        WR = np.transpose(WR, (3, 5, 0, 1, 2, 4, 6))
 
-        self.R = np.zeros((len(irvec), 3), dtype=int)
-        self.data = np.empty((len(irvec), no, no), dtype=complex)
-
-        self.R[:, :2] = irvec
-
-        for i in range(len(self.R)):
-            self.data[i] = WR[tuple(self.R[i] % nq)] / ndegen[i]
+        self.R, self.data, l = bravais.short_range_model(WR, a, r, sgn=+1)
 
         self.size = no
 
@@ -247,9 +265,9 @@ def read_orbital_Coulomb_interaction(filename, nq, no, dd=False):
     """Read Coulomb interaction in orbital basis."""
 
     if dd:
-        U = np.empty((nq, nq, no, no), dtype=complex)
+        U = np.empty((nq[0], nq[1], nq[2], no, no), dtype=complex)
     else:
-        U = np.empty((nq, nq, no, no, no, no), dtype=complex)
+        U = np.empty((nq[0], nq[1], nq[2], no, no, no, no), dtype=complex)
 
     if comm.rank == 0:
         with open(filename) as data:
@@ -257,17 +275,17 @@ def read_orbital_Coulomb_interaction(filename, nq, no, dd=False):
                 try:
                     columns = line.split()
 
-                    q1, q2 = [int(round(float(q) * nq)) % nq
-                        for q in columns[0:2]]
+                    q1, q2, q3 = [int(round(float(columns[c]) * nq[c])) % nq[c]
+                        for c in range(3)]
 
                     i, j, k, l = [int(n) - 1
                         for n in columns[3:7]]
 
                     if not dd:
-                        U[q1, q2, j, i, l, k] \
+                        U[q1, q2, q3, j, i, l, k] \
                             = float(columns[7]) + 1j * float(columns[8])
                     elif i == j and k == l:
-                        U[q1, q2, i, k] \
+                        U[q1, q2, q3, i, k] \
                             = float(columns[7]) + 1j * float(columns[8])
                 except (ValueError, IndexError):
                     continue
