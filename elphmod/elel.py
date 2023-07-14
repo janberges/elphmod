@@ -57,7 +57,7 @@ class Model(object):
 
         q = np.array([q1, q2, q3])
 
-        return np.einsum('Rab,R->ab', self.data, np.exp(-1j * self.R.dot(q)))
+        return np.einsum('Rab,R->ab', self.data, np.exp(1j * self.R.dot(q)))
 
     def WR(self, R1=0, R2=0, R3=0):
         """Get density-density Coulomb matrix for arbitrary lattice vector."""
@@ -108,7 +108,7 @@ class Model(object):
 
             Wq = Wq.reshape((nq[0], nq[1], nq[2], no, no))
 
-            WR = np.fft.ifftn(Wq, axes=(0, 1, 2))
+            WR = np.fft.ifftn(Wq.conj(), axes=(0, 1, 2)).conj()
 
         WR = np.reshape(WR, (nq[0], nq[1], nq[2], no, 1, no, 1))
         WR = np.transpose(WR, (3, 5, 0, 1, 2, 4, 6))
@@ -158,7 +158,7 @@ class Model(object):
                         const[R] = np.zeros((elel.size, elel.size),
                             dtype=complex)
 
-                    const[R][B:B + self.size, A:A + self.size] = self.data[n]
+                    const[R][A:A + self.size, B:B + self.size] = self.data[n]
 
                 status.update()
 
