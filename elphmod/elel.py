@@ -237,6 +237,24 @@ class Model(object):
         comm.Bcast(self.R)
         comm.Bcast(self.data)
 
+    def to_Wmat(self, Wmat):
+        if comm.rank == 0:
+            with open(Wmat, 'w') as data:
+                data.write('# Coulomb interaction W at omega = 0\n')
+                data.write('# 1: R1, 2: R2, 3: R3 (lattice vector)\n')
+                data.write('# 1: i, 2: j, 3: Re[W] (eV), 4: Im[W] (eV)\n')
+
+                for n in range(len(self.R)):
+                    data.write(('%12d' * 3 + '\n') % tuple(self.R[n]))
+
+                    for a in range(self.size):
+                        for b in range(self.size):
+                            data.write('%5d%4d%20.10f%20.10f\n' % (a + 1, b + 1,
+                                self.data[n, a, b].real,
+                                self.data[n, a, b].imag))
+
+                    data.write('\n')
+
 def read_local_Coulomb_tensor(filename, no, dd=False):
     """Read local Coulomb tensor from VASP."""
 
