@@ -27,9 +27,13 @@ class Model(object):
     nq : tuple of int or int
         Number of q points per dimension. If an integer is given, a 2D mesh with
         `nq` points in both the first and the second dimension is assumed (for
-        backward compatibility).
+        backward compatibility). If omitted or ``None'', lattice vectors and
+        corresponding interactions from `Wmat` are used unmodified.
     no : int
         Number of orbitals.
+    Wmat : str
+        File with density-density Coulomb matrix in orbitals basis for different
+        lattice vectors.
     a : ndarray, optional
         Bravais lattice vectors. By default, a 2D lattice with `angle` between
         the first and the second basis vector is assumed.
@@ -79,7 +83,7 @@ class Model(object):
             nq_orig = nq
             nq = np.ones(3, dtype=int)
             nq[:len(nq_orig)] = nq_orig
-        else:
+        elif nq:
             nq = np.array([nq, nq, 1])
 
         if a is None:
@@ -90,8 +94,15 @@ class Model(object):
         if r is None:
             r = np.zeros((no, 3))
 
+        self.size = no
+
         if Wmat is not None:
             R, Wmat = read_Wmat(Wmat, num_wann=no)
+
+            if nq is None:
+                self.R = R
+                self.data = Wmat
+                return
 
             WR = np.zeros((nq[0], nq[1], nq[2], no, no), dtype=complex)
 
@@ -114,8 +125,6 @@ class Model(object):
         WR = np.transpose(WR, (3, 5, 0, 1, 2, 4, 6))
 
         self.R, self.data, l = bravais.short_range_model(WR, a, r, sgn=+1)
-
-        self.size = no
 
     def supercell(self, N1=1, N2=1, N3=1):
         """Map localized model for electron-electron interaction onto supercell.
