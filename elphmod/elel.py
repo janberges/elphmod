@@ -602,9 +602,9 @@ def read_Wmat(filename, num_wann):
         # read lattice vectors R
         if len(lines[line].split()) == 3:
             R1, R2, R3 = lines[line].split()
-            R[Rcount][0] = int(R1)
-            R[Rcount][1] = int(R2)
-            R[Rcount][2] = int(R3)
+            R[Rcount, 0] = int(R1)
+            R[Rcount, 1] = int(R2)
+            R[Rcount, 2] = int(R3)
         # read matrix elements
         if len(lines[line].split()) == 4:
             n, m, Wreal, Wimag = lines[line].split()
@@ -613,7 +613,7 @@ def read_Wmat(filename, num_wann):
             Wreal = float(Wreal)
             Wimag = float(Wimag)
 
-            W[Rcount][n, m] = Wreal + 1j * Wimag
+            W[Rcount, n, m] = Wreal + 1j * Wimag
         if len(lines[line].split()) == 0:
             Rcount += 1
 
