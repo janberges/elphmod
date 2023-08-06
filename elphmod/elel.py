@@ -108,6 +108,8 @@ class Model(object):
 
             for iR, (R1, R2, R3) in enumerate(R):
                 WR[R1 % nq[0], R2 % nq[1], R3 % nq[2]] = Wmat[iR]
+
+            q2r(self, WR, a, r, fft=False)
         else:
             Wq = read_orbital_Coulomb_interaction(uijkl, nq, no, dd=True)
 
@@ -117,14 +119,7 @@ class Model(object):
                 Wq -= read_orbital_Coulomb_interaction(vijkl_redu, nq, no,
                     dd=True)
 
-            Wq = Wq.reshape((nq[0], nq[1], nq[2], no, no))
-
-            WR = np.fft.ifftn(Wq.conj(), axes=(0, 1, 2)).conj()
-
-        WR = np.reshape(WR, (nq[0], nq[1], nq[2], no, 1, no, 1))
-        WR = np.transpose(WR, (3, 5, 0, 1, 2, 4, 6))
-
-        self.R, self.data, l = bravais.short_range_model(WR, a, r, sgn=+1)
+            q2r(self, Wq, a, r)
 
     def supercell(self, N1=1, N2=1, N3=1):
         """Map localized model for electron-electron interaction onto supercell.
@@ -302,6 +297,40 @@ def read_orbital_Coulomb_interaction(filename, nq, no, dd=False):
     comm.Bcast(U)
 
     return U
+
+def q2r(elel, W, a, r, fft=True):
+    """Interpolate electron-electron interaction on uniform q-point mesh.
+
+    Parameters
+    ----------
+    elel : object
+        Localized model for electron-electron interaction.
+    W : ndarray
+        Density-density interaction matrices on complete uniform q-point mesh.
+    a : ndarray
+        Bravais lattice vectors.
+    r : ndarray
+        Positions of orbital centers.
+    fft : bool
+        Perform Fourier transform? If ``False``, only the mapping to the
+        Wigner-Seitz cell is performed.
+    """
+    nq = W.shape[:-2]
+
+    nq_orig = tuple(nq)
+    nq = np.ones(3, dtype=int)
+    nq[:len(nq_orig)] = nq_orig
+
+    if fft:
+        Wq = np.reshape(W, (nq[0], nq[1], nq[2], elel.size, elel.size))
+        WR = np.fft.ifftn(Wq.conj(), axes=(0, 1, 2)).conj()
+    else:
+        WR = W
+
+    WR = np.reshape(WR, (nq[0], nq[1], nq[2], elel.size, 1, elel.size, 1))
+    WR = np.transpose(WR, (3, 5, 0, 1, 2, 4, 6))
+
+    elel.R, elel.data, l = bravais.short_range_model(WR, a, r, sgn=+1)
 
 def read_band_Coulomb_interaction(filename, nQ, nk, binary=False, share=False):
     """Read Coulomb interaction for single band in band basis."""
