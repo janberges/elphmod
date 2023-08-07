@@ -109,9 +109,29 @@ def coupling(q1=0, q2=0, q3=0, k1=0, k2=0, k3=0, **ignore):
 
     return beta * t / (tau ** 2 * np.sqrt(M)) * d
 
+U00 = 9.3 / elphmod.misc.Ry
+U01 = 5.5 / elphmod.misc.Ry
+U02 = 4.1 / elphmod.misc.Ry
+U03 = 3.6 / elphmod.misc.Ry
+
+def coulomb_interaction(q1=0, q2=0, q3=0):
+    """Calculate Coulomb interaction of Phys. Rev. Lett. 106, 236805 (2011)."""
+
+    U = np.empty((2, 2), dtype=complex)
+
+    U[0, 0] = U00 + 2 * U02 * (np.cos(q1) + np.cos(q1 + q2) + np.cos(q2))
+    U[0, 1] = (U01 * (np.exp(1j * q1) + 1 + np.exp(-1j * q2))
+        + U03 * (2 * np.cos(q1 + q2) + np.exp(1j * (q1 - q2))))
+
+    U[1, 1] = U[0, 0]
+    U[1, 0] = U[0, 1].conj()
+
+    return U
+
 H = elphmod.dispersion.sample(hamiltonian, k)
 D = elphmod.dispersion.sample(dynamical_matrix, q)
 g = elphmod.elph.sample(coupling, q.reshape((-1, 3)), nk)
+U = elphmod.dispersion.sample(coulomb_interaction, q)
 
 el = elphmod.el.Model()
 el.size = H.shape[-1]
@@ -148,3 +168,9 @@ if elphmod.MPI.comm.rank == 0:
 
     with open('%s.epmatwp' % stem, 'wb') as data:
         np.swapaxes(elph.data, 3, 4).astype(np.complex128).tofile(data)
+
+elel = elphmod.elel.Model()
+elel.size = U.shape[-1]
+elphmod.elel.q2r(elel, U * elphmod.misc.Ry, at, r)
+elel.standardize(eps=1e-10)
+elel.to_Wmat('%s.Wmat' % stem)
