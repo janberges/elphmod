@@ -27,7 +27,7 @@ class Model(object):
     nq : tuple of int or int
         Number of q points per dimension. If an integer is given, a 2D mesh with
         `nq` points in both the first and the second dimension is assumed (for
-        backward compatibility). If omitted or ``None'', lattice vectors and
+        backward compatibility). If omitted or ``None``, lattice vectors and
         corresponding interactions from `Wmat` are used unmodified.
     no : int
         Number of orbitals.
