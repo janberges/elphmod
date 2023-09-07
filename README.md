@@ -7,7 +7,7 @@
 * `el` - tight-binding models from Wannier90
 * `ph` - mass-spring models from Quantum ESPRESSO
 * `elph` - electron-phonon coupling from EPW
-* `elel` - Coulomb interaction from VASP
+* `elel` - Coulomb interaction from RESPACK
 * `MPI` - work distribution and shared memory
 * `bravais` - lattices, symmetries, and interpolation
 * `dispersion` - diagonalization on paths and meshes
