@@ -66,6 +66,8 @@ class Driver(object):
         Displacement scaling factor for plots.
     size : float, default 100.0
         Marker size for atoms in points squared.
+    pause : float, default 1e-3
+        Minimal frame duration for interactive plots in seconds.
     basis : list of list, default None
         For each basis atom in the first primitive cell, indices of orbitals
         located at this atom. Matching atom and orbital orders as ensured by
@@ -149,6 +151,7 @@ class Driver(object):
         self.interactive = False
         self.scale = 10.0
         self.size = 100.0
+        self.pause = 1e-3
         self.basis = None
 
         for name, value in kwargs.items():
@@ -418,7 +421,7 @@ class Driver(object):
         return rho_at
 
     def plot(self, interactive=None, scale=None, padding=1.0, size=100.0,
-            label=False):
+            pause=None, label=False):
         """Plot crystal structure and displacements.
 
         Parameters
@@ -433,6 +436,8 @@ class Driver(object):
             Padding between crystal and plotting box in angstrom.
         size : float, optional
             Marker size for atoms.
+        pause : float, optional
+            Minimal frame duration for interactive plots in seconds.
         label : bool, optional
             Show atom indices?
         """
@@ -450,6 +455,9 @@ class Driver(object):
 
         if size is not None:
             self.size = size
+
+        if pause is not None:
+            self.pause = pause
 
         u = self.u.reshape(self.elph.ph.r.shape).T
         r = self.elph.ph.r.T + u
@@ -506,7 +514,7 @@ class Driver(object):
         self.quiver.remove()
         self.quiver = self.axes.quiver(*r, *self.scale * u, color='gray')
 
-        plt.pause(1e-3)
+        plt.pause(self.pause)
 
     def to_xyz(self, xyz, append=False):
         """Save current atomic positions.
