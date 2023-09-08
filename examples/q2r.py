@@ -14,7 +14,8 @@ data = 'NbSe2_cDFPT'
 
 nq = 12
 
-q_path, x, GMKG = elphmod.bravais.GMKG(301, corner_indices=True)
+path = 'GMKG'
+q_path, x, corners = elphmod.bravais.path(path, ibrav=4, N=301)
 
 colors = ['skyblue', 'dodgerblue', 'orange']
 
@@ -50,7 +51,7 @@ for subplot, D in enumerate([ph.D, ph2.D]):
     if subplot == 0:
         plt.ylabel('Phonon energy (meV)')
     plt.xlabel('Wave vector')
-    plt.xticks(x[GMKG], 'GMKG')
+    plt.xticks(x[corners], path)
 
 if comm.rank == 0:
     plt.show()

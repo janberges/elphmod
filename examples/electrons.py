@@ -20,7 +20,8 @@ el = elphmod.el.Model('data/NbSe2')
 
 info('Diagonalize Hamiltonian along G-M-K-G..')
 
-k, x, GMKG = elphmod.bravais.GMKG(150, corner_indices=True)
+path = 'GMKG'
+k, x, corners = elphmod.bravais.path(path, ibrav=4, N=150)
 
 e, U, order = elphmod.dispersion.dispersion(el.H, k,
     vectors=True, order=True)
@@ -49,8 +50,8 @@ if comm.rank == 0:
     ax1.set_xlabel('Wave vector')
     ax2.set_xlabel('Density of states (1/eV)')
 
-    ax1.set_xticks(x[GMKG])
-    ax1.set_xticklabels('GMKG')
+    ax1.set_xticks(x[corners])
+    ax1.set_xticklabels(path)
 
     for n in range(el.size):
         fatbands = elphmod.plot.compline(x, e[:, n],

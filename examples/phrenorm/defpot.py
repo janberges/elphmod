@@ -15,12 +15,13 @@ ph = elphmod.ph.Model('dfpt.ifc', apply_asr_simple=True)
 elph = elphmod.elph.Model('dfpt.epmatwp', 'wigner.dat', el, ph,
     divide_mass=False)
 
-k, x, GMKG = elphmod.bravais.GMKG(corner_indices=True)
+path = 'GMKG'
+k, x, corners = elphmod.bravais.path(path, ibrav=4)
 
 g = np.empty(len(k), dtype=complex)
 
-for ik, (k1, k2) in enumerate(k):
-    g[ik] = elph.g(k1=k1, k2=k2)[nu, a, a]
+for ik, (k1, k2, k3) in enumerate(k):
+    g[ik] = elph.g(k1=k1, k2=k2, k3=k3)[nu, a, a]
 
 g *= elphmod.misc.Ry / elphmod.misc.a0
 
@@ -29,6 +30,6 @@ if elphmod.MPI.comm.rank == 0:
         r'\partial V / \partial z_{\mathrm{S}} '
         r'|\vec k d_{z^2} \rangle$ '
         r'($\mathrm{eV/\AA}$)')
-    plt.xticks(x[GMKG], 'GMKG')
+    plt.xticks(x[corners], path)
     plt.plot(x, g.real)
     plt.show()

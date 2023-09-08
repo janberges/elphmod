@@ -20,7 +20,8 @@ def cost(L):
 
 scipy.optimize.minimize(cost, [10.0])
 
-q, x, GMKG = elphmod.bravais.GMKG(300, corner_indices=True)
+path = 'GMKG'
+q, x, corners = elphmod.bravais.path(path, ibrav=4, N=300)
 
 w2, u, order = elphmod.dispersion.dispersion(ph.D, q,
     vectors=True, order=True)
@@ -38,5 +39,5 @@ if comm.rank == 0:
 
     plt.ylabel('Phonon energy (meV)')
     plt.xlabel('Wave vector')
-    plt.xticks(x[GMKG], 'GMKG')
+    plt.xticks(x[corners], path)
     plt.show()

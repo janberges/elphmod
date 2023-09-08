@@ -28,7 +28,8 @@ info('Prepare wave vectors')
 q = sorted(elphmod.bravais.irreducibles(nq))
 q = 2 * np.pi * np.array(q, dtype=float) / nq
 
-k, x, GMKG = elphmod.bravais.GMKG(100, corner_indices=True)
+path = 'GMKG'
+k, x, corners = elphmod.bravais.path(path, ibrav=4, N=100)
 
 info('Prepare electrons')
 
@@ -86,7 +87,7 @@ if comm.rank == 0:
 
     plt.ylabel('Electron energy (eV)')
     plt.xlabel('Wave vector')
-    plt.xticks(x[GMKG], 'GMKG')
+    plt.xticks(x[corners], path)
     plt.show()
 
 info('Plot cDFPT, DFPT and renormalized phonons')
@@ -108,5 +109,5 @@ for method in sorted(ph):
 
         plt.ylabel('Phonon energy (meV)')
         plt.xlabel('Wave vector')
-        plt.xticks(x[GMKG], 'GMKG')
+        plt.xticks(x[corners], path)
         plt.show()
