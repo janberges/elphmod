@@ -10,6 +10,7 @@ import numpy as np
 from . import misc, MPI
 
 comm = MPI.comm
+info = MPI.info
 
 deg = np.pi / 180
 
@@ -48,7 +49,7 @@ def rotate(vector, angle, two_dimensional=True):
         return np.dot(rotation, vector)
 
 def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
-        celldm=None, bohr=False, **ignore):
+        celldm=None, bohr=False, r_cell=None, cell_units=None, **ignore):
     """Get primitive vectors of Bravais lattice as in QE.
 
     Adapted from Modules/latgen.f90 of Quantum ESPRESSO.
@@ -66,6 +67,8 @@ def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
         lattice constant in Bohr; the other elements are dimensionless.
     bohr : bool, default False
         Return lattice vectors in angstrom or bohr?
+    r_cell, cell_units
+        Cell parameters from 'func'`read_pwi` used if `ibrav` is zero.
     **ignore
         Ignored keyword arguments, e.g., parameters from 'func'`read_pwi`.
 
@@ -94,6 +97,21 @@ def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
 
     if not bohr:
         celldm[0] *= misc.a0
+
+    if ibrav == 0: # free
+        if r_cell is None or cell_units is None:
+            info('ibrav=0 requires r_cell and cell_units!', error=True)
+
+        a = np.array(r_cell)
+
+        if 'alat' in cell_units.lower():
+            a *= celldm[0]
+        elif bohr and 'angstrom' in cell_units.lower():
+            a /= misc.a0
+        elif not bohr and 'bohr' in cell_units.lower():
+            a *= misc.a0
+
+        return a
 
     if ibrav == 1: # cubic (sc)
         return np.eye(3) * celldm[0]
@@ -260,7 +278,7 @@ def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
             [celldm[2] * cosb, celldm[2] * ex1, celldm[2] * ex2],
             ]) * celldm[0]
 
-    print('Bravais lattice unknown')
+    info('Bravais lattice %s unknown!' % ibrav, error=True)
 
 def translations(angle=120, angle0=0, two_dimensional=True):
     """Generate translation vectors of Bravais lattice.
