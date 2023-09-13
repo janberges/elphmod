@@ -1481,7 +1481,7 @@ def path(points, N=30, recvec=None, qe=False, moveG=0, **kwargs):
     points : ndarray
         List of high-symmetry points in crystal coordinates. Some well-known
         labels such as ``G`` (|Ggr|), ``M``, or ``K`` may also be used. Mostly,
-        the definitions follow http://lamp.tu-graz.ac.at/~hadley/ss1/bzones/.
+        the definitions follow https://lampx.tugraz.at/~hadley/ss1/bzones/.
     N : float
         Number of points per :math:`2 \pi / a`.
     recvec : ndarray, optional
@@ -1523,6 +1523,16 @@ def path(points, N=30, recvec=None, qe=False, moveG=0, **kwargs):
             'U': [0.25, 0.625, 0.625],
             'K': [0.375, 0.75, 0.375],
             },
+        3: { # cubic (bcc) (*)
+            'H': [0.5, 0.5, 0.5],
+            'P': [0.75, 0.25, -0.25],
+            'N': [0.5, 0.5, 0.0],
+            },
+        -3: { # cubic (bcc, more symmetric axis)
+            'H': [0.5, 0.5, -0.5],
+            'P': [0.25, 0.25, 0.25],
+            'N': [0.5, 0.0, 0.0],
+            },
         4: { # hexagonal & trigonal
             'A': [0.0, 0.0, 0.5],
             'M': [0.0, 0.5, 0.0],
@@ -1537,6 +1547,13 @@ def path(points, N=30, recvec=None, qe=False, moveG=0, **kwargs):
             'R': [0.5, 0.0, 0.5],
             'A': [0.5, 0.5, 0.5],
             },
+        7: { # tetragonal (bct) (generated from 6)
+            'X': [0.25, 0.25, -0.25],
+            'M': [0.00, 0.50, -0.50],
+            'Z': [0.25, 0.25, 0.25],
+            'R': [0.50, 0.50, 0.00],
+            'A': [0.25, 0.75, -0.25],
+            },
         8: { # orthorhombic
             'X': [0.5, 0.0, 0.0],
             'Y': [0.0, 0.5, 0.0],
@@ -1545,6 +1562,33 @@ def path(points, N=30, recvec=None, qe=False, moveG=0, **kwargs):
             'T': [0.0, 0.5, 0.5],
             'U': [0.5, 0.0, 0.5],
             'R': [0.5, 0.5, 0.5],
+            },
+        9: { # orthorhombic (bco) (*)
+            'Y': [0.5, -0.5, 0.0],
+            'y': [0.5, 0.5, 0.0],
+            'Z': [0.0, 0.0, 0.5],
+            'T': [0.5, -0.5, 0.5],
+            't': [0.5, 0.5, 0.5],
+            'S': [0.5, 0.0, 0.0],
+            'R': [0.5, 0.0, 0.5],
+            },
+        -9: { # orthorhombic (bco, alternate description)
+            'Y': [0.5, 0.5, 0.0],
+            'y': [-0.5, 0.5, 0.0],
+            'Z': [0.0, 0.0, 0.5],
+            'T': [0.5, 0.5, 0.5],
+            't': [-0.5, 0.5, 0.5],
+            'S': [0.0, 0.5, 0.0],
+            'R': [0.0, 0.5, 0.5],
+            },
+        12: { # monoclinic (unique axis c) (*)
+            'B': [-0.5, 0.0, 0.0],
+            'Y': [0.0, 0.5, 0.0],
+            'Z': [0.0, 0.0, 0.5],
+            'D': [-0.5, 0.5, 0.0],
+            'C': [0.0, 0.5, 0.5],
+            'A': [-0.5, 0.0, 0.5],
+            'E': [-0.5, 0.5, 0.5],
             },
         -12: { # monoclinic (unique axis b)
             'B': [-0.5, 0.0, 0.0],
@@ -1556,6 +1600,9 @@ def path(points, N=30, recvec=None, qe=False, moveG=0, **kwargs):
             'E': [-0.5, 0.5, 0.5],
             },
         }.get(kwargs.get('ibrav', 8), {})
+
+    # (*) generated from points for Bravais lattice with index of opposite sign
+    # through X'[k] = X[i] b[i, j] a'[k, j], where b are the reciprocals of a.
 
     labels['G'] = [0.0, 0.0, 0.0]
 
