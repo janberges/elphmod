@@ -193,7 +193,7 @@ def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
             [ 0.0,             0.0, celldm[2]],
             ]) * celldm[0]
 
-    if ibrav == 9: # orthorhombic (bco, alternate description)
+    if ibrav == -9: # orthorhombic (bco, alternate description)
         return np.array([
             [0.5, -0.5 * celldm[1],       0.0],
             [0.5,  0.5 * celldm[1],       0.0],
