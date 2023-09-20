@@ -3,6 +3,14 @@
 See [Git commits](https://github.com/janberges/elphmod/commits) for more
 detailed list of changes.
 
+## v0.21/2023-09-20
+
+* Support for more QE Bravais lattices
+* Support for electron-electron interaction beyond 2D systems
+* Consistent mapping of electron-electron interaction to supercells
+* Export of electron-electron interaction in RESPACK format (*dat.Wmat*)
+* Option to suppress status bars
+
 ## v0.20/2023-06-22
 
 * Bugfix and example related to Eliashberg theory
