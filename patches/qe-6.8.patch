@@ -311,7 +311,7 @@ index 35f710c56..d0a39e6c9 100644
 +SUBROUTINE elph_print
 +  !---------------------------------------------------------------------
 +  !
-+  ! This routine prints the electron-phonon matrix elements in Ry/Bohr
++  ! This routine prints the electron-phonon matrix elements in Ry/bohr
 +  ! in the Cartesian basis to standard output.
 +  !
 +  USE kinds, ONLY : dp
@@ -341,7 +341,7 @@ index 35f710c56..d0a39e6c9 100644
 +  ENDIF
 +  !
 +  WRITE (stdout, '(/, 5X, A, /)') &
-+     'Printing the electron-phonon matrix elements in Ry/Bohr'
++     'Printing the electron-phonon matrix elements in Ry/bohr'
 +  !
 +  WRITE (stdout, '(6A4, 2A14)') &
 +     'i', 'm', 'n', 'k1', 'k2', 'k3', 'Re[d]', 'Im[d]'

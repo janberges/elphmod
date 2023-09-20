@@ -18,9 +18,6 @@ symmetrize = True
 
 file = open('info.dat', 'w')
 
-#Converting factors
-Bohr2Angstrom = 1 / 1.889725989
-
 material = 'NbSe2'
 N1 = 3
 N2 = 3
@@ -42,7 +39,7 @@ A = cdw_data['a']
 C = cdw_data['c']
 
 a = A / N1
-#alat = a*(1/Bohr2Angstrom)
+#alat = a / elphmod.misc.a0
 
 file.write('Lattice parameter of the unit cell a = %3.12f \n' % (a))
 
@@ -82,7 +79,7 @@ if not flag_coords_type:
 ph = elphmod.ph.Model('../data/NbSe2_DFPT.ifc', apply_asr_simple=True)
 
 # cartesian coordinates (angstrom)
-tau = ph.r * Bohr2Angstrom
+tau = ph.r * elphmod.misc.a0
 
 # Set up sym. atomic positions from the IFC file:
 

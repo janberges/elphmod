@@ -1805,7 +1805,7 @@ def q2r(ph, D_irr=None, q_irr=None, nq=None, D_full=None, angle=60,
     if ph.L is not None:
         S = abs(phid).sum() - np.trace(abs(phid))[0, 0, 0].sum() / np.prod(nq)
 
-        info('Sum of force constants: %g Ry/Bohr^2 (L = %g Bohr)' % (S, ph.L))
+        info('Sum of force constants: %g Ry/bohr^2 (L = %g bohr)' % (S, ph.L))
 
     ph.R, ph.data, ph.l = bravais.short_range_model(phid, ph.a, ph.r,
         sgn=-1, divide_ndegen=ph.divide_ndegen)

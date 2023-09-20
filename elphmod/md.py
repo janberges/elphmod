@@ -258,7 +258,7 @@ class Driver(object):
         Returns
         -------
         ndarray
-            Negative forces in Ry per Bohr.
+            Negative forces in Ry per bohr.
         """
         if show:
             t0 = time.time()
@@ -278,7 +278,7 @@ class Driver(object):
         F += self.F0
 
         if show:
-            info('Total force: %15.9f Ry/Bohr; %11.6f s'
+            info('Total force: %15.9f Ry/bohr; %11.6f s'
                 % (np.linalg.norm(F), time.time() - t0))
 
         return F
@@ -296,7 +296,7 @@ class Driver(object):
         Returns
         -------
         ndarray
-            Force constants in Ry per Bohr squared.
+            Force constants in Ry per bohr squared.
         """
         if self.sparse:
             raise NotImplementedError('Dense matrices required.')

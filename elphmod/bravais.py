@@ -64,7 +64,7 @@ def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
         Traditional crystallographic constants in angstrom.
     celldm : list of float
         Alternative crystallographic constants. The first element is the
-        lattice constant in Bohr; the other elements are dimensionless.
+        lattice constant in bohr; the other elements are dimensionless.
     bohr : bool, default False
         Return lattice vectors in angstrom or bohr?
     r_cell, cell_units

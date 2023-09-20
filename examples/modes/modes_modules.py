@@ -17,9 +17,6 @@ def theta(v, w):
     return np.arccos(v.dot(w)
         / (np.linalg.norm(v) * np.linalg.norm(w))) / np.pi * 180
 
-#Converting factors
-Bohr2Angstrom = 1 / 1.889725989
-
 def supercell_vectors(cdw_data, N1, N2, A, a, a1, a2, a3):
 
     if cdw_data['ibrav'] == 4:
