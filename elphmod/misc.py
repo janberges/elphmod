@@ -584,8 +584,8 @@ def read_input_data(filename, broadcast=True):
 
     return struct
 
-def read_Wmat(filename, num_wann):
-    r"""Read Coulomb matrix elements from "dat.Wmat" (RESPACK)
+def read_dat_mat(filename, num_wann):
+    r"""Read matrix elements from RESPACK (*dat.Wmat*, *dat.h_mat_r*).
 
     Parameters
     ----------
@@ -599,40 +599,48 @@ def read_Wmat(filename, num_wann):
     ndarray
         Lattice vectors.
     ndarray
-        Direct (screened) Coulomb matrix elements.
+        Direct (screened) Coulomb or hoppling matrix elements, depending on the
+        input file.
     """
-    respack_file = open(filename)
-    lines = respack_file.readlines()
-    respack_file.close()
+    with open(filename) as respack_file:
+        lines = respack_file.readlines()
 
     block = 1 + num_wann ** 2 + 1
-    # nR: number of lattice vectors R
-    nR = int((len(lines) - 3) / block)
+    nR = int((len(lines) - 3) / block) # number of lattice vectors R
     R = np.empty((nR, 3), dtype=int)
     Rcount = 0
 
-    # allocate W matrix
-    W = np.empty((nR, num_wann, num_wann), dtype=complex)
+    # allocate W or t matrix:
+
+    data = np.empty((nR, num_wann, num_wann), dtype=complex)
+
     for line in range(3, len(lines)):
-        # read lattice vectors R
+        # read lattice vectors R:
+
         if len(lines[line].split()) == 3:
             R1, R2, R3 = lines[line].split()
+
             R[Rcount, 0] = int(R1)
             R[Rcount, 1] = int(R2)
             R[Rcount, 2] = int(R3)
-        # read matrix elements
+
+        # read matrix elements:
+
         if len(lines[line].split()) == 4:
-            n, m, Wreal, Wimag = lines[line].split()
+            n, m, real, imag = lines[line].split()
+
             n = int(n) - 1
             m = int(m) - 1
-            Wreal = float(Wreal)
-            Wimag = float(Wimag)
 
-            W[Rcount, n, m] = Wreal + 1j * Wimag
+            real = float(real)
+            imag = float(imag)
+
+            data[Rcount, n, m] = real + 1j * imag
+
         if len(lines[line].split()) == 0:
             Rcount += 1
 
-    return R, W
+    return R, data
 
 def split(expr, sd=',', od='{', cd='}'):
     """Split expression with separators and brackets using distributive law.

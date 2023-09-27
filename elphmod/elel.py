@@ -97,7 +97,7 @@ class Model(object):
         self.size = no
 
         if Wmat is not None:
-            R, Wmat = misc.read_Wmat(Wmat, num_wann=no)
+            R, Wmat = misc.read_dat_mat(Wmat, num_wann=no)
 
             if nq is None:
                 self.R = R
