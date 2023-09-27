@@ -97,7 +97,7 @@ class Model(object):
         self.size = no
 
         if Wmat is not None:
-            R, Wmat = read_Wmat(Wmat, num_wann=no)
+            R, Wmat = misc.read_Wmat(Wmat, num_wann=no)
 
             if nq is None:
                 self.R = R
@@ -568,53 +568,3 @@ def hartree_energy(rho_g, g_vect, ngm_g, uc_volume, a=1.0):
     ehart = ehart * 0.5 * uc_volume
 
     return ehart
-
-def read_Wmat(filename, num_wann):
-    r"""Read Coulomb matrix elements from "dat.Wmat" (RESPACK)
-
-    Parameters
-    ----------
-    filename : str
-        Name of the file.
-    num_wann : integer
-        Number of Wannier orbitals.
-
-    Returns
-    -------
-    ndarray
-        Lattice vectors.
-    ndarray
-        Direct (screened) Coulomb matrix elements.
-    """
-    respack_file = open(filename)
-    lines = respack_file.readlines()
-    respack_file.close()
-
-    block = 1 + num_wann ** 2 + 1
-    # nR: number of lattice vectors R
-    nR = int((len(lines) - 3) / block)
-    R = np.empty((nR, 3), dtype=int)
-    Rcount = 0
-
-    # allocate W matrix
-    W = np.empty((nR, num_wann, num_wann), dtype=complex)
-    for line in range(3, len(lines)):
-        # read lattice vectors R
-        if len(lines[line].split()) == 3:
-            R1, R2, R3 = lines[line].split()
-            R[Rcount, 0] = int(R1)
-            R[Rcount, 1] = int(R2)
-            R[Rcount, 2] = int(R3)
-        # read matrix elements
-        if len(lines[line].split()) == 4:
-            n, m, Wreal, Wimag = lines[line].split()
-            n = int(n) - 1
-            m = int(m) - 1
-            Wreal = float(Wreal)
-            Wimag = float(Wimag)
-
-            W[Rcount, n, m] = Wreal + 1j * Wimag
-        if len(lines[line].split()) == 0:
-            Rcount += 1
-
-    return R, W
