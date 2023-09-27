@@ -21,6 +21,17 @@ class Model(object):
         Common prefix of Wannier90 output files: *seedname_hr.dat* with the
         Hamiltonian in the Wannier basis and, optionally, *seedname_wsvec.dat*
         with superlattice vectors used to symmetrize the long-range hopping.
+        Alternatively, *dat.h_mat_r* from RESPACK can be used.
+    N : tuple of int, optional
+        Numbers of unit cells per direction on which RESPACK data is defined.
+        This can be omitted if all numbers are even.
+    a : ndarray, optional
+        Bravais lattice vectors used to map RESPACK data to Wigner-Seitz cell.
+        By default, a cubic cell is assumed.
+    r : ndarray, optional
+        Positions of orbital centers used to map RESPACK data to Wigner-Seitz
+        cell. By default, all orbitals are assumed to be located at the origin
+        of the unit cell.
     divide_ndegen : bool, default True
         Divide hopping by degeneracy of Wigner-Seitz point and apply the
         abovementioned correction? Only ``True`` yields correct bands.
@@ -104,9 +115,9 @@ class Model(object):
         else:
             return self.data[index]
 
-    def __init__(self, seedname=None, divide_ndegen=True, read_xsf=False,
-            normalize_wf=False, buffer_wf=False, check_ortho=False,
-            rydberg=False, shared_memory=False):
+    def __init__(self, seedname=None, N=None, a=None, r=None,
+        divide_ndegen=True, read_xsf=False, normalize_wf=False, buffer_wf=False,
+        check_ortho=False, rydberg=False, shared_memory=False):
 
         self.divide_ndegen = divide_ndegen
         self.rydberg = rydberg
@@ -117,8 +128,31 @@ class Model(object):
         if seedname.endswith('_hr.dat'):
             seedname = seedname[:-7]
 
-        self.R, self.data = read_hrdat(seedname, divide_ndegen)
-        self.size = self.data.shape[1]
+        if seedname.endswith('dat.h_mat_r'):
+            R, data = misc.read_dat_mat(seedname)
+            self.size = data.shape[1]
+
+            if N is None:
+                N = 2 * R[-1]
+
+            if a is None:
+                info('Warning: You should really define the Bravais lattice!')
+                a = bravais.primitives(ibrav=1)
+
+            if r is None:
+                r = np.zeros((self.size, 3))
+
+            t = np.zeros((N[0], N[1], N[2], self.size, self.size),
+                dtype=complex)
+
+            for iR, (R1, R2, R3) in enumerate(R):
+                t[R1 % N[0], R2 % N[1], R3 % N[2]] = data[iR]
+
+            k2r(self, t, a, r, fft=False)
+        else:
+            self.R, self.data = read_hrdat(seedname, divide_ndegen)
+            self.size = self.data.shape[1]
+
         self.nk = tuple(2 * self.R[np.all(self.R[:, x] == 0,
             axis=1)].max(initial=1) for x in [[1, 2], [2, 0], [0, 1]])
 
@@ -678,7 +712,7 @@ def read_wsvecdat(wsvecdat):
 
     return supvecs
 
-def k2r(el, H, a, r):
+def k2r(el, H, a, r, fft=True):
     """Interpolate Hamilontian matrices on uniform k-point mesh.
 
     Parameters
@@ -691,6 +725,9 @@ def k2r(el, H, a, r):
         Bravais lattice vectors.
     r : ndarray
         Positions of orbital centers.
+    fft : bool
+        Perform Fourier transform? If ``False``, only the mapping to the
+        Wigner-Seitz cell is performed.
     """
     nk = H.shape[:-2]
 
@@ -698,9 +735,12 @@ def k2r(el, H, a, r):
     nk = np.ones(3, dtype=int)
     nk[:len(nk_orig)] = nk_orig
 
-    H = np.reshape(H, (nk[0], nk[1], nk[2], el.size, el.size))
+    if fft:
+        H = np.reshape(H, (nk[0], nk[1], nk[2], el.size, el.size))
+        t = np.fft.ifftn(H.conj(), axes=(0, 1, 2)).conj()
+    else:
+        t = H
 
-    t = np.fft.ifftn(H.conj(), axes=(0, 1, 2)).conj()
     t = np.reshape(t, (nk[0], nk[1], nk[2], el.size, 1, el.size, 1))
     t = np.transpose(t, (3, 5, 0, 1, 2, 4, 6))
 
