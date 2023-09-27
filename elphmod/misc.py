@@ -584,15 +584,13 @@ def read_input_data(filename, broadcast=True):
 
     return struct
 
-def read_dat_mat(filename, num_wann):
+def read_dat_mat(filename):
     r"""Read matrix elements from RESPACK (*dat.Wmat*, *dat.h_mat_r*).
 
     Parameters
     ----------
     filename : str
         Name of the file.
-    num_wann : integer
-        Number of Wannier orbitals.
 
     Returns
     -------
@@ -604,6 +602,11 @@ def read_dat_mat(filename, num_wann):
     """
     with open(filename) as respack_file:
         lines = respack_file.readlines()
+
+    for line in range(3, len(lines)):
+        if not lines[line].strip():
+            num_wann = int(lines[line - 1].split()[0])
+            break
 
     block = 1 + num_wann ** 2 + 1
     nR = int((len(lines) - 3) / block) # number of lattice vectors R

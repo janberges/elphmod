@@ -30,7 +30,7 @@ class Model(object):
         backward compatibility). If omitted or ``None``, lattice vectors and
         corresponding interactions from `Wmat` are used unmodified.
     no : int
-        Number of orbitals.
+        Number of orbitals. Ignored if `Wmat` is used.
     Wmat : str
         File with density-density Coulomb matrix in orbitals basis for different
         lattice vectors.
@@ -91,25 +91,10 @@ class Model(object):
             a[:2, :2] = bravais.translations(angle)
             a[2, 2] = 1.0
 
-        if r is None:
-            r = np.zeros((no, 3))
-
-        self.size = no
-
         if Wmat is not None:
-            R, Wmat = misc.read_dat_mat(Wmat, num_wann=no)
+            R, data = misc.read_dat_mat(Wmat)
 
-            if nq is None:
-                self.R = R
-                self.data = Wmat
-                return
-
-            WR = np.zeros((nq[0], nq[1], nq[2], no, no), dtype=complex)
-
-            for iR, (R1, R2, R3) in enumerate(R):
-                WR[R1 % nq[0], R2 % nq[1], R3 % nq[2]] = Wmat[iR]
-
-            q2r(self, WR, a, r, fft=False)
+            self.size = data.shape[1]
         else:
             Wq = read_orbital_Coulomb_interaction(uijkl, nq, no, dd=True)
 
@@ -119,6 +104,25 @@ class Model(object):
                 Wq -= read_orbital_Coulomb_interaction(vijkl_redu, nq, no,
                     dd=True)
 
+            self.size = no
+
+        if r is None:
+            r = np.zeros((self.size, 3))
+
+        if Wmat is not None:
+            if nq is None:
+                self.R = R
+                self.data = data
+                return
+
+            WR = np.zeros((nq[0], nq[1], nq[2], self.size, self.size),
+                dtype=complex)
+
+            for iR, (R1, R2, R3) in enumerate(R):
+                WR[R1 % nq[0], R2 % nq[1], R3 % nq[2]] = data[iR]
+
+            q2r(self, WR, a, r, fft=False)
+        else:
             q2r(self, Wq, a, r)
 
     def supercell(self, N1=1, N2=1, N3=1):
