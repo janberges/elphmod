@@ -49,7 +49,10 @@ uSI = 1e-3 / NA
 # approximate constants in SI units:
 
 meSI = 9.1093837015e-31
-"""Electron mass (kg)."""
+"""Electron mass (kg) [2018 CODATA]."""
+
+eps0 = 8.8541878128e-12
+"""Vacuum permittivity (F/m) [2018 CODATA]."""
 
 # constants in atomic units (eV, AA):
 
