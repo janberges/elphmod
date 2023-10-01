@@ -2600,6 +2600,7 @@ def cartesian_to_crystal(R_CARTESIAN, a1, a2, a3):
         Lattice structure in crystal coordinates.
     """
     R_CRYSTAL = np.empty(R_CARTESIAN.shape)
+
     A_Matrix = np.zeros([3, 3])
 
     A_Matrix[:, 0] = a1
@@ -2610,4 +2611,5 @@ def cartesian_to_crystal(R_CARTESIAN, a1, a2, a3):
 
     for ii in np.arange(R_CARTESIAN.shape[0]):
         R_CRYSTAL[ii, :] = np.dot(A_Matrix_Inverse, R_CARTESIAN[ii, :])
+
     return R_CRYSTAL
