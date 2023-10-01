@@ -115,10 +115,11 @@ class Driver(object):
         self.sparse = False
         self.diagonalize()
 
-        self.C0 = 0.0
+        self.C0 = np.zeros((len(self.q), self.elph.ph.size, self.elph.ph.size),
+            dtype=complex)
 
         if unscreen:
-            self.C0 -= self.hessian()
+            self.C0 -= self.hessian(gamma_only=False)
 
         self.C0 += dispersion.sample(self.elph.ph.D, self.q)
 
@@ -145,7 +146,7 @@ class Driver(object):
             self.sparse = True
             self.diagonalize()
 
-        self.F0 = 0.0
+        self.F0 = np.zeros(self.elph.ph.size)
         self.F0 = -self.jacobian(show=False)
 
         self.interactive = False
@@ -283,15 +284,15 @@ class Driver(object):
 
         return F
 
-    def hessian(self, parameters=None):
+    def hessian(self, parameters=None, gamma_only=True):
         """Calculate second derivative of free energy.
 
         Parameters
         ----------
         parameters : ndarray
             Dummy positional argument for optimization routines.
-        show : bool
-            Print free energy?
+        gamma_only : default True
+            Calculate Hessian for q = 0 only?
 
         Returns
         -------
@@ -301,9 +302,11 @@ class Driver(object):
         if self.sparse:
             raise NotImplementedError('Dense matrices required.')
 
-        self.d = np.empty_like(self.d0)
+        nq = 1 if gamma_only else len(self.q)
 
-        for iq in range(len(self.q)):
+        d = np.empty_like(self.d0[:nq])
+
+        for iq in range(nq):
             V = self.U.conj().swapaxes(-2, -1)
 
             q = np.round(self.nk * self.q[iq] / (2 * np.pi)).astype(int)
@@ -312,17 +315,17 @@ class Driver(object):
                 if q[i]:
                     V = np.roll(V, -q[i], axis=i)
 
-            self.d[iq] = V @ self.d0[iq] @ self.U
+            d[iq] = V @ self.d0[iq] @ self.U
 
-        C = diagrams.phonon_self_energy(self.q, self.e, g=self.d,
+        C = diagrams.phonon_self_energy(self.q[:nq], self.e, g=d[:nq],
             kT=self.kT, occupations=self.f)
 
         C[0] += diagrams.phonon_self_energy_fermi_shift(self.e,
-            self.d[0], self.kT, occupations=self.f)
+            d[0], self.kT, occupations=self.f)
 
-        C += self.C0
+        C += self.C0[:nq]
 
-        return C
+        return C[0].real if gamma_only else C
 
     def electrons(self, seedname=None, dk1=1, dk2=1, dk3=1):
         """Set up tight-binding model for current structure.
@@ -385,8 +388,8 @@ class Driver(object):
         model.divide_mass = divide_mass
         model.r += self.u.reshape((-1, 3))
 
-        ph.q2r(model, D_full=self.hessian(), nq=self.nq, divide_mass=False,
-            **kwargs)
+        ph.q2r(model, D_full=self.hessian(gamma_only=False), nq=self.nq,
+            divide_mass=False, **kwargs)
 
         return model
 

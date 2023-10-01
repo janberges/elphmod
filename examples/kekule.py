@@ -82,9 +82,9 @@ for i in range(len(alpha)):
 
     if not sparse:
         if i == i0:
-            c0 = 0.5 * u1.T.dot(driver.hessian()[0].real).dot(u1)
+            c0 = 0.5 * u1.T.dot(driver.hessian()).dot(u1)
         elif i == i1:
-            c1 = 0.5 * u1.T.dot(driver.hessian()[0].real).dot(u1)
+            c1 = 0.5 * u1.T.dot(driver.hessian()).dot(u1)
 
 if comm.rank == 0:
     scale = 1e3 * elphmod.misc.Ry / len(driver.elph.cells)
