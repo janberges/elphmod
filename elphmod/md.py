@@ -284,7 +284,7 @@ class Driver(object):
 
         return F
 
-    def hessian(self, parameters=None, gamma_only=True):
+    def hessian(self, parameters=None, gamma_only=True, fildyn=None):
         """Calculate second derivative of free energy.
 
         Parameters
@@ -293,6 +293,8 @@ class Driver(object):
             Dummy positional argument for optimization routines.
         gamma_only : default True
             Calculate Hessian for q = 0 only?
+        fildyn : str, optional
+            Filename to save Hessian.
 
         Returns
         -------
@@ -324,6 +326,13 @@ class Driver(object):
             d[0], self.kT, occupations=self.f)
 
         C += self.C0[:nq]
+
+        if fildyn is not None and comm.rank == 0:
+            ph.write_flfrc(fildyn,
+                (self.q[:nq].dot(bravais.reciprocals(*self.elph.ph.a)), C),
+                self.elph.ph.M, self.elph.ph.a,
+                self.elph.ph.r + self.u.reshape(self.elph.ph.r.shape),
+                self.elph.ph.atom_order)
 
         return C[0].real if gamma_only else C
 
