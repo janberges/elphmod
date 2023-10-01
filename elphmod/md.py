@@ -535,7 +535,7 @@ class Driver(object):
                 pos = self.elph.ph.r + self.u.reshape(self.elph.ph.r.shape)
 
                 for X, r in zip(self.elph.ph.atom_order, pos):
-                    data.write(('%8s' + ' %12.5e' * 3 + '\n')
+                    data.write(('%8s' + ' %15.9f' * 3 + '\n')
                         % (X, r[0], r[1], r[2]))
 
     def from_xyz(self, xyz):
