@@ -157,7 +157,7 @@ def shm_split(comm=comm, shared_memory=True):
     ``comm.rank == 0`` is equivalent to ``node.rank == images.rank == 0``.
     """
     if not shared_memory or MPI.COMM_TYPE_SHARED == MPI.UNDEFINED:
-        if shared_memory:
+        if shared_memory and comm.size > 1:
             info('Shared memory not implemented')
 
         return I, comm
