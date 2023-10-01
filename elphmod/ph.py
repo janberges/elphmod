@@ -220,9 +220,10 @@ class Model(object):
                         for iq in range(len(q)):
                             q[iq] = np.dot(at, q[iq])
 
-                            i = tuple(np.round(q[iq] * nq).astype(int) % nq)
+                            i = tuple(np.round(q[iq]
+                                * nq / (2 * np.pi)).astype(int) % nq)
 
-                            q0[i] = q[iq] * 2 * np.pi
+                            q0[i] = q[iq]
                             D0[i] = D[iq]
 
                     q0 = q0.reshape((-1,) + q0.shape[3:])
@@ -1080,7 +1081,7 @@ def read_flfrc(flfrc):
 
                 if 'dynamical matrix in cartesian axes' in line:
                     q.append(np.array(list(map(float, cells()[3:6])))
-                        / celldm[0])
+                        * 2 * np.pi / celldm[0])
 
                     D.append(np.empty((3 * nat, 3 * nat), dtype=complex))
 
@@ -1175,10 +1176,6 @@ def write_flfrc(flfrc, phid, amass, at, tau, atom_order, epsil=None, zeu=None):
     """
     dyn = isinstance(phid, tuple)
 
-    if dyn:
-        q = phid[0]
-        D = np.array(phid[1])
-
     atm, amass = tuple(zip(*sorted(set(zip(atom_order, amass)),
         key=lambda X: atom_order.index(X[0]))))
 
@@ -1224,6 +1221,9 @@ def write_flfrc(flfrc, phid, amass, at, tau, atom_order, epsil=None, zeu=None):
             data.write('\n')
 
         if dyn:
+            q = phid[0] * alat / (2 * np.pi)
+            D = np.array(phid[1])
+
             # write dynamical matrices:
 
             for iq in range(len(q)):
@@ -1400,7 +1400,7 @@ def read_flfrc_xml(flfrc):
             dynmat = root.find('DYNAMICAL_MAT_.%d' % (iq + 1))
 
             q[iq] = list(map(float, dynmat.find('Q_POINT').text.split()))
-            q[iq] /= celldm[0]
+            q[iq] *= 2 * np.pi / celldm[0]
 
             for na1 in range(nat):
                 for na2 in range(nat):
@@ -1892,7 +1892,7 @@ def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
     q_cart = []
 
     for iq, (q1, q2) in enumerate(q):
-        q_cart.append((q1 * b1 + q2 * b2) / (2 * np.pi))
+        q_cart.append(q1 * b1 + q2 * b2)
 
     # write 'fildyn0' with information about q-point mesh:
 
