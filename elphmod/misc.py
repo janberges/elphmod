@@ -59,6 +59,9 @@ eps0 = 8.8541878128e-12
 Ry = 13.605693122994
 """Rydberg energy (eV) [2018 CODATA]."""
 
+Ha = 2 * Ry
+"""Hartree energy (eV)."""
+
 a0 = 0.529177210903
 """Bohr radius (AA) [2018 CODATA]."""
 
