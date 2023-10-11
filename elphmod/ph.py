@@ -213,9 +213,7 @@ class Model(object):
                                 dtype=complex)
 
                         if divide_mass:
-                            for na in range(len(amass)):
-                                D[:, group(na), :] /= np.sqrt(amass[na])
-                                D[:, :, group(na)] /= np.sqrt(amass[na])
+                            divide_by_mass(D, amass)
 
                         for iq in range(len(q)):
                             q[iq] = np.dot(at, q[iq])
@@ -279,9 +277,7 @@ class Model(object):
                 self.a, self.r, sgn=-1, divide_ndegen=divide_ndegen)
 
             if divide_mass:
-                for na in range(self.nat):
-                    self.data[:, group(na), :] /= np.sqrt(self.M[na])
-                    self.data[:, :, group(na)] /= np.sqrt(self.M[na])
+                divide_by_mass(self.data, self.M)
         else:
             self.update_short_range(flfrc=ifc,
                 apply_asr_simple=apply_asr_simple)
@@ -911,6 +907,20 @@ def group(n, size=3):
 
     return slice(n * size, (n + 1) * size)
 
+def divide_by_mass(dyn, amass):
+    """Divide dynamical matrices by atomic masses.
+
+    Parameters
+    ----------
+    dyn : ndarray
+        Dynamical matrices.
+    amass : list of float
+        Atomic masses.
+    """
+    for na in range(len(amass)):
+        dyn[..., group(na), :] /= np.sqrt(amass[na])
+        dyn[..., :, group(na)] /= np.sqrt(amass[na])
+
 def read_q(fildyn0):
     """Read list of irreducible q points from *fildyn0*."""
 
@@ -949,9 +959,7 @@ def fildyn_freq(fildyn='matdyn'):
             (q, D), amass, at, tau, atom_order, epsil, zeu = read_flfrc('%s%d'
                 % (fildyn, iq + 1))
 
-            for na in range(len(amass)):
-                D[:, group(na), :] /= np.sqrt(amass[na])
-                D[:, :, group(na)] /= np.sqrt(amass[na])
+            divide_by_mass(D, amass)
 
             w = sgnsqrt(np.linalg.eigvalsh(D[0])) * misc.Ry / misc.cmm1
 
@@ -1811,9 +1819,7 @@ def q2r(ph, D_irr=None, q_irr=None, nq=None, D_full=None, angle=60,
         sgn=-1, divide_ndegen=ph.divide_ndegen)
 
     if ph.divide_mass:
-        for na in range(ph.nat):
-            ph.data[:, group(na), :] /= np.sqrt(ph.M[na])
-            ph.data[:, :, group(na)] /= np.sqrt(ph.M[na])
+        divide_by_mass(ph.data, ph.M)
 
     if apply_asr or apply_rsr:
         sum_rule_correction(ph, asr=apply_asr, rsr=apply_rsr)
