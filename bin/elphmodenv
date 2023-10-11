@@ -6,13 +6,18 @@
 # From MehmedB @ Stack Overflow: "How to limit number of CPU's used by a python
 # script w/o terminal or multiprocessing library?"
 
-export MKL_NUM_THREADS=1
-export NUMEXPR_NUM_THREADS=1
-export OMP_NUM_THREADS=1
-export OPENBLAS_NUM_THREADS=1
-export VECLIB_MAXIMUM_THREADS=1
+NUM_THREADS=${1:-1}
+
+export MKL_NUM_THREADS=$NUM_THREADS
+export NUMEXPR_NUM_THREADS=$NUM_THREADS
+export OMP_NUM_THREADS=$NUM_THREADS
+export OPENBLAS_NUM_THREADS=$NUM_THREADS
+export VECLIB_MAXIMUM_THREADS=$NUM_THREADS
 
 # Running `source elphmodenv` before running your Python scripts should prevent
 # NumPy from using multiple processors for linear algebra. This is advantageous
 # when parallelizing with MPI already (`mpirun python3 script.py`) or on shared
 # servers, where CPU resources must be used with restraint.
+
+# Combine `source elphmodenv X` with `mpirun -n Y python3 script.py`, where the
+# product of X an Y is the number of available CPUs, for hybrid parallelization.
