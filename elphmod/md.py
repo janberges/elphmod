@@ -284,7 +284,8 @@ class Driver(object):
 
         return F
 
-    def hessian(self, parameters=None, gamma_only=True, fildyn=None):
+    def hessian(self, parameters=None, gamma_only=True, apply_asr_simple=False,
+            fildyn=None):
         """Calculate second derivative of free energy.
 
         Parameters
@@ -293,6 +294,10 @@ class Driver(object):
             Dummy positional argument for optimization routines.
         gamma_only : default True
             Calculate Hessian for q = 0 only?
+        apply_asr_simple : default False
+            Apply simple acoustic sum rule correction to force constants
+            according to Eq. 81 of Gonze and Lee, Phys. Rev. B 55, 10355 (1997)?
+            This is done before saving the Hessian to file.
         fildyn : str, optional
             Filename to save Hessian.
 
@@ -326,6 +331,16 @@ class Driver(object):
             d[0], self.kT, occupations=self.f)
 
         C += self.C0[:nq]
+
+        if apply_asr_simple:
+            C = C.reshape((nq, self.elph.ph.nat, 3, self.elph.ph.nat, 3))
+
+            corr = C.sum(axis=3)
+
+            for na in range(self.elph.ph.nat):
+                C[:, na, :, na, :] -= corr[:, na]
+
+            C = C.reshape((nq, self.elph.ph.size, self.elph.ph.size))
 
         if fildyn is not None and comm.rank == 0:
             ph.write_flfrc(fildyn,
