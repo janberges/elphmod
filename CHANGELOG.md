@@ -3,6 +3,11 @@
 See [Git commits](https://github.com/janberges/elphmod/commits) for more
 detailed list of changes.
 
+## v0.22/2023-10-14
+
+* Import of Wannier Hamiltonian from RESPACK
+* Export of dynamical matrices from MD driver
+
 ## v0.21/2023-09-20
 
 * Support for more QE Bravais lattices
