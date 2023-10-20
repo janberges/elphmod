@@ -322,7 +322,7 @@ def find_Fermi_level(n, e, kT=0.025, f=fermi_dirac, mu=None, tol=1e-5,
         eps=1e-10):
     """Determine chemical potential via fixed-point iteration.
 
-    See Eqs. 4.21 and 4.22 of https://janber.de/theses/Master_Jan_Berges.pdf.
+    See Eqs. 4.21 and 4.22 of https://janberges.de/theses/Master_Jan_Berges.pdf.
 
     Parameters
     ----------
