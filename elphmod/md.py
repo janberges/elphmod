@@ -82,7 +82,7 @@ class Driver(object):
             info("Initialize 'ph' and 'elph' with 'divide_mass=False'!",
                 error=True)
 
-        self.elph = elph
+        self.elph = copy.copy(elph)
 
         self.kT = kT
         self.f = f
