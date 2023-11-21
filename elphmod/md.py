@@ -126,7 +126,7 @@ class Driver(object):
         if supercell is not None:
             self.elph.ph = copy.copy(self.elph.ph)
 
-            ph.q2r(self.elph.ph, nq=nq, D_full=self.C0, divide_mass=False)
+            ph.q2r(self.elph.ph, nq=self.nq, D_full=self.C0, divide_mass=False)
 
             self.elph = self.elph.supercell(*supercell, sparse=True)
 
@@ -327,8 +327,8 @@ class Driver(object):
         C = diagrams.phonon_self_energy(self.q[:nq], self.e, g=d[:nq],
             kT=self.kT, occupations=self.f)
 
-        C[0] += diagrams.phonon_self_energy_fermi_shift(self.e,
-            d[0], self.kT, occupations=self.f)
+        C[0] += diagrams.phonon_self_energy_fermi_shift(self.e, d[0],
+            kT=self.kT, occupations=self.f)
 
         C += self.C0[:nq]
 
