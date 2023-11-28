@@ -2,7 +2,7 @@
 
 # Python modules for electron-phonon models
 
-![elphmod logo](https://raw.githubusercontent.com/janberges/elphmod/master/logo/logo.svg)
+![elphmod logo](https://raw.githubusercontent.com/janberges/elphmod/master/logo/elphmod.svg)
 
 * `el` - tight-binding models from Wannier90
 * `ph` - mass-spring models from Quantum ESPRESSO
