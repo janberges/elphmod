@@ -1,3 +1,28 @@
 [build-system]
-requires = ["setuptools>=46.4.0", "wheel"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "elphmod"
+dynamic = ["version"]
+authors = [{name = "elphmod Developers"}]
+description = "Python modules for electron-phonon models"
+readme = "README.md"
+urls = {homepage = "https://github.com/janberges/elphmod"}
+classifiers = [
+    "Programming Language :: Python",
+    "License :: OSI Approved :: GNU General Public License (GPL)",
+    "Operating System :: POSIX :: Linux",
+]
+requires-python = ">=2.7"
+dependencies = ["numpy"]
+
+[tool.setuptools]
+dynamic = {version = {attr = "elphmod.__version__"}}
+packages = {find = {namespaces = false}}
+script-files = [
+    "bin/elphmodenv",
+    "bin/kpoints",
+    "bin/minimum",
+    "bin/ph2epw",
+]
