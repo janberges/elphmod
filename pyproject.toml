@@ -8,7 +8,7 @@ dynamic = ["version"]
 authors = [{name = "elphmod Developers"}]
 description = "Python modules for electron-phonon models"
 readme = "README.md"
-urls = {homepage = "https://github.com/janberges/elphmod"}
+urls = {Homepage = "https://github.com/janberges/elphmod"}
 classifiers = [
     "Programming Language :: Python",
     "License :: OSI Approved :: GNU General Public License (GPL)",
