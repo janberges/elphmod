@@ -3,7 +3,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 project = 'elphmod'
-copyright = '2017-2023 elphmod Developers'
+copyright = '2017-2024 elphmod Developers'
 author = 'Uni Bremen'
 
 extensions = ['sphinx.ext.autodoc', 'numpydoc', 'm2r2']

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (C) 2017-2023 elphmod Developers
+# Copyright (C) 2017-2024 elphmod Developers
 # This program is free software under the terms of the GNU GPLv3 or later.
 
 # See Allen and Dynes, Phys. Rev. B 12, 905 (1975) for the formulas used here.

@@ -1,4 +1,4 @@
-# Copyright (C) 2017-2023 elphmod Developers
+# Copyright (C) 2017-2024 elphmod Developers
 # This program is free software under the terms of the GNU GPLv3 or later.
 
 # Some routines in this file follow wan2bloch.f90 of EPW v5.3.1.
