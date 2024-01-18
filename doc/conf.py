@@ -28,6 +28,6 @@ rst_epilog = '''
 .. include:: <isogrk1.txt>
 '''
 
-html_theme = 'alabaster'
+html_theme = 'sphinx_rtd_theme'
 
 numpydoc_show_class_members = False

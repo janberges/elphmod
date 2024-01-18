@@ -3,3 +3,4 @@ mpi4py --no-binary=mpi4py
 matplotlib
 numpydoc
 m2r2
+sphinx-rtd-theme
