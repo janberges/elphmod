@@ -332,12 +332,13 @@ class Driver(object):
             for x in range(self.elph.ph.size):
                 gx = V.dot(self.d0[x].dot(self.U))
                 avgx = np.diag(gx).dot(d) / dos
+                gx *= dfde
 
                 for y in range(x, self.elph.ph.size):
                     gy = V.dot(self.d0[y].dot(self.U))
-                    avgy = np.diag(gy).dot(d) / dos
+                    avgy = np.diag(gy).dot(d)
 
-                    C[0, x, y] = (gx * dfde * gy).sum() + avgx * dos * avgy
+                    C[0, x, y] = (gx * gy).sum() + avgx * avgy
                     C[0, y, x] = C[0, x, y]
         else:
             d = np.empty_like(self.d0[:nq])
