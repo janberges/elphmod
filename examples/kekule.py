@@ -48,22 +48,21 @@ scipy.optimize.minimize(driver.free_energy, driver.u, jac=driver.jacobian,
 
 driver.plot(interactive=False)
 
-if not sparse:
-    ph = driver.phonons()
+ph = driver.phonons()
 
-    path = 'GMKG'
-    q, x, corners = elphmod.bravais.path(path, ibrav=4, N=150)
+path = 'GMKG'
+q, x, corners = elphmod.bravais.path(path, ibrav=4, N=150)
 
-    w2 = elphmod.dispersion.dispersion(ph.D, q)
+w2 = elphmod.dispersion.dispersion(ph.D, q)
 
-    if comm.rank == 0:
-        w = elphmod.ph.sgnsqrt(w2) * elphmod.misc.Ry * 1e3
+if comm.rank == 0:
+    w = elphmod.ph.sgnsqrt(w2) * elphmod.misc.Ry * 1e3
 
-        plt.plot(x, w, 'k')
-        plt.ylabel('Phonon energy (meV)')
-        plt.xlabel('Wave vector')
-        plt.xticks(x[corners], path)
-        plt.show()
+    plt.plot(x, w, 'k')
+    plt.ylabel('Phonon energy (meV)')
+    plt.xlabel('Wave vector')
+    plt.xticks(x[corners], path)
+    plt.show()
 
 u1 = driver.u.copy()
 
@@ -80,11 +79,10 @@ for i in range(len(alpha)):
     driver.u = alpha[i] * u1
     E[i] = driver.free_energy()
 
-    if not sparse:
-        if i == i0:
-            c0 = 0.5 * u1.T.dot(driver.hessian()).dot(u1)
-        elif i == i1:
-            c1 = 0.5 * u1.T.dot(driver.hessian()).dot(u1)
+    if i == i0:
+        c0 = 0.5 * u1.T.dot(driver.hessian()).dot(u1)
+    elif i == i1:
+        c1 = 0.5 * u1.T.dot(driver.hessian()).dot(u1)
 
 if comm.rank == 0:
     scale = 1e3 * elphmod.misc.Ry / len(driver.elph.cells)
@@ -94,14 +92,13 @@ if comm.rank == 0:
 
     plt.plot(alpha, E, 'k')
 
-    if not sparse:
-        c0 *= scale
-        c1 *= scale
+    c0 *= scale
+    c1 *= scale
 
-        ylim = plt.ylim()
-        plt.plot(alpha, c0 * (alpha - alpha[i0]) ** 2 + E[i0], 'k:')
-        plt.plot(alpha, c1 * (alpha - alpha[i1]) ** 2 + E[i1], 'k--')
-        plt.ylim(ylim)
+    ylim = plt.ylim()
+    plt.plot(alpha, c0 * (alpha - alpha[i0]) ** 2 + E[i0], 'k:')
+    plt.plot(alpha, c1 * (alpha - alpha[i1]) ** 2 + E[i1], 'k--')
+    plt.ylim(ylim)
 
     plt.ylabel('Free energy (meV/cell)')
     plt.xlabel('Lattice distortion (relaxed displacement)')

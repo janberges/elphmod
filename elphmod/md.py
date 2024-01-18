@@ -285,7 +285,7 @@ class Driver(object):
         return F
 
     def hessian(self, parameters=None, gamma_only=True, apply_asr_simple=False,
-            fildyn=None):
+            fildyn=None, eps=1e-10):
         """Calculate second derivative of free energy.
 
         Parameters
@@ -300,35 +300,64 @@ class Driver(object):
             This is done before saving the Hessian to file.
         fildyn : str, optional
             Filename to save Hessian.
+        eps : float
+            Smallest allowed absolute value of divisor.
 
         Returns
         -------
         ndarray
             Force constants in Ry per bohr squared.
         """
-        if self.sparse:
-            raise NotImplementedError('Dense matrices required.')
+        gamma_only = gamma_only or self.sparse
 
         nq = 1 if gamma_only else len(self.q)
 
-        d = np.empty_like(self.d0[:nq])
+        if self.sparse:
+            x = self.e / self.kT
+            f = 2 * self.f(x)
+            d = 2 * self.f.delta(x) / (-self.kT)
 
-        for iq in range(nq):
-            V = self.U.conj().swapaxes(-2, -1)
+            df = np.subtract.outer(f, f)
+            de = np.subtract.outer(self.e, self.e)
+            ok = abs(de) > eps
 
-            q = np.round(self.nk * self.q[iq] / (2 * np.pi)).astype(int)
+            dfde = np.tile(d, (self.elph.el.size, 1))
+            dfde[ok] = df[ok] / de[ok]
+            dos = d.sum() # = np.trace(dfde)
 
-            for i in range(3):
-                if q[i]:
-                    V = np.roll(V, -q[i], axis=i)
+            C = np.zeros((nq, self.elph.ph.size, self.elph.ph.size))
 
-            d[iq] = V @ self.d0[iq] @ self.U
+            V = self.U.transpose().copy()
 
-        C = diagrams.phonon_self_energy(self.q[:nq], self.e, g=d[:nq],
-            kT=self.kT, occupations=self.f)
+            for x in range(self.elph.ph.size):
+                gx = V.dot(self.d0[x].dot(self.U))
+                avgx = np.diag(gx).dot(d) / dos
 
-        C[0] += diagrams.phonon_self_energy_fermi_shift(self.e, d[0],
-            kT=self.kT, occupations=self.f)
+                for y in range(x, self.elph.ph.size):
+                    gy = V.dot(self.d0[y].dot(self.U))
+                    avgy = np.diag(gy).dot(d) / dos
+
+                    C[0, x, y] = (gx * dfde * gy).sum() + avgx * dos * avgy
+                    C[0, y, x] = C[0, x, y]
+        else:
+            d = np.empty_like(self.d0[:nq])
+
+            for iq in range(nq):
+                V = self.U.conj().swapaxes(-2, -1)
+
+                q = np.round(self.nk * self.q[iq] / (2 * np.pi)).astype(int)
+
+                for i in range(3):
+                    if q[i]:
+                        V = np.roll(V, -q[i], axis=i)
+
+                d[iq] = V @ self.d0[iq] @ self.U
+
+            C = diagrams.phonon_self_energy(self.q[:nq], self.e, g=d[:nq],
+                kT=self.kT, occupations=self.f, eps=eps)
+
+            C[0] += diagrams.phonon_self_energy_fermi_shift(self.e, d[0],
+                kT=self.kT, occupations=self.f)
 
         C += self.C0[:nq]
 
