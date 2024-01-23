@@ -15,7 +15,7 @@ PW = elphmod.bravais.read_pwi('scf.in')
 PH = elphmod.bravais.read_ph('dfpt.in')
 
 kT = PW['degauss'] * elphmod.misc.Ry
-f = elphmod.occupations.smearing(PW['smearing'])
+f = elphmod.occupations.smearing(**PW)
 
 nk = PW['k_points'][0]
 nq = PH['nq1']
@@ -28,7 +28,7 @@ q = sorted(elphmod.bravais.irreducibles(nq))
 q = 2 * np.pi * np.array(q, dtype=float) / nq
 
 path = 'GMKG'
-k, x, corners = elphmod.bravais.path(path, ibrav=4, N=100)
+k, x, corners = elphmod.bravais.path(path, N=340, **PW)
 
 info('Prepare electrons')
 

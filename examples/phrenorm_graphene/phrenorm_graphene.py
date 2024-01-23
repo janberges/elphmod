@@ -11,11 +11,14 @@ import numpy as np
 comm = elphmod.MPI.comm
 info = elphmod.MPI.info
 
-kT = 0.01 * elphmod.misc.Ry
-f = elphmod.occupations.gauss
+PW = elphmod.bravais.read_pwi('scf.in')
+PH = elphmod.bravais.read_ph('dfpt.in')
 
-nk = 6
-nq = 2
+kT = PW['degauss'] * elphmod.misc.Ry
+f = elphmod.occupations.smearing(**PW)
+
+nk = PW['k_points'][0]
+nq = PH['nq1']
 
 info('Prepare wave vectors')
 
@@ -23,7 +26,7 @@ q = sorted(elphmod.bravais.irreducibles(nq))
 q = 2 * np.pi * np.array(q, dtype=float) / nq
 
 path = 'GMKG'
-q_path, x, corners = elphmod.bravais.path(path, ibrav=4, N=200)
+q_path, x, corners = elphmod.bravais.path(path, N=500, **PW)
 
 info('Prepare electrons')
 

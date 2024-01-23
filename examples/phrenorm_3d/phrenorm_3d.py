@@ -11,28 +11,31 @@ import numpy as np
 comm = elphmod.MPI.comm
 info = elphmod.MPI.info
 
-kT = 0.1 * elphmod.misc.Ry
-f = elphmod.occupations.gauss
+PW = elphmod.bravais.read_pwi('scf.in')
+PH = elphmod.bravais.read_ph('dfpt.in')
 
-nk = 4
-nq = 2
+kT = PW['degauss'] * elphmod.misc.Ry
+f = elphmod.occupations.smearing(**PW)
+
+nk = PW['k_points'][:3]
+nq = [PH['nq1'], PH['nq2'], PH['nq3']]
 
 info('Prepare wave vectors')
 
 k = 2 * np.pi * np.array([[[(k1, k2, k3)
-    for k3 in range(nk)]
-    for k2 in range(nk)]
-    for k1 in range(nk)], dtype=float) / nk
+    for k3 in range(nk[2])]
+    for k2 in range(nk[1])]
+    for k1 in range(nk[0])], dtype=float) / nk
 
 q = 2 * np.pi * np.array([[[(q1, q2, q3)
-    for q3 in range(nq)]
-    for q2 in range(nq)]
-    for q1 in range(nq)], dtype=float) / nq
+    for q3 in range(nq[2])]
+    for q2 in range(nq[1])]
+    for q1 in range(nq[0])], dtype=float) / nq
 
 q_flat = np.reshape(q, (-1, 3))
 
 path = 'GXRMG'
-q_path, x, corners = elphmod.bravais.path(path, ibrav=1, moveG=1e-3)
+q_path, x, corners = elphmod.bravais.path(path, N=100, moveG=1e-3, **PW)
 
 info('Prepare electrons')
 
@@ -63,7 +66,7 @@ info('Calculate phonon self-energy')
 
 Pi = elphmod.diagrams.phonon_self_energy(q_flat, e, g=g['cdfpt'], G=g['dfpt'],
     kT=kT, occupations=f)
-Pi = np.reshape(Pi, (nq, nq, nq, ph['cdfpt'].size, ph['cdfpt'].size))
+Pi = np.reshape(Pi, (nq[0], nq[1], nq[2], ph['cdfpt'].size, ph['cdfpt'].size))
 Pi /= elphmod.misc.Ry ** 2
 
 info('Renormalize phonons')

@@ -294,20 +294,22 @@ def fermi_dirac_matsubara_delta_prime(x, nmats=1000):
 fermi_dirac_matsubara.delta = fermi_dirac_matsubara_delta
 fermi_dirac_matsubara.delta_prime = fermi_dirac_matsubara_delta_prime
 
-def smearing(name='gaussian'):
+def smearing(smearing='gaussian', **ignore):
     """Select smearing function via name used in Quantum ESPRESSO.
 
     Parameters
     ----------
-    name : str, default 'gaussian'
+    smearing : str, default 'gaussian'
         Any available option for PWscf input parameter ``smearing``.
+    **ignore
+        Ignored keyword arguments, e.g., parameters from 'func'`read_pwi`.
 
     Returns
     -------
     function
         Smearing function.
     """
-    name = name.lower()
+    name = smearing.lower()
 
     if name in {'gaussian', 'gauss'}:
         return gauss
