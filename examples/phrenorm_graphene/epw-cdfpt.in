@@ -9,7 +9,7 @@ graphene
     use_ws = .true.
     epwwrite = .true.
     lpolar = .true.
-    system_2d = .true.
+    system_2d = 'gaussian'
 
     nbndsub = 2
 

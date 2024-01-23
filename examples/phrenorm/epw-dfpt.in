@@ -9,7 +9,7 @@ TaS2
     use_ws = .true.
     epwwrite = .true.
     lpolar = .false.
-    system_2d = .false.
+    system_2d = 'no'
 
     nbndsub = 3
     bands_skipped = 'exclude_bands = 1:8'
