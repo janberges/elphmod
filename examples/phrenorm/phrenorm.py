@@ -21,7 +21,6 @@ nk = PW['k_points'][0]
 nq = PH['nq1']
 
 nel = 1
-nph = 9
 
 info('Prepare wave vectors')
 
