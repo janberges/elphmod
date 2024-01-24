@@ -1819,24 +1819,32 @@ def read_pwi(pwi):
                         struct['pp'].append(words[2])
 
                 elif key == 'atomic_positions':
-                    struct['at'] = []
-                    struct['r'] = np.empty((struct['nat'], 3))
-
                     if len(words) == 1:
                         struct['coords'] = 'alat'
                     else:
-                        struct['coords'] = words[1]
+                        struct['coords'] = ''.join(c for c in words[1].lower()
+                            if c not in '{ }')
 
                     print("Read crystal structure in units '%s'"
                         % struct['coords'])
+
+                    struct['at'] = []
+
+                    if 'crystal_sg' in struct['coords']:
+                        struct['r'] = []
+                    else:
+                        struct['r'] = np.empty((struct['nat'], 3))
 
                     for n in range(struct['nat']):
                         words = next(lines).split()
 
                         struct['at'].append(words[0])
 
-                        for x in range(3):
-                            struct['r'][n, x] = float(words[1 + x])
+                        if 'crystal_sg' in struct['coords']:
+                            struct['r'].append(words[1])
+                        else:
+                            for x in range(3):
+                                struct['r'][n, x] = float(words[1 + x])
 
                 elif key == 'k_points':
                     struct['ktyp'] = words[1].lower()
@@ -1906,7 +1914,8 @@ def write_pwi(pwi, struct):
                 'cosab', 'ecutwfc', 'ecutrho', 'nbnd', 'occupations',
                 'smearing', 'degauss', 'nosym', 'noinv', 'tot_charge',
                 'assume_isolated', 'nspin', 'noncolin', 'lspinorb',
-                'tot_magnetization', 'starting_magnetization']:
+                'tot_magnetization', 'starting_magnetization', 'space_group',
+                'uniqueb', 'origin_choice', 'rhombohedral']:
             if key in struct:
                 data.write('%s = %r\n' % (key, struct[key]))
 
@@ -1951,8 +1960,12 @@ def write_pwi(pwi, struct):
 
         data.write('ATOMIC_POSITIONS %s\n' % struct['coords'])
 
-        for X, (r1, r2, r3) in zip(struct['at'], struct['r']):
-            data.write('%2s %12.9f %12.9f %12.9f\n' % (X, r1, r2, r3))
+        if 'crystal_sg' in struct['coords'].lower():
+            for Xr in zip(struct['at'], struct['r']):
+                data.write('%2s %s\n' % Xr)
+        else:
+            for X, (r1, r2, r3) in zip(struct['at'], struct['r']):
+                data.write('%2s %12.9f %12.9f %12.9f\n' % (X, r1, r2, r3))
 
         if 'ktyp' in struct:
             data.write('\n')
