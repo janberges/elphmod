@@ -138,7 +138,7 @@ class StatusBar(object):
     in_progress = comm.rank != 0
 
     def __init__(self, count, width=60, title='progress'):
-        if StatusBar.in_progress or verbosity < 3:
+        if not count or StatusBar.in_progress or verbosity < 3:
             return
 
         StatusBar.in_progress = self
@@ -148,9 +148,8 @@ class StatusBar(object):
         self.width = width
         self.progress = 0
 
-        if self.count:
-            sys.stdout.write((' %s ' % title).center(width, '_'))
-            sys.stdout.write('\n')
+        sys.stdout.write((' %s ' % title).center(width, '_'))
+        sys.stdout.write('\n')
 
     def update(self):
         """Update progress bar."""
