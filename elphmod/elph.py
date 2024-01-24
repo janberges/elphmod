@@ -244,11 +244,16 @@ class Model(object):
 
         if comm.rank == 0:
             with open(epmatwp, 'rb') as data:
+                status = misc.StatusBar(shape[0] * (self.data.nbytes > 1e9),
+                    title='load real-space coupling')
+
                 for irg in range(shape[0]):
                     tmp = np.fromfile(data, dtype=np.complex128,
                         count=np.prod(shape[1:])).reshape(shape[1:])
 
                     self.data[irg] = np.swapaxes(tmp, 2, 3)
+
+                    status.update()
 
                     # index orders:
                     # EPW (Fortran): a, b, R', x, R
