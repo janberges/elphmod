@@ -871,16 +871,25 @@ class Model(object):
 
         return l[nonzero], C[nonzero]
 
-    def to_flfrc(self, flfrc, nr1, nr2, nr3):
+    def to_flfrc(self, flfrc, nr1=None, nr2=None, nr3=None):
         """Save mass-spring model to force-constants file.
 
         Parameters
         ----------
         flfrc : str
             Filename.
-        nr1, nr2, nr3 : int
-            Mesh dimensions.
+        nr1, nr2, nr3 : int, optional
+            Mesh dimensions. If not given, :attr:`nq` is assumed.
         """
+        if nr1 is None:
+            nr1 = self.nq[0]
+
+        if nr2 is None:
+            nr2 = self.nq[1]
+
+        if nr3 is None:
+            nr3 = self.nq[2]
+
         phid = np.zeros((self.nat, self.nat, nr1, nr2, nr3, 3, 3))
 
         sizes, bounds = MPI.distribute(len(self.R), bounds=True)

@@ -144,7 +144,7 @@ ph = elphmod.ph.Model(phid=np.empty((2, 2) + nq + (3, 3)),
 
 elphmod.ph.q2r(ph, D_full=D)
 ph.standardize(eps=1e-10)
-ph.to_flfrc('%s.ifc' % stem, *nq)
+ph.to_flfrc('%s.ifc' % stem)
 
 Rk, dk, lk = elphmod.bravais.wigner_seitz_x('q', nk[0], at, r)
 Rg, dg, lg = elphmod.bravais.wigner_seitz_x('q', nq[0], at, r)
