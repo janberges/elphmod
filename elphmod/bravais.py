@@ -615,8 +615,10 @@ def symmetries(data, epsilon=0.0, unity=True, angle=60):
 
     # generate iterator through symmetries:
 
+    dangle = 90 if angle == 90 else 60
+
     for reflect in False, True:
-        for angle in range(0, 360, 60):
+        for angle in range(0, 360, dangle):
             if reflect or angle or unity:
                 image = get_image(reflect, angle)
 
