@@ -20,42 +20,54 @@ except ImportError:
             self.rank = 0
             self.size = 1
 
-        def Barrier(self):
+        @staticmethod
+        def Barrier():
             pass
 
-        def barrier(self):
+        @staticmethod
+        def barrier():
             pass
 
-        def Bcast(self, data):
+        @staticmethod
+        def Bcast(data):
             pass
 
-        def bcast(self, data):
+        @staticmethod
+        def bcast(data):
             return data
 
-        def Gatherv(self, send, recv):
+        @staticmethod
+        def Gatherv(send, recv):
             recv[0][...] = send.reshape(recv[0].shape)
 
-        def Allgatherv(self, send, recv):
+        @staticmethod
+        def Allgatherv(send, recv):
             recv[0][...] = send.reshape(recv[0].shape)
 
-        def gather(self, send):
+        @staticmethod
+        def gather(send):
             return [send]
 
-        def allgather(self, send):
+        @staticmethod
+        def allgather(send):
             return [send]
 
-        def Reduce(self, send, recv):
+        @staticmethod
+        def Reduce(send, recv):
             if send is not MPI.IN_PLACE:
                 recv[...] = send.reshape(recv.shape)
 
-        def Allreduce(self, send, recv):
+        @staticmethod
+        def Allreduce(send, recv):
             if send is not MPI.IN_PLACE:
                 recv[...] = send.reshape(recv.shape)
 
-        def allreduce(self, send):
+        @staticmethod
+        def allreduce(send):
             return send
 
-        def Scatterv(self, send, recv):
+        @staticmethod
+        def Scatterv(send, recv):
             recv[...] = send[0].reshape(recv.shape)
 
         def Split(self, color, key=None):
