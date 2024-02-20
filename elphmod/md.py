@@ -396,7 +396,7 @@ class Driver(object):
         object
             Tight-binding model for the electrons.
         """
-        H = np.einsum('...an,...n,...bn->...ab', self.U, self.e, self.U.conj())
+        H = self.U @ np.diag(self.e) @ self.U.conj().T
 
         if dk1 > 1 or dk2 > 1 or dk3 > 1:
             if not self.sparse:
