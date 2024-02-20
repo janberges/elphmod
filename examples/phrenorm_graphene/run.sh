@@ -3,7 +3,7 @@
 # Copyright (C) 2017-2024 elphmod Developers
 # This program is free software under the terms of the GNU GPLv3 or later.
 
-source elphmodenv
+eval `elphmodenv`
 
 echo 'Using normconserving pseudopotentials from PseudoDojo'
 echo '[1] van Setten et al., Comput. Phys. Commun. 226, 39 (2018)'

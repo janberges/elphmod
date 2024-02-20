@@ -719,3 +719,33 @@ def vector_index(vectors, vector):
         return np.argmax(match)
     else:
         return None
+
+def minimum(*args):
+    """Find extremum of parabola through given points.
+
+    Parameters
+    ----------
+    *args
+        Coordinates of three points. Can also be provided as command arguments.
+
+    Returns
+    -------
+    float
+        x coordinates of extremum.
+    """
+    if len(args) == 6:
+        x1, x2, x3, y1, y2, y3 = args
+    if len(sys.argv) == 7:
+        x1, x2, x3, y1, y2, y3 = list(map(float, sys.argv[1:]))
+    else:
+        raise SystemExit('Usage: minimum x1 x2 x3 y1 y2 y3')
+
+    enum = x1 ** 2 * (y2 - y3) + x2 ** 2 * (y3 - y1) + x3 ** 2 * (y1 - y2)
+    deno = x1 * 2 * (y2 - y3) + x2 * 2 * (y3 - y1) + x3 * 2 * (y1 - y2)
+
+    if deno:
+        x0 = enum / deno
+        info(x0)
+        return x0
+    else:
+        info('There is no extremum.')

@@ -2628,3 +2628,41 @@ def cartesian_to_crystal(R_CARTESIAN, a1, a2, a3):
         R_CRYSTAL[ii, :] = np.dot(A_Matrix_Inverse, R_CARTESIAN[ii, :])
 
     return R_CRYSTAL
+
+def kpoints(nk1=None, nk2=None, nk3=None, weights=None):
+    """Generate and print uniform k-point mesh.
+
+    Omitted arguments are read from standard input.
+
+    Parameters
+    ----------
+    nk1, nk2, nk3 : int
+        Number of points along axis.
+    weights : bool
+        Print weights?
+    """
+    k = []
+    N = 1
+
+    for axis, nk in ('1st', nk1), ('2nd', nk2), ('3rd', nk3):
+        if nk is None:
+            nk = int(input('number of points along %s axis: ' % axis))
+
+        dk = 1.0 / nk
+        k.append([i * dk for i in range(nk)])
+        N *= nk
+
+    cols = [0.0] * len(k)
+
+    if weights is None:
+        weights = 'y' in input('print weights (y/n): ')
+
+    if weights:
+       cols.append(1.0 / N)
+
+    print(N)
+
+    for cols[0] in k[0]:
+       for cols[1] in k[1]:
+          for cols[2] in k[2]:
+             print(' '.join('%12.10f' % c for c in cols))

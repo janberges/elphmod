@@ -17,12 +17,12 @@ classifiers = [
 requires-python = ">=2.7"
 dependencies = ["numpy"]
 
+[project.scripts]
+elphmodenv = "elphmod.MPI:elphmodenv"
+kpoints = "elphmod.bravais:kpoints"
+minimum = "elphmod.misc:minimum"
+ph2epw = "elphmod.elph:ph2epw"
+
 [tool.setuptools]
 dynamic = {version = {attr = "elphmod.__version__"}}
 packages = {find = {namespaces = false}}
-script-files = [
-    "bin/elphmodenv",
-    "bin/kpoints",
-    "bin/minimum",
-    "bin/ph2epw",
-]

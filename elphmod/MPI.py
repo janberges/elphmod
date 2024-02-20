@@ -371,3 +371,25 @@ def info(message, error=False, comm=comm):
 
     if error:
         sys.exit()
+
+def elphmodenv(num_threads=1):
+    """Print commands to change number of threads.
+
+    Run `eval $(elphmodenv)` before your Python scripts to prevent NumPy from
+    using multiple processors for linear algebra. This is advantageous when
+    parallelizing with MPI already (`mpirun python3 script.py`) or on shared
+    servers, where CPU resources must be used with restraint.
+
+    Combine `eval $(elphmodenv X)` with `mpirun -n Y python3 script.py`, where
+    the product of X an Y is the number of available CPUs, for hybrid
+    parallelization.
+    """
+    if len(sys.argv) > 1:
+        num_threads = int(sys.argv[1])
+
+    # From MehmedB @ Stack Overflow: "How to limit number of CPU's used by a python
+    # script w/o terminal or multiprocessing library?"
+
+    for var in ['MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS',
+            'OPENBLAS_NUM_THREADS', 'VECLIB_MAXIMUM_THREADS']:
+        info('export %s=%d' % (var, num_threads))

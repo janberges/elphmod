@@ -1489,3 +1489,72 @@ def read_data(filename):
                 data[indices] = values[0]
 
     return data
+
+def ph2epw(fildyn='dyn', outdir='work', dvscf_dir='save'):
+    """Convert PHonon output to EPW input.
+
+    Based on script `pp.py` provided with EPW code (C) 2015 Samuel Ponce.
+
+    All arguments can be overwritten by environment variables of the same name.
+
+    Parameters
+    ----------
+    dyn : str
+        Prefix of dynamical-matrix files.
+    outdir : str
+        QE output directory.
+    dvscf_dir : str
+        EPW input directory.
+    """
+    import glob
+    import os
+    import shutil
+
+    if 'dyn' in os.environ:
+        dyn = os.environ['dyn']
+
+    if 'outdir' in os.environ:
+        outdir = os.environ['outdir']
+
+    if 'dvscf_dir' in os.environ:
+        dvscf_dir = os.environ['dvscf_dir']
+
+    if fildyn.endswith('.xml'):
+        fildyn = fildyn[:-4]
+
+    ext = '.xml' if os.path.isfile('%s1.xml' % fildyn) else ''
+
+    if not os.path.isfile('%s1%s' % (fildyn, ext)) or not os.path.isdir(outdir):
+        info('Usage: [fildyn=...] [outdir=...] [dvscf_dir=...] ph2epw',
+            error=True)
+
+    os.makedirs(dvscf_dir, exist_ok=True)
+
+    phsave, = glob.glob('%s/_ph0/*.phsave' % outdir)
+    prefix = phsave[len('%s/_ph0/' % outdir):-len('.phsave')]
+
+    shutil.copytree(phsave, '%s/%s.phsave' % (dvscf_dir, prefix),
+        dirs_exist_ok=True)
+
+    n = 0
+    while True:
+        n += 1
+
+        dyn = '%s%d%s' % (fildyn, n, ext)
+
+        if not os.path.isfile(dyn):
+            break
+
+        shutil.copy2(dyn, '%s/%s.dyn_q%d%s' % (dvscf_dir, prefix, n, ext))
+
+        orig = '%s/_ph0' % outdir
+
+        if n > 1:
+            orig += '/%s.q_%d' % (prefix, n)
+
+        for suffix in 'dvscf', 'dvscf_paw':
+            origfile = '%s/%s.%s1' % (orig, prefix, suffix)
+
+            if os.path.isfile(origfile):
+                shutil.copy2(origfile, '%s/%s.%s_q%d'
+                    % (dvscf_dir, prefix, suffix, n))

@@ -1,54 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env python3
 
-# Based on script pp.py provided with EPW code (C) 2015 Samuel Ponce.
-# This program is free software under the terms of the GNU GPLv3 or later.
+from elphmod.elph import ph2epw
 
-set -e
-
-: ${fildyn:=dyn}
-: ${outdir:=work}
-: ${dvscf_dir:=save}
-
-fildyn=${fildyn%.xml}
-
-test -e "$fildyn"1.xml && ext=.xml || ext=""
-
-if test ! -e "$fildyn"1$ext -o ! -e "$outdir"
-then
-    echo "Usage: [fildyn=...] [outdir=...] [dvscf_dir=...] ph2epw"
-    exit 1
-fi
-
-mkdir -p "$dvscf_dir"
-
-for phsave in "$outdir"/_ph0/*.phsave
-do
-    prefix=${phsave#$outdir/_ph0/}
-    prefix=${prefix%.phsave}
-
-    cp -r "$phsave" "$dvscf_dir"
-
-    for dyn in "$fildyn"*$ext
-    do
-        n=${dyn#$fildyn}
-        n=${n%$ext}
-
-        test $n -eq 0 && continue
-
-        cp "$dyn" "$dvscf_dir/$prefix.dyn_q$n$ext"
-
-        orig="$outdir/_ph0"
-
-        test $n -gt 1 && orig="$orig/$prefix.q_$n"
-
-        for suffix in dvscf dvscf_paw
-        do
-            origfile="$orig/$prefix.$suffix"1
-
-            if test -f "$origfile"
-            then
-                cp "$origfile" "$dvscf_dir/$prefix.$suffix"_q$n
-            fi
-        done
-    done
-done
+ph2epw()
