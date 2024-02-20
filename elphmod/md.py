@@ -265,8 +265,7 @@ class Driver(object):
             t0 = time.time()
 
         if self.sparse:
-            f = (self.U.conj() @ np.diag(self.f(self.e / self.kT))
-                @ self.U.T).real
+            f = self.U @ np.diag(self.f(self.e / self.kT)) @ self.U.T
 
             F = np.array([2 * self.d0[x].multiply(f).sum()
                 for x in range(self.elph.ph.size)])
