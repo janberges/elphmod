@@ -35,14 +35,14 @@ Using APT and pip, you can install the corresponding dependencies as follows:
     sudo apt install libopenmpi-dev
     python3 -m pip install mpi4py --no-binary=mpi4py
 
-If you plan to work on elphmod itself, we recommend to download the complete
-repository and also install the requirements of examples and documentation:
+If you plan to work on elphmod itself, we recommend to download the repository,
+perform an editable installation, and also install the requirements of examples
+and documentation:
 
     git clone https://github.com/janberges/elphmod
-    python3 -m pip install -r elphmod/requirements.txt
-
-Also consider adding the absolute paths to `elphmod` and `elphmod/bin` to the
-environment variables `PYTHONPATH` and `PATH`, respectively.
+    cd elphmod
+    python3 -m pip install -e .
+    python3 -m pip install -r requirements.txt
 
 ## Documentation
 
