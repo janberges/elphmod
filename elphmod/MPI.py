@@ -307,7 +307,7 @@ class Buffer(object):
 
         if comm.rank == 0:
             with open(self.buf, 'wb') as data:
-                pickle.dump(obj, data)
+                pickle.dump(obj, data, protocol = 4)
 
 def load(filename, shared_memory=False, comm=comm):
     """Read and broadcast NumPy data."""
