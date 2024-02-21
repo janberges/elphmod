@@ -40,9 +40,8 @@ perform an editable installation, and also install the requirements of examples
 and documentation:
 
     git clone https://github.com/janberges/elphmod
-    cd elphmod
-    python3 -m pip install -e .
-    python3 -m pip install -r requirements.txt
+    python3 -m pip install -e elphmod
+    python3 -m pip install -r elphmod/requirements.txt
 
 ## Documentation
 
