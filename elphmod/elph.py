@@ -415,8 +415,8 @@ class Model(object):
             except ImportError:
                 from scipy.sparse import dok_matrix as sparse_array
 
-            elph.gs = np.array([sparse_array((elph.el.size, elph.el.size))
-                for x in range(elph.ph.size)])
+            elph.gs = [sparse_array((elph.el.size, elph.el.size))
+                for x in range(elph.ph.size)]
 
             if elph.ph.lr:
                 g_lr = elph.g_lr().real
@@ -477,12 +477,10 @@ class Model(object):
                 status.update()
 
         if sparse:
-            elph.gs = comm.allreduce(elph.gs)
-
             # DOK/CSR format efficient for matrix construction/calculations:
 
             for x in range(elph.ph.size):
-                elph.gs[x] = elph.gs[x].tocsr()
+                elph.gs[x] = comm.allreduce(elph.gs[x]).tocsr()
 
             if comm.rank == 0:
                 import pickle
