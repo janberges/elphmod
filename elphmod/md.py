@@ -265,7 +265,7 @@ class Driver(object):
             t0 = time.time()
 
         if self.sparse:
-            f = self.U @ np.diag(self.f(self.e / self.kT)) @ self.U.T
+            f = self.U * self.f(self.e / self.kT)[np.newaxis] @ self.U.T
 
             F = np.array([2 * self.d0[x].multiply(f).sum()
                 for x in range(self.elph.ph.size)])
@@ -396,7 +396,7 @@ class Driver(object):
         object
             Tight-binding model for the electrons.
         """
-        H = self.U @ np.diag(self.e) @ self.U.conj().T
+        H = self.U * self.e[..., np.newaxis, :] @ self.U.conj().swapaxes(-2, -1)
 
         if dk1 > 1 or dk2 > 1 or dk3 > 1:
             if not self.sparse:
