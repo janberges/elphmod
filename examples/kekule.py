@@ -48,10 +48,22 @@ scipy.optimize.minimize(driver.free_energy, driver.u, jac=driver.jacobian,
 
 driver.plot(interactive=False)
 
-ph = driver.phonons()
-
 path = 'GMKG'
-q, x, corners = elphmod.bravais.path(path, ibrav=4, N=150)
+k, x, corners = elphmod.bravais.path(path, ibrav=4, N=150)
+q = k
+
+el = driver.electrons()
+
+e = elphmod.dispersion.dispersion(el.H, k)
+
+if comm.rank == 0:
+    plt.plot(x, e, 'k')
+    plt.ylabel('Electron energy (eV)')
+    plt.xlabel('Wave vector')
+    plt.xticks(x[corners], path)
+    plt.show()
+
+ph = driver.phonons()
 
 w2 = elphmod.dispersion.dispersion(ph.D, q)
 
