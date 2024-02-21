@@ -1,5 +1,6 @@
 numpy
 mpi4py --no-binary=mpi4py
+ipi
 matplotlib
 numpydoc
 m2r2
