@@ -1,8 +1,7 @@
 # elphmod examples
 
 This directory contains examples that demonstrate the different functionalities
-of elphmod. To run them, the scripts `run.sh` can be used. `elphmod/elphmod` and
-`elphmod/bin` must be on `sys.path`/`PYTHONPATH` and `PATH`, respectively.
+of elphmod. To run them, the scripts `run.sh` can be used.
 
 * `3x3.py` - relaxation of CDW distortion in monolayer TaS2
 * `a2f.py` - Eliashberg spectral function of monolayer TaS2
