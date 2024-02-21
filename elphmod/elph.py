@@ -482,6 +482,8 @@ class Model(object):
             for x in range(elph.ph.size):
                 elph.gs[x] = comm.allreduce(elph.gs[x]).tocsr()
 
+            elph.gs = np.array(elph.gs)
+
             if comm.rank == 0:
                 import pickle
 
