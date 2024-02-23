@@ -1528,13 +1528,14 @@ def ph2epw(fildyn='dyn', outdir='work', dvscf_dir='save'):
         info('Usage: [fildyn=...] [outdir=...] [dvscf_dir=...] ph2epw',
             error=True)
 
-    os.makedirs(dvscf_dir, exist_ok=True)
-
     phsave, = glob.glob('%s/_ph0/*.phsave' % outdir)
     prefix = phsave[len('%s/_ph0/' % outdir):-len('.phsave')]
 
-    shutil.copytree(phsave, '%s/%s.phsave' % (dvscf_dir, prefix),
-        dirs_exist_ok=True)
+    try:
+        shutil.copytree(phsave, '%s/%s.phsave' % (dvscf_dir, prefix))
+    except FileExistsError:
+        info('Warning: EPW dvscf_dir "%s" already exists!' % dvscf_dir)
+        return
 
     n = 0
     while True:
