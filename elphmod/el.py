@@ -149,17 +149,19 @@ class Model(object):
                 t[R1 % N[0], R2 % N[1], R3 % N[2]] = data[iR]
 
             k2r(self, t, a, r, fft=False)
+
+            supvecs = None
         else:
             self.R, self.data = read_hrdat(seedname, divide_ndegen)
             self.size = self.data.shape[1]
+
+            supvecs = read_wsvecdat('%s_wsvec.dat' % seedname)
 
         self.nk = tuple(2 * self.R[np.all(self.R[:, x] == 0,
             axis=1)].max(initial=1) for x in [[1, 2], [2, 0], [0, 1]])
 
         if rydberg:
             self.data /= misc.Ry
-
-        supvecs = read_wsvecdat('%s_wsvec.dat' % seedname)
 
         if supvecs is not None and divide_ndegen:
             if comm.rank == 0:
