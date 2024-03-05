@@ -410,10 +410,7 @@ class Model(object):
         const = dict()
 
         if sparse:
-            try:
-                from scipy.sparse import dok_array as sparse_array
-            except ImportError:
-                from scipy.sparse import dok_matrix as sparse_array
+            sparse_array = misc.get_sparse_array()
 
             elph.gs = [sparse_array((elph.el.size, elph.el.size))
                 for x in range(elph.ph.size)]

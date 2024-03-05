@@ -286,10 +286,7 @@ class Model(object):
         el.rydberg = self.rydberg
 
         if sparse:
-            try:
-                from scipy.sparse import dok_array as sparse_array
-            except ImportError:
-                from scipy.sparse import dok_matrix as sparse_array
+            sparse_array = misc.get_sparse_array()
 
             el.Hs = sparse_array((el.size, el.size))
 

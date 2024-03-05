@@ -178,6 +178,19 @@ def hello():
             % (__version__, comm.size))
         info('To suppress all output, set elphmod.misc.verbosity = 0.')
 
+def get_sparse_array():
+    """Try to import sparse array or matrix."""
+
+    try:
+        from scipy.sparse import dok_array as sparse_array
+    except ImportError:
+        try:
+            from scipy.sparse import dok_matrix as sparse_array
+        except ImportError:
+            info('Sparse arrays require SciPy!', error=True)
+
+    return sparse_array
+
 def group(points, eps=1e-7):
     """Group points into neighborhoods.
 
