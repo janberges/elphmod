@@ -1168,7 +1168,7 @@ def proj_sum(proj, orbitals, *groups, **kwargs):
     import re
 
     def info(orbital):
-        return re.match('(?:([A-Z][a-z]?)(\d*))?-?(\d*)(?:([spdfx])(\S*))?',
+        return re.match(r'(?:([A-Z][a-z]?)(\d*))?-?(\d*)(?:([spdfx])(\S*))?',
             orbital.strip()).groups()
 
     other = kwargs.get('other', False)

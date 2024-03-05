@@ -14,7 +14,7 @@ comm = MPI.comm
 def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
         order=False, hermitian=True, broadcast=True, shared_memory=False,
         **order_kwargs):
-    """Diagonalize Hamiltonian or dynamical matrix for given k points.
+    r"""Diagonalize Hamiltonian or dynamical matrix for given k points.
 
     Parameters
     ----------
@@ -525,7 +525,7 @@ def map_dispersions(V1, V2):
     return np.reshape(mapping, shape[:-1])
 
 def unfolding_weights(k, R, U0, U, blocks0=None, blocks=None, sgn=-1):
-    """Calculate weights for "unfolding" of supercell dispersions.
+    r"""Calculate weights for "unfolding" of supercell dispersions.
 
     Parameters
     ----------

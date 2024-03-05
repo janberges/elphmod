@@ -733,7 +733,7 @@ class Model:
 
 def sample(g, q, nk=None, U=None, u=None, squared=False, broadcast=True,
         shared_memory=False):
-    """Sample coupling for given q and k points and transform to band basis.
+    r"""Sample coupling for given q and k points and transform to band basis.
 
     One purpose of this routine is full control of the complex phase.
 

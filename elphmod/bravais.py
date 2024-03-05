@@ -317,7 +317,7 @@ def translations(angle=120, angle0=0, two_dimensional=True):
         return a1, a2
 
 def reciprocals(a1, a2, a3=None):
-    """Generate translation vectors of reciprocal lattice.
+    r"""Generate translation vectors of reciprocal lattice.
 
     Parameters
     ----------
@@ -510,7 +510,7 @@ def images(k1, k2, nk, angle=60):
     return points
 
 def irreducibles(nk, angle=60):
-    """Generate set of irreducible k points.
+    r"""Generate set of irreducible k points.
 
     Parameters
     ----------
@@ -1476,7 +1476,7 @@ def Fourier_interpolation(data, angle=60, sign=-1, function=True):
     return dict((tuple(point), value) for point, value in zip(points, values))
 
 def path(points, N=30, recvec=None, qe=False, moveG=0, **kwargs):
-    """Generate arbitrary path through Brillouin zone.
+    r"""Generate arbitrary path through Brillouin zone.
 
     Parameters
     ----------
@@ -1670,7 +1670,7 @@ def path(points, N=30, recvec=None, qe=False, moveG=0, **kwargs):
 
 def GMKG(N=30, corner_indices=False, mesh=False, angle=60, straight=True,
         lift_degen=True):
-    """Generate path |Ggr|-M-K-|Ggr| through Brillouin zone.
+    r"""Generate path |Ggr|-M-K-|Ggr| through Brillouin zone.
 
     (This function should be replaced by a more general one to produce arbitrary
     paths through both triangular and rectangular Brillouin zones, where special

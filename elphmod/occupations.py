@@ -209,7 +209,7 @@ double_fermi_dirac.delta_prime = double_fermi_dirac_delta_prime
 double_fermi_dirac.entropy = double_fermi_dirac_entropy
 
 def lorentz(x):
-    """Calculate Lorentz step function.
+    r"""Calculate Lorentz step function.
 
     Used to simulate the influence of a wide box-shaped hybridization function
     at low temperatures. Formula derived by Tim O. Wehling and Erik G.C.P. van

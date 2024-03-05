@@ -526,7 +526,7 @@ def phonon_self_energy_fermi_shift(e, g, kT=0.025,
 
 def phonon_self_energy2(q, e, g2, kT=0.025, nmats=1000, hyb_width=1.0,
         hyb_height=0.0, GB=4.0):
-    """Calculate phonon self-energy using the Green's functions explicitly.
+    r"""Calculate phonon self-energy using the Green's functions explicitly.
 
     Parameters
     ----------
@@ -827,7 +827,7 @@ def renormalize_coupling_orbital(q, e, g, W, U, **kwargs):
 
 def Pi_g(q, e, g, U, kT=0.025, eps=1e-10,
         occupations=occupations.fermi_dirac, dd=True, status=True):
-    """Join electron-phonon coupling and Lindhard bubble in orbital basis.
+    r"""Join electron-phonon coupling and Lindhard bubble in orbital basis.
 
     Parameters
     ----------

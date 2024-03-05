@@ -548,7 +548,7 @@ def read_namelists(filename):
             elif key is not None and item != '=':
                 count = 1
                 while count:
-                    item, count = re.subn('___\d+___', place, item)
+                    item, count = re.subn(r'___\d+___', place, item)
 
                 if re.match(r'(\'.*\'|".*")$', item):
                     item = item[1:-1]

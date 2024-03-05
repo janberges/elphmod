@@ -1696,7 +1696,7 @@ def polarization(e, path, angle=60):
 def q2r(ph, D_irr=None, q_irr=None, nq=None, D_full=None, angle=60,
         apply_asr=False, apply_asr_simple=False, apply_rsr=False, flfrc=None,
         divide_mass=True):
-    """Interpolate dynamical matrices given for irreducible wedge of q points.
+    r"""Interpolate dynamical matrices given for irreducible wedge of q points.
 
     This function replaces `interpolate_dynamical_matrices`, which depends on
     Quantum ESPRESSO. For 2D lattices, it is sufficient to provide dynamical
@@ -1833,7 +1833,7 @@ def q2r(ph, D_irr=None, q_irr=None, nq=None, D_full=None, angle=60,
 def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
         write_fildyn0=True, apply_asr=False, apply_asr_simple=False,
         apply_rsr=False, divide_mass=True, qe_prefix='', clean=False):
-    """Interpolate dynamical matrices given for irreducible wedge of q points.
+    r"""Interpolate dynamical matrices given for irreducible wedge of q points.
 
     This function still uses the Quantum ESPRESSO executables ``q2qstar.x`` and
     ``q2r.x``.  They are called in serial by each MPI process, which leads to
