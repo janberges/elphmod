@@ -46,14 +46,9 @@ and documentation:
 
 ## Documentation
 
-The documentation can be found at <https://janberges.github.io/elphmod>. It has
-been automatically generated from the NumPy-style docstrings in the source code
-using Sphinx:
+The documentation can be found at <https://janberges.github.io/elphmod>.
 
-    cd doc
-    make html
-
-Please also have a look at the examples.
+Please also have a look at the [examples](examples).
 
 ## Licence
 
