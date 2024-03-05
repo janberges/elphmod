@@ -387,8 +387,8 @@ def elphmodenv(num_threads=1):
     if len(sys.argv) > 1:
         num_threads = int(sys.argv[1])
 
-    # From MehmedB @ Stack Overflow: "How to limit number of CPU's used by a python
-    # script w/o terminal or multiprocessing library?"
+    # From MehmedB @ Stack Overflow: "How to limit number of CPU's used by a
+    # python script w/o terminal or multiprocessing library?"
 
     for var in ['MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS', 'OMP_NUM_THREADS',
             'OPENBLAS_NUM_THREADS', 'VECLIB_MAXIMUM_THREADS']:
