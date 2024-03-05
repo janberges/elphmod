@@ -12,7 +12,7 @@ from . import bravais, dispersion, misc, MPI
 
 comm = MPI.comm
 
-class Model(object):
+class Model:
     """Localized model for electron-electron interaction.
 
     Currently, only square and hexagonal Bravais lattices are supported.

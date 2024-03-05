@@ -116,7 +116,7 @@ colors = collections.defaultdict(lambda: (250, 22, 145),
     Mt=(235, 0, 38))
 """Jmol's element color scheme from http://jmol.sourceforge.net/jscolors/."""
 
-class StatusBar(object):
+class StatusBar:
     """Progress bar that does without carriage return or backspace.
 
     Parameters

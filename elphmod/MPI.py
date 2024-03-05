@@ -15,7 +15,7 @@ try:
         raise ImportError
 
 except ImportError:
-    class Communicator(object):
+    class Communicator:
         def __init__(self):
             self.rank = 0
             self.size = 1
@@ -76,7 +76,7 @@ except ImportError:
         def Split_type(self, color, key=None):
             return self
 
-    class Interface(object):
+    class Interface:
         def __init__(self):
             self.COMM_WORLD = Communicator()
             self.UNDEFINED = 0
@@ -269,7 +269,7 @@ class SharedArray(np.ndarray):
 
         comm.Barrier()
 
-class Buffer(object):
+class Buffer:
     """Wrapper for ``pickle`` in parallel context.
 
     Parameters

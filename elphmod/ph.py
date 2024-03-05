@@ -12,7 +12,7 @@ from . import bravais, dispersion, misc, MPI
 comm = MPI.comm
 info = MPI.info
 
-class Model(object):
+class Model:
     """Mass-spring model for the phonons.
 
     Parameters

@@ -14,7 +14,7 @@ from . import bravais, diagrams, dispersion, el, misc, MPI, occupations, ph
 comm = MPI.comm
 info = MPI.info
 
-class Driver(object):
+class Driver:
     """MD driver for DFPT-based displacements dynamics.
 
     Parameters

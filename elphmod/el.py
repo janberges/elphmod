@@ -12,7 +12,7 @@ from . import bravais, dispersion, misc, MPI, occupations
 comm = MPI.comm
 info = MPI.info
 
-class Model(object):
+class Model:
     """Tight-binding model for the electrons.
 
     Parameters

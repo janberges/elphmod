@@ -15,7 +15,7 @@ from . import bravais, dispersion, misc, MPI
 comm = MPI.comm
 info = MPI.info
 
-class Model(object):
+class Model:
     """Localized model for electron-phonon coupling.
 
     Parameters
