@@ -41,7 +41,8 @@ and documentation:
 
     git clone https://github.com/janberges/elphmod
     python3 -m pip install -e elphmod
-    python3 -m pip install -r elphmod/requirements.txt
+    python3 -m pip install -r elphmod/examples/requirements.txt
+    python3 -m pip install -r elphmod/doc/requirements.txt
 
 ## Documentation
 

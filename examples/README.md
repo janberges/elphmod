@@ -1,7 +1,8 @@
 # elphmod examples
 
 This directory contains examples that demonstrate the different functionalities
-of elphmod. To run them, the scripts `run.sh` can be used.
+of elphmod. To run them, the scripts `run.sh` can be used. Make sure to install
+the Python requirements before (`python3 -m pip install -r requirements.txt`).
 
 * `3x3.py` - relaxation of CDW distortion in monolayer TaS2
 * `a2f.py` - Eliashberg spectral function of monolayer TaS2

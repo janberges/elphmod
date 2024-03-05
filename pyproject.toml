@@ -15,7 +15,7 @@ classifiers = [
     "Operating System :: POSIX :: Linux",
 ]
 requires-python = ">=2.7"
-dependencies = ["numpy"]
+dependencies = ["numpy", "scipy"]
 
 [project.scripts]
 elphmodenv = "elphmod.MPI:elphmodenv"
