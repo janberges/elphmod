@@ -75,7 +75,7 @@ for n in range(len(D)):
 
 plt.ylabel('Phonon energy (meV)')
 plt.xticks(range(len(D)),
-    ['DFPT', 'cDFPT', 'cDFPT+$\Pi$', 'DFPT+ASR', 'DFPT+RSR'])
+    ['DFPT', 'cDFPT', r'cDFPT+$\Pi$', 'DFPT+ASR', 'DFPT+RSR'])
 
 plt.legend(handles=[pts.Patch(color=color, label=label)
     for color, label in zip(colors, labels)])
