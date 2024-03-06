@@ -1507,8 +1507,8 @@ def ph2epw(fildyn='dyn', outdir='work', dvscf_dir='save'):
     import os
     import shutil
 
-    if 'dyn' in os.environ:
-        dyn = os.environ['dyn']
+    if 'fildyn' in os.environ:
+        fildyn = os.environ['fildyn']
 
     if 'outdir' in os.environ:
         outdir = os.environ['outdir']
