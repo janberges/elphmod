@@ -10,11 +10,11 @@ description = "Python modules for electron-phonon models"
 readme = "README.md"
 urls = {Homepage = "https://github.com/janberges/elphmod"}
 classifiers = [
-    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
     "License :: OSI Approved :: GNU General Public License (GPL)",
     "Operating System :: POSIX :: Linux",
 ]
-requires-python = ">=2.7"
+requires-python = ">=3.5"
 dependencies = ["numpy", "scipy"]
 
 [project.scripts]
