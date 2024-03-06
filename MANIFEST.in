@@ -1,1 +1,2 @@
-graft patches
+exclude MANIFEST.in
+prune test
