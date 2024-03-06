@@ -24,4 +24,4 @@ ph2epw = "elphmod.elph:ph2epw"
 
 [tool.setuptools]
 dynamic = {version = {attr = "elphmod.__version__"}}
-packages = {find = {namespaces = false}}
+packages = ["elphmod"]
