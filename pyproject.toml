@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["flit_core>=3.4"]
+build-backend = "flit_core.buildapi"
 
 [project]
 name = "elphmod"
@@ -10,7 +10,7 @@ description = "Python modules for electron-phonon models"
 readme = "README.md"
 urls = {Homepage = "https://github.com/janberges/elphmod"}
 classifiers = [
-    "License :: OSI Approved :: GNU General Public License (GPL)",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Programming Language :: Python :: 3",
 ]
 requires-python = ">=3.5"
@@ -21,7 +21,3 @@ elphmodenv = "elphmod.MPI:elphmodenv"
 kpoints = "elphmod.bravais:kpoints"
 minimum = "elphmod.misc:minimum"
 ph2epw = "elphmod.elph:ph2epw"
-
-[tool.setuptools]
-dynamic = {version = {attr = "elphmod.__version__"}}
-packages = ["elphmod"]
