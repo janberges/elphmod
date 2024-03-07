@@ -3,6 +3,17 @@
 See [Git commits](https://github.com/janberges/elphmod/commits) for more
 detailed list of changes.
 
+## v0.23/2024-03-07
+
+* QE-7.3 support (cDFPT patch, no longer included in source distribution)
+* pyproject.toml-based build with reviewed requirements
+* Scripts replaced by entry points (for editable installs and portability)
+* Phonons and faster forces from MD driver using sparse coupling matrices
+* Official PNG version of logo
+* Read the Docs theme
+* First unit test
+* Various bugfixes and optimizations
+
 ## v0.22/2023-10-14
 
 * Import of Wannier Hamiltonian from RESPACK
