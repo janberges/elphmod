@@ -4,6 +4,12 @@
 
 ![elphmod logo](https://raw.githubusercontent.com/janberges/elphmod/master/logo/elphmod.svg)
 
+elphmod is a collection of Python modules to handle coupled tight-binding and
+mass-spring models derived from first principles. It provides interfaces with
+popular simulation software such as Quantum ESPRESSO, Wannier90, EPW, RESPACK,
+and i-PI. It helps calculate dispersions, spectra, and response functions and
+can be used to build and study distorted structures on supercells.
+
 * `el` - tight-binding models from Wannier90
 * `ph` - mass-spring models from Quantum ESPRESSO
 * `elph` - electron-phonon coupling from EPW
