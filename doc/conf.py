@@ -8,6 +8,8 @@ author = 'Uni Bremen'
 
 extensions = ['sphinx.ext.autodoc', 'numpydoc', 'm2r2']
 
+exclude_patterns = ['README.md']
+
 mathjax_path = ('https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js'
     '?config=TeX-AMS-MML_HTMLorMML')
 
