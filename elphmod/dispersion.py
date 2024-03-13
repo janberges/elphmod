@@ -365,17 +365,21 @@ def dispersion_full_nosym(matrix, size, vectors=False, order=False,
     """
     # set up k-point mesh:
 
-    use_3d_kpts = (hasattr(size, '__getitem__') and hasattr(size, '__len__'))
+    use_3d_kpts = hasattr(size, '__getitem__') and hasattr(size, '__len__')
+
     if order:
         use_3d_kpts = False
 
     if comm.rank == 0:
         if use_3d_kpts:
-            ktriv = [np.linspace(0,size[i],size[i], endpoint=False) for i in range(len(size))]
-            kx, ky, kz = np.meshgrid( *ktriv, indexing='ij' )
-            k = np.array( [kx, ky, kz] ).transpose((1,2,3,0))
+            ktriv = [np.linspace(0, size[i], size[i], endpoint=False)
+                for i in range(len(size))]
+
+            kx, ky, kz = np.meshgrid(*ktriv, indexing='ij')
+            k = np.array([kx, ky, kz]).transpose((1, 2, 3, 0))
         else:
             k = [[(k1, k2) for k2 in range(size)] for k1 in range(size)]
+
         k = 2 * np.pi * np.array(k, dtype=float) / size
     else:
         k = None
