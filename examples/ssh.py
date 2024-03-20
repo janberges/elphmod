@@ -3,8 +3,8 @@
 # Copyright (C) 2017-2024 elphmod Developers
 # This program is free software under the terms of the GNU GPLv3 or later.
 
-import data.chain
 import elphmod
+import elphmod.models.chain
 import scipy.optimize
 
 sparse = False # use sparse matrices to be able to simulate large cells?
@@ -14,6 +14,8 @@ nk = 210
 nq = 210
 
 kT = 2e-4
+
+elphmod.models.chain.create('data/chain')
 
 el = elphmod.el.Model('data/chain', rydberg=True)
 ph = elphmod.ph.Model('data/chain.ifc', divide_mass=False)

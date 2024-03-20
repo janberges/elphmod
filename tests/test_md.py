@@ -4,27 +4,23 @@
 # This program is free software under the terms of the GNU GPLv3 or later.
 
 import elphmod
+import elphmod.models.graphene
 import numpy as np
-import sys
 import unittest
 
 elphmod.misc.verbosity = 0
-
-data = '../examples/data'
-
-sys.path.append(data)
-
-import graphene
 
 class TestMD(unittest.TestCase):
     def test_dense_vs_sparse(self,
             N=2, kT=0.1, f=elphmod.occupations.fermi_dirac):
         """Verify that dense and sparse MD drivers yield identical results."""
 
-        el = elphmod.el.Model('%s/graphene' % data, rydberg=True)
-        ph = elphmod.ph.Model('%s/graphene.ifc' % data, divide_mass=False)
-        elph = elphmod.elph.Model('%s/graphene.epmatwp' % data,
-            '%s/graphene.wigner' % data, el, ph, divide_mass=False)
+        elphmod.models.graphene.create('graphene')
+
+        el = elphmod.el.Model('graphene', rydberg=True)
+        ph = elphmod.ph.Model('graphene.ifc', divide_mass=False)
+        elph = elphmod.elph.Model('graphene.epmatwp', 'graphene.wigner',
+            el, ph, divide_mass=False)
 
         ElPh = elph.supercell(N, N)
 

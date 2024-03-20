@@ -5,8 +5,8 @@
 
 # See Allen and Dynes, Phys. Rev. B 12, 905 (1975) for the formulas used here.
 
-import data.TaS2
 import elphmod
+import elphmod.models.tas2
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -17,6 +17,8 @@ kTel = 0.3
 kTph = 0.0003
 f = elphmod.occupations.fermi_dirac
 eps = 1e-10
+
+elphmod.models.tas2.create('data/TaS2')
 
 el = elphmod.el.Model('data/TaS2')
 ph = elphmod.ph.Model('data/TaS2.ifc')

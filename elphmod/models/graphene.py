@@ -22,8 +22,6 @@ Cz = -98.2 * Npm
 
 beta = 2.0
 
-stem = __file__[:-3]
-
 at = elphmod.bravais.primitives(ibrav=4, a=a, c=15.0, bohr=True)
 r = np.dot([[2.0, 1.0, 0.0], [1.0, 2.0, 0.0]], at) / 3
 
@@ -128,49 +126,70 @@ def coulomb_interaction(q1=0, q2=0, q3=0):
 
     return U
 
-H = elphmod.dispersion.sample(hamiltonian, k)
-D = elphmod.dispersion.sample(dynamical_matrix, q)
-g = elphmod.elph.sample(coupling, q.reshape((-1, 3)), nk)
-U = elphmod.dispersion.sample(coulomb_interaction, q)
+def create(prefix='graphene'):
+    """Create tight-binding, mass-spring, and coupling data files for graphene.
 
-el = elphmod.el.Model()
-el.size = H.shape[-1]
-elphmod.el.k2r(el, H * elphmod.misc.Ry, at, r)
-el.standardize(eps=1e-10)
-el.to_hrdat(stem)
+    Parameters
+    ----------
+    prefix : str, default 'chain'
+        Common prefix or seedname of data files.
 
-ph = elphmod.ph.Model(phid=np.empty((2, 2) + nq + (3, 3)),
-    amass=[M] * 2, at=at, tau=r, atom_order=['C'] * 2)
+    Returns
+    -------
+    object
+        Tight-binding model.
+    object
+        Mass-spring model.
+    object
+        Localized electron-phonon coupling.
+    object
+        Localized electron-electron interaction.
+    """
+    H = elphmod.dispersion.sample(hamiltonian, k)
+    D = elphmod.dispersion.sample(dynamical_matrix, q)
+    g = elphmod.elph.sample(coupling, q.reshape((-1, 3)), nk)
+    U = elphmod.dispersion.sample(coulomb_interaction, q)
 
-elphmod.ph.q2r(ph, D_full=D)
-ph.standardize(eps=1e-10)
-ph.to_flfrc('%s.ifc' % stem)
+    el = elphmod.el.Model()
+    el.size = H.shape[-1]
+    elphmod.el.k2r(el, H * elphmod.misc.Ry, at, r)
+    el.standardize(eps=1e-10)
+    el.to_hrdat(prefix)
 
-Rk, dk, lk = elphmod.bravais.wigner_seitz_x('q', nk[0], at, r)
-Rg, dg, lg = elphmod.bravais.wigner_seitz_x('q', nq[0], at, r)
+    ph = elphmod.ph.Model(phid=np.empty((2, 2) + nq + (3, 3)),
+        amass=[M] * 2, at=at, tau=r, atom_order=['C'] * 2)
 
-Rk = np.insert(Rk, obj=2, values=0, axis=1)
-Rg = np.insert(Rg, obj=2, values=0, axis=1)
+    elphmod.ph.q2r(ph, D_full=D)
+    ph.standardize(eps=1e-10)
+    ph.to_flfrc('%s.ifc' % prefix)
 
-dg = dg.swapaxes(0, 1).reshape((1, el.size, ph.nat, len(Rg)))
+    Rk, dk, lk = elphmod.bravais.wigner_seitz_x('q', nk[0], at, r)
+    Rg, dg, lg = elphmod.bravais.wigner_seitz_x('q', nq[0], at, r)
 
-elph = elphmod.elph.Model(Rk=Rk, dk=dk, Rg=Rg, dg=dg, el=el, ph=ph,
-    divide_mass=False)
-elphmod.elph.q2r(elph, nq, nk, g)
-elph.standardize(eps=1e-10)
+    Rk = np.insert(Rk, obj=2, values=0, axis=1)
+    Rg = np.insert(Rg, obj=2, values=0, axis=1)
 
-if elphmod.MPI.comm.rank == 0:
-    with open('%s.wigner' % stem, 'wb') as data:
-        for obj in [1, 1,
-                len(elph.Rk), elph.Rk, np.ones(len(elph.Rk), dtype=int),
-                len(elph.Rg), elph.Rg, np.ones(len(elph.Rg), dtype=int)]:
-            np.array(obj, dtype=np.int32).tofile(data)
+    dg = dg.swapaxes(0, 1).reshape((1, el.size, ph.nat, len(Rg)))
 
-    with open('%s.epmatwp' % stem, 'wb') as data:
-        np.swapaxes(elph.data, 3, 4).astype(np.complex128).tofile(data)
+    elph = elphmod.elph.Model(Rk=Rk, dk=dk, Rg=Rg, dg=dg, el=el, ph=ph,
+        divide_mass=False)
+    elphmod.elph.q2r(elph, nq, nk, g)
+    elph.standardize(eps=1e-10)
 
-elel = elphmod.elel.Model()
-elel.size = U.shape[-1]
-elphmod.elel.q2r(elel, U * elphmod.misc.Ry, at, r)
-elel.standardize(eps=1e-10)
-elel.to_Wmat('%s.Wmat' % stem)
+    if elphmod.MPI.comm.rank == 0:
+        with open('%s.wigner' % prefix, 'wb') as data:
+            for obj in [1, 1,
+                    len(elph.Rk), elph.Rk, np.ones(len(elph.Rk), dtype=int),
+                    len(elph.Rg), elph.Rg, np.ones(len(elph.Rg), dtype=int)]:
+                np.array(obj, dtype=np.int32).tofile(data)
+
+        with open('%s.epmatwp' % prefix, 'wb') as data:
+            np.swapaxes(elph.data, 3, 4).astype(np.complex128).tofile(data)
+
+    elel = elphmod.elel.Model()
+    elel.size = U.shape[-1]
+    elphmod.elel.q2r(elel, U * elphmod.misc.Ry, at, r)
+    elel.standardize(eps=1e-10)
+    elel.to_Wmat('%s.Wmat' % prefix)
+
+    return el, ph, elph, elel

@@ -18,7 +18,9 @@ N = [ # 3 x 3 (60 degrees instead of 120 degrees)
     ]
 
 if use_model:
-    import data.graphene
+    import elphmod.models.graphene
+
+    elphmod.models.graphene.create('data/graphene')
 
     el = elphmod.el.Model('data/graphene')
     ph = elphmod.ph.Model('data/graphene.ifc')

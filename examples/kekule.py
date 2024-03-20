@@ -3,8 +3,8 @@
 # Copyright (C) 2017-2024 elphmod Developers
 # This program is free software under the terms of the GNU GPLv3 or later.
 
-import data.graphene
 import elphmod
+import elphmod.models.graphene
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.optimize
@@ -19,6 +19,8 @@ nq = 6
 
 kT0 = 2.0
 kT = 0.02
+
+elphmod.models.graphene.create('data/graphene')
 
 el = elphmod.el.Model('data/graphene', rydberg=True)
 ph = elphmod.ph.Model('data/graphene.ifc', divide_mass=False)

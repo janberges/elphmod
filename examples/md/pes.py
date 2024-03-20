@@ -5,13 +5,12 @@
 
 __all__ = ['__drivers__', 'Dummy_driver']
 
-import sys
-sys.path.append('..')
-
-import data.graphene
 import elphmod
+import elphmod.models.graphene
 import subprocess
 import time
+
+elphmod.models.graphene.create('../data/graphene')
 
 el = elphmod.el.Model('../data/graphene', rydberg=True)
 ph = elphmod.ph.Model('../data/graphene.ifc', divide_mass=False)

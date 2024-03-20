@@ -47,8 +47,6 @@ fyz = 3.0 * Npm
 
 beta = 5.0
 
-stem = __file__[:-3]
-
 at = elphmod.bravais.primitives(ibrav=4, a=a, c=15.0, bohr=True)
 r = np.dot([[1.0, 2.0, 0.0], [2.0, 1.0, +0.1], [2.0, 1.0, -0.1]], at)
 r[:, :2] /= 3
@@ -321,43 +319,62 @@ def coupling(q1=0, q2=0, q3=0, k1=0, k2=0, k3=0, **ignore):
         + dt[5] * (np.exp(-1j * k2) - np.exp(-1j * K2))
         ) / sqrtM
 
-H = elphmod.dispersion.sample(hamiltonian, k)
-D = elphmod.dispersion.sample(dynamical_matrix, q)
-g = elphmod.elph.sample(coupling, Q.reshape((-1, 3)), nk)
+def create(prefix='TaS2'):
+    """Create tight-binding, mass-spring, and coupling data files for TMDCs.
 
-el = elphmod.el.Model()
-el.size = H.shape[-1]
-elphmod.el.k2r(el, H * elphmod.misc.Ry, at, r[:1].repeat(3, axis=0))
-el.standardize(eps=1e-10)
-el.to_hrdat(stem)
+    Parameters
+    ----------
+    prefix : str, default 'chain'
+        Common prefix or seedname of data files.
 
-ph = elphmod.ph.Model(phid=np.empty((3, 3) + nq + (3, 3)),
-    amass=[M, m, m], at=at, tau=r, atom_order=['Ta', 'S', 'S'])
+    Returns
+    -------
+    object
+        Tight-binding model.
+    object
+        Mass-spring model.
+    object
+        Localized electron-phonon coupling.
+    """
+    H = elphmod.dispersion.sample(hamiltonian, k)
+    D = elphmod.dispersion.sample(dynamical_matrix, q)
+    g = elphmod.elph.sample(coupling, Q.reshape((-1, 3)), nk)
 
-elphmod.ph.q2r(ph, D_full=D)
-ph.standardize(eps=1e-10)
-ph.to_flfrc('%s.ifc' % stem)
+    el = elphmod.el.Model()
+    el.size = H.shape[-1]
+    elphmod.el.k2r(el, H * elphmod.misc.Ry, at, r[:1].repeat(3, axis=0))
+    el.standardize(eps=1e-10)
+    el.to_hrdat(prefix)
 
-Rk, dk, lk = elphmod.bravais.wigner_seitz_x('k', nk[0], at)
-Rg, dg, lg = elphmod.bravais.wigner_seitz_x('g', nQ[0], at, r - r[0])
+    ph = elphmod.ph.Model(phid=np.empty((3, 3) + nq + (3, 3)),
+        amass=[M, m, m], at=at, tau=r, atom_order=['Ta', 'S', 'S'])
 
-Rk = np.insert(Rk, obj=2, values=0, axis=1)
-Rg = np.insert(Rg, obj=2, values=0, axis=1)
+    elphmod.ph.q2r(ph, D_full=D)
+    ph.standardize(eps=1e-10)
+    ph.to_flfrc('%s.ifc' % prefix)
 
-dk = np.reshape(dk, (1, 1, len(Rk)))
-dg = np.reshape(dg, (1, 1, ph.nat, len(Rg)))
+    Rk, dk, lk = elphmod.bravais.wigner_seitz_x('k', nk[0], at)
+    Rg, dg, lg = elphmod.bravais.wigner_seitz_x('g', nQ[0], at, r - r[0])
 
-elph = elphmod.elph.Model(Rk=Rk, dk=dk, Rg=Rg, dg=dg, el=el, ph=ph,
-    divide_mass=False)
-elphmod.elph.q2r(elph, nQ, nk, g)
-elph.standardize(eps=1e-10)
+    Rk = np.insert(Rk, obj=2, values=0, axis=1)
+    Rg = np.insert(Rg, obj=2, values=0, axis=1)
 
-if elphmod.MPI.comm.rank == 0:
-    with open('%s.wigner' % stem, 'wb') as data:
-        for obj in [1, 1,
-                len(elph.Rk), elph.Rk, np.ones(len(elph.Rk), dtype=int),
-                len(elph.Rg), elph.Rg, np.ones(len(elph.Rg), dtype=int)]:
-            np.array(obj, dtype=np.int32).tofile(data)
+    dk = np.reshape(dk, (1, 1, len(Rk)))
+    dg = np.reshape(dg, (1, 1, ph.nat, len(Rg)))
 
-    with open('%s.epmatwp' % stem, 'wb') as data:
-        np.swapaxes(elph.data, 3, 4).astype(np.complex128).tofile(data)
+    elph = elphmod.elph.Model(Rk=Rk, dk=dk, Rg=Rg, dg=dg, el=el, ph=ph,
+        divide_mass=False)
+    elphmod.elph.q2r(elph, nQ, nk, g)
+    elph.standardize(eps=1e-10)
+
+    if elphmod.MPI.comm.rank == 0:
+        with open('%s.wigner' % prefix, 'wb') as data:
+            for obj in [1, 1,
+                    len(elph.Rk), elph.Rk, np.ones(len(elph.Rk), dtype=int),
+                    len(elph.Rg), elph.Rg, np.ones(len(elph.Rg), dtype=int)]:
+                np.array(obj, dtype=np.int32).tofile(data)
+
+        with open('%s.epmatwp' % prefix, 'wb') as data:
+            np.swapaxes(elph.data, 3, 4).astype(np.complex128).tofile(data)
+
+    return el, ph, elph

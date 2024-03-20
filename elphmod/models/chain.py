@@ -15,8 +15,6 @@ t = 1.0 / elphmod.misc.Ry
 w0 = 0.05 / elphmod.misc.Ry
 g0 = 0.02 / elphmod.misc.Ry ** 1.5
 
-stem = __file__[:-3]
-
 at = elphmod.bravais.primitives(ibrav=8, a=a, b=c, c=c, bohr=True)
 r = np.zeros((1, 3))
 
@@ -70,43 +68,62 @@ def coupling(q1=0, q2=0, q3=0, k1=0, k2=0, k3=0, **ignore):
 
     return g
 
-H = elphmod.dispersion.sample(hamiltonian, k)
-D = elphmod.dispersion.sample(dynamical_matrix, q)
-g = elphmod.elph.sample(coupling, Q, nk)
+def create(prefix='chain'):
+    """Create tight-binding, mass-spring, and coupling data files for chain.
 
-el = elphmod.el.Model()
-el.size = H.shape[-1]
-elphmod.el.k2r(el, H * elphmod.misc.Ry, at, r)
-el.standardize(eps=1e-10)
-el.to_hrdat(stem)
+    Parameters
+    ----------
+    prefix : str, default 'chain'
+        Common prefix or seedname of data files.
 
-ph = elphmod.ph.Model(phid=np.empty((1, 1) + nq + (3, 3)),
-    amass=[M], at=at, tau=r, atom_order=['X'])
+    Returns
+    -------
+    object
+        Tight-binding model.
+    object
+        Mass-spring model.
+    object
+        Localized electron-phonon coupling.
+    """
+    H = elphmod.dispersion.sample(hamiltonian, k)
+    D = elphmod.dispersion.sample(dynamical_matrix, q)
+    g = elphmod.elph.sample(coupling, Q, nk)
 
-elphmod.ph.q2r(ph, D_full=D)
-ph.standardize(eps=1e-10)
-ph.to_flfrc('%s.ifc' % stem)
+    el = elphmod.el.Model()
+    el.size = H.shape[-1]
+    elphmod.el.k2r(el, H * elphmod.misc.Ry, at, r)
+    el.standardize(eps=1e-10)
+    el.to_hrdat(prefix)
 
-Rk = np.array([(-1, 0, 0), (0, 0, 0), (1, 0, 0)])
-Rg = Rk.copy()
+    ph = elphmod.ph.Model(phid=np.empty((1, 1) + nq + (3, 3)),
+        amass=[M], at=at, tau=r, atom_order=['X'])
 
-dk = np.ones((ph.nat, ph.nat, len(Rk)), dtype=int)
-dg = np.ones((1, el.size, ph.nat, len(Rg)), dtype=int)
+    elphmod.ph.q2r(ph, D_full=D)
+    ph.standardize(eps=1e-10)
+    ph.to_flfrc('%s.ifc' % prefix)
 
-elph = elphmod.elph.Model(Rk=Rk, dk=dk, Rg=Rg, dg=dg, el=el, ph=ph,
-    divide_mass=False)
-elphmod.elph.q2r(elph, nQ, nk, g)
-elph.standardize(eps=1e-10)
+    Rk = np.array([(-1, 0, 0), (0, 0, 0), (1, 0, 0)])
+    Rg = Rk.copy()
 
-if elphmod.MPI.comm.rank == 0:
-    dk = np.ones((ph.nat, ph.nat, len(elph.Rk)), dtype=int)
-    dg = np.ones((ph.nat, len(elph.Rg), 1, el.size), dtype=int)
+    dk = np.ones((ph.nat, ph.nat, len(Rk)), dtype=int)
+    dg = np.ones((1, el.size, ph.nat, len(Rg)), dtype=int)
 
-    with open('%s.wigner' % stem, 'wb') as data:
-        for obj in [1, 1,
-                len(elph.Rk), elph.Rk, np.ones(len(elph.Rk), dtype=int),
-                len(elph.Rg), elph.Rg, np.ones(len(elph.Rg), dtype=int)]:
-            np.array(obj, dtype=np.int32).tofile(data)
+    elph = elphmod.elph.Model(Rk=Rk, dk=dk, Rg=Rg, dg=dg, el=el, ph=ph,
+        divide_mass=False)
+    elphmod.elph.q2r(elph, nQ, nk, g)
+    elph.standardize(eps=1e-10)
 
-    with open('%s.epmatwp' % stem, 'wb') as data:
-        np.swapaxes(elph.data, 3, 4).astype(np.complex128).tofile(data)
+    if elphmod.MPI.comm.rank == 0:
+        dk = np.ones((ph.nat, ph.nat, len(elph.Rk)), dtype=int)
+        dg = np.ones((ph.nat, len(elph.Rg), 1, el.size), dtype=int)
+
+        with open('%s.wigner' % prefix, 'wb') as data:
+            for obj in [1, 1,
+                    len(elph.Rk), elph.Rk, np.ones(len(elph.Rk), dtype=int),
+                    len(elph.Rg), elph.Rg, np.ones(len(elph.Rg), dtype=int)]:
+                np.array(obj, dtype=np.int32).tofile(data)
+
+        with open('%s.epmatwp' % prefix, 'wb') as data:
+            np.swapaxes(elph.data, 3, 4).astype(np.complex128).tofile(data)
+
+    return el, ph, elph

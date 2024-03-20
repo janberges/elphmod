@@ -3,9 +3,11 @@
 # Copyright (C) 2017-2024 elphmod Developers
 # This program is free software under the terms of the GNU GPLv3 or later.
 
-import data.TaS2
 import elphmod
+import elphmod.models.tas2
 import scipy.optimize
+
+elphmod.models.tas2.create('data/TaS2')
 
 el = elphmod.el.Model('data/TaS2', rydberg=True)
 ph = elphmod.ph.Model('data/TaS2.ifc', divide_mass=False)

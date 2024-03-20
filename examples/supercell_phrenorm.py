@@ -6,8 +6,8 @@
 # This example shows that phonon renormalization and supercell mapping commute.
 
 import copy
-import data.graphene
 import elphmod
+import elphmod.models.graphene
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -15,10 +15,12 @@ N = 2
 
 f = elphmod.occupations.fermi_dirac
 kT = 0.01
-mu = data.graphene.t / elphmod.misc.Ry
+mu = elphmod.models.graphene.t / elphmod.misc.Ry
 
 nq = 6
 nk = 12
+
+elphmod.models.graphene.create('data/graphene')
 
 el = elphmod.el.Model('data/graphene')
 el.data /= elphmod.misc.Ry

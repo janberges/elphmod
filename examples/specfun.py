@@ -3,8 +3,8 @@
 # Copyright (C) 2017-2024 elphmod Developers
 # This program is free software under the terms of the GNU GPLv3 or later.
 
-import data.graphene
 import elphmod
+import elphmod.models.graphene
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -34,6 +34,8 @@ Z = 0.64
 L = 5.0 # cf. Ponce' et al., Phys. Rev. B 107, 155424 (2023)
 
 info('Load model Hamiltonian for graphene..')
+
+elphmod.models.graphene.create('data/graphene')
 
 el = elphmod.el.Model('data/graphene')
 ph = elphmod.ph.Model('data/graphene.ifc')
