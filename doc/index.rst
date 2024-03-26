@@ -21,6 +21,7 @@ Modules
    modules/eliashberg
    modules/plot
    modules/misc
+   modules/models
 
 Indices and tables
 ------------------

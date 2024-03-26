@@ -42,6 +42,8 @@ k = 2 * np.pi * np.array(k, dtype=float) / nk
 q = 2 * np.pi * np.array(q, dtype=float) / nq
 
 def hamiltonian(k1=0, k2=0, k3=0):
+    """Calculate electrons of, e.g., Phys. Rev. B 90, 085422 (2014)."""
+
     H = np.zeros((2, 2), dtype=complex)
 
     H[0, 1] = t * (np.exp(1j * k1) + 1 + np.exp(-1j * k2))

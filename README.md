@@ -24,6 +24,7 @@ can be used to build and study distorted structures on supercells.
 * `eliashberg` - parameters for McMillan's formula
 * `plot` - BZ plots, fatbands, etc.
 * `misc` - constants, status bars, parsing, etc.
+* `models` - nearest-neighbor models for testing
 
 ## Installation
 
