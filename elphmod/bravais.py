@@ -1107,101 +1107,6 @@ def wigner_seitz(nk, angle=120, dk1=0.0, dk2=0.0, epsilon=0.0):
 
     return irvec, ndegen, wslen
 
-def wigner_seitz_x(x, nk, at=None, tau=None, epsilon=1e-8):
-    """Emulate the EPW subroutine *wigner_seitz{x}* in *wigner.f90*.
-
-    Parameters
-    ----------
-    x : str
-        Type of Wigner-Seitz cell:
-
-        * ``'k'``: cell-centered
-        * ``'q'``: bond-centered
-        * ``'g'``: atom-centered
-
-    nk : int
-        Number of points per dimension.
-    at, tau : ndarray
-        Geometry as returned by :func:`ph.read_flfrc` and :func:`ph.Model`.
-    epsilon : float
-        Maximum absolute difference of "equal" floats.
-
-    Returns
-    -------
-    list of tuple of int
-        Mesh-point indices.
-    list of int
-        Degeneracies.
-    list of float
-        Lattice-vector lengths.
-    """
-    a = np.sqrt(np.dot(at[0, :2], at[0, :2]))
-
-    a1 = at[0, :2] / a
-    a2 = at[1, :2] / a
-
-    angle = int(round(np.arccos(np.dot(a1, a2)) * 180 / np.pi))
-
-    b1, b2 = reciprocals(a1, a2)
-
-    if x == 'k':
-        return wigner_seitz(nk, angle)
-
-    if x == 'g':
-        shifts = tau
-
-    elif x == 'q':
-        shifts = [tau2 - tau1 for tau1 in tau for tau2 in tau]
-
-    irvec_x = []
-    ndegen_x = [] # list of dict
-    wslen_x = dict()
-
-    for dk in shifts:
-        dk1 = np.dot(b1, dk[:2]) / a
-        dk2 = np.dot(b2, dk[:2]) / a
-
-        irvec, ndegen, wslen = wigner_seitz(nk, angle, -dk1, -dk2, epsilon)
-
-        irvec_x.extend([key for key in irvec if key not in wslen_x])
-
-        ndegen_x.append(dict(zip(irvec, ndegen)))
-        wslen_x.update(dict(zip(irvec, wslen)))
-
-    ndegen_x = [[ndegen.get(key, 0) for key in irvec_x] for ndegen in ndegen_x]
-    wslen_x = [wslen_x[key] for key in irvec_x]
-
-    if x == 'q':
-        ndegen_x = np.reshape(ndegen_x, (len(tau), len(tau), len(irvec_x)))
-        ndegen_x = np.transpose(ndegen_x, axes=(1, 0, 2))
-
-    return irvec_x, ndegen_x, wslen_x
-
-def write_wigner_file(name, nk, nq, at=None, tau=None, epsilon=1e-8):
-    """Write binary file with Wigner-Seitz data as used by EPW.
-
-    **ATTENTION:** This function is compatible with `read_wigner_file` for
-    ``old_ws=True`` only!
-
-    See Also
-    --------
-    read_wigner_file, wigner_seitz_x, elph.Model
-    """
-    if comm.rank == 0:
-        integer = np.int32
-        double = np.float64
-
-        with open(name, 'wb') as data:
-            for x, nx in zip('kqg', [nk, nq, nq]):
-                irvec, ndegen, wslen = wigner_seitz_x(x, nx, at, tau, epsilon)
-
-                irvec = np.insert(irvec, obj=2, values=0, axis=1) # 2D to 3D
-
-                np.array(len(irvec), dtype=integer).tofile(data)
-                np.array(    irvec,  dtype=integer).tofile(data)
-                np.array(   ndegen,  dtype=integer).tofile(data)
-                np.array(    wslen,  dtype=double ).tofile(data)
-
 def read_wigner_file(name, old_ws=False, nat=None):
     """Read binary file with Wigner-Seitz data as used by EPW.
 
@@ -1216,7 +1121,7 @@ def read_wigner_file(name, old_ws=False, nat=None):
 
     See Also
     --------
-    write_wigner_file, wigner_seitz_x, elph.Model
+    elph.Model
     """
     if comm.rank == 0:
         with open(name, 'rb') as data:
