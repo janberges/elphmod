@@ -380,7 +380,7 @@ class Driver:
 
         return C[0].real if gamma_only else C
 
-    def electrons(self, seedname=None, dk1=1, dk2=1, dk3=1):
+    def electrons(self, seedname=None, dk1=1, dk2=1, dk3=1, rydberg=False):
         """Set up tight-binding model for current structure.
 
         Parameters
@@ -390,6 +390,8 @@ class Driver:
         dk1, dk2, dk3 : int, optional
             Only use data for every `dkn`-th k point along the *n*-th axis? This
             reduces the size of the Hamiltonian file.
+        rydberg : bool, default False
+            Keep Ry units? Otherwise they are converted to eV.
 
         Returns
         -------
@@ -403,6 +405,7 @@ class Driver:
                 H = H[::dk1, ::dk2, ::dk3]
 
         model = copy.deepcopy(self.elph.el)
+        model.rydberg = rydberg
 
         if hasattr(self.elph.el, 'cells'):
             assert self.elph.el.cells == self.elph.ph.cells
@@ -413,7 +416,7 @@ class Driver:
         else:
             r = np.zeros((self.elph.el.size, 3))
 
-        el.k2r(model, H * misc.Ry, self.elph.ph.a, r)
+        el.k2r(model, H if rydberg else H * misc.Ry, self.elph.ph.a, r)
 
         model.standardize(eps=1e-10)
 
