@@ -16,7 +16,6 @@ mark are not necessarily a good idea.
 * Disentangle two-dimensional bands with spin degree of freedom.
 * Check if cDFPT examples work for for `nspin = 2` or `noncolin = .true.`
 * Shift Wannier functions more accurately in STM and STS simulations.
-* Save `el.Model`, `ph.Model`, and `elph.Model` to files (`_hr.dat`, `flfrc`).
 * Move I/O functions and numerical constants to separate modules.
 * Free local memory after data has been gathered in global memory.
 * Drop Python-2 support in favor of things like `(nq, nph, *nk, nel, nel)`?
