@@ -15,12 +15,8 @@ class TestMD(unittest.TestCase):
             N=2, kT=0.1, f=elphmod.occupations.fermi_dirac):
         """Verify that dense and sparse MD drivers yield identical results."""
 
-        elphmod.models.graphene.create('graphene')
-
-        el = elphmod.el.Model('graphene', rydberg=True)
-        ph = elphmod.ph.Model('graphene.ifc', divide_mass=False)
-        elph = elphmod.elph.Model('graphene.epmatwp', 'graphene.wigner',
-            el, ph, divide_mass=False)
+        el, ph, elph, elel = elphmod.models.graphene.create(rydberg=True,
+            divide_mass=False)
 
         ElPh = elph.supercell(N, N)
 
