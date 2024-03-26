@@ -1068,7 +1068,7 @@ def to_Voronoi(k1, k2, nk, angle=60, dk1=0, dk2=0, epsilon=0.0):
 
     return images
 
-def wigner_seitz(nk, angle=120, dk1=0.0, dk2=0.0, epsilon=0.0):
+def wigner_2d(nk, angle=120, dk1=0.0, dk2=0.0, epsilon=0.0):
     """Find lattice points in Wigner-Seitz cell (including boundary).
 
     Parameters
