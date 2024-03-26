@@ -155,13 +155,13 @@ class Model:
             self.R, self.data = read_hrdat(seedname, divide_ndegen)
             self.size = self.data.shape[1]
 
+            if rydberg:
+                self.data /= misc.Ry
+
             supvecs = read_wsvecdat('%s_wsvec.dat' % seedname)
 
         self.nk = tuple(2 * self.R[np.all(self.R[:, x] == 0,
             axis=1)].max(initial=1) for x in [[1, 2], [2, 0], [0, 1]])
-
-        if rydberg:
-            self.data /= misc.Ry
 
         if supvecs is not None and divide_ndegen:
             if comm.rank == 0:
@@ -712,7 +712,7 @@ def read_wsvecdat(wsvecdat):
 
     return supvecs
 
-def k2r(el, H, a, r, fft=True):
+def k2r(el, H, a, r, fft=True, rydberg=False):
     """Interpolate Hamilontian matrices on uniform k-point mesh.
 
     Parameters
@@ -728,6 +728,9 @@ def k2r(el, H, a, r, fft=True):
     fft : bool
         Perform Fourier transform? If ``False``, only the mapping to the
         Wigner-Seitz cell is performed.
+    rydberg : bool, default False
+        Is input Hamiltonian given in Ry rather than eV units? This is
+        independent of ``el.rydberg``, which is always respected.
     """
     nk = H.shape[:-2]
 
@@ -746,6 +749,12 @@ def k2r(el, H, a, r, fft=True):
 
     el.R, el.data, l = bravais.short_range_model(t, a, r,
         sgn=+1, divide_ndegen=el.divide_ndegen)
+
+    if rydberg != el.rydberg:
+        if rydberg:
+            el.data *= misc.Ry
+        else:
+            el.data /= misc.Ry
 
 def read_bands(filband):
     """Read bands from *filband* just like Quantum ESRESSO's ``plotband.x``.

@@ -416,7 +416,7 @@ class Driver:
         else:
             r = np.zeros((self.elph.el.size, 3))
 
-        el.k2r(model, H if rydberg else H * misc.Ry, self.elph.ph.a, r)
+        el.k2r(model, H, self.elph.ph.a, r, rydberg=True)
 
         model.standardize(eps=1e-10)
 

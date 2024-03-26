@@ -157,7 +157,7 @@ def create(prefix=None, rydberg=False, divide_mass=True):
 
     el = elphmod.el.Model(rydberg=rydberg)
     el.size = H.shape[-1]
-    elphmod.el.k2r(el, H if rydberg else H * elphmod.misc.Ry, at, r)
+    elphmod.el.k2r(el, H, at, r, rydberg=True)
     el.standardize(eps=1e-10)
 
     ph = elphmod.ph.Model(phid=np.empty((2, 2) + nq + (3, 3)),
