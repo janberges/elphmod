@@ -102,15 +102,8 @@ def create(prefix='chain'):
     ph.standardize(eps=1e-10)
     ph.to_flfrc('%s.ifc' % prefix)
 
-    Rk = np.array([(-1, 0, 0), (0, 0, 0), (1, 0, 0)])
-    Rg = Rk.copy()
-
-    dk = np.ones((ph.nat, ph.nat, len(Rk)), dtype=int)
-    dg = np.ones((1, el.size, ph.nat, len(Rg)), dtype=int)
-
-    elph = elphmod.elph.Model(Rk=Rk, dk=dk, Rg=Rg, dg=dg, el=el, ph=ph,
-        divide_mass=False)
-    elphmod.elph.q2r(elph, nQ, nk, g)
+    elph = elphmod.elph.Model(el=el, ph=ph, divide_mass=False)
+    elphmod.elph.q2r(elph, nQ, nk, g, r)
     elph.standardize(eps=1e-10)
 
     if elphmod.MPI.comm.rank == 0:

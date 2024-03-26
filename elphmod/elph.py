@@ -917,7 +917,7 @@ def transform(g, q, nk, U=None, u=None, broadcast=True, shared_memory=False):
 
     return g
 
-def q2r(elph, nq, nk, g, divide_mass=True):
+def q2r(elph, nq, nk, g, r=None, divide_mass=True, shared_memory=False):
     """Fourier-transform electron-phonon coupling from reciprocal to real space.
 
     Parameters
@@ -928,9 +928,14 @@ def q2r(elph, nq, nk, g, divide_mass=True):
         Number of q and k points along axes, i.e., shapes of uniform meshes.
     g : ndarray
         Electron-phonon coupling on complete uniform q- and k-point meshes.
-    divide_mass : bool
+    r : ndarray, optional
+        Positions of orbital centers. If given, the Wigner-Seitz lattice vectors
+        are determined again. This is required when changing `nq` or `nk`.
+    divide_mass : bool, default True
         Has input coupling been divided by square root of atomic mass? This is
         independent of ``elph.divide_mass``, which is always respected.
+    shared_memory : bool, default False
+        Store real-space coupling in shared memory?
     """
     nq_orig = nq
     nq = np.ones(3, dtype=int)
@@ -960,6 +965,21 @@ def q2r(elph, nq, nk, g, divide_mass=True):
         data = None
 
     comm.Gatherv(my_data, (data, comm.gather(my_data.size)))
+
+    if r is not None:
+        elph.Rg, ndegen_g, wslen = bravais.wigner(nq[0], nq[1], nq[2],
+            elph.ph.a, r, elph.ph.r)
+
+        elph.dg = ndegen_g.transpose(1, 2, 0)[np.newaxis]
+
+        elph.Rk, ndegen_k, wslen = bravais.wigner(nk[0], nk[1], nk[2],
+            elph.ph.a, r)
+
+        elph.dk = ndegen_k.transpose()
+
+        elph.node, elph.images, elph.data = MPI.shared_array((len(elph.Rg),
+            elph.ph.size, len(elph.Rk), elph.el.size, elph.el.size),
+            dtype=complex, shared_memory=shared_memory)
 
     if comm.rank == 0:
         for irg, (g1, g2, g3) in enumerate(elph.Rg % nq):

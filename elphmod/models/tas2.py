@@ -353,18 +353,8 @@ def create(prefix='TaS2'):
     ph.standardize(eps=1e-10)
     ph.to_flfrc('%s.ifc' % prefix)
 
-    Rk, dk, lk = elphmod.bravais.wigner_seitz_x('k', nk[0], at)
-    Rg, dg, lg = elphmod.bravais.wigner_seitz_x('g', nQ[0], at, r - r[0])
-
-    Rk = np.insert(Rk, obj=2, values=0, axis=1)
-    Rg = np.insert(Rg, obj=2, values=0, axis=1)
-
-    dk = np.reshape(dk, (1, 1, len(Rk)))
-    dg = np.reshape(dg, (1, 1, ph.nat, len(Rg)))
-
-    elph = elphmod.elph.Model(Rk=Rk, dk=dk, Rg=Rg, dg=dg, el=el, ph=ph,
-        divide_mass=False)
-    elphmod.elph.q2r(elph, nQ, nk, g)
+    elph = elphmod.elph.Model(el=el, ph=ph, divide_mass=False)
+    elphmod.elph.q2r(elph, nQ, nk, g, r=np.repeat(r[:1], el.size, axis=0))
     elph.standardize(eps=1e-10)
 
     if elphmod.MPI.comm.rank == 0:
