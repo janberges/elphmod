@@ -16,7 +16,7 @@ comm = MPI.comm
 info = MPI.info
 
 class Model:
-    """Localized model for electron-phonon coupling.
+    r"""Localized model for electron-phonon coupling.
 
     Parameters
     ----------
@@ -48,11 +48,21 @@ class Model:
     el, ph : object
         Tight-binding and mass-spring models.
     Rk, Rg : ndarray
-        Lattice vectors of Wigner-Seitz supercells.
+        Lattice vectors :math:`\vec R', \vec R` of Wigner-Seitz supercells.
     dk, dg : ndarray
         Degeneracies of Wigner-Seitz points.
     data : ndarray
-        Corresponding electron-phonon matrix elements.
+        Corresponding electron-phonon matrix elements in Ry\ :sup:`3/2`.
+
+        .. math::
+
+            g_{\vec R i \vec R' \alpha \beta} = \frac \hbar {\sqrt M_i}
+                \bra{0 \alpha}
+                    \frac{\partial V}{\partial u_{\vec R i}}
+                \ket{\vec R' \beta}
+
+        If :attr:`divide_mass` is ``False``, the prefactor :math:`\hbar /
+        \sqrt{M_i}` is absent and the units are Ry/bohr instead.
     divide_mass : bool
         Has real-space coupling been divided by atomic masses?
     divide_ndegen : bool
@@ -76,18 +86,11 @@ class Model:
             broadcast=True, comm=comm):
         r"""Calculate electron-phonon coupling for arbitary points k and k + q.
 
-        .. math::
-
-            \sqrt{2 \omega} g_{\nu m n} = \frac \hbar {\sqrt M}
-                \bra{\vec k + \vec q m}
-                    \frac{\partial V}{\partial u_\nu}
-                \ket{\vec k n}
-
         Parameters
         ----------
-        q1, q2, q2 : float
+        q1, q2, q2 : float, default 0.0
             q point in crystal coordinates with period :math:`2 \pi`.
-        k1, k2, k3 : float
+        k1, k2, k3 : float, default 0.0
             Ingoing k point in crystal coordinates with period :math:`2 \pi`.
         elbnd : bool
             Transform to electronic band basis? Provided for convenience. Since
@@ -110,8 +113,8 @@ class Model:
         Returns
         -------
         ndarray
-            Electron-phonon matrix element :math:`\sqrt{2 \omega} g_{\nu m n}`
-            in Ry\ :sup:`3/2`.
+            Fourier transform of :attr:`data`, possibly plus a long-range term
+            and transformed into the band basis.
         """
         nRq, nph, nRk, nel, nel = self.data.shape
 
@@ -198,8 +201,18 @@ class Model:
         return gq
 
     def gR(self, Rq1=0, Rq2=0, Rq3=0, Rk1=0, Rk2=0, Rk3=0):
-        """Get electron-phonon matrix elements for arbitrary lattice vectors."""
+        """Get electron-phonon matrix elements for arbitrary lattice vectors.
 
+        Parameters
+        ----------
+        Rq1, Rq2, Rq3, Rk1, Rk2, Rk3 : int, default 0
+            Lattice vectors in units of primitive vectors.
+
+        Returns
+        -------
+        ndarray
+            Element of :attr:`data` or zero.
+        """
         index_q = misc.vector_index(self.Rg, (Rq1, Rq2, Rq3))
         index_k = misc.vector_index(self.Rk, (Rk1, Rk2, Rk3))
 
@@ -970,7 +983,10 @@ def q2r(elph, nq, nk, g, r=None, divide_mass=True, shared_memory=False):
         Electron-phonon coupling on complete uniform q- and k-point meshes.
     r : ndarray, optional
         Positions of orbital centers. If given, the Wigner-Seitz lattice vectors
-        are determined again. This is required when changing `nq` or `nk`.
+        are determined again, whereby the distances to the displaced atom and
+        the initial orbital are are both measured from the final orbital in the
+        unit cell at the origin (first orbital index). This argument is required
+        when changing `nq` or `nk`.
     divide_mass : bool, default True
         Has input coupling been divided by square root of atomic mass? This is
         independent of ``elph.divide_mass``, which is always respected.

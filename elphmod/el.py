@@ -13,7 +13,7 @@ comm = MPI.comm
 info = MPI.info
 
 class Model:
-    """Tight-binding model for the electrons.
+    r"""Tight-binding model for the electrons.
 
     Parameters
     ----------
@@ -62,9 +62,15 @@ class Model:
     Attributes
     ----------
     R : ndarray
-        Lattice vectors of Wigner-Seitz supercell.
+        Lattice vectors :math:`\vec R` of Wigner-Seitz supercell.
     data : ndarray
-        Corresponding on-site energies and hoppings.
+        Corresponding on-site energies and hoppings in eV.
+
+        .. math::
+
+            H_{\vec R \alpha \beta} = \bra{0 \alpha} H \ket{\vec R \beta}
+
+        If :attr:`rydberg` is ``True``, the units are Ry instead.
     size : int
         Number of Wannier functions/bands.
     nk : tuple of int
@@ -89,8 +95,18 @@ class Model:
         Have energies been converted from eV to Ry?
     """
     def H(self, k1=0, k2=0, k3=0):
-        """Set up Hamilton operator for arbitrary k point."""
+        """Set up Hamilton operator for arbitrary k point.
 
+        Parameters
+        ----------
+        k1, k2, k3 : float, default 0.0
+            k point in crystal coordinates with period :math:`2 \pi`.
+
+        Returns
+        -------
+        ndarray
+            Fourier transform of :attr:`data`.
+        """
         k = np.array([k1, k2, k3])
 
         # Sign convention in hamiltonian.f90 of Wannier90:
@@ -106,8 +122,18 @@ class Model:
         return np.einsum('Rab,R->ab', self.data, np.exp(1j * self.R.dot(k)))
 
     def t(self, R1=0, R2=0, R3=0):
-        """Get on-site or hopping energy for arbitrary lattice vector."""
+        """Get on-site or hopping energy for arbitrary lattice vector.
 
+        Parameters
+        ----------
+        R1, R2, R3 : int, default 0
+            Lattice vector in units of primitive vectors.
+
+        Returns
+        -------
+        ndarray
+            Element of :attr:`data` or zero.
+        """
         index = misc.vector_index(self.R, (R1, R2, R3))
 
         if index is None:

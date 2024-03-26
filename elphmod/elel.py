@@ -13,7 +13,7 @@ from . import bravais, dispersion, misc, MPI
 comm = MPI.comm
 
 class Model:
-    """Localized model for electron-electron interaction.
+    r"""Localized model for electron-electron interaction.
 
     Currently, only square and hexagonal Bravais lattices are supported.
 
@@ -46,7 +46,7 @@ class Model:
     Attributes
     ----------
     R : ndarray
-        Lattice vectors of Wigner-Seitz supercell.
+        Lattice vectors :attr:`\vec R` of Wigner-Seitz supercell.
     data : ndarray
         Corresponding density-density interaction in orbital basis.
     size : int
@@ -57,15 +57,35 @@ class Model:
         Primitive vectors of supercell if the model describes a supercell.
     """
     def W(self, q1=0, q2=0, q3=0):
-        """Set up density-density Coulomb matrix for arbitrary q point."""
+        """Set up density-density Coulomb matrix for arbitrary q point.
 
+        Parameters
+        ----------
+        q1, q2, q3 : float, default 0.0
+            q point in crystal coordinates with period :math:`2 \pi`.
+
+        Returns
+        -------
+        ndarray
+            Fourier transform of :attr:`data`.
+        """
         q = np.array([q1, q2, q3])
 
         return np.einsum('Rab,R->ab', self.data, np.exp(1j * self.R.dot(q)))
 
     def WR(self, R1=0, R2=0, R3=0):
-        """Get density-density Coulomb matrix for arbitrary lattice vector."""
+        """Get density-density Coulomb matrix for arbitrary lattice vector.
 
+        Parameters
+        ----------
+        R1, R2, R3 : int, default 0
+            Lattice vector in units of primitive vectors.
+
+        Returns
+        -------
+        ndarray
+            Element of :attr:`data` or zero.
+        """
         index = misc.vector_index(self.R, (R1, R2, R3))
 
         if index is None:

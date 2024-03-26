@@ -13,7 +13,7 @@ comm = MPI.comm
 info = MPI.info
 
 class Model:
-    """Mass-spring model for the phonons.
+    r"""Mass-spring model for the phonons.
 
     Parameters
     ----------
@@ -68,14 +68,24 @@ class Model:
 
     Attributes
     ----------
+    R : ndarray
+        Lattice vectors :math:`\vec R` of Wigner-Seitz supercell.
+    data : ndarray
+        Corresponding force constants divided by atomic masses in Ry\ :sup:`2`.
+
+        .. math::
+
+            D_{\vec R i j} = \frac{\hbar^2}{\sqrt{M_i M_j}}
+                \frac{\partial^2 E}{\partial u_{0 i} \partial u_{\vec R j}}
+
+        If `divide_mass` is ``False``, the prefactor :math:`\hbar^2 / \sqrt{M_i
+        M_j}` is absent and the units are Ry/bohr\ :sup:`2` instead.
     M : ndarray
-        Atomic masses.
+        Atomic masses :math:`M_i`.
     a : ndarray
         Bravais lattice vectors.
     r : ndarray
         Positions of basis atoms.
-    R : ndarray
-        Lattice vectors of Wigner-Seitz supercell.
     l : ndarray.
         Bond lengths.
     atom_order : list of str
@@ -94,8 +104,6 @@ class Model:
         Range-separation parameter for two-dimensional electrostatics.
     perp : bool
         Yield out-of-plane long-range terms if `L` is nonzero?
-    data : ndarray
-        Interatomic force constants divided by atomic masses.
     divide_mass : bool
         Have force constants and Born charges been divided by atomic masses?
     divide_ndegen : bool
@@ -130,8 +138,18 @@ class Model:
         Constant part of long-range correction to dynamical matrix if `lr`.
     """
     def D(self, q1=0, q2=0, q3=0):
-        """Set up dynamical matrix for arbitrary q point."""
+        """Set up dynamical matrix for arbitrary q point.
 
+        Parameters
+        ----------
+        q1, q2, q3 : float, default 0.0
+            q point in crystal coordinates with period :math:`2 \pi`.
+
+        Returns
+        -------
+        ndarray
+            Fourier transform of :attr:`data`, possibly plus a long-range term.
+        """
         q = np.array([q1, q2, q3])
 
         # Sign convention in do_q2r.f90 of QE:
@@ -159,8 +177,18 @@ class Model:
         return Dq
 
     def C(self, R1=0, R2=0, R3=0):
-        """Get interatomic force constants for arbitrary lattice vector."""
+        """Get interatomic force constants for arbitrary lattice vector.
 
+        Parameters
+        ----------
+        R1, R2, R3 : int, default 0
+            Lattice vector in units of primitive vectors.
+
+        Returns
+        -------
+        ndarray
+            Element of :attr:`data` or zero.
+        """
         index = misc.vector_index(self.R, (R1, R2, R3))
 
         if index is None:
