@@ -731,6 +731,46 @@ class Model:
 
         return d[nonzero], g[nonzero]
 
+    def to_epmatwp(self, prefix):
+        """Save coupling to *.epmatwp* and *.wigner* files.
+
+        If :attr:`divide_ndegen`, the division by the degeneracies of the
+        Wigner-Seitz points is not undone before writing the *.epmatwp* file.
+        Instead, all degeneracies in the *.wiger* file are set to one.
+
+        Parameters
+        ----------
+        prefix : str
+            Filename stem.
+        """
+        if comm.rank == 0:
+            with open('%s.wigner' % prefix, 'wb') as data:
+                if self.divide_ndegen:
+                    dim = dim2 = 1
+                    dk = np.ones(len(self.Rk), dtype=int)
+                    dg = np.ones(len(self.Rg), dtype=int)
+                else:
+                    dim, dim2 = self.dg.shape[1:3]
+                    dk = self.dk
+                    dg = self.dg.transpose(2, 3, 0, 1)
+
+                for obj in [dim, dim2, len(self.Rk), self.Rk, dk,
+                        len(self.Rg), self.Rg, dg]:
+                    np.array(obj, dtype=np.int32).tofile(data)
+
+            with open('%s.epmatwp' % prefix, 'wb') as data:
+                epmatwp = self.data.reshape((len(self.Rg), self.ph.nat, 3,
+                    len(self.Rk), self.el.size, self.el.size))
+
+                for g in range(len(self.Rg)):
+                    for na in range(self.ph.nat):
+                        if self.divide_mass:
+                            buf = epmatwp[g, na] * np.sqrt(self.ph.M[na])
+                        else:
+                            buf = epmatwp[g, na]
+
+                        buf.swapaxes(-2, -1).astype(np.complex128).tofile(data)
+
 def sample(g, q, nk=None, U=None, u=None, squared=False, broadcast=True,
         shared_memory=False):
     r"""Sample coupling for given q and k points and transform to band basis.

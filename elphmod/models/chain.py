@@ -105,18 +105,6 @@ def create(prefix='chain'):
     elph = elphmod.elph.Model(el=el, ph=ph, divide_mass=False)
     elphmod.elph.q2r(elph, nQ, nk, g, r)
     elph.standardize(eps=1e-10)
-
-    if elphmod.MPI.comm.rank == 0:
-        dk = np.ones((ph.nat, ph.nat, len(elph.Rk)), dtype=int)
-        dg = np.ones((ph.nat, len(elph.Rg), 1, el.size), dtype=int)
-
-        with open('%s.wigner' % prefix, 'wb') as data:
-            for obj in [1, 1,
-                    len(elph.Rk), elph.Rk, np.ones(len(elph.Rk), dtype=int),
-                    len(elph.Rg), elph.Rg, np.ones(len(elph.Rg), dtype=int)]:
-                np.array(obj, dtype=np.int32).tofile(data)
-
-        with open('%s.epmatwp' % prefix, 'wb') as data:
-            np.swapaxes(elph.data, 3, 4).astype(np.complex128).tofile(data)
+    elph.to_epmatwp(prefix)
 
     return el, ph, elph
