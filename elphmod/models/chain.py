@@ -68,13 +68,18 @@ def coupling(q1=0, q2=0, q3=0, k1=0, k2=0, k3=0, **ignore):
 
     return g
 
-def create(prefix='chain'):
+def create(prefix=None, rydberg=False, divide_mass=True):
     """Create tight-binding, mass-spring, and coupling data files for chain.
 
     Parameters
     ----------
-    prefix : str, default 'chain'
-        Common prefix or seedname of data files.
+    prefix : str, optional
+        Common prefix or seedname of data files. If absent, no data is written.
+    rydberg : bool, default False
+        Store tight-binding model in Ry rather than eV?
+    divide_mass : bool, default True
+        Divide force constants and electron-phonon coupling by atomic masses and
+        their square root, respectively?
 
     Returns
     -------
@@ -89,22 +94,24 @@ def create(prefix='chain'):
     D = elphmod.dispersion.sample(dynamical_matrix, q)
     g = elphmod.elph.sample(coupling, Q, nk)
 
-    el = elphmod.el.Model()
+    el = elphmod.el.Model(rydberg=rydberg)
     el.size = H.shape[-1]
-    elphmod.el.k2r(el, H * elphmod.misc.Ry, at, r)
+    elphmod.el.k2r(el, H if rydberg else H * elphmod.misc.Ry, at, r)
     el.standardize(eps=1e-10)
-    el.to_hrdat(prefix)
 
     ph = elphmod.ph.Model(phid=np.empty((1, 1) + nq + (3, 3)),
-        amass=[M], at=at, tau=r, atom_order=['X'])
+        amass=[M], at=at, tau=r, atom_order=['X'], divide_mass=divide_mass)
 
     elphmod.ph.q2r(ph, D_full=D)
     ph.standardize(eps=1e-10)
-    ph.to_flfrc('%s.ifc' % prefix)
 
-    elph = elphmod.elph.Model(el=el, ph=ph, divide_mass=False)
+    elph = elphmod.elph.Model(el=el, ph=ph, divide_mass=divide_mass)
     elphmod.elph.q2r(elph, nQ, nk, g, r)
     elph.standardize(eps=1e-10)
-    elph.to_epmatwp(prefix)
+
+    if prefix is not None:
+        el.to_hrdat(prefix)
+        ph.to_flfrc('%s.ifc' % prefix)
+        elph.to_epmatwp(prefix)
 
     return el, ph, elph

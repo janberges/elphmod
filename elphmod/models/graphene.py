@@ -126,13 +126,18 @@ def coulomb_interaction(q1=0, q2=0, q3=0):
 
     return U
 
-def create(prefix='graphene'):
+def create(prefix=None, rydberg=False, divide_mass=True):
     """Create tight-binding, mass-spring, and coupling data files for graphene.
 
     Parameters
     ----------
-    prefix : str, default 'chain'
-        Common prefix or seedname of data files.
+    prefix : str, optional
+        Common prefix or seedname of data files. If absent, no data is written.
+    rydberg : bool, default False
+        Store tight-binding model in Ry rather than eV?
+    divide_mass : bool, default True
+        Divide force constants and electron-phonon coupling by atomic masses and
+        their square root, respectively?
 
     Returns
     -------
@@ -150,28 +155,30 @@ def create(prefix='graphene'):
     g = elphmod.elph.sample(coupling, q.reshape((-1, 3)), nk)
     U = elphmod.dispersion.sample(coulomb_interaction, q)
 
-    el = elphmod.el.Model()
+    el = elphmod.el.Model(rydberg=rydberg)
     el.size = H.shape[-1]
-    elphmod.el.k2r(el, H * elphmod.misc.Ry, at, r)
+    elphmod.el.k2r(el, H if rydberg else H * elphmod.misc.Ry, at, r)
     el.standardize(eps=1e-10)
-    el.to_hrdat(prefix)
 
     ph = elphmod.ph.Model(phid=np.empty((2, 2) + nq + (3, 3)),
-        amass=[M] * 2, at=at, tau=r, atom_order=['C'] * 2)
+        amass=[M] * 2, at=at, tau=r, atom_order=['C'] * 2,
+        divide_mass=divide_mass)
 
     elphmod.ph.q2r(ph, D_full=D)
     ph.standardize(eps=1e-10)
-    ph.to_flfrc('%s.ifc' % prefix)
 
-    elph = elphmod.elph.Model(el=el, ph=ph, divide_mass=False)
+    elph = elphmod.elph.Model(el=el, ph=ph, divide_mass=divide_mass)
     elphmod.elph.q2r(elph, nq, nk, g, r)
     elph.standardize(eps=1e-10)
-    elph.to_epmatwp(prefix)
 
     elel = elphmod.elel.Model()
     elel.size = U.shape[-1]
     elphmod.elel.q2r(elel, U * elphmod.misc.Ry, at, r)
-    elel.standardize(eps=1e-10)
-    elel.to_Wmat('%s.Wmat' % prefix)
+
+    if prefix is not None:
+        el.to_hrdat(prefix)
+        ph.to_flfrc('%s.ifc' % prefix)
+        elph.to_epmatwp(prefix)
+        elel.to_Wmat('%s.Wmat' % prefix)
 
     return el, ph, elph, elel
