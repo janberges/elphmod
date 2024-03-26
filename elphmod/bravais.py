@@ -1269,41 +1269,40 @@ def read_wigner_file(name, old_ws=False, nat=None):
 
     return data
 
-def short_range_model(data, at, tau, eps=1e-7, sgn=+1, divide_ndegen=True):
-    """Map hoppings or force constants onto Wigner-Seitz cell.
+def wigner(nr1, nr2, nr3, at, tau, tau2=None, eps=1e-7, sgn=+1):
+    """Determine Wigner-Seitz lattice vectors with degenercies and lengths.
 
     Parameters
     ----------
-    data : ndarray
-        Hoppings or force constants on (positive) Fourier-transform mesh. The
-        first two dimensions correspond to the orbitals or atoms, the following
-        three to the mesh axes, and the last two (optional, relevant for force
-        constants only) to Cartesian directions.
+    nr1, nr2, nr3 : ndarray
+        Dimensions of positive lattice-vector mesh.
     at : ndarray
         Bravais lattice vectors.
     tau : ndarray
-        Positions of basis orbitals or atoms.
+        Positions of basis orbitals or atoms in original cell.
+    tau2 : ndarray, optional
+        Positions of basis orbitals or atoms in shifted cell. Defaults to `tau`.
     eps : float
         Tolerance for orbital or atomic distances to be considered equal.
     sgn : int
         Do the lattice vectors shift the first (``-1``) or second (``+1``)
         orbital/atom?
-    divide_ndegen : bool
-        Divide hoppings for force constants by lattice-vector degeneracy?
 
     Returns
     -------
+    irvec : ndarray
+        Wigner-Seitz lattice vectors.
+    ndegen : ndarray
+        Corresponding degeneracies.
+    wslen : ndarray
+        Corresponding lengths.
     """
-    while data.ndim < 7:
-        data = data[..., np.newaxis]
-
-    nbasis, nbasis, nr1, nr2, nr3, ncart, ncart = data.shape
+    if tau2 is None:
+        tau2 = tau
 
     supercells = range(-1, 3) # supercell shifts for Wigner-Seitz search
 
-    C = np.empty((ncart, ncart), dtype=data.dtype)
-
-    const = dict()
+    data = dict()
 
     N = 0 # counter for parallelization
 
@@ -1331,69 +1330,124 @@ def short_range_model(data, at, tau, eps=1e-7, sgn=+1, divide_ndegen=True):
 
                 shifts = [np.dot(copy, at) for copy in copies]
 
-                for i in range(nbasis):
-                    for j in range(nbasis):
+                for i in range(len(tau)):
+                    for j in range(len(tau2)):
                         # find equivalent bond(s) within Wigner-Seitz cell:
 
-                        bonds = [r + tau[j] - tau[i] for r in shifts]
+                        bonds = [r + tau2[j] - tau[i] for r in shifts]
                         lengths = [np.sqrt(np.dot(r, r)) for r in bonds]
                         length = min(lengths)
 
                         selected = copies[np.where(abs(lengths - length) < eps)]
 
-                        # undo supercell double counting and divide by masses:
-
-                        C[...] = data[i, j, m1, m2, m3]
-
-                        if divide_ndegen:
-                            C /= len(selected)
-
-                        # save mapped lattice vectors and matrix elements:
+                        # save mapped lattice vectors and degeneracy and length:
 
                         for R in selected:
                             R = tuple(R)
 
-                            if R not in const:
-                                const[R] = [
-                                    np.zeros((nbasis * ncart, nbasis * ncart),
-                                        dtype=C.dtype),
-                                    np.zeros((nbasis, nbasis))]
+                            if R not in data:
+                                data[R] = [
+                                    np.zeros((len(tau), len(tau2)), dtype=int),
+                                    np.zeros((len(tau), len(tau2)))]
 
-                            const[R][0][
-                                i * ncart:(i + 1) * ncart,
-                                j * ncart:(j + 1) * ncart] = C
-
-                            const[R][1][i, j] = length
+                            data[R][0][i, j] = len(selected)
+                            data[R][1][i, j] = length
 
     # convert dictionary into arrays:
 
-    my_count = len(const)
-    my_cells = np.array(list(const.keys()), dtype=np.int8)
-    my_const = np.empty((my_count, nbasis * ncart, nbasis * ncart),
-        dtype=C.dtype)
-    my_bonds = np.empty((my_count, nbasis, nbasis))
+    my_count = len(data)
+    my_irvec = np.array(list(data.keys()), dtype=int)
+    my_ndegen = np.empty((my_count, len(tau), len(tau2)), dtype=int)
+    my_wslen = np.empty((my_count, len(tau), len(tau2)))
 
-    for i, (c, l) in enumerate(const.values()):
-        my_const[i] = c
-        my_bonds[i] = l
+    for i, (d, l) in enumerate(data.values()):
+        my_ndegen[i] = d
+        my_wslen[i] = l
 
     # gather data of all processes:
 
     my_counts = np.array(comm.allgather(my_count))
     count = my_counts.sum()
 
-    cells = np.empty((count, 3), dtype=np.int8)
-    const = np.empty((count, nbasis * ncart, nbasis * ncart), dtype=C.dtype)
-    bonds = np.empty((count, nbasis, nbasis))
+    irvec = np.empty((count, 3), dtype=int)
+    ndegen = np.empty((count, len(tau), len(tau2)), dtype=int)
+    wslen = np.empty((count, len(tau), len(tau2)))
 
-    comm.Allgatherv(my_cells, (cells, my_counts * 3))
-    comm.Allgatherv(my_const, (const, my_counts * (nbasis * ncart) ** 2))
-    comm.Allgatherv(my_bonds, (bonds, my_counts * nbasis ** 2))
+    comm.Allgatherv(my_irvec, (irvec, my_counts * 3))
+    comm.Allgatherv(my_ndegen, (ndegen, my_counts * len(tau) * len(tau2)))
+    comm.Allgatherv(my_wslen, (wslen, my_counts * len(tau) * len(tau2)))
 
     # (see cdef _p_message message_vector in mpi4py/src/mpi4py/MPI/msgbuffer.pxi
     # for possible formats of second argument 'recvbuf')
 
-    return cells, const, bonds
+    return irvec, ndegen, wslen
+
+def short_range_model(data, at, tau, sgn=+1, divide_ndegen=True):
+    """Map hoppings or force constants onto Wigner-Seitz cell.
+
+    Parameters
+    ----------
+    data : ndarray
+        Hoppings or force constants on (positive) Fourier-transform mesh. The
+        first two dimensions correspond to the orbitals or atoms, the following
+        three to the mesh axes, and the last two (optional, relevant for force
+        constants only) to Cartesian directions.
+    at : ndarray
+        Bravais lattice vectors.
+    tau : ndarray
+        Positions of basis orbitals or atoms.
+    sgn : int
+        Do the lattice vectors shift the first (``-1``) or second (``+1``)
+        orbital/atom?
+    divide_ndegen : bool
+        Divide hoppings for force constants by lattice-vector degeneracy?
+
+    Returns
+    -------
+    irvec : ndarray
+        Wigner-Seitz lattice vectors.
+    const : ndarray
+        Corresponding hoppings or force constants.
+    wslen : ndarray
+        Corresponding lengths.
+    """
+    while data.ndim < 7:
+        data = data[..., np.newaxis]
+
+    nbasis, nbasis, nr1, nr2, nr3, ncart, ncart = data.shape
+
+    irvec, ndegen, wslen = wigner(nr1, nr2, nr3, at, tau, sgn=sgn)
+
+    sizes, bounds = MPI.distribute(len(irvec), bounds=True)
+
+    my_const = np.zeros((sizes[comm.rank], nbasis * ncart, nbasis * ncart),
+        dtype=data.dtype)
+
+    for my_n, n in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
+        m1 = irvec[n, 0] % nr1
+        m2 = irvec[n, 1] % nr2
+        m3 = irvec[n, 2] % nr3
+
+        for i in range(nbasis):
+            for j in range(nbasis):
+                tmp = my_const[my_n,
+                    i * ncart:(i + 1) * ncart,
+                    j * ncart:(j + 1) * ncart]
+
+                tmp[:, :] = data[i, j, m1, m2, m3]
+
+                if divide_ndegen:
+                    if ndegen[n, i, j]:
+                        tmp /= ndegen[n, i, j]
+                    else:
+                        tmp[:, :] = 0.0
+
+    const = np.zeros((len(irvec), nbasis * ncart, nbasis * ncart),
+        dtype=data.dtype)
+
+    comm.Allgatherv(my_const, (const, comm.allgather(my_const.size)))
+
+    return irvec, const, wslen
 
 def Fourier_interpolation(data, angle=60, sign=-1, function=True):
     """Perform Fourier interpolation on triangular or rectangular lattice.
