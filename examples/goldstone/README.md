@@ -15,7 +15,8 @@ modes are Goldstone bosons with zero energy (or: without any restoring force).
 
 Using the example of a nitrogen molecule, this example shows that
 
-* cDFPT phonons do not always satisfy the Goldstone theorem [arXiv:2102.10072],
+* cDFPT phonons do not always satisfy the Goldstone theorem [van Loon et al.,
+  Phys. Rev. B 103, 205103 (2021)],
 * the acoustic sum rule correction restores the translational Goldstone modes,
 * the Born-Huang sum rule correction restores the rotational Goldstone modes.
 

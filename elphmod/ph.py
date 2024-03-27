@@ -329,7 +329,7 @@ class Model:
         * 2D case: Sohier, Calandra, and Mauri, Phys. Rev. B 94, 085415 (2016)
         * Quadrupoles: Ponce' et al., Phys. Rev. Research 3, 043022 (2021)
         * Improved 2D phonons: Royo and Stengel, Phys. Rev. X 11, 041027 (2021)
-        * Improved 2D coupling: Ponce' et al., arXiv:2207.10190 (2022)
+        * Improved 2D coupling: Ponce' et al., Phys. Rev. B 107, 155424 (2023)
 
         Parameters
         ----------

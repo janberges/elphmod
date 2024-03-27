@@ -42,7 +42,7 @@ q = 2 * np.pi * np.array(q, dtype=float) / nq
 Q = 2 * np.pi * np.array(Q, dtype=float) / nQ
 
 def hamiltonian(k1=0, k2=0, k3=0):
-    """Calculate electrons as in Eq. (50) of arXiv:2212.11806."""
+    """Calculate electrons as in Eq. (62) of PRX 13, 041009 (2023)."""
 
     H = np.empty((1, 1))
 
@@ -51,7 +51,7 @@ def hamiltonian(k1=0, k2=0, k3=0):
     return H
 
 def dynamical_matrix(q1=0, q2=0, q3=0):
-    """Calculate phonons as in Eq. (51) of arXiv:2212.11806."""
+    """Calculate phonons as in Eq. (63) of PRX 13, 041009 (2023)."""
 
     D = np.eye(3)
 
@@ -60,7 +60,7 @@ def dynamical_matrix(q1=0, q2=0, q3=0):
     return D
 
 def coupling(q1=0, q2=0, q3=0, k1=0, k2=0, k3=0, **ignore):
-    """Calculate el.-ph. coupling as in Eq. (52) of arXiv:2212.11806."""
+    """Calculate el.-ph. coupling as in Eq. (64) of PRX 13, 041009 (2023)."""
 
     g = np.zeros((3, 1, 1), dtype=complex)
 

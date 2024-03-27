@@ -124,7 +124,7 @@ for n in range(3):
     dt[2 * n + 1, :2] = derivative(t0.T, (120 * n + 60) * deg)
 
 def hamiltonian(k1=0.0, k2=0.0, k3=0.0):
-    """Calculate electrons according to Eq. (5) of arXiv:1911.02450."""
+    """Calculate electrons according to Eq. (5) of PRB 101, 155107 (2020)."""
 
     return e0 + (
         + t[0] * np.exp(1j * k1)
@@ -215,8 +215,11 @@ F2 = xreflect(F3)
 F6 = xreflect(F5)
 
 def dynamical_matrix(q1=0.0, q2=0.0, q3=0.0):
-    """Calculate phonons with parameters taken from arXiv:2303.07261."""
+    """Calculate phonons as in Sec. 2.4.3.2 of doi:10.26092/elib/250.
 
+    The DFPT force constants come from Fig. 3 (f-j) of PRX 13, 041009 (2023).
+    Load spring "TaS2-SR" on https://janberges.de/spring to visualize them.
+    """
     D = np.zeros((9, 9), dtype=complex)
 
     intra = A1 + A2 + A3
@@ -305,7 +308,7 @@ def dynamical_matrix(q1=0.0, q2=0.0, q3=0.0):
 sqrtM = np.sqrt(np.repeat([M, m, m], 3)[:, np.newaxis, np.newaxis])
 
 def coupling(q1=0, q2=0, q3=0, k1=0, k2=0, k3=0, **ignore):
-    """Calculate coupling according to Eq. (B4) of arXiv:1911.02450."""
+    """Calculate coupling according to Eq. (B4) of PRB 101, 155107 (2020)."""
 
     K1 = k1 + q1
     K2 = k2 + q2

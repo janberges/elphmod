@@ -69,7 +69,7 @@ detailed list of changes.
 * Jmol's atom "CPK" colors [https://jmol.sourceforge.net/jscolors]
 * RPA and cRPA Coulomb interaction from RESPACK
 * Example on electron-phonon fluctuation diagnostics
-* 2D long-range electrostatics by Poncé et al. [arXiv:2207.10190]
+* 2D long-range electrostatics by Poncé et al. [PRB 107, 155424 (2023)]
 * Various bugfixes and optimizations
 
 ## v0.15/2022-07-29

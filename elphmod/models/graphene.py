@@ -96,7 +96,7 @@ tau2 = -r[1]
 tau = np.linalg.norm(tau0)
 
 def coupling(q1=0, q2=0, q3=0, k1=0, k2=0, k3=0, **ignore):
-    """Calculate el.-ph. coupling as in Section S9 of arXiv:2108.01121."""
+    """Calculate el.-ph. coupling as in Sec. S9 of PRB 105, L241109 (2022)."""
 
     d = np.zeros((6, 2, 2), dtype=complex)
 
