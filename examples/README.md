@@ -17,6 +17,7 @@ Also make sure to install the Python requirements before:
 * `dos.py` - density of states via smearing and tetrahedron methods
 * `double_delta.py` - double-delta integral via smearing and tetrahedron methods
 * `electrons.py` - electronic band structure and density of states
+* `fan_migdal.py` - electron renormalization from Fan-Migdal self-energy
 * `fermi_surface.py` - Fermi surface via smearing method
 * `fermi_velocity.py` - Fermi velocity on whole Brillouin zone
 * `intersections.py` - Fermi-surface intersections via tetrahedron method

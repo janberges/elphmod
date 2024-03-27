@@ -1298,3 +1298,89 @@ def triangle(q, Q, e, gq, gQ, gqQ, kT=0.025, eps=1e-10,
         return chi, 4 * chi_k.reshape(nk_orig + (nbnd,) * 3)
     else:
         return chi
+
+def fan_migdal_self_energy(k, e, w, g2, omega, kT=0.025,
+        electronic_occupations=occupations.fermi_dirac, comm=comm):
+    r"""Calculate Fan-Migdal electron self-energy (to be tested).
+
+    See Eq. (4) by Abramovitch et al., Phys. Rev. Mater. 7, 093801 (2023).
+
+    Parameters
+    ----------
+    k : list of tuple
+        List of k points in crystal coordinates :math:`k_i \in [0, 2 \pi)`.
+    e : ndarray
+        Electron dispersion on uniform mesh. The Fermi level must be at zero.
+    w : ndarray
+        Phonon dispersion on same uniform mesh as `e`.
+    g2 : ndarray
+        Squared electron-phonon coupling.
+    omega : ndarray
+        Frequency argument including small imaginary regulator.
+    kT : float
+        Smearing temperature.
+    electronic_occupations : function
+        Particle distribution as a function of energy divided by `kT`.
+
+    Returns
+    -------
+    ndarray
+        Fan-Migdal electron self-energy.
+    """
+    nK = len(k)
+
+    k_orig = k
+    k = np.zeros((nK, 3))
+    k[:, :len(k_orig[0])] = k_orig
+
+    nq_orig = w.shape[:-1]
+    nq = np.ones(3, dtype=int)
+    nq[:len(nq_orig)] = nq_orig
+
+    nbnd = e.shape[-1]
+    nmodes = w.shape[-1]
+
+    e = np.reshape(e, (nq[0], nq[1], nq[2], 1, nbnd, 1, 1))
+    w = np.reshape(w, (nq[0], nq[1], nq[2], nmodes, 1, 1, 1))
+    g2 = np.reshape(g2, (nq[0], nq[1], nq[2], nmodes, nK, nbnd, nbnd, 1))
+    omega = np.reshape(omega, (1, 1, 1, 1, 1, 1, -1))
+
+    f = electronic_occupations(e / kT)
+    N = occupations.bose_einstein(w / kT)
+
+    e = np.tile(e, (2, 2, 2, 1, 1, 1, 1))
+    f = np.tile(f, (2, 2, 2, 1, 1, 1, 1))
+
+    scale = nq / (2 * np.pi)
+    prefactor = 2 / nq.prod()
+
+    sizes, bounds = MPI.distribute(nK, bounds=True, comm=comm)
+
+    my_Sigma = np.empty((sizes[comm.rank], nbnd, omega.size), dtype=complex)
+
+    status = misc.StatusBar(sizes[comm.rank],
+        title='calculate Fan-Migdal electron self-energy')
+
+    for my_ik, ik in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
+        k1, k2, k3 = np.round(k[ik] * scale).astype(int) % nq
+
+        kq1 = slice(k1, k1 + nq[0])
+        kq2 = slice(k2, k2 + nq[1])
+        kq3 = slice(k3, k3 + nq[2])
+
+        fkq = f[kq1, kq2, kq3]
+        ekq = e[kq1, kq2, kq3]
+
+        domega = omega - ekq
+
+        my_Sigma[my_ik] = prefactor * np.sum(g2[:, :, :, :, ik, :, :, :]
+            * ((fkq + N) / (domega + w) + (1 - fkq + N) / (domega - w)),
+            axis=(0, 1, 2, 3, 4))
+
+        status.update()
+
+    Sigma = np.empty((nK, nbnd, omega.size), dtype=complex)
+
+    comm.Allgatherv(my_Sigma, (Sigma, comm.allgather(my_Sigma.size)))
+
+    return Sigma
