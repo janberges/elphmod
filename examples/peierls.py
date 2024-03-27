@@ -47,7 +47,7 @@ def H(k1=0.0):
 # k-point sampling:
 
 x = np.linspace(-0.5, +0.5, nk, endpoint=False)
-k = 2 * np.pi * x.reshape((-1, 1))
+k = 2 * np.pi * x
 K = 3 * k
 
 # calculation of band structure:

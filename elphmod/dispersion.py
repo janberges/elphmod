@@ -59,10 +59,10 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
     """
     if comm.rank == 0:
         k = np.array(k)
-        kshape = k.shape[:-1]
+        kshape = k.shape[:max(1, k.ndim - 1)]
         points = np.prod(kshape)
+        k = np.reshape(k, (points, -1))
         dimens = k.shape[-1]
-        k = np.reshape(k, (points, dimens))
     else:
         kshape = points = dimens = None
 
