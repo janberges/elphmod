@@ -16,6 +16,13 @@ except ImportError:
 
 xmax = 709.0 # approx. log([max. double] / 2 - 1)
 
+def bose_einstein(x):
+    """Calculate Bose-Einstein function."""
+
+    x = np.minimum(x, xmax)
+
+    return 1 / (np.exp(x) - 1)
+
 def fermi_dirac(x):
     """Calculate Fermi function."""
 
