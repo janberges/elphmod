@@ -431,8 +431,8 @@ def sample(matrix, k, **kwargs):
         Keyword arguments passed to `matrix`.
     """
     k = np.array(k)
-    kshape = k.shape[:-1]
-    k = np.reshape(k, (-1, k.shape[-1]))
+    kshape = k.shape[:max(1, k.ndim - 1)]
+    k = np.reshape(k, (np.prod(kshape), -1))
 
     sizes, bounds = MPI.distribute(len(k), bounds=True)
 
