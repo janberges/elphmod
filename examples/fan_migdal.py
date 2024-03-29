@@ -64,7 +64,8 @@ if comm.rank == 0:
 
 info('Calculate resistivity..')
 
-v = (np.roll(e, -1, 0) - e) / (np.roll(q, -1) - q)[:, np.newaxis] * ph.a[0, 0]
+v = elphmod.dispersion.sample(el.v, q)
+v = np.einsum('ix,kan,kiab,kbn->knx', ph.a, U.conj(), v, U)[:, : ,:1].real
 
 kT = np.arange(100, 1050, 50) * elphmod.misc.kB / elphmod.misc.Ry
 
