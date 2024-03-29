@@ -121,6 +121,26 @@ class Model:
 
         return np.einsum('Rab,R->ab', self.data, np.exp(1j * self.R.dot(k)))
 
+    def v(self, k1=0, k2=0, k3=0):
+        """Set up band-velocity operator for arbitrary k point.
+
+        Parameters
+        ----------
+        k1, k2, k3 : float, default 0.0
+            k point in crystal coordinates with period :math:`2 \pi`.
+
+        Returns
+        -------
+        ndarray
+            k derivative of Fourier transform of :attr:`data` in the basis of
+            primitive lattice vectors and orbitals. It can be transformed into
+            the Cartesian and band basis afterward (Hellmann-Feynman theorem).
+        """
+        k = np.array([k1, k2, k3])
+
+        return np.einsum('Rx,Rab,R->xab',
+            1j * self.R, self.data, np.exp(1j * self.R.dot(k)))
+
     def t(self, R1=0, R2=0, R3=0):
         """Get on-site or hopping energy for arbitrary lattice vector.
 
