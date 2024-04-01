@@ -661,6 +661,48 @@ class Driver:
 
         bravais.write_pwi(pwi, pw)
 
+    def save(self, filename):
+        """Save driver to file.
+
+        Parameters
+        ----------
+        filename : str
+            Filename for pickled representation of driver.
+        """
+        if comm.size > 1:
+            tmp = self.elph.node, self.elph.images
+
+            del self.elph.node
+            del self.elph.images
+
+        MPI.Buffer(filename).set(self)
+
+        if comm.size > 1:
+            self.elph.node, self.elph.images = tmp
+
+    @staticmethod
+    def load(filename):
+        """Load driver from file.
+
+        This should only be used in serial runs. Shared memory will be lost.
+
+        Parameters
+        ----------
+        filename : str
+            Filename for pickled representation of driver.
+
+        Returns
+        -------
+        object
+            MD driver for DFPT-based displacements dynamics.
+        """
+        driver = MPI.Buffer(filename).get()
+
+        driver.elph.node, driver.elph.images = MPI.shm_split(comm,
+            shared_memory=False)
+
+        return driver
+
     def __call__(self, a, r):
         """Interface driver with i-PI.
 
