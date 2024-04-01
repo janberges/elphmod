@@ -46,7 +46,7 @@ driver.random_displacements(amplitude=0.05)
 driver.plot(interactive=True)
 
 scipy.optimize.minimize(driver.free_energy, driver.u, jac=driver.jacobian,
-    method='BFGS', tol=1e-8)
+    method='BFGS', options=dict(gtol=1e-8, norm=np.inf))
 
 driver.plot(interactive=False)
 
