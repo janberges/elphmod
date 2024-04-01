@@ -3,10 +3,9 @@
 # Copyright (C) 2017-2024 elphmod Developers
 # This program is free software under the terms of the GNU GPLv3 or later.
 
-__all__ = ['__drivers__', 'Dummy_driver']
-
 import elphmod
 import elphmod.models.graphene
+import ipi._driver.driver
 import subprocess
 import time
 
@@ -30,7 +29,4 @@ time.sleep(2) # wait for i-PI to load and create a socket
 
 driver.plot(interactive=True)
 
-def Dummy_driver(*ignore):
-    return driver
-
-__drivers__ = dict(dummy=Dummy_driver)
+ipi._driver.driver.run_driver(unix=True, address='localhost', driver=driver)

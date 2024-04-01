@@ -1,6 +1,5 @@
 RESTART
 \#*
-driver.py
 i-pi.checkpoint
 i-pi.md
 i-pi.pos_0.xyz
