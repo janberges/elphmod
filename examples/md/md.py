@@ -4,22 +4,20 @@
 # This program is free software under the terms of the GNU GPLv3 or later.
 
 import elphmod
-import elphmod.models.graphene
+import elphmod.models.tas2
 import ipi._driver.driver
 import subprocess
 import time
 
-elphmod.models.graphene.create('../data/graphene')
+el, ph, elph = elphmod.models.tas2.create(rydberg=True, divide_mass=False)
 
-el = elphmod.el.Model('../data/graphene', rydberg=True)
-ph = elphmod.ph.Model('../data/graphene.ifc', divide_mass=False)
-elph = elphmod.elph.Model('../data/graphene.epmatwp', '../data/graphene.wigner',
-    el, ph, divide_mass=False)
+driver = elphmod.md.Driver(elph, nk=(12, 12), nq=(2, 2), supercell=(9, 9),
+    kT=0.02, f=elphmod.occupations.marzari_vanderbilt, n=1.0)
 
-driver = elphmod.md.Driver(elph, kT=0.02, f=elphmod.occupations.fermi_dirac,
-    n=elph.el.size, supercell=[(6, 0, 0), (3, 6, 0)])
+driver.kT = 0.005
+driver.f = elphmod.occupations.fermi_dirac
 
-driver.random_displacements(amplitude=0.1)
+driver.random_displacements()
 
 driver.to_xyz('init.xyz')
 

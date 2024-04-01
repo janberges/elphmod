@@ -12,7 +12,6 @@ Also make sure to install the Python requirements before:
 
     python3 -m pip install -r requirements.txt
 
-* `3x3.py` - relaxation of CDW distortion in monolayer TaS2
 * `a2f.py` - Eliashberg spectral function of monolayer TaS2
 * `coulomb.py` - Coulomb interaction from VASP
 * `dos.py` - density of states via smearing and tetrahedron methods
@@ -48,7 +47,7 @@ More sophisticated examples have their own subdirectory. Most of them require a
 * `fluctuations` - fluctuation diagnostics of phonon anomalies in 1H-TaS2
 * `goldstone` - Goldstone modes of nitrogen molecule
 * `lambda` - electron-phonon coupling for superconductivity
-* `md` - molecular dynamics using i-PI
+* `md` - interface with i-PI code for molecular-dynamics simulations
 * `modes` - decomposition of CDW modes into harmonic eigenmodes from DFPT
 * `phrenorm` - phonon renormalization in 1H-TaS2
 * `phrenorm_3d` - phonon renormalization in polonium
