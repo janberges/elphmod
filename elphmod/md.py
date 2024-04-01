@@ -669,16 +669,21 @@ class Driver:
         filename : str
             Filename for pickled representation of driver.
         """
-        if comm.size > 1:
-            tmp = self.elph.node, self.elph.images
+        interactive = self.interactive
+        self.interactive = False
+
+        if comm.size > 1 and not self.sparse:
+            communicators = self.elph.node, self.elph.images
 
             del self.elph.node
             del self.elph.images
 
         MPI.Buffer(filename).set(self)
 
-        if comm.size > 1:
-            self.elph.node, self.elph.images = tmp
+        self.interactive = interactive
+
+        if comm.size > 1 and not self.sparse:
+            self.elph.node, self.elph.images = communicators
 
     @staticmethod
     def load(filename):
@@ -698,8 +703,9 @@ class Driver:
         """
         driver = MPI.Buffer(filename).get()
 
-        driver.elph.node, driver.elph.images = MPI.shm_split(comm,
-            shared_memory=False)
+        if not driver.sparse:
+            driver.elph.node, driver.elph.images = MPI.shm_split(comm,
+                shared_memory=False)
 
         return driver
 
