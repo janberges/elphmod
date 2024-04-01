@@ -600,19 +600,40 @@ class Driver:
     def from_xyz(self, xyz):
         """Load saved atomic positions if compatible.
 
+        If an interactive plot is open, it is updated. If `xyz` contains a full
+        trajectory, all steps are shown in an interactive plot (whose speed can
+        be controlled via :attr:`pause`) and the last atomic positions are kept.
+
         Parameters
         ----------
         xyz : str
             Name of .xyz file.
         """
         if comm.rank == 0:
-            atm = np.loadtxt(xyz, skiprows=2, dtype=str, usecols=0)
-            pos = np.loadtxt(xyz, skiprows=2, dtype=float, usecols=(1, 2, 3))
+            with open(xyz) as lines:
+                for line in lines:
+                    nat = int(line)
 
-            if np.all(atm == self.elph.ph.atom_order):
-                self.u = (pos - self.elph.ph.r).ravel()
-            else:
-                print("Error: Cannot use incompatible '%s'" % xyz)
+                    if nat != self.elph.ph.nat:
+                        print("Error: Wrong number of atoms in '%s'!" % xyz)
+                        break
+
+                    next(lines) # skip comment line
+
+                    for na in range(nat):
+                        cols = next(lines).split()
+
+                        if cols[0] != self.elph.ph.atom_order[na]:
+                            print("Warning: Unexpected atom %d in '%s' ignored!"
+                                % (na + 1, xyz))
+                            continue
+
+                        pos = np.array(list(map(float, cols[1:4])))
+
+                        self.u[ph.group(na)] = pos - self.elph.ph.r[na]
+
+                    if self.interactive:
+                        self.update_plot()
 
         comm.Bcast(self.u)
 
