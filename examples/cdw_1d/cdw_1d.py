@@ -21,7 +21,7 @@ driver.kT = 0.002
 
 driver.random_displacements()
 
-driver.plot(interactive=True, scale=25)
+driver.plot(interactive=True, scale=25, elev=0)
 
 scipy.optimize.minimize(driver.free_energy, driver.u, jac=driver.jacobian,
     method='BFGS', tol=1e-8)

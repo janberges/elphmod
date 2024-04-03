@@ -480,7 +480,7 @@ class Driver:
         return rho_at
 
     def plot(self, filename=None, interactive=None, scale=None, padding=1.0,
-            size=100.0, pause=None, label=False):
+            size=100.0, pause=None, label=False, elev=None, azim=None):
         """Plot crystal structure and displacements.
 
         Parameters
@@ -501,6 +501,8 @@ class Driver:
             Minimal frame duration for interactive plots in seconds.
         label : bool, optional
             Show atom indices?
+        elev, azim : float, optional
+            Elevation and azimuthal view angles.
         """
         if comm.rank != 0:
             return
@@ -523,8 +525,14 @@ class Driver:
         u = self.u.reshape(self.elph.ph.r.shape).T
         r = self.elph.ph.r.T + u
 
+        if elev is None:
+            elev = self.axes.elev if hasattr(self, 'axes') else 90
+
+        if azim is None:
+            azim = self.axes.azim if hasattr(self, 'axes') else -90
+
         self.axes = plt.axes(projection='3d')
-        self.axes.view_init(elev=90, azim=-90, roll=0)
+        self.axes.view_init(elev, azim)
 
         sizes = self.size
 
