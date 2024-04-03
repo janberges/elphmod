@@ -480,7 +480,7 @@ class Driver:
         return rho_at
 
     def plot(self, filename=None, interactive=None, scale=None, padding=1.0,
-            size=100.0, pause=None, label=False, elev=None, azim=None):
+            size=None, pause=None, label=False, elev=None, azim=None):
         """Plot crystal structure and displacements.
 
         Parameters
