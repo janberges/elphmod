@@ -522,6 +522,7 @@ class Driver:
         r = self.elph.ph.r.T + u
 
         self.axes = plt.axes(projection='3d')
+        self.axes.view_init(elev=90, azim=-90, roll=0)
 
         sizes = self.size
 
