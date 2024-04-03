@@ -1329,9 +1329,9 @@ def short_range_model(data, at, tau, sgn=+1, divide_ndegen=True):
         dtype=data.dtype)
 
     for my_n, n in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
-        m1 = irvec[n, 0] % nr1
-        m2 = irvec[n, 1] % nr2
-        m3 = irvec[n, 2] % nr3
+        m1 = sgn * irvec[n, 0] % nr1
+        m2 = sgn * irvec[n, 1] % nr2
+        m3 = sgn * irvec[n, 2] % nr3
 
         for i in range(nbasis):
             for j in range(nbasis):
