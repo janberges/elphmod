@@ -3,6 +3,16 @@
 See [Git commits](https://github.com/janberges/elphmod/commits) for more
 detailed list of changes.
 
+## v0.24/2024-04-03
+
+* Improved MD driver and i-PI example
+* Calculation of band velocity without finite differences
+* Documentation of indices of matrix elements
+* Export of coupling in EPW format (*.epmatwp*)
+* Transformation of coupling to arbitrary real-space meshes
+* Cleanup of routines related to Wigner-Seitz cell
+* Subpackage `elphmod.models` for nearest-neighbor model input data
+
 ## v0.23/2024-03-07
 
 * QE-7.3 support (cDFPT patch, no longer included in source distribution)
