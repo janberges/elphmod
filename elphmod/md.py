@@ -479,12 +479,14 @@ class Driver:
 
         return rho_at
 
-    def plot(self, interactive=None, scale=None, padding=1.0, size=100.0,
-            pause=None, label=False):
+    def plot(self, filename=None, interactive=None, scale=None, padding=1.0,
+            size=100.0, pause=None, label=False):
         """Plot crystal structure and displacements.
 
         Parameters
         ----------
+        filename : str, optional
+            Figure filename. If given, the plot is saved rather than shown.
         interactive : bool, optional
             Shall the plot be updated? If given, this sets the eponymous
             attribute, which is used by default.
@@ -554,7 +556,11 @@ class Driver:
             plt.ioff()
 
         plt.subplots_adjust(left=0, right=1, bottom=0, top=1)
-        plt.show()
+
+        if filename is None:
+            plt.show()
+        else:
+            plt.savefig(filename)
 
     def update_plot(self):
         """Update open plot."""
