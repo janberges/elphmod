@@ -941,7 +941,7 @@ def read_symmetry_points(bandsout):
     return points
 
 def read_atomic_projections(atomic_proj_xml, order=False, from_fermi=True,
-        other=False, **order_kwargs):
+        squared=True, other=False, **order_kwargs):
     """Read projected bands from *outdir/prefix.save/atomic_proj.xml*.
 
     Parameters
@@ -952,9 +952,11 @@ def read_atomic_projections(atomic_proj_xml, order=False, from_fermi=True,
         Order/disentangle bands via their k-local character?
     from_fermi : bool
         Subtract Fermi level from electronic energies?
+    squared : bool
+        Return squared complex modulus of projection?
     other : bool
         Estimate projection onto "other" orbitals as difference of band weights
-        to one?
+        to one? This requires `squared`.
     **order_kwargs
         Keyword arguments passed to :func:`band_order`.
 
@@ -991,11 +993,14 @@ def read_atomic_projections(atomic_proj_xml, order=False, from_fermi=True,
     x = np.empty(nk)
     k = np.empty((nk, 3))
     eps = np.empty((nk, bands))
-    proj2 = np.empty((nk, bands, no + 1 if other else no))
 
-    if comm.rank == 0:
+    if squared:
+        proj2 = np.empty((nk, bands, no + 1 if other else no))
+
+    if comm.rank == 0 or not squared:
         proj = np.empty((nk, bands, no), dtype=complex)
 
+    if comm.rank == 0:
         next(data)
 
         for ik in range(nk):
@@ -1040,17 +1045,22 @@ def read_atomic_projections(atomic_proj_xml, order=False, from_fermi=True,
                 for a in range(no):
                     proj[ik, :, a] = proj[ik, o[ik], a]
 
-        proj2[:, :, :no] = abs(proj) ** 2
+        if squared:
+            proj2[:, :, :no] = abs(proj) ** 2
 
-        if other:
-            proj2[:, :, no] = 1.0 - proj2[:, :, :no].sum(axis=2)
+            if other:
+                proj2[:, :, no] = 1.0 - proj2[:, :, :no].sum(axis=2)
 
     comm.Bcast(x)
     comm.Bcast(k)
     comm.Bcast(eps)
-    comm.Bcast(proj2)
 
-    return x, k, eps, proj2
+    if squared:
+        comm.Bcast(proj2)
+    else:
+        comm.Bcast(proj)
+
+    return x, k, eps, proj2 if squared else proj
 
 def read_atomic_projections_old(atomic_proj_xml, order=False, from_fermi=True,
         **order_kwargs):
