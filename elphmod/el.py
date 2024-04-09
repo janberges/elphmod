@@ -1144,7 +1144,8 @@ def read_projwfc_out(projwfc_out):
     -------
     list of str
         Common names of (pseudo) atomic orbitals listed in `projwfc_out` (in
-        that order).
+        that order). If spin-orbit coupling is considered, symmetry labels
+        related to the magnetic quantum number are omitted.
     """
     if comm.rank == 0:
         orbitals = []
@@ -1168,12 +1169,17 @@ def read_projwfc_out(projwfc_out):
 
                         if info:
                             X = info[28:31].strip()
-                            n = int(info[39])
+                            n = int(info[38:40])
                             l = int(info[44])
-                            m = int(info[49])
 
-                            orbitals.append('%s-%d%s'
-                                % (X, n, labels[l][m - 1]))
+                            if info[46] == 'm':
+                                m = int(info[48:50])
+
+                                orbitals.append('%s-%d%s'
+                                    % (X, n, labels[l][m - 1]))
+                            else:
+                                orbitals.append('%s-%d%s'
+                                    % (X, n, labels[l][0][0]))
                         else:
                             break
 
@@ -1242,6 +1248,9 @@ def proj_sum(proj, orbitals, *groups, **kwargs):
                 for a, orbital in enumerate(orbitals):
                     if all(A == B for A, B in zip(selection, orbital) if A):
                         indices.add(a)
+
+            if not indices:
+                print('Warning: "%s" does not match any orbital!' % group)
 
             summed[..., n] = proj[..., sorted(indices)].sum(axis=2)
 
