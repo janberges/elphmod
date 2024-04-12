@@ -261,6 +261,15 @@ index 2966a268e..8c81744bd 100644
 -  IF (lgauss .OR. ltetra ) THEN
 +  IF (lgauss .OR. ltetra .OR. lcdfpt) THEN
       !
+diff --git a/Makefile b/Makefile
+index 463811671..b3ae4f757 100644
+--- a/Makefile
++++ b/Makefile
+@@ -76,3 +76,3 @@ cp : bindir libs mods
+ 
+-ph : phlibs
++ph : phlibs pp
+ 	if test -d PHonon; then \
 diff --git a/PHonon/PH/Makefile b/PHonon/PH/Makefile
 index a43b438d1..48624ceba 100644
 --- a/PHonon/PH/Makefile

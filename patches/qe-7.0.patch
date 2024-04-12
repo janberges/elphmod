@@ -279,6 +279,15 @@ index 047f5b385..ce3d9f359 100644
 +               npwx, npwq, thresh, ik, num_iter, conv_root, anorm, nbnd_occ(ikk), npol)
 +         ENDIF
           !
+diff --git a/Makefile b/Makefile
+index fd6ac8694..ded46441e 100644
+--- a/Makefile
++++ b/Makefile
+@@ -76,3 +76,3 @@ cp : bindir mods
+ 
+-ph : phlibs
++ph : phlibs pp
+ 	if test -d PHonon; then \
 diff --git a/PHonon/PH/Makefile b/PHonon/PH/Makefile
 index c2a810758..77160b30c 100644
 --- a/PHonon/PH/Makefile
