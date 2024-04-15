@@ -955,8 +955,8 @@ def read_atomic_projections(atomic_proj_xml, order=False, from_fermi=True,
     squared : bool
         Return squared complex modulus of projection?
     other : bool
-        Estimate projection onto "other" orbitals as difference of band weights
-        to one? This requires `squared`.
+        Estimate projection onto "other" orbitals not defined in pseudopotential
+        files as difference of band weights to one? This requires `squared`.
     **order_kwargs
         Keyword arguments passed to :func:`band_order`.
 
@@ -1142,7 +1142,7 @@ def read_atomic_projections_old(atomic_proj_xml, order=False, from_fermi=True,
 
     return x, k, eps, abs(proj) ** 2
 
-def read_projwfc_out(projwfc_out):
+def read_projwfc_out(projwfc_out, other=True):
     """Identify orbitals in *atomic_proj.xml* via output of ``projwfc.x``.
 
     Parameters
@@ -1156,6 +1156,9 @@ def read_projwfc_out(projwfc_out):
         Common names of (pseudo) atomic orbitals listed in `projwfc_out` (in
         that order). If spin-orbit coupling is considered, symmetry labels
         related to the magnetic quantum number are omitted.
+    other : bool, default True
+        Add name ``X-x`` to list of orbitals, which corresponds to "other"
+        orbitals from :func:`read_atomic_projections`?
     """
     if comm.rank == 0:
         orbitals = []
@@ -1201,7 +1204,8 @@ def read_projwfc_out(projwfc_out):
                     for m, n in enumerate(duplicates, 1):
                         orbitals[n] = orbitals[n].replace('-', '%d-' % m, 1)
 
-            orbitals.append('X-x')
+            if other:
+                orbitals.append('X-x')
     else:
         orbitals = None
 
@@ -1230,7 +1234,9 @@ def proj_sum(proj, orbitals, *groups, **kwargs):
         Comma-separated lists of names of selected orbitals. Omitted name
         components are summed over. Curly braces are expanded.
     other : bool, default False
-        Return remaining orbital weight too?
+        Return remaining orbital weight too? If you just want to select the
+        "other" orbitals from :func:`read_atomic_projections`, add the name
+        ``x`` to `orbitals` instead.
 
     Returns
     -------
