@@ -46,6 +46,8 @@ class Model:
         Positions of basis atoms if `flfrc` is omitted.
     atom_order : list of str
         Ordered list of atoms if `flfrc` is omitted.
+    alph : float
+        Ewald parameter if `flfrc` is omitted.
     epsil : ndarray
         Dielectric tensor if `flfrc` is omitted.
     zeu : ndarray
@@ -90,6 +92,8 @@ class Model:
         Bond lengths.
     atom_order : list of str
         Ordered list of atoms.
+    alpha : float
+        Ewald parameter.
     eps : ndarray
         Dielectric tensor.
     Z : ndarray
@@ -199,14 +203,14 @@ class Model:
     def __init__(self, flfrc=None, quadrupole_fmt=None, apply_asr=False,
         apply_asr_simple=False, apply_zasr=False, apply_rsr=False, lr=True,
         lr2d=None, phid=np.zeros((1, 1, 1, 1, 1, 3, 3)), amass=np.ones(1),
-        at=np.eye(3), tau=np.zeros((1, 3)), atom_order=['X'], epsil=None,
-        zeu=None, Q=None, L=None, perp=True, divide_mass=True,
+        at=np.eye(3), tau=np.zeros((1, 3)), atom_order=['X'], alph=None,
+        epsil=None, zeu=None, Q=None, L=None, perp=True, divide_mass=True,
         divide_ndegen=True, ifc=None):
 
         if comm.rank == 0:
             if flfrc is None:
-                model = (phid.copy(), amass, at, tau, atom_order, epsil, zeu,
-                    phid.shape[2:5], None, None)
+                model = (phid.copy(), amass, at, tau, atom_order,
+                    alph, epsil, zeu, phid.shape[2:5], None, None)
             else:
                 try:
                     model = read_flfrc(flfrc)
@@ -234,7 +238,7 @@ class Model:
                             q, D = read_flfrc(fildyn)[0]
                         else:
                             ((q, D), amass, at, tau, atom_order,
-                                epsil, zeu) = read_flfrc(fildyn)
+                                alph, epsil, zeu) = read_flfrc(fildyn)
 
                             q0 = np.empty(nq + (3,), dtype=float)
                             D0 = np.empty(nq + (3 * len(amass),) * 2,
@@ -255,7 +259,8 @@ class Model:
                     q0 = q0.reshape((-1,) + q0.shape[3:])
                     D0 = D0.reshape((-1,) + D0.shape[3:])
 
-                    model = amass, at, tau, atom_order, epsil, zeu, nq, q0, D0
+                    model = (amass, at, tau, atom_order,
+                        alph, epsil, zeu, nq, q0, D0)
 
             if quadrupole_fmt is not None:
                 Q = read_quadrupole_fmt(quadrupole_fmt)
@@ -276,8 +281,8 @@ class Model:
         self.L = comm.bcast(L)
         self.perp = comm.bcast(perp)
 
-        (self.M, self.a, self.r, self.atom_order, self.eps, self.Z, self.nq,
-            self.q0, self.D0) = model[-9:]
+        (self.M, self.a, self.r, self.atom_order, self.alpha, self.eps, self.Z,
+            self.nq, self.q0, self.D0) = model[-10:]
 
         self.nat = len(self.atom_order)
         self.size = 3 * self.nat
@@ -291,9 +296,10 @@ class Model:
 
         self.lr2d = lr2d_guess if lr2d is None else lr2d
 
-        self.scale = None
-
         if self.lr:
+            if self.alpha is None:
+                self.alpha = 1.0
+
             if self.lr2d != lr2d:
                 info('Warning: System is assumed to be %s-dimensional!'
                     % ('two' if self.lr2d else 'three'))
@@ -313,7 +319,7 @@ class Model:
         if apply_asr or apply_rsr:
             sum_rule_correction(self, asr=apply_asr, rsr=apply_rsr)
 
-    def prepare_long_range(self, alpha=1.0, G_max=28.0):
+    def prepare_long_range(self, G_max=28.0):
         """Prepare calculation of long-range terms for polar materials.
 
         The following two routines are based on ``rgd_blk`` and ``rgd_blk_epw``
@@ -333,9 +339,6 @@ class Model:
 
         Parameters
         ----------
-        alpha : float
-            Ewald parameter. This only sets the attribute :attr:`scale` if it is
-            not defined yet.
         G_max : float
             Cutoff for reciprocal lattice vectors.
         """
@@ -356,8 +359,7 @@ class Model:
 
         a = np.linalg.norm(self.a[0])
 
-        if self.scale is None:
-            self.scale = 4 * alpha * (2 * np.pi / a) ** 2
+        self.scale = 4 * self.alpha * (2 * np.pi / a) ** 2
 
         nr = 1 + (np.sqrt(self.scale * G_max)
             / np.linalg.norm(2 * np.pi * self.b, axis=1)).astype(int)
@@ -576,10 +578,15 @@ class Model:
 
         ph.lr = self.lr
         ph.lr2d = self.lr2d
-        ph.scale = self.scale
         ph.L = self.L
         ph.perp = self.perp
         ph.eps = self.eps
+
+        if self.alpha is None:
+            ph.alpha = self.alpha
+        else:
+            ph.alpha = self.alpha * (np.linalg.norm(ph.a[0])
+                / np.linalg.norm(self.a[0])) ** 2
 
         if self.Z is None:
             ph.Z = None
@@ -990,8 +997,8 @@ def fildyn_freq(fildyn='matdyn'):
 
     with open('%s.freq' % fildyn, 'w') as freq:
         for iq in range(len(q0)):
-            (q, D), amass, at, tau, atom_order, epsil, zeu = read_flfrc('%s%d'
-                % (fildyn, iq + 1))
+            (q, D), amass, at, tau, atom_order, alph, epsil, zeu = read_flfrc(
+                '%s%d' % (fildyn, iq + 1))
 
             divide_by_mass(D, amass)
 
@@ -1027,6 +1034,8 @@ def read_flfrc(flfrc):
         Atomic positions/basis vectors.
     list of str
         Atomic symbols.
+    float
+        Ewald parameter.
     ndarray
         Dielectric tensor.
     ndarray
@@ -1110,7 +1119,7 @@ def read_flfrc(flfrc):
         for index in ityp:
             atom_order.append(atm[index].strip())
 
-        epsil = zeu = None
+        alph = epsil = zeu = None
 
         if dyn:
             # read sections of dynamical-matrix file:
@@ -1156,9 +1165,14 @@ def read_flfrc(flfrc):
         else:
             # read macroscopic dielectric function and effective charges:
 
-            lrigid = cells()[0] == 'T'
+            tmp = cells()
+
+            lrigid = tmp[0] == 'T'
 
             if lrigid:
+                if len(tmp) > 1:
+                    alph = float(tmp[1])
+
                 epsil = table(3)
 
                 zeu = np.empty((nat, 3, 3))
@@ -1187,9 +1201,11 @@ def read_flfrc(flfrc):
 
     # return force constants, masses, and geometry:
 
-    return [(q, D) if dyn else phid, amass, at, tau, atom_order, epsil, zeu]
+    return [(q, D) if dyn else phid,
+        amass, at, tau, atom_order, alph, epsil, zeu]
 
-def write_flfrc(flfrc, phid, amass, at, tau, atom_order, epsil=None, zeu=None):
+def write_flfrc(flfrc, phid, amass, at, tau, atom_order,
+        alph=None, epsil=None, zeu=None):
     """Write force constants in real or reciprocal space.
 
     Parameters
@@ -1207,6 +1223,8 @@ def write_flfrc(flfrc, phid, amass, at, tau, atom_order, epsil=None, zeu=None):
         Atomic positions/basis vectors.
     atom_order : list of str
         Atomic symbols.
+    alph : float
+        Ewald parameter.
     epsil : ndarray
         Dielectric tensor.
     zeu : ndarray
@@ -1291,7 +1309,12 @@ def write_flfrc(flfrc, phid, amass, at, tau, atom_order, epsil=None, zeu=None):
         lrigid = epsil is not None and zeu is not None
 
         if not dyn:
-            data.write('%2s\n' % ('T' if lrigid else 'F'))
+            data.write('%2s' % ('T' if lrigid else 'F'))
+
+            if lrigid and alph is not None:
+                data.write(' %g' % alph)
+
+            data.write('\n')
 
         if lrigid:
             if dyn:
@@ -1414,7 +1437,12 @@ def read_flfrc_xml(flfrc):
 
     ifc = root.find('INTERATOMIC_FORCE_CONSTANTS')
 
-    if ifc:
+    if ifc is not None:
+        alph = ifc.find('alpha_ewald')
+
+        if alph is not None:
+            alph = float(alph.text)
+
         nr1, nr2, nr3 = map(int, ifc.find('MESH_NQ1_NQ2_NQ3').text.split())
 
         phid = np.empty((nat, nat, nr1, nr2, nr3, 3, 3))
@@ -1433,6 +1461,8 @@ def read_flfrc_xml(flfrc):
 
                             phid[na1, na2, m1, m2, m3] = tmp
     else:
+        alph = None
+
         nq = int(geometry.find('NUMBER_OF_Q').text)
 
         q = np.empty((nq, 3))
@@ -1453,7 +1483,8 @@ def read_flfrc_xml(flfrc):
 
                     D[iq, group(na1), group(na2)] = tmp
 
-    return [phid if ifc else (q, D), amass, at, tau, atom_order, epsil, zeu]
+    return [phid if ifc else (q, D),
+        amass, at, tau, atom_order, alph, epsil, zeu]
 
 def read_quadrupole_fmt(quadrupole_fmt):
     """Read file *quadrupole.fmt* suitable for ``epw.x``.
@@ -1923,7 +1954,7 @@ def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
     else:
         data = None
 
-    amass, at, tau, atom_order, epsil, zeu = comm.bcast(data)
+    amass, at, tau, atom_order, alph, epsil, zeu = comm.bcast(data)
 
     # transform q points from crystal to Cartesian coordinates:
 
@@ -1956,7 +1987,7 @@ def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
         Gamma = np.all(q_cart[iq] == 0)
 
         write_flfrc(fildynq, (q_cart[iq:iq + 1], D[iq:iq + 1]), amass, at, tau,
-            atom_order, epsil if Gamma else None, zeu if Gamma else None)
+            atom_order, alph, epsil if Gamma else None, zeu if Gamma else None)
 
         os.system('{0}q2qstar.x {1} {1} > /dev/null'.format(qe_prefix, fildynq))
 
