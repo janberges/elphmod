@@ -9,25 +9,44 @@ import numpy as np
 
 from . import bravais, diagrams, dos, misc, occupations
 
-def Tc(lamda, wlog, mustar=0.1):
+def Tc(lamda, wlog, mustar=0.1, w2nd=None, correct=False):
     """Calculate critical temperature using McMillan's formula.
+
+    See Eqs. (2) and (34) by Allen and Dynes, Phys. Rev. B 12, 905 (1975).
 
     Parameters
     ----------
     lamda : float
         Effective electron-phonon coupling strength.
     wlog : float
-        Effective phonon energy in eV.
+        Logarithmic average phonon energy in eV.
     mustar : float
         Coulomb pseudopotential.
+    w2nd : bool, default None
+        Second-moment average phonon energy used for shape correction in eV.
+    correct : bool, default False
+        Apply Allen and Dynes' strong-coupling and, if `w2nd` is given, shape
+        corrections of Eq. (34)?
 
     Returns
     -------
     float
         Critical temperature in kelvin.
     """
-    return wlog / (1.20 * misc.kB) * np.exp(-1.04 * (1 + lamda)
+    Tc = wlog / (1.20 * misc.kB) * np.exp(-1.04 * (1 + lamda)
         / max(1e-3, (lamda - mustar * (1 + 0.62 * lamda))))
+
+    if correct:
+        # strong-coupling correction:
+        Lamda = 2.46 * (1 + 3.8 * mustar)
+        Tc *= np.cbrt(1 + (lamda / Lamda) ** 1.5)
+
+        # shape correction:
+        if w2nd is not None:
+            Lamda = 1.82 * (1 + 6.3 * mustar) * w2nd / wlog
+            Tc *= 1 + (w2nd / wlog - 1) * lamda ** 2 / (lamda ** 2 + Lamda ** 2)
+
+    return Tc
 
 def McMillan(nq, e, w2, g2, eps=1e-10, mustar=0.0, tetra=False, kT=0.025,
         f=occupations.fermi_dirac):
