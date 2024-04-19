@@ -1376,6 +1376,8 @@ def read_flfrc_xml(flfrc):
         with open(flfrc) as data:
             xml = data.read()
 
+            # handle QE 7.2 XML issue (https://gitlab.com/QEF/q-e/-/issues/582):
+
             xml = xml.replace('</root>', '</Root>')
 
             if not xml.rstrip().endswith('</Root>'):
