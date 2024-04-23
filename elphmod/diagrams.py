@@ -1386,7 +1386,7 @@ def fan_migdal_self_energy(k, e, w, g2, omega, kT=0.025,
     return Sigma
 
 def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10,
-        occupations=occupations.fermi_dirac, comm=comm):
+        occupations=occupations.fermi_dirac, dc_only=False, comm=comm):
     r"""Calculate Green-Kubo optical conductivity (to be tested).
 
     See Eq. (8) by Abramovitch et al., Phys. Rev. Mater. 7, 093801 (2023).
@@ -1406,6 +1406,8 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10,
         Negligible difference between two floating-point numbers.
     occupations : function
         Particle distribution as a function of energy divided by `kT`.
+    dc_only : bool
+        Only compute DC resistivity tensor (zero-frequency limit)?
 
     Returns
     -------
@@ -1419,7 +1421,7 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10,
 
     iw0 = np.argmin(abs(omega))
 
-    if abs(omega[iw0]) > eps:
+    if abs(omega[iw0]) > eps and not dc_only:
         info('Frequency sampling should include zero!', error=True)
 
     nbnd = A.shape[-2]
@@ -1434,30 +1436,34 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10,
 
     prefactor = 4 * np.pi * domega / nq # including e^2 = 2 and 2 / nq
 
-    sizes, bounds = MPI.distribute(len(omega), bounds=True, comm=comm)
+    if dc_only:
+        sigma = prefactor * np.sum(d * np.sum(vA[:, :, :, np.newaxis]
+            * vA[:, :, np.newaxis, :], axis=0), axis=0)
+    else:
+        sizes, bounds = MPI.distribute(len(omega), bounds=True, comm=comm)
 
-    my_sigma = np.empty((sizes[comm.rank], ndim, ndim))
+        my_sigma = np.empty((sizes[comm.rank], ndim, ndim))
 
-    status = misc.StatusBar(sizes[comm.rank],
-        title='calculate Green-Kubo optical conductivity')
+        status = misc.StatusBar(sizes[comm.rank],
+            title='calculate Green-Kubo optical conductivity')
 
-    for my_iw, iw in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
-        diw = iw - iw0
-        diwm = max(0, -diw)
-        diwp = max(0, diw)
-        slmp = slice(diwm, len(omega) - diwp)
-        slpm = slice(diwp, len(omega) - diwm)
+        for my_iw, iw in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
+            diw = iw - iw0
+            diwm = max(0, -diw)
+            diwp = max(0, diw)
+            slmp = slice(diwm, len(omega) - diwp)
+            slpm = slice(diwp, len(omega) - diwm)
 
-        a = d if iw == iw0 else (f[slmp] - f[slpm]) / omega[iw]
-        b = np.sum(vA[:, slmp, :, np.newaxis] * vA[:, slpm, np.newaxis, :],
-            axis=0)
+            a = d if iw == iw0 else (f[slmp] - f[slpm]) / omega[iw]
+            b = np.sum(vA[:, slmp, :, np.newaxis] * vA[:, slpm, np.newaxis, :],
+                axis=0)
 
-        my_sigma[my_iw] = prefactor * np.sum(a * b, axis=0)
+            my_sigma[my_iw] = prefactor * np.sum(a * b, axis=0)
 
-        status.update()
+            status.update()
 
-    sigma = np.empty((len(omega), ndim, ndim))
+        sigma = np.empty((len(omega), ndim, ndim))
 
-    comm.Allgatherv(my_sigma, (sigma, comm.allgather(my_sigma.size)))
+        comm.Allgatherv(my_sigma, (sigma, comm.allgather(my_sigma.size)))
 
     return sigma

@@ -85,7 +85,7 @@ for ikT in range(len(kT)):
     A = -G.imag / np.pi
 
     sigma[ikT] = elphmod.diagrams.green_kubo_conductivity(v, A, omega,
-        kT[ikT])[np.argmin(abs(omega)), 0, 0]
+        kT[ikT], dc_only=True)[0, 0]
 
 sigma /= abs(np.dot(ph.a[0], np.cross(ph.a[1], ph.a[2])))
 
