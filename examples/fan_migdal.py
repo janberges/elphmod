@@ -39,7 +39,7 @@ info('Calculate spectral function..')
 
 kT = 1000 * elphmod.misc.kB / elphmod.misc.Ry
 
-omega = np.linspace(1.5 * e.min(), 1.5 * e.max(), nq)
+omega, domega = np.linspace(1.5 * e.min(), 1.5 * e.max(), nq, retstep=True)
 
 Sigma = elphmod.diagrams.fan_migdal_self_energy(k.reshape((-1, 1)), e, w, g2,
     omega + 1j * eta, kT)
@@ -48,18 +48,28 @@ G = 1 / (omega[np.newaxis, np.newaxis, :] - e[:, :, np.newaxis] - Sigma)
 
 A = -G.imag / np.pi
 
+integral = A.sum(axis=2) * domega
+
 if comm.rank == 0:
     ik = nq // 2 + 1
 
-    plt.imshow(A[:ik, 0, ::-1].T, extent=(0.0, np.pi, omega[0], omega[-1]),
+    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True,
+        gridspec_kw=dict(height_ratios=(3, 1)))
+
+    ax1.set_ylabel('Electron energy (Ry)')
+    ax2.set_ylabel('Integral')
+    ax2.set_xlabel('Wave vector')
+    ax2.set_xticks([0.0, np.pi])
+    ax2.set_xticklabels('GX')
+
+    ax1.imshow(A[:ik, 0, ::-1].T, extent=(0.0, np.pi, omega[0], omega[-1]),
         cmap='plasma')
+    ax1.plot(k[:ik], e[:ik], 'w--')
+    ax1.axis('auto')
 
-    plt.plot(k[:ik], e[:ik], 'w--')
+    ax2.plot(k[:ik], integral[:ik, 0])
+    ax2.set_ylim(0.0, 2 * el.size)
 
-    plt.ylabel('Electron energy (Ry)')
-    plt.xlabel('Wave vector')
-    plt.xticks([0.0, np.pi], [r'$\Gamma$', 'X'])
-    plt.axis('auto')
     plt.show()
 
 info('Calculate resistivity..')
