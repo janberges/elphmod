@@ -1352,7 +1352,7 @@ def fan_migdal_self_energy(k, e, w, g2, omega, kT=0.025,
     f = np.tile(f, (2, 2, 2, 1, 1, 1, 1))
 
     scale = nq / (2 * np.pi)
-    prefactor = 2 / nq.prod()
+    prefactor = 1 / nq.prod()
 
     sizes, bounds = MPI.distribute(nK, bounds=True, comm=comm)
 
