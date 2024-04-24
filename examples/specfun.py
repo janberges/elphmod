@@ -96,7 +96,7 @@ if comm.rank == 0:
         gridspec_kw=dict(height_ratios=(3, 1)))
 
     ax1.set_ylabel('Phonon energy (Ry)')
-    ax2.set_ylabel('Integrated phonon spectral function')
+    ax2.set_ylabel('Integral')
     ax2.set_xlabel('Wave vector')
     ax2.set_xticks(x[GMKG])
     ax2.set_xticklabels('GMKG')
