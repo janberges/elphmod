@@ -376,7 +376,7 @@ def dispersion_full_nosym(matrix, size, vectors=False, order=False,
                 for i in range(len(size))]
 
             kx, ky, kz = np.meshgrid(*ktriv, indexing='ij')
-            k = np.array([kx, ky, kz]).transpose((1, 2, 3, 0))
+            k = np.array([kx, ky, kz]).transpose((1, 2, 3, 0)).copy()
         else:
             k = [[(k1, k2) for k2 in range(size)] for k1 in range(size)]
 
