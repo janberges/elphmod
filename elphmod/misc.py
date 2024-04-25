@@ -76,6 +76,12 @@ kB = kBSI / eVSI
 uRy = uSI / (2 * meSI)
 """Atomic mass constant (2 me)."""
 
+ohmRy = eVSI ** 2 / 2 / hbarSI
+"""Resistance unit ohm (Rydberg atomic units)."""
+
+ohmmRy = 1e10 / a0 * ohmRy
+"""Resistivity unit ohm metre (Rydberg atomic units)."""
+
 colors = collections.defaultdict(lambda: (250, 22, 145),
     H=(255, 255, 255), He=(217, 255, 255), Li=(204, 128, 255),
     Be=(194, 255, 0), B=(255, 181, 181), C=(144, 144, 144),

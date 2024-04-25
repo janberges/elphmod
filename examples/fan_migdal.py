@@ -100,8 +100,9 @@ for ikT in range(len(kT)):
 sigma /= abs(np.dot(ph.a[0], np.cross(ph.a[1], ph.a[2])))
 
 if comm.rank == 0:
-    plt.plot(kT / elphmod.misc.kB * elphmod.misc.Ry, 1 / sigma, 'k')
+    plt.plot(kT / elphmod.misc.kB * elphmod.misc.Ry,
+        1e6 / elphmod.misc.ohmmRy / sigma, 'k')
 
-    plt.ylabel('Resistivity (a.u.)')
+    plt.ylabel('Resistivity (\u03bc\u03a9m)')
     plt.xlabel('Temperature (K)')
     plt.show()
