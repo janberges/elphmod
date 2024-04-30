@@ -1115,7 +1115,8 @@ def read_wigner_file(name, old_ws=False, nat=None):
     name : str
         Name of file with Wigner-Seitz data.
     old_ws : bool
-        Use previous definition of Wigner-Seitz cells?
+        Use previous definition of Wigner-Seitz cells? This is required if
+        `patches/qe-6.3-backports.patch` has been used.
     nat : int
         Number of atoms per unit cell.
 

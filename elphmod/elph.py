@@ -33,7 +33,8 @@ class Model:
     dk, dg : ndarray
         Degeneracies of Wigner-Seitz points if `wigner` is omitted.
     old_ws : bool
-        Use previous definition of Wigner-Seitz cells?
+        Use previous definition of Wigner-Seitz cells? This is required if
+        `patches/qe-6.3-backports.patch` has been used.
     divide_mass : bool
         Divide electron-phonon coupling by square root of atomic masses?
     divide_ndegen : bool
