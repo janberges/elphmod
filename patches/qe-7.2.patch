@@ -356,7 +356,7 @@ index 268ed5b82..02921cef3 100644
 +  LOGICAL :: elph, elph_mat, elph_simple, elph_epa, elph_defpot
    INTEGER :: elph_nbnd_min, elph_nbnd_max
 diff --git a/PHonon/PH/elphon.f90 b/PHonon/PH/elphon.f90
-index 47f6a1ae5..f2fea24e6 100644
+index 47f6a1ae5..7c733b65e 100644
 --- a/PHonon/PH/elphon.f90
 +++ b/PHonon/PH/elphon.f90
 @@ -1808 +1808,61 @@ subroutine lint ( nsym, s, minus_q, at, bg, npk, k1,k2,k3, &
