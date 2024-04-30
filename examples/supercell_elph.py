@@ -30,7 +30,7 @@ else:
     el = elphmod.el.Model('phrenorm_graphene/graphene')
     ph = elphmod.ph.Model('phrenorm_graphene/dfpt.ifc', apply_asr_simple=True)
     elph = elphmod.elph.Model('phrenorm_graphene/dfpt.epmatwp',
-        'phrenorm_graphene/wigner.dat', el, ph, divide_mass=False)
+        'phrenorm_graphene/wigner.fmt', el, ph, divide_mass=False)
 
 elph.data *= elphmod.misc.Ry / elphmod.misc.a0
 

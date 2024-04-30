@@ -12,7 +12,7 @@ el = elphmod.el.Model('TaS2')
 mu = elphmod.el.read_Fermi_level('pw.out')
 ph = elphmod.ph.Model('ifc', apply_asr_simple=True)
 ph.data *= elphmod.misc.Ry ** 2
-elph = elphmod.elph.Model('work/TaS2.epmatwp', 'wigner.dat', el, ph)
+elph = elphmod.elph.Model('work/TaS2.epmatwp', 'wigner.fmt', el, ph)
 elph.data *= elphmod.misc.Ry ** 1.5
 
 q = sorted(elphmod.bravais.irreducibles(nq))

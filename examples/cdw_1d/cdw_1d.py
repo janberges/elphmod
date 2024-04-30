@@ -9,7 +9,7 @@ import scipy.optimize
 
 el = elphmod.el.Model('C', rydberg=True)
 ph = elphmod.ph.Model('dyn.xml', divide_mass=False, apply_asr_simple=True)
-elph = elphmod.elph.Model('work/C.epmatwp', 'wigner.dat',
+elph = elphmod.elph.Model('work/C.epmatwp', 'wigner.fmt',
     el, ph, divide_mass=False)
 
 elph = elph.supercell(1, 1, 2)

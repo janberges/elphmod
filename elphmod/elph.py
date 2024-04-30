@@ -757,19 +757,32 @@ class Model:
             Filename stem.
         """
         if comm.rank == 0:
-            with open('%s.wigner' % prefix, 'wb') as data:
+            with open('%s.wigner' % prefix, 'w') as data:
                 if self.divide_ndegen:
-                    dim = dim2 = 1
-                    dk = np.ones(len(self.Rk), dtype=int)
-                    dg = np.ones(len(self.Rg), dtype=int)
+                    dims = dims2 = 1
+                    dk = np.ones((dims, dims, len(self.Rk)), dtype=int)
+                    dg = np.ones((1, dims, dims2, len(self.Rg)), dtype=int)
                 else:
-                    dim, dim2 = self.dg.shape[1:3]
+                    dims, dims2 = self.dg.shape[1:3]
                     dk = self.dk
-                    dg = self.dg.transpose(2, 3, 0, 1)
+                    dg = self.dg
 
-                for obj in [dim, dim2, len(self.Rk), self.Rk, dk,
-                        len(self.Rg), self.Rg, dg]:
-                    np.array(obj, dtype=np.int32).tofile(data)
+                data.write('%d 0 %d %d %d\n'
+                    % (len(self.Rk), len(self.Rg), dims, dims2))
+
+                for ir in range(len(self.Rk)):
+                    data.write('%6d %5d %5d\n' % tuple(self.Rk[ir]))
+
+                    for iw in range(dims):
+                        data.write(' '.join('%d' % dk[iw2, iw, ir]
+                            for iw2 in range(dims)) + '\n')
+
+                for ir in range(len(self.Rg)):
+                    data.write('%6d %5d %5d\n' % tuple(self.Rg[ir]))
+
+                    for iw in range(dims):
+                        data.write(' '.join('%d' % dg[0, iw, na, ir]
+                            for na in range(dims2)) + '\n')
 
             with open('%s.epmatwp' % prefix, 'wb') as data:
                 epmatwp = self.data.reshape((len(self.Rg), self.ph.nat, 3,

@@ -13,18 +13,47 @@ index dbf4f17cb..a1812a5db 100644
 +         ../../PP/src/libpp.a
  LIBOBJS =../../LAXlib/libqela.a ../../UtilXlib/libutil.a ../../clib/clib.a
 diff --git a/EPW/src/ephwann_shuffle.f90 b/EPW/src/ephwann_shuffle.f90
-index b8f005982..1b071abed 100644
+index b8f005982..e080f6607 100644
 --- a/EPW/src/ephwann_shuffle.f90
 +++ b/EPW/src/ephwann_shuffle.f90
-@@ -390,2 +390,11 @@
+@@ -182,2 +182,4 @@
+   !! Error status
++  INTEGER :: iuwigner
++  !! File unit for writing Wigner-Seitz data
+   INTEGER :: nrr_k
+@@ -390,2 +392,35 @@
    nrr_g = SIZE(irvec_g(1, :))
 +  !
 +  IF (ionode) THEN
-+    OPEN (13, file='wigner.dat', action='write', status='replace', access='stream')
-+    WRITE (13) dims, dims2
-+    WRITE (13) nrr_k, irvec_k, ndegen_k
-+    WRITE (13) nrr_g, irvec_g, ndegen_g
-+    CLOSE (13)
++    OPEN(NEWUNIT=iuwigner, FILE='wigner.fmt', ACTION='write', STATUS='replace')
++    !
++    WRITE (iuwigner, 1) nrr_k, nrr_q, nrr_g, dims, dims2
++    !
++    DO ir = 1, nrr_k
++      WRITE (iuwigner, 2) irvec_k(:, ir), wslen_k(ir)
++      DO iw = 1, dims
++        WRITE (iuwigner, 1) ndegen_k(ir, iw, :)
++      ENDDO
++    ENDDO
++    !
++    DO ir = 1, nrr_q
++      WRITE (iuwigner, 2) irvec_q(:, ir), wslen_q(ir)
++      DO na = 1, dims2
++        WRITE (iuwigner, 1) ndegen_q(ir, na, :)
++      ENDDO
++    ENDDO
++    !
++    DO ir = 1, nrr_g
++      WRITE (iuwigner, 2) irvec_g(:, ir), wslen_g(ir)
++      DO iw = 1, dims
++        WRITE (iuwigner, 1) ndegen_g(iw, ir, :)
++      ENDDO
++    ENDDO
++    !
++    CLOSE(iuwigner)
++    !
++    1 FORMAT(1000(I0, :, 1X)) ! 1000 instead of * for Fortran < 2008
++    2 FORMAT(3I6, ES26.17E3) ! should preserve double precision
 +  ENDIF
 +  !
    IF (use_ws) THEN

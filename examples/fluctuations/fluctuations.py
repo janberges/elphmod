@@ -22,7 +22,7 @@ info('Load tight-binding model, mass-spring model, and coupling')
 el = elphmod.el.Model('TaS2')
 mu = elphmod.el.read_Fermi_level('pw.out')
 ph = elphmod.ph.Model('ifc', apply_asr_simple=True)
-elph = elphmod.elph.Model('work/TaS2.epmatwp', 'wigner.dat', el, ph)
+elph = elphmod.elph.Model('work/TaS2.epmatwp', 'wigner.fmt', el, ph)
 
 info('Diagonalize Hamiltonian and dynamical matrix and sample coupling')
 

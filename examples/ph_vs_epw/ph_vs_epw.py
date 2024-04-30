@@ -18,7 +18,7 @@ b = elphmod.bravais.reciprocals(*a)
 
 el = elphmod.el.Model('TaS2')
 ph = elphmod.ph.Model('dyn')
-elph = elphmod.elph.Model('work/TaS2.epmatwp', 'wigner.dat', el, ph,
+elph = elphmod.elph.Model('work/TaS2.epmatwp', 'wigner.fmt', el, ph,
     divide_mass=False)
 
 with open('ph.out') as lines:
