@@ -1,9 +1,9 @@
-# Patches for Quantum ESPRESSO
+# Patches
 
 Some parts of elphmod (including examples) process the output of a modified
-version of Quantum ESPRESSO (QE). This directory contains the corresponding
-patches for different versions of QE. To apply them, go to the QE repository
-and run, e.g., the following commands:
+version of Quantum ESPRESSO (QE). We provide the corresponding patches for
+different versions of QE. To apply them, go to the QE repository and run, e.g.,
+the following commands:
 
     git checkout qe-7.3
     git apply /path/to/elphmod/patches/qe-7.3.patch

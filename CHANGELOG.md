@@ -1,4 +1,4 @@
-# Changes
+# Changelog
 
 See [Git commits](https://github.com/janberges/elphmod/commits) for more
 detailed list of changes.

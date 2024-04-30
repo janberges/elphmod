@@ -23,6 +23,15 @@ Modules
    modules/misc
    modules/models
 
+Further information
+-------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   pages/changelog
+   pages/patches
+
 Indices and tables
 ------------------
 
