@@ -80,8 +80,10 @@ class Model:
             D_{\vec R i j} = \frac{\hbar^2}{\sqrt{M_i M_j}}
                 \frac{\partial^2 E}{\partial u_{0 i} \partial u_{\vec R j}}
 
-        If `divide_mass` is ``False``, the prefactor :math:`\hbar^2 / \sqrt{M_i
-        M_j}` is absent and the units are Ry/bohr\ :sup:`2` instead.
+        If not :attr:`divide_mass`, the prefactor :math:`\hbar^2 / \sqrt{M_i
+        M_j}` is absent and the units are Ry/bohr\ :sup:`2` instead. If
+        :attr:`lr`, this is only the short-range component of the force
+        constants.
     M : ndarray
         Atomic masses :math:`M_i`.
     a : ndarray

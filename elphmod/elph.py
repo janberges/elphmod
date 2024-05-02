@@ -62,8 +62,9 @@ class Model:
                     \frac{\partial V}{\partial u_{\vec R i}}
                 \ket{\vec R' \beta}
 
-        If :attr:`divide_mass` is ``False``, the prefactor :math:`\hbar /
-        \sqrt{M_i}` is absent and the units are Ry/bohr instead.
+        If not :attr:`divide_mass`, the prefactor :math:`\hbar / \sqrt{M_i}` is
+        absent and the units are Ry/bohr instead. If :attr:`ph.lr`, this is only
+        the short-range component of the matrix elements.
     divide_mass : bool
         Has real-space coupling been divided by atomic masses?
     divide_ndegen : bool
