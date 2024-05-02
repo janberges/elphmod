@@ -1226,7 +1226,7 @@ def read_wigner_file(name, old_ws=False, nat=None):
 
     return data
 
-def wigner(nr1, nr2, nr3, at, tau, tau2=None, eps=1e-7, sgn=+1):
+def wigner(nr1, nr2, nr3, at, tau, tau2=None, eps=1e-7, sgn=+1, nsc=2):
     """Determine Wigner-Seitz lattice vectors with degenercies and lengths.
 
     Parameters
@@ -1244,6 +1244,9 @@ def wigner(nr1, nr2, nr3, at, tau, tau2=None, eps=1e-7, sgn=+1):
     sgn : int
         Do the lattice vectors shift the first (``-1``) or second (``+1``)
         orbital/atom?
+    nsc : int
+        Number of supercells per dimension and direction where Wigner-Seitz
+        lattice vectors are searched for.
 
     Returns
     -------
@@ -1257,7 +1260,7 @@ def wigner(nr1, nr2, nr3, at, tau, tau2=None, eps=1e-7, sgn=+1):
     if tau2 is None:
         tau2 = tau
 
-    supercells = range(-1, 3) # supercell shifts for Wigner-Seitz search
+    supercells = range(-nsc, nsc) # intentionally asymmetric (mesh is positive)
 
     data = dict()
 
@@ -1273,10 +1276,10 @@ def wigner(nr1, nr2, nr3, at, tau, tau2=None, eps=1e-7, sgn=+1):
 
                 # determine equivalent unit cells within considered supercells:
 
-                copies = np.array([[
-                        M1 * nr1 + sgn * m1,
-                        M2 * nr2 + sgn * m2,
-                        M3 * nr3 + sgn * m3,
+                copies = sgn * np.array([[
+                        M1 * nr1 + m1,
+                        M2 * nr2 + m2,
+                        M3 * nr3 + m3,
                         ]
                     for M1 in supercells
                     for M2 in supercells
@@ -1285,7 +1288,7 @@ def wigner(nr1, nr2, nr3, at, tau, tau2=None, eps=1e-7, sgn=+1):
 
                 # calculate corresponding translation vectors:
 
-                shifts = [np.dot(copy, at) for copy in copies]
+                shifts = copies.dot(at)
 
                 for i in range(len(tau)):
                     for j in range(len(tau2)):
