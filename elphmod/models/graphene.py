@@ -59,7 +59,7 @@ def rotate(A, phi):
 
     R = np.array([[c, -s, 0], [s,  c, 0], [0, 0, 1]])
 
-    return R.dot(A).dot(R.T)
+    return R @ A @ R.T
 
 K = np.diag([Cx, Cy, Cz])
 

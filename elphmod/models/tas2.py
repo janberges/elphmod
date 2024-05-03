@@ -92,7 +92,7 @@ def R(phi):
         ])
 
 def hopping(t0, phi):
-    return np.einsum('ab,bc,cd->ad', R(phi), t0, R(-phi))
+    return R(phi) @ t0 @ R(-phi)
 
 def dR_dphi(phi):
     return 2 * np.array([
@@ -104,10 +104,7 @@ def dR_dphi(phi):
 def derivative(t0, phi):
     dt_dr = -beta / a * hopping(t0, phi)
 
-    dt_dphi = (
-          np.einsum('ab,bc,cd->ad', dR_dphi(phi), t0, R(-phi))
-        - np.einsum('ab,bc,cd->ad', R(phi), t0, dR_dphi(-phi))
-        )
+    dt_dphi = dR_dphi(phi) @ t0 @ R(-phi) - R(phi) @ t0 @ dR_dphi(-phi)
 
     dt_dx = dt_dr * np.cos(phi) - dt_dphi / a * np.sin(phi)
     dt_dy = dt_dr * np.sin(phi) + dt_dphi / a * np.cos(phi)
@@ -143,7 +140,7 @@ def R(phi):
         ])
 
 def rotate(matrix, phi):
-    return R(phi).dot(matrix).dot(R(-phi))
+    return R(phi) @ matrix @ R(-phi)
 
 def xreflect(matrix):
     matrix = matrix.copy()
