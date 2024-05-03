@@ -84,7 +84,7 @@ t0 = np.array([
     [-t_z2_xy,  -t_x2y2_xy, t_xy     ],
     ])
 
-def R(phi):
+def R2(phi):
     return np.array([
         [1,               0,                0],
         [0, np.cos(2 * phi), -np.sin(2 * phi)],
@@ -92,9 +92,9 @@ def R(phi):
         ])
 
 def hopping(t0, phi):
-    return R(phi) @ t0 @ R(-phi)
+    return R2(phi) @ t0 @ R2(-phi)
 
-def dR_dphi(phi):
+def dR2_dphi(phi):
     return 2 * np.array([
         [0,                0,                0],
         [0, -np.sin(2 * phi), -np.cos(2 * phi)],
@@ -104,7 +104,7 @@ def dR_dphi(phi):
 def derivative(t0, phi):
     dt_dr = -beta / a * hopping(t0, phi)
 
-    dt_dphi = dR_dphi(phi) @ t0 @ R(-phi) - R(phi) @ t0 @ dR_dphi(-phi)
+    dt_dphi = dR2_dphi(phi) @ t0 @ R2(-phi) - R2(phi) @ t0 @ dR2_dphi(-phi)
 
     dt_dx = dt_dr * np.cos(phi) - dt_dphi / a * np.sin(phi)
     dt_dy = dt_dr * np.sin(phi) + dt_dphi / a * np.cos(phi)
