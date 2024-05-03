@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Copyright (C) 2017-2024 elphmod Developers
 # This program is free software under the terms of the GNU GPLv3 or later.
@@ -190,29 +189,33 @@ file.close()
 
 #%% Plot structures
 
-# for atom_index in range(nat):
-#     if at_sym[atom_index]==transition_metal:
-#         plt.plot(R_sym[atom_index,0], R_sym[atom_index,1], 'o',
-#             color='cyan', markersize=15)
-#     elif at_sym[atom_index]==chalcogen:
-#         plt.plot(R_sym[atom_index,0], R_sym[atom_index,1], 'o',
-#             color='orangered', markersize=15)
+for atom_index in range(nat):
+    if at_sym[atom_index] == transition_metal:
+        plt.plot(R_sym[atom_index, 0], R_sym[atom_index, 1], 'o',
+            color='cyan', markersize=15)
+    elif at_sym[atom_index] == chalcogen:
+        plt.plot(R_sym[atom_index, 0], R_sym[atom_index, 1], 'o',
+            color='orangered', markersize=15)
 
-# for atom_index in range(nat):
-#     if at_cdw[atom_index]==transition_metal:
-#         plt.plot(R_cdw[atom_index,0], R_cdw[atom_index,1], 'o',
-#             color='darkblue', markersize=15)
-#     elif at_cdw[atom_index]==chalcogen:
-#         plt.plot(R_cdw[atom_index,0], R_cdw[atom_index,1], 'o',
-#             color='gold', markersize=15)
+for atom_index in range(nat):
+    if at_cdw[atom_index] == transition_metal:
+        plt.plot(R_cdw[atom_index, 0], R_cdw[atom_index, 1], 'o',
+            color='darkblue', markersize=15)
+    elif at_cdw[atom_index] == chalcogen:
+        plt.plot(R_cdw[atom_index, 0], R_cdw[atom_index, 1], 'o',
+            color='gold', markersize=15)
 
-# Start_Pos = (0,0)
-# plt.plot([0, A1[0]], [0, A1[1]] , color='black')
-# plt.plot([0, A2[0]], [0, A2[1]],  color='black')
-# plt.plot([0, A1[0]], [0, A1[1]] , color='black')
-# plt.plot([0, A2[0]], [0, A2[1]],  color='black')
+Start_Pos = (0, 0)
+plt.plot([0, A1[0]], [0, A1[1]], color='black')
+plt.plot([0, A2[0]], [0, A2[1]], color='black')
+plt.plot([0, A1[0]], [0, A1[1]], color='black')
+plt.plot([0, A2[0]], [0, A2[1]], color='black')
 
-# plt.plot([Start_Pos[0]+A2[0],Start_Pos[0]+A2[0]+A1[0]],
-#     [Start_Pos[1]+A2[1],Start_Pos[1]+A2[1]+A1[1]], color='black')
-# plt.plot([Start_Pos[0]+A1[0],Start_Pos[0]+A2[0]+A1[0]],
-#     [Start_Pos[1]+A1[1],Start_Pos[1]+A2[1]+A1[1]], color='black')
+plt.plot([Start_Pos[0] + A2[0], Start_Pos[0] + A2[0] + A1[0]],
+    [Start_Pos[1] + A2[1], Start_Pos[1] + A2[1] + A1[1]], color='black')
+plt.plot([Start_Pos[0] + A1[0], Start_Pos[0] + A2[0] + A1[0]],
+    [Start_Pos[1] + A1[1], Start_Pos[1] + A2[1] + A1[1]], color='black')
+
+plt.axis('off')
+plt.axis('equal')
+plt.show()

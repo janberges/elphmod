@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Copyright (C) 2017-2024 elphmod Developers
 # This program is free software under the terms of the GNU GPLv3 or later.
@@ -10,10 +9,7 @@ Created on Sun Mar 14 15:15:43 2021
 @author: arne
 """
 
-import elphmod
-import re
 import numpy as np
-import sys
 import matplotlib.pyplot as plt
 
 # Note: returns angle in degree
