@@ -31,5 +31,10 @@ rst_epilog = '''
 '''
 
 html_theme = 'sphinx_rtd_theme'
+html_logo = '../logo/elphmod.svg'
+html_theme_options = {
+    'logo_only': True,
+    'style_nav_header_background': '#e7f2fa',
+    }
 
 numpydoc_show_class_members = False
