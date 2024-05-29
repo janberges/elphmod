@@ -1,8 +1,4 @@
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5919991.svg)](https://doi.org/10.5281/zenodo.5919991)
-
 # Python modules for electron-phonon models
-
-![elphmod logo](https://raw.githubusercontent.com/janberges/elphmod/master/logo/elphmod.svg)
 
 elphmod is a collection of Python modules to handle coupled tight-binding and
 mass-spring models derived from first principles. It provides interfaces with
@@ -32,19 +28,14 @@ To install the latest version of elphmod:
 
     python3 -m pip install elphmod
 
-Alternatively, to install the latest development version:
-
-    python3 -m pip install git+https://github.com/janberges/elphmod
-
 elphmod can optionally be run in parallel via MPI (with shared-memory support).
 Using APT and pip, you can install the corresponding dependencies as follows:
 
     sudo apt install libopenmpi-dev
     python3 -m pip install mpi4py --no-binary=mpi4py
 
-If you plan to work on elphmod itself, we recommend to download the repository,
-perform an editable installation, and also install the requirements of examples
-and documentation:
+You can also download the complete repository, perform an editable installation,
+and install the requirements of examples and documentation:
 
     git clone https://github.com/janberges/elphmod
     python3 -m pip install -e elphmod
@@ -55,7 +46,11 @@ and documentation:
 
 The documentation can be found at <https://janberges.github.io/elphmod>.
 
-Please also have a look at the [examples](examples).
+Please also have a look at the examples directory.
+
+## Reference
+
+elphmod is stored on Zenodo: <https://doi.org/10.5281/zenodo.5919991>.
 
 ## Licence
 
