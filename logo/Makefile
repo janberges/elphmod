@@ -9,11 +9,8 @@ elphmod.png: elphmod.svg
 	inkscape -w 480 -b white -o $@ $<
 	python3 optimize.py $@ $@
 
-elphmod_square.png: elphmod.png
-	convert $< -gravity center -extent 480x480 $@
-
-elphmod_banner.png: elphmod.png
-	convert $< -gravity center -extent 1280x640 $@
+elphmod_square.png elphmod_banner: elphmod.png
+	python3 pad.py
 
 clean:
 	rm -f *.aux *.log *.pdf *_*.png
