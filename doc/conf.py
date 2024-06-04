@@ -6,7 +6,12 @@ project = 'elphmod'
 copyright = '2017-2024 elphmod Developers'
 author = 'Uni Bremen'
 
-extensions = ['sphinx.ext.autodoc', 'numpydoc', 'm2r2']
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.viewcode',
+    'numpydoc',
+    'm2r2',
+    ]
 
 exclude_patterns = ['README.md']
 
