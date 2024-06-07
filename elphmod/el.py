@@ -168,6 +168,8 @@ class Model:
         self.divide_ndegen = divide_ndegen
         self.rydberg = rydberg
 
+        self.cells = [(0, 0, 0)]
+
         if seedname is None:
             return
 

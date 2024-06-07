@@ -292,6 +292,8 @@ class Model:
         self.divide_mass = divide_mass
         self.divide_ndegen = divide_ndegen
 
+        self.cells = [(0, 0, 0)]
+
         self.lr = lr and self.eps is not None and self.Z is not None
 
         lr2d_guess = self.nq[0] != self.nq[2] == 1 != self.nq[1]

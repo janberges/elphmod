@@ -96,6 +96,8 @@ class Model:
     def __init__(self, uijkl=None, vijkl_full=None, vijkl_redu=None,
             nq=None, no=None, Wmat=None, a=None, r=None, angle=120):
 
+        self.cells = [(0, 0, 0)]
+
         if uijkl is None and Wmat is None:
             return
 

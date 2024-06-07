@@ -235,6 +235,8 @@ class Model:
         self.divide_mass = divide_mass
         self.divide_ndegen = divide_ndegen
 
+        self.cells = [(0, 0, 0)]
+
         # read lattice vectors within Wigner-Seitz cell:
 
         if wigner is None:
