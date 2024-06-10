@@ -64,7 +64,7 @@ def McMillan(nq, e, w2, g2, eps=1e-10, mustar=0.0, tetra=False, kT=0.025,
         Squared electron-phonon coupling (energy to the power of three).
     eps : float
         Phonon frequencies squared below `eps` are set to `eps`; corresponding
-        coupling are set to zero.
+        couplings are set to zero.
     mustar : float
         Coulomb pseudopotential.
     tetra : bool
