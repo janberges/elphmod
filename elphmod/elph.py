@@ -933,7 +933,8 @@ def sample(g, q, nk=None, U=None, u=None, squared=False, broadcast=True,
 
     return g
 
-def transform(g, q, nk, U=None, u=None, broadcast=True, shared_memory=False):
+def transform(g, q, nk, U=None, u=None, squared=False, broadcast=True,
+        shared_memory=False):
     """Transform q- and k-dependent coupling to band basis.
 
     See Also
@@ -950,7 +951,8 @@ def transform(g, q, nk, U=None, u=None, broadcast=True, shared_memory=False):
     if u is not None:
         nph = u.shape[-1]
 
-    my_g = np.empty((sizes[comm.rank], nph, nk, nk, nel, nel), dtype=complex)
+    my_g = np.empty((sizes[comm.rank], nph, nk, nk, nel, nel),
+        dtype=float if squared else complex)
 
     scale = 2 * np.pi / nk
 
@@ -973,10 +975,15 @@ def transform(g, q, nk, U=None, u=None, broadcast=True, shared_memory=False):
                 if u is not None:
                     gqk = np.einsum('xab,xu->uab', gqk, u[iq])
 
+                if squared:
+                    gqk *= gqk.conj()
+                    gqk = gqk.real
+
                 my_g[my_iq, :, k1, k2, :, :] = gqk
 
     node, images, g = MPI.shared_array((len(q), nph, nk, nk, nel, nel),
-        dtype=complex, shared_memory=shared_memory, single_memory=not broadcast)
+        dtype=my_g.dtype, shared_memory=shared_memory,
+        single_memory=not broadcast)
 
     comm.Gatherv(my_g, (g, comm.gather(my_g.size)))
 
