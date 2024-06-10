@@ -708,7 +708,7 @@ class Driver:
         interactive = self.interactive
         self.interactive = False
 
-        if comm.size > 1 and not self.sparse:
+        if not self.sparse:
             communicators = self.elph.node, self.elph.images
 
             del self.elph.node
@@ -718,7 +718,7 @@ class Driver:
 
         self.interactive = interactive
 
-        if comm.size > 1 and not self.sparse:
+        if not self.sparse:
             self.elph.node, self.elph.images = communicators
 
     @staticmethod
