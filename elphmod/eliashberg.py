@@ -49,7 +49,7 @@ def Tc(lamda, wlog, mustar=0.1, w2nd=None, correct=False):
     return Tc
 
 def McMillan(nq, e, w2, g2, eps=1e-10, mustar=0.0, tetra=False, kT=0.025,
-        f=occupations.fermi_dirac):
+        f=occupations.fermi_dirac, correct=False):
     r"""Calculate parameters and result of McMillan's formula.
 
     Parameters
@@ -76,6 +76,8 @@ def McMillan(nq, e, w2, g2, eps=1e-10, mustar=0.0, tetra=False, kT=0.025,
     f : function
         Particle distribution as a function of energy divided by `kT`. Only used
         if `tetra` is ``False``.
+    correct : bool, default False
+        Apply Allen and Dynes' strong-coupling and shape corrections?
 
     Returns
     -------
@@ -85,6 +87,8 @@ def McMillan(nq, e, w2, g2, eps=1e-10, mustar=0.0, tetra=False, kT=0.025,
         Effective phonon frequency :math:`\langle \omega \rangle`.
     float
         Estimated critical temperature of superconductivity.
+    float, optional
+        Second-moment average phonon energy used for shape correction.
     """
     nk, nk, nel = e.shape
     nQ, nph = w2.shape
@@ -138,5 +142,10 @@ def McMillan(nq, e, w2, g2, eps=1e-10, mustar=0.0, tetra=False, kT=0.025,
 
     lamda = N0 * V.sum() / dd.sum()
     wlog = np.exp((V * np.log(w2) / 2).sum() / V.sum())
+
+    if correct:
+        w2nd = np.sqrt((V * w2).sum() / V.sum())
+
+        return lamda, wlog, Tc(lamda, wlog, mustar, w2nd, correct=True), w2nd
 
     return lamda, wlog, Tc(lamda, wlog, mustar)
