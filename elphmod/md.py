@@ -460,6 +460,73 @@ class Driver:
 
         return model
 
+    def superconductivity(self, eps=1e-10, kT=None):
+        r"""Calculate effective couplings and phonon frequencies.
+
+        Note that :attr:`d` is destroyed.
+
+        Parameters
+        ----------
+        eps : float
+            Phonon frequencies squared below `eps` are set to `eps`;
+            corresponding couplings are set to zero. If there are values below
+            `-eps` (imaginary frequencies), all return values are ``None``.
+        kT : float, optional
+            Smearing temperature. By default, :attr:`kT` is used.
+
+        Returns
+        -------
+        float
+            Effective electron-phonon coupling strength :math:`\lambda`.
+        float
+            Logarithmic average phonon energy.
+        float
+            Second-moment average phonon energy.
+        """
+        if kT is None:
+            kT = self.kT
+
+        mm12 = 1 / np.sqrt(self.elph.ph.M).repeat(3)
+
+        D = self.hessian(gamma_only=False)
+        D *= mm12[np.newaxis, np.newaxis, :]
+        D *= mm12[np.newaxis, :, np.newaxis]
+
+        w2, u = np.linalg.eigh(D)
+
+        if np.any(w2 < -eps):
+            return None, None, None
+
+        for iq in range(len(self.q)):
+            if self.node.rank == iq % self.node.size:
+                self.d[iq] *= mm12[:,
+                    np.newaxis, np.newaxis, np.newaxis, np.newaxis, np.newaxis]
+
+                self.d[iq] = np.sum(self.d[iq, :, np.newaxis] * u[iq, :, :,
+                    np.newaxis, np.newaxis, np.newaxis, np.newaxis, np.newaxis],
+                    axis=0)
+
+                self.d[iq] *= self.d[iq].conj()
+
+        g2dd, dd = diagrams.double_fermi_surface_average(self.q, self.e, self.d,
+            kT, self.f)
+
+        g2dd = g2dd.real
+
+        dangerous = np.where(w2 < eps)
+        w2[dangerous] = eps
+        g2dd[dangerous] = 0.0
+
+        N0 = self.f.delta(self.e / kT).sum() / kT / self.nk.prod()
+
+        V = g2dd / w2
+
+        lamda = N0 * V.sum() / dd.sum()
+        wlog = np.exp((V * np.log(w2) / 2).sum() / V.sum())
+        w2nd = np.sqrt((V * w2).sum() / V.sum())
+
+        return lamda, wlog, w2nd
+
     def density(self):
         """Calculate electron density for all orbitals.
 
