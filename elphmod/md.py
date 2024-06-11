@@ -39,6 +39,8 @@ class Driver:
         Note that `elph` should belong to the primitive cell in this case.
     unscreen : bool, default True
         Unscreen phonons? Otherwise, they are assumed to be unscreened already.
+    shared_memory : bool, default True
+        Store :attr:`d0` and :attr:`d` in shared memory?
     **kwargs
         Attributes to be set initially.
 
@@ -58,6 +60,8 @@ class Driver:
         Unperturbed electron Hamiltonian in orbital basis.
     d0 : ndarray
         Electron-phonon coupling in orbital basis.
+    d : ndarray
+        Electron-phonon coupling in band basis.
     sparse : bool
         Is the simulation performed on a supercell using sparse matrices?
     interactive : bool, default False
@@ -72,9 +76,12 @@ class Driver:
         For each basis atom in the first primitive cell, indices of orbitals
         located at this atom. Matching atom and orbital orders as ensured by
         :meth:`elph.Model.supercell` are required.
+    node, images : MPI.Intracomm
+        Communicators between processes that share memory or same ``node.rank``
+        if `shared_memory`.
     """
     def __init__(self, elph, kT, f, n, nk=(1,), nq=(1,), supercell=None,
-            unscreen=True, **kwargs):
+            unscreen=True, shared_memory=True, **kwargs):
         if not elph.el.rydberg:
             info("Initialize 'el' with 'rydberg=True'!", error=True)
 
@@ -108,7 +115,9 @@ class Driver:
 
         self.H0 = dispersion.sample(self.elph.el.H, self.k)
 
-        self.d0 = self.elph.sample(self.q, self.nk)
+        self.d0 = self.elph.sample(self.q, self.nk, shared_memory=shared_memory)
+        self.node, self.images, self.d = MPI.shared_array(self.d0.shape,
+            dtype=self.d0.dtype, shared_memory=shared_memory)
 
         self.u = np.zeros(self.elph.ph.size)
 
@@ -340,23 +349,25 @@ class Driver:
                     C[0, x, y] = (gx * gy).sum() + avgx * avgy
                     C[0, y, x] = C[0, x, y]
         else:
-            d = np.empty_like(self.d0[:nq])
-
             for iq in range(nq):
-                V = self.U.conj().swapaxes(-2, -1)
+                if comm.rank == 0:
+                    V = self.U.conj().swapaxes(-2, -1)
 
-                q = np.round(self.nk * self.q[iq] / (2 * np.pi)).astype(int)
+                    q = np.round(self.nk * self.q[iq] / (2 * np.pi)).astype(int)
 
-                for i in range(3):
-                    if q[i]:
-                        V = np.roll(V, -q[i], axis=i)
+                    for i in range(3):
+                        if q[i]:
+                            V = np.roll(V, -q[i], axis=i)
 
-                d[iq] = V @ self.d0[iq] @ self.U
+                    self.d[iq] = V @ self.d0[iq] @ self.U
 
-            C = diagrams.phonon_self_energy(self.q[:nq], self.e, g=d[:nq],
+                if self.node.rank == 0:
+                    self.images.Bcast(self.d[iq].view(dtype=float))
+
+            C = diagrams.phonon_self_energy(self.q[:nq], self.e, g=self.d[:nq],
                 kT=self.kT, occupations=self.f, eps=eps)
 
-            C[0] += diagrams.phonon_self_energy_fermi_shift(self.e, d[0],
+            C[0] += diagrams.phonon_self_energy_fermi_shift(self.e, self.d[0],
                 kT=self.kT, occupations=self.f)
 
         C += self.C0[:nq]
@@ -708,8 +719,13 @@ class Driver:
         interactive = self.interactive
         self.interactive = False
 
+        comms = self.node, self.images
+
+        del self.node
+        del self.images
+
         if not self.sparse:
-            communicators = self.elph.node, self.elph.images
+            elph_comms = self.elph.node, self.elph.images
 
             del self.elph.node
             del self.elph.images
@@ -718,8 +734,10 @@ class Driver:
 
         self.interactive = interactive
 
+        self.node, self.images = comms
+
         if not self.sparse:
-            self.elph.node, self.elph.images = communicators
+            self.elph.node, self.elph.images = elph_comms
 
     @staticmethod
     def load(filename):
@@ -739,9 +757,10 @@ class Driver:
         """
         driver = MPI.Buffer(filename).get()
 
+        driver.node, driver.images = MPI.shm_split(comm, shared_memory=False)
+
         if not driver.sparse:
-            driver.elph.node, driver.elph.images = MPI.shm_split(comm,
-                shared_memory=False)
+            driver.elph.node, driver.elph.images = driver.node, driver.images
 
         return driver
 
