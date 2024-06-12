@@ -1431,7 +1431,6 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10,
     vA = v.reshape((-1, 1, ndim)) * A.reshape((-1, len(omega), 1))
 
     x = omega[:, np.newaxis, np.newaxis] / kT
-    f = occupations(x)
     d = occupations.delta(x) / kT
 
     prefactor = 4 * np.pi * domega / nq # including e^2 = 2 and 2 / nq
@@ -1440,6 +1439,8 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10,
         sigma = prefactor * np.sum(d * np.sum(vA[:, :, :, np.newaxis]
             * vA[:, :, np.newaxis, :], axis=0), axis=0)
     else:
+        f = occupations(x)
+
         sizes, bounds = MPI.distribute(len(omega), bounds=True, comm=comm)
 
         my_sigma = np.empty((sizes[comm.rank], ndim, ndim))
