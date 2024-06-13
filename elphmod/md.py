@@ -293,7 +293,7 @@ class Driver:
         return F
 
     def hessian(self, parameters=None, gamma_only=True, apply_asr_simple=False,
-            fildyn=None, eps=1e-10):
+            fildyn=None, eps=1e-10, kT=None):
         """Calculate second derivative of free energy.
 
         Parameters
@@ -310,15 +310,19 @@ class Driver:
             Filename to save Hessian.
         eps : float
             Smallest allowed absolute value of divisor.
+        kT : float, optional
+            Smearing temperature. If given, it is used to calculate the double
+            Fermi-surface average of the electron-phonon coupling squared, which
+            is then also returned.
 
         Returns
         -------
         ndarray
             Force constants in Ry per bohr squared.
+        ndarray, optional
+            Fermi-surface average of electron-phonon coupling squared.
         """
-        gamma_only = gamma_only or self.sparse
-
-        nq = 1 if gamma_only else len(self.q)
+        nq = 1 if gamma_only or self.sparse else len(self.q)
 
         if self.sparse:
             x = self.e / self.kT
@@ -333,6 +337,13 @@ class Driver:
             dfde[ok] = df[ok] / de[ok]
             dos = d.sum() # = np.trace(dfde)
 
+            if kT is not None:
+                tmp = d if kT == self.kT else self.f.delta(self.e / kT) / kT
+                dd = np.outer(tmp, tmp)
+                ddos = dd.sum()
+
+                g2dd = np.empty((nq, self.elph.ph.size, self.elph.ph.size))
+
             C = np.zeros((nq, self.elph.ph.size, self.elph.ph.size))
 
             V = self.U.transpose().copy()
@@ -340,6 +351,10 @@ class Driver:
             for x in range(self.elph.ph.size):
                 gx = V.dot(self.d0[x].dot(self.U))
                 avgx = np.diag(gx).dot(d) / dos
+
+                if kT is not None:
+                    gxdd = gx * dd
+
                 gx *= dfde
 
                 for y in range(x, self.elph.ph.size):
@@ -348,6 +363,10 @@ class Driver:
 
                     C[0, x, y] = (gx * gy).sum() + avgx * avgy
                     C[0, y, x] = C[0, x, y]
+
+                    if kT is not None:
+                        g2dd[0, x, y] = (gxdd * gy).sum() / ddos
+                        g2dd[0, y, x] = g2dd[0, x, y]
         else:
             for iq in range(nq):
                 if comm.rank == 0:
@@ -389,7 +408,12 @@ class Driver:
                 self.elph.ph.r + self.u.reshape(self.elph.ph.r.shape),
                 self.elph.ph.atom_order)
 
-        return C[0].real if gamma_only else C
+        returns = C[0].real if gamma_only else C
+
+        if kT is not None:
+            returns = returns, g2dd
+
+        return returns
 
     def electrons(self, seedname=None, dk1=1, dk2=1, dk3=1, rydberg=False):
         """Set up tight-binding model for current structure.
@@ -488,7 +512,11 @@ class Driver:
 
         mm12 = 1 / np.sqrt(self.elph.ph.M).repeat(3)
 
-        D = self.hessian(gamma_only=False)
+        if self.sparse:
+            D, g2dd = self.hessian(gamma_only=False, kT=kT)
+        else:
+            D = self.hessian(gamma_only=False)
+
         D *= mm12[np.newaxis, np.newaxis, :]
         D *= mm12[np.newaxis, :, np.newaxis]
 
@@ -497,23 +525,30 @@ class Driver:
         if np.any(w2 < -eps):
             return None, None, None
 
-        for iq in range(len(self.q)):
-            if self.node.rank == iq % self.node.size:
-                self.d[iq] *= mm12[:,
-                    np.newaxis, np.newaxis, np.newaxis, np.newaxis, np.newaxis]
+        if self.sparse:
+            g2dd *= mm12[np.newaxis, np.newaxis, :]
+            g2dd *= mm12[np.newaxis, :, np.newaxis]
+            g2dd = np.diagonal(u.swapaxes(-2, -1) @ g2dd @ u,
+                axis1=1, axis2=2).copy()
+        else:
+            for iq in range(len(self.q)):
+                if self.node.rank == iq % self.node.size:
+                    self.d[iq] *= mm12[:,
+                        np.newaxis, np.newaxis, np.newaxis,
+                        np.newaxis, np.newaxis]
 
-                self.d[iq] = np.sum(self.d[iq, :, np.newaxis] * u[iq, :, :,
-                    np.newaxis, np.newaxis, np.newaxis, np.newaxis, np.newaxis],
-                    axis=0)
+                    self.d[iq] = np.sum(self.d[iq, :, np.newaxis] * u[iq, :, :,
+                        np.newaxis, np.newaxis, np.newaxis,
+                        np.newaxis, np.newaxis], axis=0)
 
-                self.d[iq] *= self.d[iq].conj()
+                    self.d[iq] *= self.d[iq].conj()
 
-        comm.Barrier()
+            comm.Barrier()
 
-        g2dd, dd = diagrams.double_fermi_surface_average(self.q, self.e, self.d,
-            kT, self.f)
+            g2dd, dd = diagrams.double_fermi_surface_average(self.q,
+                self.e, self.d, kT, self.f)
 
-        g2dd = g2dd.real
+            g2dd = g2dd.real / dd.sum()
 
         dangerous = np.where(w2 < eps)
         w2[dangerous] = eps
@@ -523,7 +558,7 @@ class Driver:
 
         V = g2dd / w2
 
-        lamda = N0 * V.sum() / dd.sum()
+        lamda = N0 * V.sum()
         wlog = np.exp((V * np.log(w2) / 2).sum() / V.sum())
         w2nd = np.sqrt((V * w2).sum() / V.sum())
 
