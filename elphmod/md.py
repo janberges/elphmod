@@ -348,6 +348,9 @@ class Driver:
 
             V = self.U.transpose().copy()
 
+            status = misc.StatusBar(self.elph.ph.size,
+                title='calculate static phonon self-energy')
+
             for x in range(self.elph.ph.size):
                 gx = V.dot(self.d0[x].dot(self.U))
                 avgx = np.diag(gx).dot(d)
@@ -367,6 +370,8 @@ class Driver:
                     if kT is not None:
                         g2dd[0, x, y] = (gxdd * gy).sum() / ddos
                         g2dd[0, y, x] = g2dd[0, x, y]
+
+                status.update()
         else:
             for iq in range(nq):
                 if comm.rank == 0:
