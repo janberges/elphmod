@@ -340,7 +340,7 @@ class Driver:
             if kT is not None:
                 tmp = d if kT == self.kT else self.f.delta(self.e / kT) / kT
                 dd = np.outer(tmp, tmp)
-                ddos = dd.sum()
+                dd /= dd.sum()
 
                 g2dd = np.empty((nq, self.elph.ph.size, self.elph.ph.size))
 
@@ -370,7 +370,7 @@ class Driver:
                     C[0, y, x] = C[0, x, y]
 
                     if kT is not None:
-                        g2dd[0, x, y] = (gxdd * gy).sum() / ddos
+                        g2dd[0, x, y] = (gxdd * gy).sum()
                         g2dd[0, y, x] = g2dd[0, x, y]
 
                 status.update()
