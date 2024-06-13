@@ -907,6 +907,44 @@ class Model:
 
         return l[nonzero], C[nonzero]
 
+    def to_pwi(self, pwi, **kwargs):
+        """Save atomic positions etc. to PWscf input file.
+
+        Parameters
+        ----------
+        pwi : str
+            Filename.
+        **kwargs
+            Keyword arguments with further parameters to be written.
+        """
+        species = sorted(set(self.atom_order),
+            key=lambda X: self.atom_order.index(X))
+
+        alat = np.linalg.norm(self.a[0])
+
+        pw = dict()
+
+        pw['ibrav'] = 0
+        pw['ntyp'] = len(species)
+        pw['nat'] = self.nat
+        pw['a'] = alat * misc.a0
+
+        pw['at_species'] = species
+        pw['mass'] = [self.M[self.atom_order.index(X)] / misc.uRy
+            for X in species]
+        pw['pp'] = ['%s.upf' % X for X in species]
+
+        pw['coords'] = 'crystal'
+        pw['at'] = self.atom_order
+        pw['r'] = bravais.cartesian_to_crystal(self.r, *self.a)
+
+        pw['cell_units'] = 'alat'
+        pw['r_cell'] = self.a / alat
+
+        pw.update(kwargs)
+
+        bravais.write_pwi(pwi, pw)
+
     def to_flfrc(self, flfrc, nr1=None, nr2=None, nr3=None):
         """Save mass-spring model to force-constants file.
 
