@@ -350,7 +350,7 @@ class Driver:
 
             for x in range(self.elph.ph.size):
                 gx = V.dot(self.d0[x].dot(self.U))
-                avgx = np.diag(gx).dot(d) / dos
+                avgx = np.diag(gx).dot(d)
 
                 if kT is not None:
                     gxdd = gx * dd
@@ -361,7 +361,7 @@ class Driver:
                     gy = V.dot(self.d0[y].dot(self.U))
                     avgy = np.diag(gy).dot(d)
 
-                    C[0, x, y] = (gx * gy).sum() + avgx * avgy
+                    C[0, x, y] = (gx * gy).sum() + avgx * avgy / dos
                     C[0, y, x] = C[0, x, y]
 
                     if kT is not None:
