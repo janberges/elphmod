@@ -945,7 +945,7 @@ class Model:
                     phid[:, na] *= np.sqrt(self.M[na])
 
             write_flfrc(flfrc, phid, self.M, self.a, self.r, self.atom_order,
-                self.eps, self.Z)
+                self.alpha, self.eps, self.Z)
 
 def group(n, size=3):
     """Create slice of dynamical matrix belonging to `n`-th atom."""
@@ -1876,7 +1876,8 @@ def q2r(ph, D_irr=None, q_irr=None, nq=None, D_full=None, angle=60,
             phid[:, na] *= np.sqrt(ph.M[na])
 
     if flfrc and comm.rank == 0:
-        write_flfrc(flfrc, phid, ph.M, ph.a, ph.r, ph.atom_order, ph.eps, ph.Z)
+        write_flfrc(flfrc, phid, ph.M, ph.a, ph.r, ph.atom_order,
+            ph.alpha, ph.eps, ph.Z)
 
     if apply_asr_simple:
         asr(phid)
