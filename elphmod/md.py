@@ -348,12 +348,15 @@ class Driver:
 
             V = self.U.transpose().copy()
 
+            d_orb = self.U * d[np.newaxis] @ V
+            avg = np.array([self.d0[x].multiply(d_orb).sum()
+                for x in range(self.elph.ph.size)]) / np.sqrt(dos)
+
             status = misc.StatusBar(self.elph.ph.size,
                 title='calculate static phonon self-energy')
 
             for x in range(self.elph.ph.size):
                 gx = V.dot(self.d0[x].dot(self.U))
-                avgx = np.diag(gx).dot(d)
 
                 if kT is not None:
                     gxdd = gx * dd
@@ -362,9 +365,8 @@ class Driver:
 
                 for y in range(x, self.elph.ph.size):
                     gy = V.dot(self.d0[y].dot(self.U))
-                    avgy = np.diag(gy).dot(d)
 
-                    C[0, x, y] = (gx * gy).sum() + avgx * avgy / dos
+                    C[0, x, y] = (gx * gy).sum() + avg[x] * avg[y]
                     C[0, y, x] = C[0, x, y]
 
                     if kT is not None:
