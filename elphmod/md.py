@@ -335,7 +335,7 @@ class Driver:
 
             dfde = np.tile(d, (self.elph.el.size, 1))
             dfde[ok] = df[ok] / de[ok]
-            dos = d.sum() # = np.trace(dfde)
+            dos = -d.sum() # = -np.trace(dfde)
 
             if kT is not None:
                 tmp = d if kT == self.kT else self.f.delta(self.e / kT) / kT
