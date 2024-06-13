@@ -982,6 +982,12 @@ class Model:
                     phid[na, :] *= np.sqrt(self.M[na])
                     phid[:, na] *= np.sqrt(self.M[na])
 
+            if not self.lr and self.eps is not None and self.Z is not None:
+                print('Warning: Writing inconsistent force-constants file!')
+                print('The long-range part has not been subtracted (lr=False).')
+                print('The dielectric properties are written nevertheless.')
+                print('Consider setting the attribute Z to None to avoid this.')
+
             write_flfrc(flfrc, phid, self.M, self.a, self.r, self.atom_order,
                 self.alpha, self.eps, self.Z)
 
