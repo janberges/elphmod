@@ -508,6 +508,8 @@ class Driver:
 
                 self.d[iq] *= self.d[iq].conj()
 
+        comm.Barrier()
+
         g2dd, dd = diagrams.double_fermi_surface_average(self.q, self.e, self.d,
             kT, self.f)
 
