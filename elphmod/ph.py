@@ -927,7 +927,7 @@ class Model:
         pw['ibrav'] = 0
         pw['ntyp'] = len(species)
         pw['nat'] = self.nat
-        pw['a'] = alat * misc.a0
+        pw['celldm'] = [alat]
 
         pw['at_species'] = species
         pw['mass'] = [self.M[self.atom_order.index(X)] / misc.uRy
