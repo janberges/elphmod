@@ -359,18 +359,16 @@ class Driver:
                 gx = V.dot(self.d0[x].dot(self.U))
 
                 if kT is not None:
-                    gxdd = gx * dd
+                    gxdd = self.U @ (gx * dd) @ V
 
-                gx *= dfde
+                gx = self.U @ (gx * dfde) @ V # overwriting gx to save memory
 
                 for y in range(x, self.elph.ph.size):
-                    gy = V.dot(self.d0[y].dot(self.U))
-
-                    C[0, x, y] = (gx * gy).sum() + avg[x] * avg[y]
+                    C[0, x, y] = self.d0[y].multiply(gx).sum() + avg[x] * avg[y]
                     C[0, y, x] = C[0, x, y]
 
                     if kT is not None:
-                        g2dd[0, x, y] = (gxdd * gy).sum()
+                        g2dd[0, x, y] = self.d0[y].multiply(gxdd).sum()
                         g2dd[0, y, x] = g2dd[0, x, y]
 
                 status.update()
