@@ -72,7 +72,7 @@ index 7cddef733..e9a1b8bfc 100644
  ch_psi_all.o \
 diff --git a/LR_Modules/cdfpt.f90 b/LR_Modules/cdfpt.f90
 new file mode 100644
-index 000000000..5b6b1bd28
+index 000000000..4b2ff0413
 --- /dev/null
 +++ b/LR_Modules/cdfpt.f90
 @@ -0,0 +1,164 @@
@@ -137,9 +137,6 @@ index 000000000..5b6b1bd28
 +     !
 +     IF (.NOT. lcdfpt) RETURN
 +     !
-+     filename = TRIM(wfc_dir) // TRIM(prefix) // postfix &
-+        // 'atomic_proj.xml'
-+     !
 +     ALLOCATE(subspace(nbnd, nk1, nk2, nk3))
 +     !
 +     IF (meta_ionode) THEN
@@ -156,6 +153,9 @@ index 000000000..5b6b1bd28
 +        ENDIF
 +        !
 +        IF (lorb) THEN
++           filename = TRIM(wfc_dir) // TRIM(prefix) // postfix &
++              // 'atomic_proj.xml'
++           !
 +           CALL read_xml_proj(filename, ierr, natomwfc, nbnd_proj, &
 +              nkstot, nspin, nelec, ef, xk_proj, wk, et, projs)
 +           !
