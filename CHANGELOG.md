@@ -3,6 +3,16 @@
 See [Git commits](https://github.com/janberges/elphmod/commits) for more
 detailed list of changes.
 
+## v0.25/2024-06-14
+
+* Superconductivity calculations on large supercells
+* Improved documentation (patches, conventions, source-code links)
+* New format for Wigner-Seitz data (*wigner.fmt*)
+* Fan-Migdal self-energy and Green-Kubo conductivity
+* Size-consistent Ewald parameter (as in development version of QE)
+* Allen-Dynes formula with strong-coupling and shape corrections
+* Improved handling of atomic projections (phase, spin-orbit coupling)
+
 ## v0.24/2024-04-03
 
 * Improved MD driver and i-PI example

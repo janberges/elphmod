@@ -3,6 +3,7 @@
 The following things should/could be done sooner or later. Items with question
 mark are not necessarily a good idea.
 
+* Use size-consistent tolerance for electron number when finding Fermi level?
 * Unscreen phonons of MD driver on supercell (using sparse matrices).
 * Set `ph.D0` and `elph.g0` when generating models with `q2r`.
 * Read Wannier-function centres from `_centres.xyz`.
