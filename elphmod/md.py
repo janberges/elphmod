@@ -489,7 +489,7 @@ class Driver:
 
         return model
 
-    def superconductivity(self, eps=1e-10, kT=None):
+    def superconductivity(self, eps=1e-10, tol=None, kT=None):
         r"""Calculate effective couplings and phonon frequencies.
 
         Note that :attr:`d` is destroyed.
@@ -498,8 +498,11 @@ class Driver:
         ----------
         eps : float
             Phonon frequencies squared below `eps` are set to `eps`;
-            corresponding couplings are set to zero. If there are values below
-            `-eps` (imaginary frequencies), all return values are ``None``.
+            corresponding couplings are set to zero.
+        tol : float, optional
+            If any phonon frequency squared is smaller than `tol`, all return
+            values are ``None``. A very small negative value can be chosen to
+            skip calculations involving significant imaginary frequencies.
         kT : float, optional
             Smearing temperature. By default, :attr:`kT` is used.
 
@@ -527,7 +530,7 @@ class Driver:
 
         w2, u = np.linalg.eigh(D)
 
-        if np.any(w2 < -eps):
+        if tol is not None and np.any(w2 < tol):
             return None, None, None
 
         if self.sparse:

@@ -5,6 +5,7 @@
 
 import elphmod
 import elphmod.models.graphene
+import elphmod.models.tas2
 import numpy as np
 import unittest
 
@@ -33,6 +34,22 @@ class TestMD(unittest.TestCase):
 
         self.assertTrue(np.allclose(driver_dense.jacobian(show=False),
             driver_sparse.jacobian(show=False)))
+
+    def test_superconductivity(self,
+            N=4, kT=0.1, f=elphmod.occupations.fermi_dirac):
+        """Verify that superconductivity calculations are size-consistent."""
+
+        el, ph, elph = elphmod.models.tas2.create(rydberg=True,
+            divide_mass=False)
+
+        driver_dense, driver_sparse = [elphmod.md.Driver(elph, kT, f, n=1.0,
+            nk=(N, N), nq=(N, N), supercell=sc) for sc in [(N, N), None]]
+
+        driver_dense.diagonalize()
+        driver_sparse.diagonalize()
+
+        self.assertTrue(np.allclose(driver_dense.superconductivity(),
+            driver_sparse.superconductivity()))
 
 if __name__ == '__main__':
     unittest.main()
