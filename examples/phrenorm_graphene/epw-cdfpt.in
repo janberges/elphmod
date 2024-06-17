@@ -1,7 +1,7 @@
 graphene
 &INPUTEPW
     prefix = 'graphene'
-    outdir = 'work/'
+    outdir = 'work'
     dvscf_dir = 'cdfpt.save'
 
     wannierize = .false.

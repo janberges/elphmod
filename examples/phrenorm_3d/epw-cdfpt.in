@@ -1,7 +1,7 @@
 polonium
 &INPUTEPW
     prefix = 'polonium'
-    outdir = 'work/'
+    outdir = 'work'
     dvscf_dir = 'cdfpt.save'
 
     wannierize = .false.

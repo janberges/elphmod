@@ -1,7 +1,7 @@
 C
 &INPUTEPW
     prefix = 'C'
-    outdir = 'work/'
+    outdir = 'work'
     dvscf_dir = 'save'
 
     wannierize = .true.

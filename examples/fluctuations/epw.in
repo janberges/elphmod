@@ -1,7 +1,7 @@
 TaS2
 &INPUTEPW
     prefix = 'TaS2'
-    outdir = 'work/'
+    outdir = 'work'
     dvscf_dir = 'save'
 
     wannierize = .true.
