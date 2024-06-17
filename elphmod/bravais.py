@@ -1197,7 +1197,7 @@ def read_wigner_file(name, old_ws=False, nat=None):
                 irvec_g = np.empty((nrr_g, 3), dtype=np.int32)
 
                 ndegen_k = np.empty((dims, dims, nrr_k), dtype=np.int32)
-                ndegen_q = np.empty((dims2, dims2, nrr_k), dtype=np.int32)
+                ndegen_q = np.empty((dims2, dims2, nrr_q), dtype=np.int32)
                 ndegen_g = np.empty((1, dims, dims2, nrr_g), dtype=np.int32)
 
                 for ir in range(nrr_k):
