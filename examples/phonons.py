@@ -14,11 +14,11 @@ colors = ['skyblue', 'dodgerblue', 'orange']
 
 data = 'NbSe2_cDFPT'
 
-info('Set up mass-spring model..')
+info('Set up mass-spring model')
 
 ph = elphmod.ph.Model('data/%s.ifc' % data, apply_asr_simple=True)
 
-info('Diagonalize dynamical matrix along G-M-K-G..')
+info('Diagonalize dynamical matrix along G-M-K-G')
 
 path = 'GMKG'
 q, x, corners = elphmod.bravais.path(path, ibrav=4, N=150)
@@ -31,14 +31,14 @@ if comm.rank == 0:
 
     pol = elphmod.ph.polarization(u, q)
 
-    print("Load reference from Quantum ESPRESSO's 'matdyn.x'..")
+    print("Load reference from Quantum ESPRESSO's 'matdyn.x'")
 
     ref = np.loadtxt('data/%s.disp.gp' % data) * elphmod.misc.cmm1 * 1e3
 
     x0 = ref[:, 0] / ref[-1, 0] * x[-1]
     w0 = ref[:, 1:]
 
-    print('Plot dispersions..')
+    print('Plot dispersions')
 
     for nu in range(ph.size):
         fatbands = elphmod.plot.compline(x, w[:, nu], pol[:, nu])

@@ -15,7 +15,7 @@ nk = 72
 tip = np.array([0.0, 0.0, 3.0]) # tip position
 V = 0.1 * elphmod.misc.Ry # sample bias
 
-info('Set up and diagonalize Wannier Hamiltonian..')
+info('Set up and diagonalize Wannier Hamiltonian')
 
 el = elphmod.el.Model('graphene', read_xsf=True, normalize_wf=True,
     check_ortho=True)
@@ -25,18 +25,18 @@ e, U, order = elphmod.dispersion.dispersion_full_nosym(el.H, nk,
 
 e -= elphmod.el.read_Fermi_level('scf.out')
 
-info('Set up Bravais lattice vectors..')
+info('Set up Bravais lattice vectors')
 
 pwi = elphmod.bravais.read_pwi('scf.in')
 a = elphmod.bravais.primitives(**pwi)
 
-info('Calculate density of states..')
+info('Calculate density of states')
 
 w, dw = np.linspace(e.min(), e.max(), 300, retstep=True)
 
 DOS = sum(elphmod.dos.hexDOS(e[:, :, n])(w) for n in range(el.size))
 
-info('Determine indices of unit-cell corners and vertical tip position..')
+info('Determine indices of unit-cell corners and vertical tip position')
 
 def indices(point):
     return np.unravel_index(np.argmin(np.linalg.norm(el.r - point,
@@ -49,7 +49,7 @@ xt, yt, zt = indices(tip)
 nx = x1 - x0
 ny = y1 - y0
 
-info('Shift Wannier functions and calculate overlap with tip..')
+info('Shift Wannier functions and calculate overlap with tip')
 
 if comm.rank == 0:
     cells = range(-3, 4)
@@ -80,7 +80,7 @@ if comm.rank == 0:
 
             overlap[iR, n] = np.sum(s * el.W[n]) * el.dV
 
-info('Calculate scanning-tunneling image and weight electronic eigenstates..')
+info('Calculate scanning-tunneling image and weight electronic eigenstates')
 
 STM = np.zeros((nx, ny))
 weight = np.empty(e.shape)
@@ -109,7 +109,7 @@ if comm.rank == 0:
 comm.Bcast(STM)
 comm.Bcast(weight)
 
-info('Plot scanning-tunnelling image..')
+info('Plot scanning-tunnelling image')
 
 plot = elphmod.plot.plot(STM, angle=120)
 
@@ -118,7 +118,7 @@ if comm.rank == 0:
     plt.axis('off')
     plt.show()
 
-info('Calculate scanning-tunnelling spectrum..')
+info('Calculate scanning-tunnelling spectrum')
 
 STS = sum(elphmod.dos.hexa2F(e[:, :, n], weight[:, :, n])(w)
     for n in range(el.size))

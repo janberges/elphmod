@@ -1110,7 +1110,7 @@ def coupling(filename, nQ, nmodes, nk, bands, Q=None, nq=None, offset=0,
 
     for n, iq in enumerate(my_Q):
         if status:
-            print('Read data for q point %d..' % iq)
+            print('Read data for q point %d' % iq)
 
         # TypeError: 'test' % 1
         # permitted: 'test' % np.array(1)
@@ -1142,7 +1142,7 @@ def coupling(filename, nQ, nmodes, nk, bands, Q=None, nq=None, offset=0,
     if completion:
         for n, iq in enumerate(my_Q):
             if status:
-                print('Complete data for q point %d..' % iq)
+                print('Complete data for q point %d' % iq)
 
             for nu in range(nmodes):
                 for ibnd in range(bands):
@@ -1367,7 +1367,7 @@ def read_patterns(filename, q, nrep, status=True):
 
     for my_iq, iq in enumerate(my_q):
         if status:
-            print('Read displacement pattern for q point %d..' % (iq + 1))
+            print('Read displacement pattern for q point %d' % (iq + 1))
 
         with open(filename % (iq + 1)) as data:
             def goto(pattern):
@@ -1424,7 +1424,7 @@ def read_xml_files(filename, q, rep, bands, nbands, nk, squeeze=True,
 
     for my_iq, iq in enumerate(my_q):
         if status:
-            print('Read data for q point %d..' % (iq + 1))
+            print('Read data for q point %d' % (iq + 1))
 
         for my_irep, irep in enumerate(rep):
             with open(filename % (iq + 1, irep + 1)) as data:

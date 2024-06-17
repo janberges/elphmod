@@ -16,7 +16,7 @@ d = 2.0
 
 style = dict(color='lightgray', linestyle='dashed')
 
-print('Plot step functions..')
+print('Plot step functions')
 
 plt.axvline(x=0.0, **style)
 plt.axhline(y=0.0, **style)
@@ -35,7 +35,7 @@ plt.ylabel(r'$f(x)$')
 plt.legend()
 plt.show()
 
-print('Plot delta functions..')
+print('Plot delta functions')
 
 plt.axvline(x=0.0, **style)
 plt.axhline(y=0.0, **style)
@@ -61,7 +61,7 @@ plt.ylabel(r'$\delta(x)$')
 plt.legend()
 plt.show()
 
-print('Plot derivatives of delta functions..')
+print('Plot derivatives of delta functions')
 
 plt.axvline(x=0.0, **style)
 plt.axhline(y=0.0, **style)
@@ -89,7 +89,7 @@ plt.ylabel(r"$\delta'(x)$")
 plt.legend()
 plt.show()
 
-print('Plot generalized entropy..')
+print('Plot generalized entropy')
 
 plt.axvline(x=0.0, **style)
 plt.axhline(y=0.0, **style)

@@ -701,7 +701,7 @@ def renormalize_coupling_band(q, e, g, W, U, kT=0.025, eps=1e-10,
 
     for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         if status:
-            print('Renormalize coupling for q point %d..' % (iq + 1))
+            print('Renormalize coupling for q point %d' % (iq + 1))
 
         q1, q2, q3 = np.round(q[iq] * scale).astype(int) % nk
 
@@ -897,7 +897,7 @@ def Pi_g(q, e, g, U, kT=0.025, eps=1e-10,
 
     for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         if status:
-            print('Calculate "g Pi" for q point %d..' % (iq + 1))
+            print('Calculate "g Pi" for q point %d' % (iq + 1))
 
         q1, q2, q3 = np.round(q[iq] * scale).astype(int) % nk
 

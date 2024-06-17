@@ -33,7 +33,7 @@ epsz = 1.16
 Z = 0.64
 L = 5.0 # cf. Ponce' et al., Phys. Rev. B 107, 155424 (2023)
 
-info('Load model Hamiltonian for graphene..')
+info('Load model Hamiltonian for graphene')
 
 elphmod.models.graphene.create('data/graphene')
 
@@ -44,7 +44,7 @@ elph = elphmod.elph.Model('data/graphene.epmatwp', 'data/graphene.wigner',
 
 el.data /= elphmod.misc.Ry
 
-info('Sample and diagonalize model Hamiltonian..')
+info('Sample and diagonalize model Hamiltonian')
 
 q, x, GMKG = elphmod.bravais.GMKG(nk, corner_indices=True, mesh=True,
     straight=False, lift_degen=False)
@@ -70,7 +70,7 @@ if not to_screen:
 else:
     G = g
 
-info('Calculate retarded displacement-displacement correlation function..')
+info('Calculate retarded displacement-displacement correlation function')
 
 w, dw = np.linspace(0.0, 1.1 * w0.max(), len(q), retstep=True)
 
@@ -83,7 +83,7 @@ Dw = D0[..., None] - Pi0[..., None] + Piw
 
 A = elphmod.ph.spectral_function(Dw, w, eta2)
 
-info('Plot results..')
+info('Plot results')
 
 maximum = abs(A).max()
 

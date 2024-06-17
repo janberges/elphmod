@@ -15,7 +15,7 @@ nq = 240
 
 eta = 0.05 / elphmod.misc.Ry
 
-info('Set up model and sample data..')
+info('Set up model and sample data')
 
 el, ph, elph = elphmod.models.chain.create('data/chain', rydberg=True)
 
@@ -35,7 +35,7 @@ w = elphmod.ph.sgnsqrt(w2)
 w[0, :3] = eta # avoid division by zero acoustic frequency
 g2 /= 2 * w[:, :, np.newaxis, np.newaxis, np.newaxis]
 
-info('Calculate spectral function..')
+info('Calculate spectral function')
 
 kT = 1000 * elphmod.misc.kB / elphmod.misc.Ry
 
@@ -72,7 +72,7 @@ if comm.rank == 0:
 
     plt.show()
 
-info('Calculate resistivity..')
+info('Calculate resistivity')
 
 v = elphmod.dispersion.sample(el.v, q)
 v = np.einsum('ix,kan,kiab,kbn->knx', ph.a, U.conj(), v, U)[:, :, :1].real
