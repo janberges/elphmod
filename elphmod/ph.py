@@ -294,6 +294,9 @@ class Model:
 
         self.cells = [(0, 0, 0)]
 
+        if self.alpha is None:
+            self.alpha = 1.0
+
         self.lr = lr and self.eps is not None and self.Z is not None
 
         lr2d_guess = self.nq[0] != self.nq[2] == 1 != self.nq[1]
@@ -301,9 +304,6 @@ class Model:
         self.lr2d = lr2d_guess if lr2d is None else lr2d
 
         if self.lr:
-            if self.alpha is None:
-                self.alpha = 1.0
-
             if self.lr2d != lr2d:
                 info('Warning: System is assumed to be %s-dimensional!'
                     % ('two' if self.lr2d else 'three'))
