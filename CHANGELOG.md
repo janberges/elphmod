@@ -3,6 +3,10 @@
 See [Git commits](https://github.com/janberges/elphmod/commits) for more
 detailed list of changes.
 
+## v0.26/2024-06-17
+
+* Small but relevant bugfix in new EPW interface
+
 ## v0.25/2024-06-14
 
 * Superconductivity calculations on large supercells
