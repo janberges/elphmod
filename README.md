@@ -24,9 +24,13 @@ can be used to build and study distorted structures on supercells.
 
 ## Installation
 
-To install the latest version of elphmod:
+You can install the latest version of elphmod from PyPI:
 
     python3 -m pip install elphmod
+
+Or from the conda-forge channel on Anaconda Cloud:
+
+    conda install conda-forge::elphmod
 
 elphmod can optionally be run in parallel via MPI (with shared-memory support).
 Using APT and pip, you can install the corresponding dependencies as follows:
