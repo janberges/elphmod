@@ -1,0 +1,24 @@
+TaS2
+&INPUTPH
+    prefix = 'TaS2'
+    outdir = 'work'
+
+    fildyn = 'dynref'
+    fildvscf = 'dvscfref'
+
+    bare = .true.
+    ldisp = .true.
+    qplot = .true.
+
+    tr2_ph = 1e-12
+
+    electron_phonon = 'defpot'
+/
+7
+0.0 0.0009622504 0.0 1
+0.0 0.0962250449 0.0 1
+0.0 0.1924500897 0.0 1
+0.0 0.2886751346 0.0 1
+0.0 0.3849001795 0.0 1
+0.0 0.4811252243 0.0 1
+0.0 0.5773502692 0.0 1

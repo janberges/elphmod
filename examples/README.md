@@ -57,6 +57,7 @@ More sophisticated examples have their own subdirectory. Most of them require a
 * `projwfc_1d` - projected band structure of carbon chain
 * `projwfc` - projected band structure of graphene
 * `projwfc_3d` - projected band structure of polonium
+* `quadrupole` - optimization of quadrupole tensor for bare phonons of 1H-TaS2
 * `simstm` - simulated STM image of 1H-TaS2
 * `simsts` - simulated STS spectrum of graphene
 * `wannier` - Wannier interpolation in 1H-TaS2
