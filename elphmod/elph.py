@@ -358,7 +358,7 @@ class Model:
             info('Run "sample_orig" before changing Z, Q, etc.!', error=True)
 
         if not self.ph.lr:
-            q2r(self, self.ph.nq, self.el.nk, self.g0, self.divide_mass)
+            q2r(self, self.ph.nq, self.el.nk, self.g0, None, self.divide_mass)
             return
 
         self.ph.prepare_long_range()
@@ -379,7 +379,7 @@ class Model:
 
         g.Bcast()
 
-        q2r(self, self.ph.nq, self.el.nk, g, self.divide_mass)
+        q2r(self, self.ph.nq, self.el.nk, g, None, self.divide_mass)
 
     def sample(self, *args, **kwargs):
         """Sample coupling.
