@@ -338,7 +338,7 @@ class Model:
 
             el.Hs = sparse_array((el.size, el.size))
 
-            if abs(self.data.imag).sum() / abs(self.data.real).sum() > 1e-6:
+            if abs(self.data.imag).sum() > 1e-6 * abs(self.data.real).sum():
                 info('Warning: Significant imaginary part of hopping ignored!')
 
         if comm.rank == 0:
