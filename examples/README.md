@@ -12,6 +12,8 @@ Also make sure to install the Python requirements before:
 
     python3 -m pip install -r requirements.txt
 
+(Installing PyQt5 is only necessary if the Tk interface is not available.)
+
 * `a2f.py` - Eliashberg spectral function of monolayer TaS2
 * `coulomb.py` - Coulomb interaction from VASP
 * `dos.py` - density of states via smearing and tetrahedron methods
