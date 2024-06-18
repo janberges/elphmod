@@ -748,6 +748,21 @@ class Model:
 
         return d[nonzero], g[nonzero]
 
+    def clear(self):
+        """Delete all lattice vectors and associated matrix elements."""
+
+        self.el.R = np.zeros_like(self.el.R[:0, :])
+        self.ph.R = np.zeros_like(self.ph.R[:0, :])
+
+        self.el.data = np.zeros_like(self.el.data[:0, :, :])
+        self.ph.data = np.zeros_like(self.ph.data[:0, :, :])
+
+        self.Rk = np.zeros_like(self.Rk[:0, :])
+        self.Rg = np.zeros_like(self.Rg[:0, :])
+
+        self.data = np.zeros_like(self.data[:0, :, :0, :, :])
+        self.gq = np.zeros_like(self.gq[:, :0, :, :])
+
     def to_epmatwp(self, prefix):
         """Save coupling to *.epmatwp* and *.wigner* files.
 
