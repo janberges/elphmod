@@ -39,6 +39,8 @@ class TestDiagrams(unittest.TestCase):
 
         u = 1 - 2 * np.random.rand(1, elph.ph.size, 1)
 
+        elphmod.MPI.comm.Bcast(u)
+
         gu = elph.sample(q=q, U=U, u=u)[0]
 
         prefactor = 2 * kT / np.prod(nk)
