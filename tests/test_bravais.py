@@ -7,8 +7,8 @@ import elphmod
 import numpy as np
 import unittest
 
-class TestWigner(unittest.TestCase):
-    def _test_2d(self, angle=120, nk=12):
+class TestBravais(unittest.TestCase):
+    def _test_wigner_2d(self, angle=120, nk=12):
         """Verify that 2D and general code yield same WS data."""
 
         at = np.eye(3)
@@ -30,20 +30,20 @@ class TestWigner(unittest.TestCase):
         self.assertTrue(np.allclose(wslen[order, 0, 0],
             np.array(wslen_2d)[order_2d]))
 
-    def test_2d_60(self):
+    def test_wigner_2d_60(self):
         """Verify that 2D (60 degrees) and general code yield same WS data."""
 
-        self._test_2d(60)
+        self._test_wigner_2d(60)
 
-    def test_2d_90(self):
+    def test_wigner_2d_90(self):
         """Verify that 2D (90 degrees) and general code yield same WS data."""
 
-        self._test_2d(90)
+        self._test_wigner_2d(90)
 
-    def test_2d_120(self):
+    def test_wigner_2d_120(self):
         """Verify that 2D (120 degrees) and general code yield same WS data."""
 
-        self._test_2d(120)
+        self._test_wigner_2d(120)
 
 if __name__ == '__main__':
     unittest.main()
