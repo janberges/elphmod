@@ -475,34 +475,28 @@ class Model:
         S : tuple of int
             Shift of as multiple of primitive lattice vectors.
         """
-        S = np.asarray(S)
-        data = self.data.copy()
+        R = np.tile(self.R, (3, 1))
+        data = np.tile(self.data, (3, 1, 1))
 
-        old_R = set(range(len(self.R)))
-        new_R = []
-        new_t = []
+        n = len(self.R)
+        m = 2 * n
 
-        for i in range(len(self.R)):
-            R = self.R[i] + S
-            j = misc.vector_index(self.R, R)
+        R[:n] -= S
+        data[:n, :, :] = 0.0
+        data[:n, :, s] = self.data[:, :, s]
+        data[:n, s, s] = 0.0
 
-            if j is None:
-                t = np.zeros((self.size, self.size), dtype=complex)
-                t[:, s] = self.data[i, :, s]
-                t[s, s] = 0.0
-                new_R.append(R)
-                new_t.append(t)
-            else:
-                old_R.remove(j)
-                data[j, :, s] = self.data[i, :, s]
-                data[j, s, s] = self.data[j, s, s]
+        data[n:m, s, :] = 0.0
+        data[n:m, :, s] = 0.0
+        data[n:m, s, s] = self.data[:, s, s]
 
-        for j in old_R:
-            data[j, :, s] = 0.0
-            data[j, s, s] = self.data[j, s, s]
+        R[m:] += S
+        data[m:, :, :] = 0.0
+        data[m:, s, :] = self.data[:, s, :]
+        data[m:, s, s] = 0.0
 
-        self.R = np.concatenate((self.R, new_R))
-        self.data = np.concatenate((data, new_t))
+        self.R = R
+        self.data = data
 
         self.standardize()
 
