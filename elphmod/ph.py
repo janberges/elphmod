@@ -788,34 +788,28 @@ class Model:
         """
         self.data = self.data.reshape((len(self.R), self.nat, 3, self.nat, 3))
 
-        S = np.asarray(S)
-        data = self.data.copy()
+        R = np.tile(self.R, (3, 1))
+        data = np.tile(self.data, (3, 1, 1, 1, 1))
 
-        old_R = set(range(len(self.R)))
-        new_R = []
-        new_C = []
+        n = len(self.R)
+        m = 2 * n
 
-        for i in range(len(self.R)):
-            R = self.R[i] + S
-            j = misc.vector_index(self.R, R)
+        R[:n] -= S
+        data[:n, :, :, :, :] = 0.0
+        data[:n, :, :, s, :] = self.data[:, :, :, s, :]
+        data[:n, s, :, s, :] = 0.0
 
-            if j is None:
-                C = np.zeros((self.nat, 3, self.nat, 3))
-                C[:, :, s, :] = self.data[i, :, :, s, :]
-                C[s, :, s, :] = 0.0
-                new_R.append(R)
-                new_C.append(C)
-            else:
-                old_R.remove(j)
-                data[j, :, :, s, :] = self.data[i, :, :, s, :]
-                data[j, s, :, s, :] = self.data[j, s, :, s, :]
+        data[n:m, s, :, :, :] = 0.0
+        data[n:m, :, :, s, :] = 0.0
+        data[n:m, s, :, s, :] = self.data[:, s, :, s, :]
 
-        for j in old_R:
-            data[j, :, :, s, :] = 0.0
-            data[j, s, :, s, :] = self.data[j, s, :, s, :]
+        R[m:] += S
+        data[m:, :, :, :, :] = 0.0
+        data[m:, s, :, :, :] = self.data[:, s, :, :, :]
+        data[m:, s, :, s, :] = 0.0
 
-        self.R = np.concatenate((self.R, new_R))
-        self.data = np.concatenate((data, new_C))
+        self.R = R
+        self.data = data
 
         self.data = self.data.reshape((len(self.R), self.size, self.size))
 
