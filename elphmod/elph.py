@@ -498,7 +498,7 @@ class Model:
 
             elph.gs = np.array(elph.gs)
 
-            if comm.rank == 0:
+            if misc.verbosity >= 2 and comm.rank == 0:
                 import pickle
 
                 print('Sparse representation of coupling requires %.6f GB'
