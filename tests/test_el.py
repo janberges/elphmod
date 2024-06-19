@@ -3,6 +3,7 @@
 # Copyright (C) 2017-2024 elphmod Developers
 # This program is free software under the terms of the GNU GPLv3 or later.
 
+import copy
 import elphmod
 import elphmod.models.graphene
 import numpy as np
@@ -34,6 +35,31 @@ class TestElectron(unittest.TestCase):
         el.order_orbitals(1, 0)
         e = elphmod.dispersion.dispersion_full(el.H, nk)
         self.assertTrue(np.allclose(np.sort(e, axis=None), ref))
+
+    def test_k2r(self):
+        """Test Fourier interpolation of Hamiltonian."""
+
+        for rydberg in False, True:
+            el, ph, elph, elel = elphmod.models.graphene.create(rydberg=rydberg,
+                divide_mass=False)
+            el2 = copy.copy(el)
+
+            H = elphmod.dispersion.sample(el.H, elphmod.models.graphene.k)
+
+            elphmod.el.k2r(el2, H, ph.a, ph.r, rydberg=rydberg)
+            el2.standardize(eps=1e-10)
+
+            self.assertTrue(np.allclose(el.data, el2.data))
+
+            if rydberg:
+                H *= elphmod.misc.Ry
+            else:
+                H /= elphmod.misc.Ry
+
+            elphmod.el.k2r(el2, H, ph.a, ph.r, rydberg=not rydberg)
+            el2.standardize(eps=1e-10)
+
+            self.assertTrue(np.allclose(el.data, el2.data))
 
 if __name__ == '__main__':
     unittest.main()
