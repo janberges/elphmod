@@ -20,10 +20,10 @@ double_fermi_dirac.entropy = d(occupations.double_fermi_dirac.entropy)
 tol = dict(rtol=1e-5, atol=1e-4)
 
 class TestOccupations(unittest.TestCase):
-    def test_derivatives(self):
+    def test_derivatives(self, xmax=10.0, nx=2001):
         """Compare analytical and numerical derivatives of step functions."""
 
-        x, dx = np.linspace(-10, 10, 2001, retstep=True)
+        x, dx = np.linspace(-xmax, xmax, nx, retstep=True)
 
         xd = x[1:] - dx / 2
         xdp = x[1:-1]

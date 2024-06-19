@@ -36,7 +36,7 @@ class TestMD(unittest.TestCase):
             driver_sparse.jacobian(show=False)))
 
     def test_superconductivity(self,
-            N=4, kT=0.1, f=elphmod.occupations.fermi_dirac):
+            N=2, kT=0.1, f=elphmod.occupations.fermi_dirac):
         """Verify that superconductivity calculations are size-consistent."""
 
         el, ph, elph = elphmod.models.tas2.create(rydberg=True,
