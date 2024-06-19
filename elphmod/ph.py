@@ -687,10 +687,15 @@ class Model:
 
         ph.lr = self.lr
         ph.lr2d = self.lr2d
-        ph.scale = self.scale
         ph.L = self.L
         ph.perp = self.perp
         ph.eps = self.eps
+
+        if self.alpha is None:
+            ph.alpha = self.alpha
+        else:
+            ph.alpha = self.alpha * (np.linalg.norm(ph.a[0])
+                / np.linalg.norm(self.a[0])) ** 2
 
         if self.Z is None:
             ph.Z = None
