@@ -3,8 +3,6 @@
 
 """Susceptibilities, self-energies, etc."""
 
-from __future__ import division
-
 import numpy as np
 
 from . import misc, MPI, occupations
@@ -52,7 +50,7 @@ def susceptibility(e, kT=0.025, eta=1e-10, occupations=occupations.fermi_dirac):
 
     scale = nk / (2 * np.pi)
     eta2 = eta ** 2
-    prefactor = 2.0 / nk ** 2
+    prefactor = 2 / nk ** 2
 
     def calculate_susceptibility(q1=0, q2=0):
         q1 = int(round(q1 * scale)) % nk
@@ -113,7 +111,7 @@ def susceptibility2(e, kT=0.025, nmats=1000, hyb_width=1.0, hyb_height=0.0):
 
     scale = nk / (2 * np.pi)
 
-    prefactor = kT * 4.0 / nk ** 2
+    prefactor = 4 * kT / nk ** 2
     # factor 2 for the negative Matsubara frequencies
     # factor 2 for the spin
 
@@ -124,9 +122,9 @@ def susceptibility2(e, kT=0.025, nmats=1000, hyb_width=1.0, hyb_height=0.0):
     G = np.empty((nmats, 2 * nk, 2 * nk), dtype=complex) # Green's functions
 
     for i in range(nmats):
-        G[i] = 1.0 / (1j * nu[i] - e - Delta[i])
+        G[i] = 1 / (1j * nu[i] - e - Delta[i])
 
-    tail = -2.0 / (4 * kT) + prefactor * nk ** 2 * np.sum(1.0 / nu ** 2)
+    tail = -2 / (4 * kT) + prefactor * nk ** 2 * np.sum(1 / nu ** 2)
     # see Appendix B of the thesis of Hartmut Hafermann
     # factor 2 for spin
     # VERIFY THAT THIS IS CORRECT! (after rewriting function)
@@ -213,7 +211,7 @@ def polarization(e, U, kT=0.025, eps=1e-10, subspace=None,
         subspace = np.tile(subspace, (2, 2, 2, 1))
 
     scale = nk / (2 * np.pi)
-    prefactor = 2.0 / nk.prod()
+    prefactor = 2 / nk.prod()
 
     k1 = slice(0, nk[0])
     k2 = slice(0, nk[1])
@@ -374,7 +372,7 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
                 delta = np.tile(delta, (2, 2, 2, 1))
 
     scale = nk / (2 * np.pi)
-    prefactor = 2.0 / nk.prod()
+    prefactor = 2 / nk.prod()
 
     sizes, bounds = MPI.distribute(nQ, bounds=True, comm=comm)
 
@@ -522,7 +520,7 @@ def phonon_self_energy_fermi_shift(e, g, kT=0.025,
     dos = d.sum()
     avg = np.einsum('ijkn,xijknn->x', d, g) / dos
 
-    return 2.0 / nk.prod() * dos * np.outer(avg, avg) # one complex conjugate?
+    return 2 / nk.prod() * dos * np.outer(avg, avg) # one complex conjugate?
 
 def phonon_self_energy2(q, e, g2, kT=0.025, nmats=1000, hyb_width=1.0,
         hyb_height=0.0, GB=4.0):
@@ -567,7 +565,7 @@ def phonon_self_energy2(q, e, g2, kT=0.025, nmats=1000, hyb_width=1.0,
     e = np.tile(e, (2, 2))
 
     scale = nk / (2 * np.pi)
-    prefactor = kT * 4.0 / nk ** 2
+    prefactor = kT * 4 / nk ** 2
 
     nu = (2 * np.arange(nmats) + 1) * np.pi * kT # Matsubara frequencies
 
@@ -576,9 +574,9 @@ def phonon_self_energy2(q, e, g2, kT=0.025, nmats=1000, hyb_width=1.0,
     G = np.empty((nmats, 2 * nk, 2 * nk), dtype=complex) # Green's functions
 
     for i in range(nmats):
-        G[i] = 1.0 / (1j * nu[i] - e - Delta[i])
+        G[i] = 1 / (1j * nu[i] - e - Delta[i])
 
-    tail = -2.0 / (4 * kT) / nk ** 2 + prefactor * np.sum(1.0 / nu ** 2)
+    tail = -2 / (4 * kT) / nk ** 2 + prefactor * np.sum(1 / nu ** 2)
     # VERIFY THAT THIS IS CORRECT!
 
     sizes, bounds = MPI.distribute(nQ, bounds=True)
@@ -690,7 +688,7 @@ def renormalize_coupling_band(q, e, g, W, U, kT=0.025, eps=1e-10,
     U = np.tile(U, (2, 2, 2, 1, 1))
 
     scale = nk / (2 * np.pi)
-    prefactor = 2.0 / nk.prod()
+    prefactor = 2 / nk.prod()
 
     sizes, bounds = MPI.distribute(nQ, bounds=True)
 
@@ -884,7 +882,7 @@ def Pi_g(q, e, g, U, kT=0.025, eps=1e-10,
     U = np.tile(U, (2, 2, 2, 1, 1))
 
     scale = nk / (2 * np.pi)
-    prefactor = 2.0 / nk.prod()
+    prefactor = 2 / nk.prod()
 
     sizes, bounds = MPI.distribute(nQ, bounds=True)
 
@@ -1069,7 +1067,7 @@ def grand_potential(e, kT=0.025, occupations=occupations.fermi_dirac):
     """
     x = e / kT
 
-    prefactor = 2.0 / np.prod(e.shape[:-1])
+    prefactor = 2 / np.prod(e.shape[:-1])
 
     if occupations is occupations.fermi_dirac: # faster alternative
         return prefactor * kT * np.log(occupations(-x)).sum()
@@ -1128,7 +1126,7 @@ def first_order(e, g, kT=0.025, U=None, eps=1e-10,
     else:
         indices = 'ijkm,xijkmm->x'
 
-    return 2.0 / nk.prod() * np.einsum(indices, f, g)
+    return 2 / nk.prod() * np.einsum(indices, f, g)
 
 def triangle(q, Q, e, gq, gQ, gqQ, kT=0.025, eps=1e-10,
         occupations=occupations.fermi_dirac, fluctuations=False):
@@ -1223,7 +1221,7 @@ def triangle(q, Q, e, gq, gQ, gqQ, kT=0.025, eps=1e-10,
     d = np.tile(d, (2, 2, 2, 1))
 
     scale = nk / (2 * np.pi)
-    prefactor = 4.0 / nk.prod()
+    prefactor = 4 / nk.prod()
 
     chi = np.empty((nbnd, nbnd, nbnd, nk[0], nk[1], nk[2]), dtype=complex)
 

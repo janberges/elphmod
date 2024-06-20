@@ -3,8 +3,6 @@
 
 """Lattices, symmetries, and interpolation."""
 
-from __future__ import division
-
 import numpy as np
 
 from . import misc, MPI
@@ -1553,8 +1551,8 @@ def path(points, N=30, recvec=None, qe=False, moveG=0, **kwargs):
             'A': [0.0, 0.0, 0.5],
             'M': [0.0, 0.5, 0.0],
             'L': [0.0, 0.5, 0.5],
-            'K': [1.0 / 3.0, 1.0 / 3.0, 0.0],
-            'H': [1.0 / 3.0, 1.0 / 3.0, 0.5],
+            'K': [1 / 3, 1 / 3, 0.0],
+            'H': [1 / 3, 1 / 3, 0.5],
             },
         6: { # tetragonal (st)
             'X': [0.5, 0.0, 0.0],
@@ -1737,9 +1735,9 @@ def GMKG(N=30, corner_indices=False, mesh=False, angle=60, straight=True,
         k *= shrink
         K *= shrink
 
-    L1 = 1.0 / np.sqrt(3)
-    L2 = 1.0 / 3.0
-    L3 = 2.0 / 3.0
+    L1 = 1 / np.sqrt(3)
+    L2 = 1 / 3
+    L3 = 2 / 3
 
     if mesh and not N % 6: # use only points of N x N mesh
         N1 = N // 2

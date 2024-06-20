@@ -3,8 +3,6 @@
 
 """Charge-density-wave dynamics on supercells."""
 
-from __future__ import division
-
 import copy
 import numpy as np
 import time
@@ -233,7 +231,7 @@ class Driver:
         if self.interactive:
             self.update_plot()
 
-        prefactor = 2.0 / self.nk.prod()
+        prefactor = 2 / self.nk.prod()
 
         E = prefactor * (self.f(self.e / self.kT) * self.e).sum() # E - mu N
         E += self.mu * self.n # mu N

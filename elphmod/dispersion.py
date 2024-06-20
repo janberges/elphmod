@@ -3,8 +3,6 @@
 
 """Diagonalization on paths and meshes."""
 
-from __future__ import division
-
 import numpy as np
 
 from . import bravais, misc, MPI

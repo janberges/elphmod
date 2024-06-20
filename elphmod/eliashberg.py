@@ -3,8 +3,6 @@
 
 """Parameters for McMillan's formula."""
 
-from __future__ import division
-
 import numpy as np
 
 from . import bravais, diagrams, dos, misc, occupations

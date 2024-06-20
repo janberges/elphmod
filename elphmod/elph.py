@@ -6,8 +6,6 @@
 
 """Electron-phonon coupling from EPW."""
 
-from __future__ import division
-
 import numpy as np
 
 from . import bravais, dispersion, misc, MPI

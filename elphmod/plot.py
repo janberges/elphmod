@@ -3,8 +3,6 @@
 
 """BZ plots, fatbands, etc."""
 
-from __future__ import division
-
 import numpy as np
 
 from . import bravais, MPI, misc
@@ -145,8 +143,8 @@ def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
         comm.Bcast(image)
 
     if outlines:
-        h = 1.0 / np.sqrt(3)
-        a = 1.0 / 3
+        h = 1 / np.sqrt(3)
+        a = 1 / 3
 
         b1, b2 = bravais.reciprocals(a1, a2)
 
@@ -237,17 +235,17 @@ def toBZ(data=None, points=1000, interpolation=bravais.linear_interpolation,
     if angle == 60:
         a3 = a1 - a2
         b3 = b1 + b2
-        M = 2.0 / 3.0
+        M = 2 / 3
 
     elif angle == 90:
         a3 = a1
         b3 = b1
-        M = 1.0 / 2.0
+        M = 1 / 2
 
     elif angle == 120:
         a3 = a1 + a2
         b3 = b1 - b2
-        M = 2.0 / 3.0
+        M = 2 / 3
 
     kxmax = max(abs(a1[0]), abs(a2[0]), abs(a3[0])) * M
     kymax = max(abs(a1[1]), abs(a2[1]), abs(a3[1])) * M

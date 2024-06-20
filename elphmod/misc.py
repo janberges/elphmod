@@ -3,8 +3,6 @@
 
 """Constants, status bars, parsing, etc."""
 
-from __future__ import division
-
 import collections
 import numpy as np
 import sys

@@ -3,8 +3,6 @@
 
 """Mass-spring models from Quantum ESPRESSO."""
 
-from __future__ import division
-
 import numpy as np
 
 from . import bravais, dispersion, misc, MPI

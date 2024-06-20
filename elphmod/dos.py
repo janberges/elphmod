@@ -3,8 +3,6 @@
 
 """2D tetrahedron methods."""
 
-from __future__ import division
-
 import numpy as np
 
 from . import bravais, misc, MPI
@@ -242,7 +240,7 @@ def double_delta(x, y, f=None, eps=1e-7):
 
     triangles = [(v, x[i], y[i], f[i]) for v, i in zip(triangles, indices)]
 
-    prefactor = 1.0 / N ** 2
+    prefactor = 1 / N ** 2
 
     def dd(z):
         my_D = []

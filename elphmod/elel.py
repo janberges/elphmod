@@ -3,8 +3,6 @@
 
 """Coulomb interaction from VASP."""
 
-from __future__ import division
-
 import sys
 import numpy as np
 
@@ -579,7 +577,7 @@ def hartree_energy(rho_g, g_vect, ngm_g, uc_volume, a=1.0):
     """
     ehart = 0.0
     for ig in range(1, ngm_g):
-        fac = 1.0 / np.linalg.norm(g_vect[ig]) ** 2
+        fac = 1 / np.linalg.norm(g_vect[ig]) ** 2
         rgtot_re = rho_g[ig].real
         rgtot_im = rho_g[ig].imag
         ehart = ehart + (rgtot_re ** 2 + rgtot_im ** 2) * fac

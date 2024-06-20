@@ -3,8 +3,6 @@
 
 """Step and delta smearing functions."""
 
-from __future__ import division
-
 import numpy as np
 
 try:
@@ -229,7 +227,7 @@ def lorentz(x):
 def lorentz_delta(x):
     """Calculate negative derivative of Lorentz step function."""
 
-    return 1.0 / (x * x + np.pi * np.pi)
+    return 1 / (x * x + np.pi * np.pi)
 
 def lorentz_delta_prime(x):
     """Calculate negative 2nd derivative of Lorentz step function."""

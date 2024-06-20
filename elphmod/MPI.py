@@ -3,8 +3,6 @@
 
 """Work distribution and shared memory."""
 
-from __future__ import division
-
 import numpy as np
 import sys
 
