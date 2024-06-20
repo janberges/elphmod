@@ -28,9 +28,7 @@ ph = elphmod.ph.Model('data/graphene.ifc')
 elph = elphmod.elph.Model('data/graphene.epmatwp', 'data/graphene.wigner',
     el, ph)
 
-q = 2 * np.pi * np.array([(q1, q2)
-    for q1 in range(nq)
-    for q2 in range(nq)], dtype=float) / nq
+q = elphmod.bravais.mesh(nq, nq, flat=True)
 
 e, u = elphmod.dispersion.dispersion_full_nosym(elph.el.H, nk, vectors=True)
 e -= mu
@@ -50,9 +48,7 @@ Nk = nk // N
 
 ElPh = elph.supercell(N, N)
 
-Q = 2 * np.pi * np.array([(q1, q2)
-    for q1 in range(Nq)
-    for q2 in range(Nq)], dtype=float) / Nq
+Q = elphmod.bravais.mesh(Nq, Nq, flat=True)
 
 E, U = elphmod.dispersion.dispersion_full_nosym(ElPh.el.H, Nk, vectors=True)
 E -= mu

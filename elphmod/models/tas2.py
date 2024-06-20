@@ -57,24 +57,9 @@ nk = (3, 3, 1) # for electrons
 nq = (2, 2, 1) # for phonons
 nQ = (3, 3, 1) # for coupling
 
-k = [[[(k1, k2, k3)
-    for k3 in range(nk[2])]
-    for k2 in range(nk[1])]
-    for k1 in range(nk[0])]
-
-q = [[[(q1, q2, q3)
-    for q3 in range(nq[2])]
-    for q2 in range(nq[1])]
-    for q1 in range(nq[0])]
-
-Q = [(Q1, Q2, Q3)
-    for Q1 in range(nQ[0])
-    for Q2 in range(nQ[1])
-    for Q3 in range(nQ[2])]
-
-k = 2 * np.pi * np.array(k, dtype=float) / nk
-q = 2 * np.pi * np.array(q, dtype=float) / nq
-Q = 2 * np.pi * np.array(Q, dtype=float) / nQ
+k = elphmod.bravais.mesh(*nk)
+q = elphmod.bravais.mesh(*nq)
+Q = elphmod.bravais.mesh(*nQ, flat=True)
 
 e0 = np.diag([e_z2, e_x2y2, e_x2y2])
 

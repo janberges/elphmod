@@ -17,10 +17,7 @@ class TestDiagrams(unittest.TestCase):
             kT=0.01, f=elphmod.occupations.fermi_dirac):
         """Compare lowest-order diagrams to finite differences."""
 
-        k = 2 * np.pi * np.array([[(k1, k2)
-            for k2 in range(nk[1])]
-            for k1 in range(nk[0])], dtype=float) / nk
-
+        k = elphmod.bravais.mesh(*nk)
         q = np.zeros((1, 2))
 
         el, ph, elph = elphmod.models.tas2.create(rydberg=True,

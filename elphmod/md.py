@@ -103,15 +103,8 @@ class Driver:
         self.nq = np.ones(3, dtype=int)
         self.nq[:len(nq)] = nq
 
-        self.k = 2 * np.pi * np.array([[[(k1, k2, k3)
-            for k3 in range(self.nk[2])]
-            for k2 in range(self.nk[1])]
-            for k1 in range(self.nk[0])], dtype=float) / self.nk
-
-        self.q = 2 * np.pi * np.array([(q1, q2, q3)
-            for q1 in range(self.nq[0])
-            for q2 in range(self.nq[1])
-            for q3 in range(self.nq[2])], dtype=float) / self.nq
+        self.k = bravais.mesh(*self.nk)
+        self.q = bravais.mesh(*self.nq, flat=True)
 
         self.H0 = dispersion.sample(self.elph.el.H, self.k)
 

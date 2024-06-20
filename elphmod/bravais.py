@@ -2643,6 +2643,29 @@ def cartesian_to_crystal(R_CARTESIAN, a1, a2, a3):
 
     return R_CRYSTAL
 
+def mesh(*n, flat=False):
+    """Generate uniform mesh.
+
+    Parameters
+    ----------
+    *n : int
+        Mesh dimensions.
+    flat : bool, default False
+        Flatten mesh-point indices into single dimension?
+
+    Returns
+    -------
+    ndarray
+        Mesh points with period :math:`2 \pi`.
+    """
+    points = 2 * np.pi * np.moveaxis(np.array(np.meshgrid(*map(range, n),
+        indexing='ij'), dtype=float), 0, -1) / n
+
+    if flat:
+        points = points.reshape((-1, len(n)))
+
+    return points.copy()
+
 def kpoints(nk1=None, nk2=None, nk3=None, weights=None):
     """Generate and print uniform k-point mesh.
 
@@ -2655,28 +2678,17 @@ def kpoints(nk1=None, nk2=None, nk3=None, weights=None):
     weights : bool
         Print weights?
     """
-    k = []
-    N = 1
+    nk = [n or int(input('number of points along %s axis: ' % axis) or 1)
+        for axis, n in [('1st', nk1), ('2nd', nk2), ('3rd', nk3)]]
 
-    for axis, nk in ('1st', nk1), ('2nd', nk2), ('3rd', nk3):
-        if nk is None:
-            nk = int(input('number of points along %s axis: ' % axis))
-
-        dk = 1.0 / nk
-        k.append([i * dk for i in range(nk)])
-        N *= nk
-
-    cols = [0.0] * len(k)
+    N = np.prod(nk)
 
     if weights is None:
         weights = 'y' in input('print weights (y/n): ')
 
-    if weights:
-       cols.append(1.0 / N)
+    w = (1 / N,) * weights
 
     print(N)
 
-    for cols[0] in k[0]:
-       for cols[1] in k[1]:
-          for cols[2] in k[2]:
-             print(' '.join('%12.10f' % c for c in cols))
+    for k in mesh(*nk).reshape((-1, 3)) / (2 * np.pi):
+        print(' '.join('%12.10f' % c for c in tuple(k) + w))

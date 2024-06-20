@@ -22,15 +22,8 @@ nq = [PH['nq1'], PH['nq2'], PH['nq3']]
 
 info('Prepare wave vectors')
 
-k = 2 * np.pi * np.array([[[(k1, k2, k3)
-    for k3 in range(nk[2])]
-    for k2 in range(nk[1])]
-    for k1 in range(nk[0])], dtype=float) / nk
-
-q = 2 * np.pi * np.array([[[(q1, q2, q3)
-    for q3 in range(nq[2])]
-    for q2 in range(nq[1])]
-    for q1 in range(nq[0])], dtype=float) / nq
+k = elphmod.bravais.mesh(*nk)
+q = elphmod.bravais.mesh(*nq)
 
 q_flat = np.reshape(q, (-1, 3))
 

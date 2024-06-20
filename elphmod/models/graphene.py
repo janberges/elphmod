@@ -28,18 +28,8 @@ r = np.dot([[2.0, 1.0, 0.0], [1.0, 2.0, 0.0]], at) / 3
 nk = (2, 2, 1)
 nq = (2, 2, 1)
 
-k = [[[(k1, k2, k3)
-    for k3 in range(nk[2])]
-    for k2 in range(nk[1])]
-    for k1 in range(nk[0])]
-
-q = [[[(q1, q2, q3)
-    for q3 in range(nq[2])]
-    for q2 in range(nq[1])]
-    for q1 in range(nq[0])]
-
-k = 2 * np.pi * np.array(k, dtype=float) / nk
-q = 2 * np.pi * np.array(q, dtype=float) / nq
+k = elphmod.bravais.mesh(*nk)
+q = elphmod.bravais.mesh(*nq)
 
 def hamiltonian(k1=0, k2=0, k3=0):
     """Calculate electrons of, e.g., Phys. Rev. B 90, 085422 (2014)."""

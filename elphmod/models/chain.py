@@ -22,24 +22,9 @@ nk = (3, 1, 1) # for electrons
 nq = (2, 1, 1) # for phonons
 nQ = (3, 1, 1) # for coupling
 
-k = [[[(k1, k2, k3)
-    for k3 in range(nk[2])]
-    for k2 in range(nk[1])]
-    for k1 in range(nk[0])]
-
-q = [[[(q1, q2, q3)
-    for q3 in range(nq[2])]
-    for q2 in range(nq[1])]
-    for q1 in range(nq[0])]
-
-Q = [(Q1, Q2, Q3)
-    for Q1 in range(nQ[0])
-    for Q2 in range(nQ[1])
-    for Q3 in range(nQ[2])]
-
-k = 2 * np.pi * np.array(k, dtype=float) / nk
-q = 2 * np.pi * np.array(q, dtype=float) / nq
-Q = 2 * np.pi * np.array(Q, dtype=float) / nQ
+k = elphmod.bravais.mesh(*nk)
+q = elphmod.bravais.mesh(*nq)
+Q = elphmod.bravais.mesh(*nQ, flat=True)
 
 def hamiltonian(k1=0, k2=0, k3=0):
     """Calculate electrons as in Eq. (62) of PRX 13, 041009 (2023)."""

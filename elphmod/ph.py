@@ -485,12 +485,7 @@ class Model:
     def sample_orig(self):
         """Sample dynamical matrix on original q-point mesh."""
 
-        self.q0 = [(q1, q2, q3)
-            for q1 in range(self.nq[0])
-            for q2 in range(self.nq[1])
-            for q3 in range(self.nq[2])]
-
-        self.q0 = 2 * np.pi * np.array(self.q0, dtype=float) / self.nq
+        self.q0 = bravais.mesh(*self.nq, flat=True)
 
         self.D0 = dispersion.sample(self.D, self.q0)
 
