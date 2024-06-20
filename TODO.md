@@ -5,7 +5,7 @@ mark are not necessarily a good idea.
 
 * Use size-consistent tolerance for electron number when finding Fermi level?
 * Unscreen phonons of MD driver on supercell (using sparse matrices).
-* Set `ph.D0` and `elph.g0` when generating models with `q2r`.
+* Set `ph.D0` and `elph.g0` when generating models with `q2r`?
 * Read Wannier-function centres from `_centres.xyz`.
 * Add long-range argument `lr` to electron-phonon class `elph`?
 * Save `_wsvec.dat` together with `_hr.dat` file (important for small meshes).

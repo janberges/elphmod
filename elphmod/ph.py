@@ -1936,6 +1936,8 @@ def q2r(ph, D_irr=None, q_irr=None, nq=None, D_full=None, angle=60,
     if ph.divide_mass:
         divide_by_mass(ph.data, ph.M)
 
+    ph.nq = tuple(nq)
+
     if apply_asr or apply_rsr:
         sum_rule_correction(ph, asr=apply_asr, rsr=apply_rsr)
 

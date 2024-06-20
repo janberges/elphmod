@@ -792,6 +792,8 @@ def k2r(el, H, a, r, fft=True, rydberg=False):
     el.R, el.data, l = bravais.short_range_model(t, a, r,
         sgn=+1, divide_ndegen=el.divide_ndegen)
 
+    el.nk = tuple(nk)
+
     if rydberg != el.rydberg:
         if rydberg:
             el.data *= misc.Ry
