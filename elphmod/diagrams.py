@@ -12,8 +12,7 @@ import elphmod.occupations
 comm = elphmod.MPI.comm
 info = elphmod.MPI.info
 
-def susceptibility(e, kT=0.025, eta=1e-10,
-        occupations=elphmod.occupations.fermi_dirac):
+def susceptibility(e, kT=0.025, eta=1e-10, occupations='fd'):
     r"""Calculate real part of static electronic susceptibility.
 
     .. math::
@@ -41,6 +40,8 @@ def susceptibility(e, kT=0.025, eta=1e-10,
         Static electronic susceptibility as a function of :math:`q_1, q_2 \in
         [0, 2 \pi)`.
     """
+    occupations = elphmod.occupations.smearing(occupations)
+
     nk, nk = e.shape
 
     x = e / kT
@@ -143,8 +144,7 @@ def susceptibility2(e, kT=0.025, nmats=1000, hyb_width=1.0, hyb_height=0.0):
 
     return calculate_susceptibility
 
-def polarization(e, U, kT=0.025, eps=1e-10, subspace=None,
-        occupations=elphmod.occupations.fermi_dirac):
+def polarization(e, U, kT=0.025, eps=1e-10, subspace=None, occupations='fd'):
     r"""Calculate RPA polarization in orbital basis (density-density).
 
     .. math::
@@ -186,6 +186,8 @@ def polarization(e, U, kT=0.025, eps=1e-10, subspace=None,
         RPA polarization in orbital basis as a function of :math:`q_1, q_2, q_3
         \in [0, 2 \pi)`.
     """
+    occupations = elphmod.occupations.smearing(occupations)
+
     cRPA = subspace is not None
 
     nk_orig = e.shape[:-1]
@@ -258,10 +260,9 @@ def polarization(e, U, kT=0.025, eps=1e-10, subspace=None,
     return calculate_polarization
 
 def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
-        occupations=elphmod.occupations.fermi_dirac, fluctuations=False,
-        Delta=None, Delta_diff=False,
-        Delta_occupations=elphmod.occupations.gauss, Delta_kT=0.025, g=None,
-        G=None, symmetrize=True, diagonal=False, U=0.0, comm=comm):
+        occupations='fd', fluctuations=False, Delta=None, Delta_diff=False,
+        Delta_occupations='gauss', Delta_kT=0.025, g=None, G=None,
+        symmetrize=True, diagonal=False, U=0.0, comm=comm):
     r"""Calculate phonon self-energy.
 
     .. math::
@@ -320,6 +321,9 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
     ndarray
         Phonon self-energy.
     """
+    occupations = elphmod.occupations.smearing(occupations)
+    Delta_occupations = elphmod.occupations.smearing(Delta_occupations)
+
     nQ = len(q)
 
     q_orig = q
@@ -487,8 +491,7 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
     else:
         return Pi
 
-def phonon_self_energy_fermi_shift(e, g, kT=0.025,
-        occupations=elphmod.occupations.fermi_dirac):
+def phonon_self_energy_fermi_shift(e, g, kT=0.025, occupations='fd'):
     r"""Calculate phonon self-energy arising from change of chemical potential.
 
     :func:`phonon_self_energy` provides the second derivative of the grand
@@ -511,6 +514,8 @@ def phonon_self_energy_fermi_shift(e, g, kT=0.025,
     ndarray
         Phonon self-energy correction.
     """
+    occupations = elphmod.occupations.smearing(occupations)
+
     nk = np.ones(3, dtype=int)
     nk[:len(e.shape[:-1])] = e.shape[:-1]
 
@@ -606,8 +611,7 @@ def phonon_self_energy2(q, e, g2, kT=0.025, nmats=1000, hyb_width=1.0,
     return Pi
 
 def renormalize_coupling_band(q, e, g, W, U, kT=0.025, eps=1e-10,
-        occupations=elphmod.occupations.fermi_dirac, nbnd_sub=None,
-        status=True):
+        occupations='fd', nbnd_sub=None, status=True):
     r"""Calculate renormalized electron-phonon coupling in band basis.
 
     .. math::
@@ -654,6 +658,8 @@ def renormalize_coupling_band(q, e, g, W, U, kT=0.025, eps=1e-10,
     --------
     renormalize_coupling_orbital
     """
+    occupations = elphmod.occupations.smearing(occupations)
+
     nQ = len(q)
 
     q_orig = q
@@ -828,8 +834,8 @@ def renormalize_coupling_orbital(q, e, g, W, U, **kwargs):
 
     return g
 
-def Pi_g(q, e, g, U, kT=0.025, eps=1e-10,
-        occupations=elphmod.occupations.fermi_dirac, dd=True, status=True):
+def Pi_g(q, e, g, U, kT=0.025, eps=1e-10, occupations='fd', dd=True,
+        status=True):
     r"""Join electron-phonon coupling and Lindhard bubble in orbital basis.
 
     Parameters
@@ -858,6 +864,8 @@ def Pi_g(q, e, g, U, kT=0.025, eps=1e-10,
     ndarray
         (k-independent) product of electron-phonon coupling and Lindhard bubble.
     """
+    occupations = elphmod.occupations.smearing(occupations)
+
     nQ = len(q)
 
     q_orig = q
@@ -948,8 +956,8 @@ def Pi_g(q, e, g, U, kT=0.025, eps=1e-10,
 
     return Pig
 
-def double_fermi_surface_average(q, e, g2=None, kT=0.025,
-        occupations=elphmod.occupations.fermi_dirac, comm=comm):
+def double_fermi_surface_average(q, e, g2=None, kT=0.025, occupations='fd',
+        comm=comm):
     r"""Calculate double Fermi-surface average.
 
     Please note that not the average itself is returned!
@@ -989,6 +997,8 @@ def double_fermi_surface_average(q, e, g2=None, kT=0.025,
         Denominator of double Fermi-surface average before :math:`\vec q`
         summation.
     """
+    occupations = elphmod.occupations.smearing(occupations)
+
     nQ = len(q)
 
     q_orig = q
@@ -1053,7 +1063,7 @@ def double_fermi_surface_average(q, e, g2=None, kT=0.025,
 
     return enum, deno
 
-def grand_potential(e, kT=0.025, occupations=elphmod.occupations.fermi_dirac):
+def grand_potential(e, kT=0.025, occupations='fd'):
     r"""Calculate (zeroth order of) grand potential.
 
     Parameters
@@ -1070,6 +1080,8 @@ def grand_potential(e, kT=0.025, occupations=elphmod.occupations.fermi_dirac):
     real
         Grand potential.
     """
+    occupations = elphmod.occupations.smearing(occupations)
+
     x = e / kT
 
     prefactor = 2 / np.prod(e.shape[:-1])
@@ -1082,8 +1094,7 @@ def grand_potential(e, kT=0.025, occupations=elphmod.occupations.fermi_dirac):
 
     return U - kT * S # - mu * N (where mu = 0)
 
-def first_order(e, g, kT=0.025, U=None, eps=1e-10,
-        occupations=elphmod.occupations.fermi_dirac):
+def first_order(e, g, kT=0.025, U=None, eps=1e-10, occupations='fd'):
     r"""Calculate first-order diagram of grand potential.
 
     Parameters
@@ -1108,6 +1119,8 @@ def first_order(e, g, kT=0.025, U=None, eps=1e-10,
     complex
         Value of first-order diagram.
     """
+    occupations = elphmod.occupations.smearing(occupations)
+
     nk = np.ones(3, dtype=int)
     nk[:len(e.shape[:-1])] = e.shape[:-1]
 
@@ -1133,8 +1146,8 @@ def first_order(e, g, kT=0.025, U=None, eps=1e-10,
 
     return 2 / nk.prod() * np.einsum(indices, f, g)
 
-def triangle(q, Q, e, gq, gQ, gqQ, kT=0.025, eps=1e-10,
-        occupations=elphmod.occupations.fermi_dirac, fluctuations=False):
+def triangle(q, Q, e, gq, gQ, gqQ, kT=0.025, eps=1e-10, occupations='fd',
+        fluctuations=False):
     r"""Calculate triangle diagram (third order of grand potential).
 
     .. math::
@@ -1197,6 +1210,8 @@ def triangle(q, Q, e, gq, gQ, gqQ, kT=0.025, eps=1e-10,
     complex
         Value of triangle.
     """
+    occupations = elphmod.occupations.smearing(occupations)
+
     tmp = np.zeros(3)
     tmp[:len(q)] = q
     q = tmp
@@ -1302,8 +1317,8 @@ def triangle(q, Q, e, gq, gQ, gqQ, kT=0.025, eps=1e-10,
     else:
         return chi
 
-def fan_migdal_self_energy(k, e, w, g2, omega, kT=0.025,
-        occupations=elphmod.occupations.fermi_dirac, comm=comm):
+def fan_migdal_self_energy(k, e, w, g2, omega, kT=0.025, occupations='fd',
+        comm=comm):
     r"""Calculate Fan-Migdal electron self-energy (to be tested).
 
     See Eq. (4) by Abramovitch et al., Phys. Rev. Mater. 7, 093801 (2023).
@@ -1330,6 +1345,8 @@ def fan_migdal_self_energy(k, e, w, g2, omega, kT=0.025,
     ndarray
         Fan-Migdal electron self-energy.
     """
+    occupations = elphmod.occupations.smearing(occupations)
+
     nK = len(k)
 
     k_orig = k
@@ -1388,8 +1405,8 @@ def fan_migdal_self_energy(k, e, w, g2, omega, kT=0.025,
 
     return Sigma
 
-def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10,
-        occupations=elphmod.occupations.fermi_dirac, dc_only=False, comm=comm):
+def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10, occupations='fd',
+        dc_only=False, comm=comm):
     r"""Calculate Green-Kubo optical conductivity (to be tested).
 
     See Eq. (8) by Abramovitch et al., Phys. Rev. Mater. 7, 093801 (2023).
@@ -1417,6 +1434,8 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10,
     ndarray
         Green-Kubo optical conductivity.
     """
+    occupations = elphmod.occupations.smearing(occupations)
+
     domega = omega[1] - omega[0]
 
     if np.any(abs(np.diff(omega) - domega) > eps):

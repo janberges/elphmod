@@ -51,7 +51,7 @@ def Tc(lamda, wlog, mustar=0.1, w2nd=None, correct=False):
     return Tc
 
 def McMillan(nq, e, w2, g2, eps=1e-10, mustar=0.0, tetra=False, kT=0.025,
-        f=elphmod.occupations.fermi_dirac, correct=False):
+        f='fd', correct=False):
     r"""Calculate parameters and result of McMillan's formula.
 
     Parameters
@@ -92,6 +92,8 @@ def McMillan(nq, e, w2, g2, eps=1e-10, mustar=0.0, tetra=False, kT=0.025,
     float, optional
         Second-moment average phonon energy used for shape correction.
     """
+    f = elphmod.occupations.smearing(f)
+
     nk, nk, nel = e.shape
     nQ, nph = w2.shape
     nQ, nph, nk, nk, nel, nel = g2.shape

@@ -305,7 +305,9 @@ def smearing(smearing='gaussian', **ignore):
     Parameters
     ----------
     smearing : str, default 'gaussian'
-        Any available option for PWscf input parameter ``smearing``.
+        Any available option for PWscf input parameter ``smearing``, as well as
+        ``lorentzian``, ``lorentz``, and ``heaviside``. If no string is passed,
+        it is returned as is.
     **ignore
         Ignored keyword arguments, e.g., parameters from 'func'`read_pwi`.
 
@@ -314,6 +316,9 @@ def smearing(smearing='gaussian', **ignore):
     function
         Smearing function.
     """
+    if not isinstance(smearing, str):
+        return smearing
+
     name = smearing.lower()
 
     if name in {'gaussian', 'gauss'}:
@@ -324,6 +329,10 @@ def smearing(smearing='gaussian', **ignore):
         return marzari_vanderbilt
     if name in {'fermi-dirac', 'f-d', 'fd'}:
         return fermi_dirac
+    if name in {'lorentzian', 'lorentz'}:
+        return lorentz
+    if name in {'heaviside'}:
+        return heaviside
 
 def find_Fermi_level(n, e, kT=0.025, f=fermi_dirac, mu=None, tol=1e-5,
         eps=1e-10):
