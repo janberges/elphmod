@@ -5,12 +5,15 @@
 
 import numpy as np
 
-from . import misc, MPI, occupations
+import elphmod.misc
+import elphmod.MPI
+import elphmod.occupations
 
-comm = MPI.comm
-info = MPI.info
+comm = elphmod.MPI.comm
+info = elphmod.MPI.info
 
-def susceptibility(e, kT=0.025, eta=1e-10, occupations=occupations.fermi_dirac):
+def susceptibility(e, kT=0.025, eta=1e-10,
+        occupations=elphmod.occupations.fermi_dirac):
     r"""Calculate real part of static electronic susceptibility.
 
     .. math::
@@ -141,7 +144,7 @@ def susceptibility2(e, kT=0.025, nmats=1000, hyb_width=1.0, hyb_height=0.0):
     return calculate_susceptibility
 
 def polarization(e, U, kT=0.025, eps=1e-10, subspace=None,
-        occupations=occupations.fermi_dirac):
+        occupations=elphmod.occupations.fermi_dirac):
     r"""Calculate RPA polarization in orbital basis (density-density).
 
     .. math::
@@ -255,9 +258,10 @@ def polarization(e, U, kT=0.025, eps=1e-10, subspace=None,
     return calculate_polarization
 
 def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
-        occupations=occupations.fermi_dirac, fluctuations=False, Delta=None,
-        Delta_diff=False, Delta_occupations=occupations.gauss, Delta_kT=0.025,
-        g=None, G=None, symmetrize=True, diagonal=False, U=0.0, comm=comm):
+        occupations=elphmod.occupations.fermi_dirac, fluctuations=False,
+        Delta=None, Delta_diff=False,
+        Delta_occupations=elphmod.occupations.gauss, Delta_kT=0.025, g=None,
+        G=None, symmetrize=True, diagonal=False, U=0.0, comm=comm):
     r"""Calculate phonon self-energy.
 
     .. math::
@@ -374,7 +378,7 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
     scale = nk / (2 * np.pi)
     prefactor = 2 / nk.prod()
 
-    sizes, bounds = MPI.distribute(nQ, bounds=True, comm=comm)
+    sizes, bounds = elphmod.MPI.distribute(nQ, bounds=True, comm=comm)
 
     omega = np.array(omega)
 
@@ -397,7 +401,7 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
 
     dynamic = np.any(omega != 0)
 
-    status = misc.StatusBar(sizes[comm.rank] * np.prod(phshape),
+    status = elphmod.misc.StatusBar(sizes[comm.rank] * np.prod(phshape),
         title='calculate %s phonon self-energy'
             % ('dynamic' if dynamic else 'static'))
 
@@ -484,7 +488,7 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
         return Pi
 
 def phonon_self_energy_fermi_shift(e, g, kT=0.025,
-        occupations=occupations.fermi_dirac):
+        occupations=elphmod.occupations.fermi_dirac):
     r"""Calculate phonon self-energy arising from change of chemical potential.
 
     :func:`phonon_self_energy` provides the second derivative of the grand
@@ -579,7 +583,7 @@ def phonon_self_energy2(q, e, g2, kT=0.025, nmats=1000, hyb_width=1.0,
     tail = -2 / (4 * kT) / nk ** 2 + prefactor * np.sum(1 / nu ** 2)
     # VERIFY THAT THIS IS CORRECT!
 
-    sizes, bounds = MPI.distribute(nQ, bounds=True)
+    sizes, bounds = elphmod.MPI.distribute(nQ, bounds=True)
 
     my_Pi = np.empty((sizes[comm.rank], nmodes), dtype=complex)
 
@@ -602,7 +606,8 @@ def phonon_self_energy2(q, e, g2, kT=0.025, nmats=1000, hyb_width=1.0,
     return Pi
 
 def renormalize_coupling_band(q, e, g, W, U, kT=0.025, eps=1e-10,
-        occupations=occupations.fermi_dirac, nbnd_sub=None, status=True):
+        occupations=elphmod.occupations.fermi_dirac, nbnd_sub=None,
+        status=True):
     r"""Calculate renormalized electron-phonon coupling in band basis.
 
     .. math::
@@ -690,7 +695,7 @@ def renormalize_coupling_band(q, e, g, W, U, kT=0.025, eps=1e-10,
     scale = nk / (2 * np.pi)
     prefactor = 2 / nk.prod()
 
-    sizes, bounds = MPI.distribute(nQ, bounds=True)
+    sizes, bounds = elphmod.MPI.distribute(nQ, bounds=True)
 
     my_g_ = np.empty((sizes[comm.rank],
         nmodes, nk[0], nk[1], nk[2], nbnd, nbnd), dtype=complex)
@@ -824,7 +829,7 @@ def renormalize_coupling_orbital(q, e, g, W, U, **kwargs):
     return g
 
 def Pi_g(q, e, g, U, kT=0.025, eps=1e-10,
-        occupations=occupations.fermi_dirac, dd=True, status=True):
+        occupations=elphmod.occupations.fermi_dirac, dd=True, status=True):
     r"""Join electron-phonon coupling and Lindhard bubble in orbital basis.
 
     Parameters
@@ -884,7 +889,7 @@ def Pi_g(q, e, g, U, kT=0.025, eps=1e-10,
     scale = nk / (2 * np.pi)
     prefactor = 2 / nk.prod()
 
-    sizes, bounds = MPI.distribute(nQ, bounds=True)
+    sizes, bounds = elphmod.MPI.distribute(nQ, bounds=True)
 
     if dd:
         my_Pig = np.empty((sizes[comm.rank], nmodes, norb), dtype=complex)
@@ -944,7 +949,7 @@ def Pi_g(q, e, g, U, kT=0.025, eps=1e-10,
     return Pig
 
 def double_fermi_surface_average(q, e, g2=None, kT=0.025,
-        occupations=occupations.fermi_dirac, comm=comm):
+        occupations=elphmod.occupations.fermi_dirac, comm=comm):
     r"""Calculate double Fermi-surface average.
 
     Please note that not the average itself is returned!
@@ -1012,7 +1017,7 @@ def double_fermi_surface_average(q, e, g2=None, kT=0.025,
 
     scale = nk / (2 * np.pi)
 
-    sizes, bounds = MPI.distribute(nQ, bounds=True, comm=comm)
+    sizes, bounds = elphmod.MPI.distribute(nQ, bounds=True, comm=comm)
 
     my_enum = np.empty((sizes[comm.rank], nmodes),
         dtype=float if np.isrealobj(g2) else complex)
@@ -1048,7 +1053,7 @@ def double_fermi_surface_average(q, e, g2=None, kT=0.025,
 
     return enum, deno
 
-def grand_potential(e, kT=0.025, occupations=occupations.fermi_dirac):
+def grand_potential(e, kT=0.025, occupations=elphmod.occupations.fermi_dirac):
     r"""Calculate (zeroth order of) grand potential.
 
     Parameters
@@ -1069,7 +1074,7 @@ def grand_potential(e, kT=0.025, occupations=occupations.fermi_dirac):
 
     prefactor = 2 / np.prod(e.shape[:-1])
 
-    if occupations is occupations.fermi_dirac: # faster alternative
+    if occupations is elphmod.occupations.fermi_dirac: # faster alternative
         return prefactor * kT * np.log(occupations(-x)).sum()
 
     U = prefactor * np.sum(occupations(x) * e)
@@ -1078,7 +1083,7 @@ def grand_potential(e, kT=0.025, occupations=occupations.fermi_dirac):
     return U - kT * S # - mu * N (where mu = 0)
 
 def first_order(e, g, kT=0.025, U=None, eps=1e-10,
-        occupations=occupations.fermi_dirac):
+        occupations=elphmod.occupations.fermi_dirac):
     r"""Calculate first-order diagram of grand potential.
 
     Parameters
@@ -1129,7 +1134,7 @@ def first_order(e, g, kT=0.025, U=None, eps=1e-10,
     return 2 / nk.prod() * np.einsum(indices, f, g)
 
 def triangle(q, Q, e, gq, gQ, gqQ, kT=0.025, eps=1e-10,
-        occupations=occupations.fermi_dirac, fluctuations=False):
+        occupations=elphmod.occupations.fermi_dirac, fluctuations=False):
     r"""Calculate triangle diagram (third order of grand potential).
 
     .. math::
@@ -1298,7 +1303,7 @@ def triangle(q, Q, e, gq, gQ, gqQ, kT=0.025, eps=1e-10,
         return chi
 
 def fan_migdal_self_energy(k, e, w, g2, omega, kT=0.025,
-        electronic_occupations=occupations.fermi_dirac, comm=comm):
+        occupations=elphmod.occupations.fermi_dirac, comm=comm):
     r"""Calculate Fan-Migdal electron self-energy (to be tested).
 
     See Eq. (4) by Abramovitch et al., Phys. Rev. Mater. 7, 093801 (2023).
@@ -1317,7 +1322,7 @@ def fan_migdal_self_energy(k, e, w, g2, omega, kT=0.025,
         Frequency argument including small imaginary regulator.
     kT : float
         Smearing temperature.
-    electronic_occupations : function
+    occupations : function
         Particle distribution as a function of energy divided by `kT`.
 
     Returns
@@ -1343,8 +1348,8 @@ def fan_migdal_self_energy(k, e, w, g2, omega, kT=0.025,
     g2 = np.reshape(g2, (nq[0], nq[1], nq[2], nmodes, nK, nbnd, nbnd, 1))
     omega = np.reshape(omega, (1, 1, 1, 1, 1, 1, -1))
 
-    f = electronic_occupations(e / kT)
-    N = occupations.bose_einstein(w / kT)
+    f = occupations(e / kT)
+    N = elphmod.occupations.bose_einstein(w / kT)
 
     e = np.tile(e, (2, 2, 2, 1, 1, 1, 1))
     f = np.tile(f, (2, 2, 2, 1, 1, 1, 1))
@@ -1352,11 +1357,11 @@ def fan_migdal_self_energy(k, e, w, g2, omega, kT=0.025,
     scale = nq / (2 * np.pi)
     prefactor = 1 / nq.prod()
 
-    sizes, bounds = MPI.distribute(nK, bounds=True, comm=comm)
+    sizes, bounds = elphmod.MPI.distribute(nK, bounds=True, comm=comm)
 
     my_Sigma = np.empty((sizes[comm.rank], nbnd, omega.size), dtype=complex)
 
-    status = misc.StatusBar(sizes[comm.rank],
+    status = elphmod.misc.StatusBar(sizes[comm.rank],
         title='calculate Fan-Migdal electron self-energy')
 
     for my_ik, ik in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
@@ -1384,7 +1389,7 @@ def fan_migdal_self_energy(k, e, w, g2, omega, kT=0.025,
     return Sigma
 
 def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10,
-        occupations=occupations.fermi_dirac, dc_only=False, comm=comm):
+        occupations=elphmod.occupations.fermi_dirac, dc_only=False, comm=comm):
     r"""Calculate Green-Kubo optical conductivity (to be tested).
 
     See Eq. (8) by Abramovitch et al., Phys. Rev. Mater. 7, 093801 (2023).
@@ -1439,11 +1444,12 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10,
     else:
         f = occupations(x)
 
-        sizes, bounds = MPI.distribute(len(omega), bounds=True, comm=comm)
+        sizes, bounds = elphmod.MPI.distribute(len(omega), bounds=True,
+            comm=comm)
 
         my_sigma = np.empty((sizes[comm.rank], ndim, ndim))
 
-        status = misc.StatusBar(sizes[comm.rank],
+        status = elphmod.misc.StatusBar(sizes[comm.rank],
             title='calculate Green-Kubo optical conductivity')
 
         for my_iw, iw in enumerate(range(*bounds[comm.rank:comm.rank + 2])):

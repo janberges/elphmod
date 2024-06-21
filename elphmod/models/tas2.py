@@ -4,7 +4,13 @@
 # This program is free software under the terms of the GNU GPLv3 or later.
 
 import numpy as np
-import elphmod
+
+import elphmod.bravais
+import elphmod.dispersion
+import elphmod.el
+import elphmod.elph
+import elphmod.misc
+import elphmod.ph
 
 deg = elphmod.bravais.deg
 

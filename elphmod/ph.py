@@ -5,10 +5,13 @@
 
 import numpy as np
 
-from . import bravais, dispersion, misc, MPI
+import elphmod.bravais
+import elphmod.dispersion
+import elphmod.misc
+import elphmod.MPI
 
-comm = MPI.comm
-info = MPI.info
+comm = elphmod.MPI.comm
+info = elphmod.MPI.info
 
 class Model:
     r"""Mass-spring model for the phonons.
@@ -193,7 +196,7 @@ class Model:
         ndarray
             Element of :attr:`data` or zero.
         """
-        index = misc.vector_index(self.R, (R1, R2, R3))
+        index = elphmod.misc.vector_index(self.R, (R1, R2, R3))
 
         if index is None:
             return np.zeros_like(self.data[0])
@@ -309,8 +312,8 @@ class Model:
             self.prepare_long_range()
 
         if self.D0 is None:
-            self.R, self.data, self.l = bravais.short_range_model(model[0],
-                self.a, self.r, sgn=-1, divide_ndegen=divide_ndegen)
+            self.R, self.data, self.l = elphmod.bravais.short_range_model(
+                model[0], self.a, self.r, sgn=-1, divide_ndegen=divide_ndegen)
 
             if divide_mass:
                 divide_by_mass(self.data, self.M)
@@ -344,7 +347,7 @@ class Model:
         G_max : float
             Cutoff for reciprocal lattice vectors.
         """
-        self.b = np.array(bravais.reciprocals(*self.a))
+        self.b = np.array(elphmod.bravais.reciprocals(*self.a))
 
         e2 = 2.0 # square of electron charge in Rydberg units
 
@@ -483,9 +486,9 @@ class Model:
     def sample_orig(self):
         """Sample dynamical matrix on original q-point mesh."""
 
-        self.q0 = bravais.mesh(*self.nq, flat=True)
+        self.q0 = elphmod.bravais.mesh(*self.nq, flat=True)
 
-        self.D0 = dispersion.sample(self.D, self.q0)
+        self.D0 = elphmod.dispersion.sample(self.D, self.q0)
 
     def update_short_range(self, flfrc=None, apply_asr_simple=False):
         """Update short-range part of interatomic force constants.
@@ -508,7 +511,7 @@ class Model:
 
         self.prepare_long_range()
 
-        D = self.D0 - dispersion.sample(self.D_lr, self.q0)
+        D = self.D0 - elphmod.dispersion.sample(self.D_lr, self.q0)
 
         q2r(self, nq=self.nq, D_full=D, flfrc=flfrc,
             apply_asr_simple=apply_asr_simple, divide_mass=self.divide_mass)
@@ -553,11 +556,11 @@ class Model:
 
         See Also
         --------
-        bravais.supercell
+        elphmod.bravais.supercell
         """
         ph = Model()
 
-        supercell = bravais.supercell(N1, N2, N3)
+        supercell = elphmod.bravais.supercell(N1, N2, N3)
         ph.N = list(map(tuple, supercell[1]))
         ph.cells = supercell[-1]
 
@@ -599,7 +602,7 @@ class Model:
             ph.prepare_long_range()
 
         if sparse:
-            sparse_array = misc.get_sparse_array()
+            sparse_array = elphmod.misc.get_sparse_array()
 
             if ph.lr:
                 ph.Ds = sparse_array(ph.D_lr().real)
@@ -609,14 +612,14 @@ class Model:
         if comm.rank == 0:
             const = dict()
 
-            status = misc.StatusBar(len(ph.cells),
+            status = elphmod.misc.StatusBar(len(ph.cells),
                 title='map force constants onto supercell')
 
             for i in range(len(ph.cells)):
                 X = i * self.size
 
                 for n in range(len(self.R)):
-                    R, r = bravais.to_supercell(self.R[n] + ph.cells[i],
+                    R, r = elphmod.bravais.to_supercell(self.R[n] + ph.cells[i],
                         supercell)
 
                     Y = r * self.size
@@ -706,7 +709,7 @@ class Model:
         if comm.rank == 0:
             const = dict()
 
-            status = misc.StatusBar(len(self.R),
+            status = elphmod.misc.StatusBar(len(self.R),
                 title='map force constants back to unit cell')
 
             for n in range(len(self.R)):
@@ -775,7 +778,7 @@ class Model:
         """Move selected atoms across unit-cell boundary.
 
         Together with :func:`order_atoms`, this function helps reconcile
-        inconsistent definitions of the basis/motif of the bravais lattice.
+        inconsistent definitions of the basis/motif of the Bravais lattice.
 
         Parameters
         ----------
@@ -834,7 +837,7 @@ class Model:
 
             const = dict()
 
-            status = misc.StatusBar(len(self.R),
+            status = elphmod.misc.StatusBar(len(self.R),
                 title='standardize mass-spring data')
 
             for n in range(len(self.R)):
@@ -922,20 +925,20 @@ class Model:
         pw['celldm'] = [alat]
 
         pw['at_species'] = species
-        pw['mass'] = [self.M[self.atom_order.index(X)] / misc.uRy
+        pw['mass'] = [self.M[self.atom_order.index(X)] / elphmod.misc.uRy
             for X in species]
         pw['pp'] = ['%s.upf' % X for X in species]
 
         pw['coords'] = 'crystal'
         pw['at'] = self.atom_order
-        pw['r'] = bravais.cartesian_to_crystal(self.r, *self.a)
+        pw['r'] = elphmod.bravais.cartesian_to_crystal(self.r, *self.a)
 
         pw['cell_units'] = 'alat'
         pw['r_cell'] = self.a / alat
 
         pw.update(kwargs)
 
-        bravais.write_pwi(pwi, pw)
+        elphmod.bravais.write_pwi(pwi, pw)
 
     def to_flfrc(self, flfrc, nr1=None, nr2=None, nr3=None):
         """Save mass-spring model to force-constants file.
@@ -958,7 +961,7 @@ class Model:
 
         phid = np.zeros((self.nat, self.nat, nr1, nr2, nr3, 3, 3))
 
-        sizes, bounds = MPI.distribute(len(self.R), bounds=True)
+        sizes, bounds = elphmod.MPI.distribute(len(self.R), bounds=True)
 
         for n in range(*bounds[comm.rank:comm.rank + 2]):
             m1, m2, m3 = -self.R[n] % (nr1, nr2, nr3)
@@ -966,7 +969,7 @@ class Model:
             phid[:, :, m1, m2, m3, :, :] += np.reshape(self.data[n],
                 (self.nat, 3, self.nat, 3)).transpose(0, 2, 1, 3)
 
-        comm.Reduce(MPI.MPI.IN_PLACE if comm.rank == 0 else phid, phid)
+        comm.Reduce(elphmod.MPI.MPI.IN_PLACE if comm.rank == 0 else phid, phid)
 
         if comm.rank == 0:
             if self.divide_mass:
@@ -1042,7 +1045,8 @@ def fildyn_freq(fildyn='matdyn'):
 
             divide_by_mass(D, amass)
 
-            w = sgnsqrt(np.linalg.eigvalsh(D[0])) * misc.Ry / misc.cmm1
+            w = sgnsqrt(np.linalg.eigvalsh(D[0]))
+            w *= elphmod.misc.Ry / elphmod.misc.cmm1
 
             if iq == 0:
                 freq.write(' &plot nbnd=%4d, nks=%4d /\n' % (len(w), len(q0)))
@@ -1121,7 +1125,7 @@ def read_flfrc(flfrc):
         # see Modules/latgen.f90 of Quantum ESPRESSO:
 
         if ibrav:
-            at = bravais.primitives(ibrav, celldm=celldm, bohr=True)
+            at = elphmod.bravais.primitives(ibrav, celldm=celldm, bohr=True)
         else: # free
             if dyn:
                 next(data) # skip "Basis vectors"
@@ -1434,7 +1438,7 @@ def read_flfrc_xml(flfrc):
     celldm = list(map(float, geometry.find('CELL_DIMENSIONS').text.split()))
 
     if ibrav:
-        at = bravais.primitives(ibrav, celldm=celldm, bohr=True)
+        at = elphmod.bravais.primitives(ibrav, celldm=celldm, bohr=True)
     else:
         at = list(map(float, geometry.find('AT').text.split()))
         at = np.array(at).reshape((3, 3)) * celldm[0]
@@ -1457,7 +1461,7 @@ def read_flfrc_xml(flfrc):
 
     tau *= celldm[0]
 
-    amass = amass[ityp] * misc.uRy
+    amass = amass[ityp] * elphmod.misc.uRy
 
     atom_order = []
 
@@ -1768,8 +1772,8 @@ def polarization(e, path, angle=60):
     y = slice(1, None, 3)
     z = slice(2, None, 3)
 
-    a1, a2 = bravais.translations(180 - angle)
-    b1, b2 = bravais.reciprocals(a1, a2)
+    a1, a2 = elphmod.bravais.translations(180 - angle)
+    b1, b2 = elphmod.bravais.reciprocals(a1, a2)
 
     for n, q in enumerate(path):
         q = q[0] * b1 + q[1] * b2
@@ -1854,8 +1858,8 @@ def q2r(ph, D_irr=None, q_irr=None, nq=None, D_full=None, angle=60,
         def apply(A, U):
             return np.einsum('ij,jk,kl->il', U, A, U.T.conj())
 
-        a1, a2 = bravais.translations(180 - angle)
-        b1, b2 = bravais.reciprocals(a1, a2)
+        a1, a2 = elphmod.bravais.translations(180 - angle)
+        b1, b2 = elphmod.bravais.reciprocals(a1, a2)
 
         r = ph.r[:, :2].T / ph.a[0, 0]
 
@@ -1923,7 +1927,7 @@ def q2r(ph, D_irr=None, q_irr=None, nq=None, D_full=None, angle=60,
 
         info('Sum of force constants: %g Ry/bohr^2 (L = %g bohr)' % (S, ph.L))
 
-    ph.R, ph.data, ph.l = bravais.short_range_model(phid, ph.a, ph.r,
+    ph.R, ph.data, ph.l = elphmod.bravais.short_range_model(phid, ph.a, ph.r,
         sgn=-1, divide_ndegen=ph.divide_ndegen)
 
     if ph.divide_mass:
@@ -2003,7 +2007,7 @@ def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
 
     # transform q points from crystal to Cartesian coordinates:
 
-    b1, b2, b3 = bravais.reciprocals(*at)
+    b1, b2, b3 = elphmod.bravais.reciprocals(*at)
 
     q_cart = []
 
@@ -2082,11 +2086,11 @@ def spectral_function(D, omega, eta):
     ndarray
         Spectral function. The first axes belongs to the frequency argument.
     """
-    sizes, bounds = MPI.distribute(len(omega), bounds=True)
+    sizes, bounds = elphmod.MPI.distribute(len(omega), bounds=True)
 
     my_A = np.empty((sizes[comm.rank],) + D.shape[:-3])
 
-    status = misc.StatusBar(sizes[comm.rank],
+    status = elphmod.misc.StatusBar(sizes[comm.rank],
         title='calculate phonon spectral function')
 
     for my_w, w in enumerate(range(*bounds[comm.rank:comm.rank + 2])):

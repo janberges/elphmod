@@ -5,10 +5,11 @@
 
 import numpy as np
 
-from . import misc, MPI
+import elphmod.misc
+import elphmod.MPI
 
-comm = MPI.comm
-info = MPI.info
+comm = elphmod.MPI.comm
+info = elphmod.MPI.info
 
 deg = np.pi / 180
 
@@ -78,7 +79,7 @@ def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
     if celldm is None:
         celldm = np.zeros(6)
 
-        celldm[0] = a / misc.a0
+        celldm[0] = a / elphmod.misc.a0
         celldm[1] = b / a
         celldm[2] = c / a
 
@@ -94,7 +95,7 @@ def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
             celldm[3] = cosab
 
     if not bohr:
-        celldm[0] *= misc.a0
+        celldm[0] *= elphmod.misc.a0
 
     if ibrav == 0: # free
         if r_cell is None or cell_units is None:
@@ -105,9 +106,9 @@ def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
         if 'alat' in cell_units.lower():
             a *= celldm[0]
         elif bohr and 'angstrom' in cell_units.lower():
-            a /= misc.a0
+            a /= elphmod.misc.a0
         elif not bohr and 'bohr' in cell_units.lower():
-            a *= misc.a0
+            a *= elphmod.misc.a0
 
         return a
 
@@ -975,7 +976,7 @@ def resize(data, shape, angle=60, axes=(0, 1), period=None, polar=False,
     # apply interpolation function at new lattice points in parallel:
 
     size = np.prod(shape)
-    sizes, bounds = MPI.distribute(size, bounds=True)
+    sizes, bounds = elphmod.MPI.distribute(size, bounds=True)
 
     my_new_data = np.empty((sizes[comm.rank],) + data.shape[len(shape):],
         dtype=data.dtype)
@@ -1120,7 +1121,7 @@ def read_wigner_file(name, old_ws=False, nat=None):
 
     See Also
     --------
-    elph.Model
+    elphmod.elph.Model
     """
     if comm.rank == 0:
         try:
@@ -1376,7 +1377,7 @@ def short_range_model(data, at, tau, sgn=+1, divide_ndegen=True):
 
     irvec, ndegen, wslen = wigner(nr1, nr2, nr3, at, tau, sgn=sgn)
 
-    sizes, bounds = MPI.distribute(len(irvec), bounds=True)
+    sizes, bounds = elphmod.MPI.distribute(len(irvec), bounds=True)
 
     my_const = np.zeros((sizes[comm.rank], nbasis * ncart, nbasis * ncart),
         dtype=data.dtype)
@@ -1804,7 +1805,7 @@ def read_pwi(pwi):
     dict
         Input data and crystal structure.
     """
-    struct = misc.read_input_data(pwi, broadcast=False)
+    struct = elphmod.misc.read_input_data(pwi, broadcast=False)
 
     if comm.rank == 0:
         for key in ['celldm']:
@@ -2232,7 +2233,7 @@ def read_ph(filename):
     dict
         Input parameters.
     """
-    return misc.read_input_data(filename)
+    return elphmod.misc.read_input_data(filename)
 
 def write_ph(ph, struct):
     """Write input data to ph file (Quantum ESPRESSO).
@@ -2288,7 +2289,7 @@ def read_q2r(filename):
     dict
         Input parameters.
     """
-    return misc.read_input_data(filename)
+    return elphmod.misc.read_input_data(filename)
 
 def write_q2r(q2r, struct):
     """Write input data to q2r file (Quantum ESPRRESO).
@@ -2325,7 +2326,7 @@ def read_matdyn(filename):
     dict
         Input parameters.
     """
-    struct = misc.read_input_data(filename, broadcast=False)
+    struct = elphmod.misc.read_input_data(filename, broadcast=False)
 
     if comm.rank == 0:
         with open(filename) as lines:
@@ -2388,7 +2389,7 @@ def read_epw(filename):
     dict
         Input parameters.
     """
-    struct = misc.read_input_data(filename, broadcast=False)
+    struct = elphmod.misc.read_input_data(filename, broadcast=False)
 
     if comm.rank == 0:
         for key in ['proj', 'wdata']:

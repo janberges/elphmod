@@ -7,10 +7,17 @@ import copy
 import numpy as np
 import time
 
-from . import bravais, diagrams, dispersion, el, misc, MPI, occupations, ph
+import elphmod.bravais
+import elphmod.diagrams
+import elphmod.dispersion
+import elphmod.el
+import elphmod.misc
+import elphmod.MPI
+import elphmod.occupations
+import elphmod.ph
 
-comm = MPI.comm
-info = MPI.info
+comm = elphmod.MPI.comm
+info = elphmod.MPI.info
 
 class Driver:
     """MD driver for DFPT-based displacements dynamics.
@@ -73,7 +80,7 @@ class Driver:
     basis : list of list, default None
         For each basis atom in the first primitive cell, indices of orbitals
         located at this atom. Matching atom and orbital orders as ensured by
-        :meth:`elph.Model.supercell` are required.
+        :meth:`elphmod.elph.Model.supercell` are required.
     node, images : MPI.Intracomm
         Communicators between processes that share memory or same ``node.rank``
         if `shared_memory`.
@@ -101,13 +108,13 @@ class Driver:
         self.nq = np.ones(3, dtype=int)
         self.nq[:len(nq)] = nq
 
-        self.k = bravais.mesh(*self.nk)
-        self.q = bravais.mesh(*self.nq, flat=True)
+        self.k = elphmod.bravais.mesh(*self.nk)
+        self.q = elphmod.bravais.mesh(*self.nq, flat=True)
 
-        self.H0 = dispersion.sample(self.elph.el.H, self.k)
+        self.H0 = elphmod.dispersion.sample(self.elph.el.H, self.k)
 
         self.d0 = self.elph.sample(self.q, self.nk, shared_memory=shared_memory)
-        self.node, self.images, self.d = MPI.shared_array(self.d0.shape,
+        self.node, self.images, self.d = elphmod.MPI.shared_array(self.d0.shape,
             dtype=self.d0.dtype, shared_memory=shared_memory)
 
         self.u = np.zeros(self.elph.ph.size)
@@ -121,12 +128,13 @@ class Driver:
         if unscreen:
             self.C0 -= self.hessian(gamma_only=False)
 
-        self.C0 += dispersion.sample(self.elph.ph.D, self.q)
+        self.C0 += elphmod.dispersion.sample(self.elph.ph.D, self.q)
 
         if supercell is not None:
             self.elph.ph = copy.copy(self.elph.ph)
 
-            ph.q2r(self.elph.ph, nq=self.nq, D_full=self.C0, divide_mass=False)
+            elphmod.ph.q2r(self.elph.ph, nq=self.nq, D_full=self.C0,
+                divide_mass=False)
 
             self.elph = self.elph.supercell(*supercell, sparse=True)
 
@@ -186,8 +194,8 @@ class Driver:
         float
             New chemical potential.
         """
-        self.mu = occupations.find_Fermi_level(self.n, self.e, self.kT, self.f,
-            self.mu)
+        self.mu = elphmod.occupations.find_Fermi_level(self.n, self.e, self.kT,
+            self.f, self.mu)
 
         return self.mu
 
@@ -270,7 +278,7 @@ class Driver:
             F = np.array([2 * self.d0[x].multiply(f).sum()
                 for x in range(self.elph.ph.size)])
         else:
-            F = diagrams.first_order(self.e, self.d0[0], self.kT,
+            F = elphmod.diagrams.first_order(self.e, self.d0[0], self.kT,
                 U=self.U, occupations=self.f).real
 
         F += self.C0[0].real.dot(self.u)
@@ -343,7 +351,7 @@ class Driver:
             avg = np.array([self.d0[x].multiply(d_orb).sum()
                 for x in range(self.elph.ph.size)]) / np.sqrt(dos)
 
-            status = misc.StatusBar(self.elph.ph.size,
+            status = elphmod.misc.StatusBar(self.elph.ph.size,
                 title='calculate static phonon self-energy')
 
             for x in range(self.elph.ph.size):
@@ -379,11 +387,11 @@ class Driver:
                 if self.node.rank == 0:
                     self.images.Bcast(self.d[iq].view(dtype=float))
 
-            C = diagrams.phonon_self_energy(self.q[:nq], self.e, g=self.d[:nq],
-                kT=self.kT, occupations=self.f, eps=eps)
+            C = elphmod.diagrams.phonon_self_energy(self.q[:nq], self.e,
+                g=self.d[:nq], kT=self.kT, occupations=self.f, eps=eps)
 
-            C[0] += diagrams.phonon_self_energy_fermi_shift(self.e, self.d[0],
-                kT=self.kT, occupations=self.f)
+            C[0] += elphmod.diagrams.phonon_self_energy_fermi_shift(self.e,
+                self.d[0], kT=self.kT, occupations=self.f)
 
         C += self.C0[:nq]
 
@@ -398,8 +406,9 @@ class Driver:
             C = C.reshape((nq, self.elph.ph.size, self.elph.ph.size))
 
         if fildyn is not None and comm.rank == 0:
-            ph.write_flfrc(fildyn,
-                (self.q[:nq].dot(bravais.reciprocals(*self.elph.ph.a)), C),
+            b = elphmod.bravais.reciprocals(*self.elph.ph.a)
+
+            elphmod.ph.write_flfrc(fildyn, (self.q[:nq].dot(b), C),
                 self.elph.ph.M, self.elph.ph.a,
                 self.elph.ph.r + self.u.reshape(self.elph.ph.r.shape),
                 self.elph.ph.atom_order)
@@ -435,8 +444,8 @@ class Driver:
             if not self.sparse:
                 H = H[::dk1, ::dk2, ::dk3]
 
-        model = copy.deepcopy(self.elph.el)
-        model.rydberg = rydberg
+        el = copy.deepcopy(self.elph.el)
+        el.rydberg = rydberg
 
         if hasattr(self.elph.el, 'cells'):
             assert self.elph.el.cells == self.elph.ph.cells
@@ -447,14 +456,14 @@ class Driver:
         else:
             r = np.zeros((self.elph.el.size, 3))
 
-        el.k2r(model, H, self.elph.ph.a, r, rydberg=True)
+        elphmod.el.k2r(el, H, self.elph.ph.a, r, rydberg=True)
 
-        model.standardize(eps=1e-10)
+        el.standardize(eps=1e-10)
 
         if seedname is not None:
-            model.to_hrdat(seedname)
+            el.to_hrdat(seedname)
 
-        return model
+        return el
 
     def phonons(self, divide_mass=True, **kwargs):
         """Set up mass-spring model for current structure.
@@ -464,21 +473,21 @@ class Driver:
         divide_mass : bool
             Divide force constants by atomic masses?
         **kwargs
-            Parameters passed to :func:`ph.q2r`.
+            Parameters passed to :func:`elphmod.ph.q2r`.
 
         Returns
         -------
         object
             Mass-spring model for the phonons.
         """
-        model = copy.deepcopy(self.elph.ph)
-        model.divide_mass = divide_mass
-        model.r += self.u.reshape((-1, 3))
+        ph = copy.deepcopy(self.elph.ph)
+        ph.divide_mass = divide_mass
+        ph.r += self.u.reshape((-1, 3))
 
-        ph.q2r(model, D_full=self.hessian(gamma_only=False), nq=self.nq,
+        elphmod.ph.q2r(ph, D_full=self.hessian(gamma_only=False), nq=self.nq,
             divide_mass=False, **kwargs)
 
-        return model
+        return ph
 
     def superconductivity(self, eps=1e-10, tol=None, kT=None):
         r"""Calculate effective couplings and phonon frequencies.
@@ -544,7 +553,7 @@ class Driver:
 
             comm.Barrier()
 
-            g2dd, dd = diagrams.double_fermi_surface_average(self.q,
+            g2dd, dd = elphmod.diagrams.double_fermi_surface_average(self.q,
                 self.e, self.d, kT, self.f)
 
             g2dd = g2dd.real / dd.sum()
@@ -655,7 +664,7 @@ class Driver:
             sizes *= rho / rho.max()
 
         self.scatter = self.axes.scatter(*r, s=sizes, c=['#%02x%02x%02x'
-            % misc.colors[X] for X in self.elph.ph.atom_order])
+            % elphmod.misc.colors[X] for X in self.elph.ph.atom_order])
 
         self.quiver = self.axes.quiver(*r, *self.scale * u, color='gray')
 
@@ -778,7 +787,7 @@ class Driver:
         """
         pw = dict()
 
-        pw['r'] = bravais.cartesian_to_crystal(self.elph.ph.r
+        pw['r'] = elphmod.bravais.cartesian_to_crystal(self.elph.ph.r
             + self.u.reshape(self.elph.ph.r.shape), *self.elph.ph.a)
 
         if self.nk.prod() == 1:
@@ -813,7 +822,7 @@ class Driver:
             del self.elph.node
             del self.elph.images
 
-        MPI.Buffer(filename).set(self)
+        elphmod.MPI.Buffer(filename).set(self)
 
         self.interactive = interactive
 
@@ -838,9 +847,10 @@ class Driver:
         object
             MD driver for DFPT-based displacements dynamics.
         """
-        driver = MPI.Buffer(filename).get()
+        driver = elphmod.MPI.Buffer(filename).get()
 
-        driver.node, driver.images = MPI.shm_split(comm, shared_memory=False)
+        driver.node, driver.images = elphmod.MPI.shm_split(comm,
+            shared_memory=False)
 
         if not driver.sparse:
             driver.elph.node, driver.elph.images = driver.node, driver.images

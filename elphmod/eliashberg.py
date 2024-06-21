@@ -5,7 +5,11 @@
 
 import numpy as np
 
-from . import bravais, diagrams, dos, misc, occupations
+import elphmod.bravais
+import elphmod.diagrams
+import elphmod.dos
+import elphmod.misc
+import elphmod.occupations
 
 def Tc(lamda, wlog, mustar=0.1, w2nd=None, correct=False):
     """Calculate critical temperature using McMillan's formula.
@@ -31,7 +35,7 @@ def Tc(lamda, wlog, mustar=0.1, w2nd=None, correct=False):
     float
         Critical temperature in kelvin.
     """
-    Tc = wlog / (1.20 * misc.kB) * np.exp(-1.04 * (1 + lamda)
+    Tc = wlog / (1.20 * elphmod.misc.kB) * np.exp(-1.04 * (1 + lamda)
         / max(1e-3, (lamda - mustar * (1 + 0.62 * lamda))))
 
     if correct:
@@ -47,7 +51,7 @@ def Tc(lamda, wlog, mustar=0.1, w2nd=None, correct=False):
     return Tc
 
 def McMillan(nq, e, w2, g2, eps=1e-10, mustar=0.0, tetra=False, kT=0.025,
-        f=occupations.fermi_dirac, correct=False):
+        f=elphmod.occupations.fermi_dirac, correct=False):
     r"""Calculate parameters and result of McMillan's formula.
 
     Parameters
@@ -92,9 +96,10 @@ def McMillan(nq, e, w2, g2, eps=1e-10, mustar=0.0, tetra=False, kT=0.025,
     nQ, nph = w2.shape
     nQ, nph, nk, nk, nel, nel = g2.shape
 
-    q = np.array(sorted(bravais.irreducibles(nq)))
+    q = np.array(sorted(elphmod.bravais.irreducibles(nq)))
 
-    weights = np.array([len(bravais.images(q1, q2, nq)) for q1, q2 in q])
+    weights = np.array([len(elphmod.bravais.images(q1, q2, nq))
+        for q1, q2 in q])
 
     if tetra:
         q *= nk // nq
@@ -105,11 +110,12 @@ def McMillan(nq, e, w2, g2, eps=1e-10, mustar=0.0, tetra=False, kT=0.025,
         for iq, (q1, q2) in enumerate(q):
             E = np.roll(np.roll(e, shift=-q1, axis=0), shift=-q2, axis=1)
 
-            g2_fun = bravais.linear_interpolation(g2[iq], axes=(1, 2))
+            g2_fun = elphmod.bravais.linear_interpolation(g2[iq], axes=(1, 2))
 
             for n in range(nel):
                 for m in range(nel):
-                    intersections = dos.double_delta(e[:, :, n], E[:, :, m])(0)
+                    intersections = elphmod.dos.double_delta(e[:, :, n],
+                        E[:, :, m])(0)
 
                     for (k1, k2), weight in intersections.items():
                         g2dd[iq] += weight * g2_fun(k1, k2)[:, n, m]
@@ -118,11 +124,12 @@ def McMillan(nq, e, w2, g2, eps=1e-10, mustar=0.0, tetra=False, kT=0.025,
         N0 = 0
 
         for n in range(nel):
-            N0 += dos.hexDOS(e[:, :, n])(0)
+            N0 += elphmod.dos.hexDOS(e[:, :, n])(0)
     else:
         q = 2 * np.pi / nq * q
 
-        g2dd, dd = diagrams.double_fermi_surface_average(q, e, g2, kT, f)
+        g2dd, dd = elphmod.diagrams.double_fermi_surface_average(q,
+            e, g2, kT, f)
 
         N0 = f.delta(e / kT).sum() / kT / np.prod(e.shape[:-1])
 

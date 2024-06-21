@@ -8,10 +8,13 @@
 
 import numpy as np
 
-from . import bravais, dispersion, misc, MPI
+import elphmod.bravais
+import elphmod.dispersion
+import elphmod.misc
+import elphmod.MPI
 
-comm = MPI.comm
-info = MPI.info
+comm = elphmod.MPI.comm
+info = elphmod.MPI.info
 
 class Model:
     r"""Localized model for electron-phonon coupling.
@@ -124,7 +127,7 @@ class Model:
         if comm.allreduce(self.q is None or np.any(q != self.q)):
             self.q = q
 
-            Rl, Ru = MPI.distribute(nRq, bounds=True,
+            Rl, Ru = elphmod.MPI.distribute(nRq, bounds=True,
                 comm=comm)[1][comm.rank:comm.rank + 2]
 
             my_g = np.einsum('Rxrab,R->xrab',
@@ -143,7 +146,7 @@ class Model:
                 for a in range(self.el.size):
                     self.gq[:, self.Rk0, a, a] += g_lr
 
-        Rl, Ru = MPI.distribute(nRk, bounds=True,
+        Rl, Ru = elphmod.MPI.distribute(nRk, bounds=True,
             comm=comm)[1][comm.rank:comm.rank + 2]
 
         my_g = np.einsum('xRab,R->xab',
@@ -213,8 +216,8 @@ class Model:
         ndarray
             Element of :attr:`data` or zero.
         """
-        index_q = misc.vector_index(self.Rg, (Rq1, Rq2, Rq3))
-        index_k = misc.vector_index(self.Rk, (Rk1, Rk2, Rk3))
+        index_q = elphmod.misc.vector_index(self.Rg, (Rq1, Rq2, Rq3))
+        index_k = elphmod.misc.vector_index(self.Rk, (Rk1, Rk2, Rk3))
 
         if index_q is None or index_k is None:
             return np.zeros_like(self.data[0, :, 0, :, :])
@@ -243,15 +246,16 @@ class Model:
 
             self.Rk, self.dk, self.Rg, self.dg = Rk, dk, Rg, dg
         else:
-            self.Rk, self.dk, self.Rg, self.dg = bravais.read_wigner_file(
-                wigner, old_ws=old_ws, nat=ph.nat)
+            self.Rk, self.dk, self.Rg, self.dg \
+                = elphmod.bravais.read_wigner_file(wigner,
+                    old_ws=old_ws, nat=ph.nat)
 
         # read coupling in Wannier basis from EPW output:
         # ('epmatwp' allocated and printed in 'ephwann_shuffle.f90')
 
         shape = len(self.Rg), ph.size, len(self.Rk), el.size, el.size
 
-        self.node, self.images, self.data = MPI.shared_array(shape,
+        self.node, self.images, self.data = elphmod.MPI.shared_array(shape,
             dtype=complex, shared_memory=shared_memory)
 
         if epmatwp is None:
@@ -259,8 +263,8 @@ class Model:
 
         if comm.rank == 0:
             with open(epmatwp, 'rb') as data:
-                status = misc.StatusBar(shape[0] * (self.data.nbytes > 1e9),
-                    title='load real-space coupling')
+                status = elphmod.misc.StatusBar((self.data.nbytes > 1e9)
+                    * shape[0], title='load real-space coupling')
 
                 for irg in range(shape[0]):
                     tmp = np.fromfile(data, dtype=np.complex128,
@@ -302,7 +306,7 @@ class Model:
         self.gq = np.empty((ph.size, len(self.Rk), el.size, el.size),
             dtype=complex)
 
-        self.Rk0 = misc.vector_index(self.Rk, (0, 0, 0))
+        self.Rk0 = elphmod.misc.vector_index(self.Rk, (0, 0, 0))
 
     def divide_degeneracy(self, g):
         """Divide real-space coupling by degeneracy of Wigner-Seitz point.
@@ -361,10 +365,10 @@ class Model:
 
         self.ph.prepare_long_range()
 
-        g = MPI.SharedArray(self.g0.shape, dtype=complex,
+        g = elphmod.MPI.SharedArray(self.g0.shape, dtype=complex,
             shared_memory=shared_memory)
 
-        g_lr = dispersion.sample(self.g_lr, self.ph.q0)
+        g_lr = elphmod.dispersion.sample(self.g_lr, self.ph.q0)
 
         for _ in range(len(self.el.nk)):
             g_lr = g_lr[..., np.newaxis]
@@ -410,13 +414,13 @@ class Model:
 
         See Also
         --------
-        bravais.supercell
+        elphmod.bravais.supercell
         """
         elph = Model(
             el=self.el.supercell(N1, N2, N3, sparse=sparse),
             ph=self.ph.supercell(N1, N2, N3, sparse=sparse))
 
-        supercell = bravais.supercell(N1, N2, N3)
+        supercell = elphmod.bravais.supercell(N1, N2, N3)
         elph.cells = supercell[-1]
 
         elph.divide_mass = self.divide_mass
@@ -425,7 +429,7 @@ class Model:
         const = dict()
 
         if sparse:
-            sparse_array = misc.get_sparse_array()
+            sparse_array = elphmod.misc.get_sparse_array()
 
             elph.gs = [sparse_array((elph.el.size, elph.el.size))
                 for x in range(elph.ph.size)]
@@ -445,20 +449,20 @@ class Model:
         rg = np.empty(len(self.Rg), dtype=int)
         rk = np.empty(len(self.Rk), dtype=int)
 
-        status = misc.StatusBar(-(-len(elph.cells) // comm.size) * len(self.Rg),
-            title='map coupling onto supercell')
+        status = elphmod.misc.StatusBar(-(-len(elph.cells) // comm.size)
+            * len(self.Rg), title='map coupling onto supercell')
 
         for i in range(len(elph.cells)):
             if i % comm.size != comm.rank:
                 continue
 
             for g in range(len(self.Rg)):
-                Rg[g], rg[g] = bravais.to_supercell(self.Rg[g] + elph.cells[i],
-                    supercell)
+                Rg[g], rg[g] = elphmod.bravais.to_supercell(self.Rg[g]
+                    + elph.cells[i], supercell)
 
             for k in range(len(self.Rk)):
-                Rk[k], rk[k] = bravais.to_supercell(self.Rk[k] + elph.cells[i],
-                    supercell)
+                Rk[k], rk[k] = elphmod.bravais.to_supercell(self.Rk[k]
+                    + elph.cells[i], supercell)
 
             A = i * self.el.size
 
@@ -496,7 +500,7 @@ class Model:
 
             elph.gs = np.array(elph.gs)
 
-            if misc.verbosity >= 2 and comm.rank == 0:
+            if elphmod.misc.verbosity >= 2 and comm.rank == 0:
                 import pickle
 
                 print('Sparse representation of coupling requires %.6f GB'
@@ -510,19 +514,19 @@ class Model:
         elph.Rk = np.array(sorted(set().union(*comm.allgather([R[3:]
             for R in const]))))
 
-        elph.node, elph.images, elph.data = MPI.shared_array((len(elph.Rg),
-            elph.ph.size, len(elph.Rk), elph.el.size, elph.el.size),
-            dtype=complex, shared_memory=shared_memory)
+        elph.node, elph.images, elph.data = elphmod.MPI.shared_array(
+            (len(elph.Rg), elph.ph.size, len(elph.Rk), elph.el.size,
+            elph.el.size), dtype=complex, shared_memory=shared_memory)
 
         elph.gq = np.empty((elph.ph.size, len(elph.Rk),
             elph.el.size, elph.el.size), dtype=complex)
 
-        elph.Rk0 = misc.vector_index(elph.Rk, (0, 0, 0))
+        elph.Rk0 = elphmod.misc.vector_index(elph.Rk, (0, 0, 0))
 
         if elph.node.rank == 0:
             elph.data[...] = 0.0
 
-        status = misc.StatusBar(len(elph.Rg) * len(elph.Rk),
+        status = elphmod.misc.StatusBar(len(elph.Rg) * len(elph.Rk),
             title='convert supercell coupling to standard format')
 
         for g, (G1, G2, G3) in enumerate(elph.Rg):
@@ -542,7 +546,7 @@ class Model:
             # Reduce chunk-wise to avoid integer overflow for message size:
 
             for g in range(len(elph.Rg)):
-                elph.images.Allreduce(MPI.MPI.IN_PLACE,
+                elph.images.Allreduce(elphmod.MPI.MPI.IN_PLACE,
                     elph.data[g].view(dtype=float))
 
         return elph
@@ -577,7 +581,7 @@ class Model:
             const[0, 0, 0, 0, 0, 0] = np.zeros((self.ph.size,
                 self.el.size, self.el.size), dtype=complex)
 
-            status = misc.StatusBar(len(self.Rg) * len(self.Rk),
+            status = elphmod.misc.StatusBar(len(self.Rg) * len(self.Rk),
                 title='standardize coupling data')
 
             for g in range(len(self.Rg)):
@@ -631,7 +635,7 @@ class Model:
             self.data = self.data[:np.prod(shape)]
             self.data = self.data.reshape(shape)
         else:
-            self.node, self.images, self.data = MPI.shared_array(shape,
+            self.node, self.images, self.data = elphmod.MPI.shared_array(shape,
                 dtype=complex, shared_memory=self.node.size > 1)
 
         if comm.rank == 0:
@@ -660,7 +664,7 @@ class Model:
         self.gq = np.empty((self.ph.size, len(self.Rk),
             self.el.size, self.el.size), dtype=complex)
 
-        self.Rk0 = misc.vector_index(self.Rk, (0, 0, 0))
+        self.Rk0 = elphmod.misc.vector_index(self.Rk, (0, 0, 0))
 
         comm.Barrier()
 
@@ -720,7 +724,7 @@ class Model:
         ndarray
             Maximum absolute matrix elements.
         """
-        d = np.linalg.norm(self.Rk.dot(self.ph.a), axis=1) * misc.a0
+        d = np.linalg.norm(self.Rk.dot(self.ph.a), axis=1) * elphmod.misc.a0
         g = abs(self.data).max(axis=(0, 1, 3, 4))
 
         nonzero = np.where(g > 0)
@@ -739,7 +743,7 @@ class Model:
         ndarray
             Maximum absolute matrix elements.
         """
-        d = np.linalg.norm(self.Rg.dot(self.ph.a), axis=1) * misc.a0
+        d = np.linalg.norm(self.Rg.dot(self.ph.a), axis=1) * elphmod.misc.a0
         g = abs(self.data).max(axis=(1, 2, 3, 4))
 
         nonzero = np.where(g > 0)
@@ -846,8 +850,8 @@ def sample(g, q, nk=None, U=None, u=None, squared=False, broadcast=True,
     shared_memory : bool, optional
         Store transformed coupling in shared memory?
     """
-    sizes, bounds = MPI.distribute(len(q), bounds=True)
-    col, row = MPI.matrix(len(q))
+    sizes, bounds = elphmod.MPI.distribute(len(q), bounds=True)
+    col, row = elphmod.MPI.matrix(len(q))
 
     nph, nel, nel = g().shape
 
@@ -874,7 +878,7 @@ def sample(g, q, nk=None, U=None, u=None, squared=False, broadcast=True,
     my_g = np.empty((sizes[row.rank], nph, nk[0], nk[1], nk[2], nel, nel),
         dtype=float if squared else complex)
 
-    status = misc.StatusBar(sizes[comm.rank] * nk.prod(),
+    status = elphmod.misc.StatusBar(sizes[comm.rank] * nk.prod(),
         title='sample coupling')
 
     scale = 2 * np.pi / nk
@@ -913,8 +917,8 @@ def sample(g, q, nk=None, U=None, u=None, squared=False, broadcast=True,
 
                     status.update()
 
-    node, images, g = MPI.shared_array((len(q), nph) + nk_orig + (nel, nel),
-        dtype=my_g.dtype, shared_memory=shared_memory,
+    node, images, g = elphmod.MPI.shared_array((len(q), nph) + nk_orig
+        + (nel, nel), dtype=my_g.dtype, shared_memory=shared_memory,
         single_memory=not broadcast)
 
     if node.size == comm.size > 1 and broadcast: # shared memory on single node
@@ -954,7 +958,7 @@ def transform(g, q, nk, U=None, u=None, squared=False, broadcast=True,
     --------
     sample
     """
-    sizes, bounds = MPI.distribute(len(q), bounds=True)
+    sizes, bounds = elphmod.MPI.distribute(len(q), bounds=True)
 
     nQ, nph, nk, nk, nel, nel = g.shape
 
@@ -994,7 +998,7 @@ def transform(g, q, nk, U=None, u=None, squared=False, broadcast=True,
 
                 my_g[my_iq, :, k1, k2, :, :] = gqk
 
-    node, images, g = MPI.shared_array((len(q), nph, nk, nk, nel, nel),
+    node, images, g = elphmod.MPI.shared_array((len(q), nph, nk, nk, nel, nel),
         dtype=my_g.dtype, shared_memory=shared_memory,
         single_memory=not broadcast)
 
@@ -1043,7 +1047,7 @@ def q2r(elph, nq, nk, g, r=None, divide_mass=True, shared_memory=False):
 
     M = np.mgrid[:elph.ph.size, :elph.el.size, :elph.el.size].reshape((3, -1)).T
 
-    sizes, bounds = MPI.distribute(len(M), bounds=True)
+    sizes, bounds = elphmod.MPI.distribute(len(M), bounds=True)
 
     my_data = np.empty((sizes[comm.rank],
         nq[0], nq[1], nq[2], nk[0], nk[1], nk[2]), dtype=complex)
@@ -1060,19 +1064,19 @@ def q2r(elph, nq, nk, g, r=None, divide_mass=True, shared_memory=False):
     comm.Gatherv(my_data, (data, comm.gather(my_data.size)))
 
     if r is not None:
-        elph.Rg, ndegen_g, wslen = bravais.wigner(nq[0], nq[1], nq[2],
+        elph.Rg, ndegen_g, wslen = elphmod.bravais.wigner(nq[0], nq[1], nq[2],
             elph.ph.a, r, elph.ph.r)
 
         elph.dg = ndegen_g.transpose(1, 2, 0)[np.newaxis]
 
-        elph.Rk, ndegen_k, wslen = bravais.wigner(nk[0], nk[1], nk[2],
+        elph.Rk, ndegen_k, wslen = elphmod.bravais.wigner(nk[0], nk[1], nk[2],
             elph.ph.a, r)
 
         elph.dk = ndegen_k.transpose()
 
-        elph.node, elph.images, elph.data = MPI.shared_array((len(elph.Rg),
-            elph.ph.size, len(elph.Rk), elph.el.size, elph.el.size),
-            dtype=complex, shared_memory=shared_memory)
+        elph.node, elph.images, elph.data = elphmod.MPI.shared_array(
+            (len(elph.Rg), elph.ph.size, len(elph.Rk), elph.el.size,
+            elph.el.size), dtype=complex, shared_memory=shared_memory)
 
     if comm.rank == 0:
         for irg, (g1, g2, g3) in enumerate(elph.Rg % nq):
@@ -1105,7 +1109,7 @@ def coupling(filename, nQ, nmodes, nk, bands, Q=None, nq=None, offset=0,
     else:
         Q = np.arange(nQ, dtype=int) + 1
 
-    sizes = MPI.distribute(nQ)
+    sizes = elphmod.MPI.distribute(nQ)
 
     dtype = complex if phase else float
 
@@ -1160,7 +1164,8 @@ def coupling(filename, nQ, nmodes, nk, bands, Q=None, nq=None, offset=0,
             for nu in range(nmodes):
                 for ibnd in range(bands):
                     for jbnd in range(bands):
-                        bravais.complete(my_elph[n, nu, :, :, ibnd, jbnd])
+                        elphmod.bravais.complete(my_elph[n, nu, :, :,
+                            ibnd, jbnd])
 
     if complete_k and nq: # to be improved considerably
         comm.Gatherv(my_elph, (elph, sizes * nmodes * nk * nk * bands * bands))
@@ -1173,7 +1178,7 @@ def coupling(filename, nQ, nmodes, nk, bands, Q=None, nq=None, offset=0,
                 for ibnd in range(bands):
                     for jbnd in range(bands):
                         elph_complete[:, :, nu, :, :, ibnd, jbnd] = (
-                            bravais.complete_k(
+                            elphmod.bravais.complete_k(
                                 elph[:, nu, :, :, ibnd, jbnd], nq))
 
         comm.Bcast(elph_complete)
@@ -1369,7 +1374,7 @@ def read_patterns(filename, q, nrep, status=True):
     if not hasattr(q, '__len__'):
         q = range(q)
 
-    sizes = MPI.distribute(len(q))
+    sizes = elphmod.MPI.distribute(len(q))
 
     patterns = np.empty((len(q), nrep, nrep))
 
@@ -1416,9 +1421,9 @@ def read_xml_files(filename, q, rep, bands, nbands, nk, squeeze=True,
     if not hasattr(bands, '__len__'):
         bands = [bands]
 
-    a1, a2 = bravais.translations(angle, angle0)
+    a1, a2 = elphmod.bravais.translations(angle, angle0)
 
-    sizes = MPI.distribute(len(q))
+    sizes = elphmod.MPI.distribute(len(q))
 
     elph = np.empty((len(q), len(rep), nk, nk, len(bands), len(bands)),
         dtype=complex)
@@ -1493,8 +1498,8 @@ def write_xml_files(filename, data, angle=120, angle0=0):
 
     nQ, nmodes, nk, nk, nbands, nbands = data.shape
 
-    a1, a2 = bravais.translations(angle, angle0)
-    b1, b2 = bravais.reciprocals(a1, a2)
+    a1, a2 = elphmod.bravais.translations(angle, angle0)
+    b1, b2 = elphmod.bravais.reciprocals(a1, a2)
 
     for iq in range(nQ):
         for irep in range(nmodes):

@@ -7,10 +7,11 @@ import collections
 import numpy as np
 import sys
 
-from . import __version__, MPI
+import elphmod
+import elphmod.MPI
 
-comm = MPI.comm
-info = MPI.info
+comm = elphmod.MPI.comm
+info = elphmod.MPI.info
 
 verbosity = 3
 """Level of verbosity.
@@ -179,7 +180,7 @@ class StatusBar:
 def hello():
     if verbosity:
         info('This is elphmod (version %s) running on %d processors.'
-            % (__version__, comm.size))
+            % (elphmod.__version__, comm.size))
         info('To suppress all output, set elphmod.misc.verbosity = 0.')
 
 def get_sparse_array():
@@ -469,7 +470,7 @@ def real_space_grid(shape, r0, a, shared_memory=False):
     ndarray
         Cartesian coordinates for all grid points.
     """
-    node, images, r = MPI.shared_array(shape + (3,),
+    node, images, r = elphmod.MPI.shared_array(shape + (3,),
         shared_memory=shared_memory)
 
     if comm.rank == 0:

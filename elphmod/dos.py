@@ -5,9 +5,11 @@
 
 import numpy as np
 
-from . import bravais, misc, MPI
+import elphmod.bravais
+import elphmod.misc
+import elphmod.MPI
 
-comm = MPI.comm
+comm = elphmod.MPI.comm
 
 def hexDOS(energies, minimum=None, maximum=None):
     r"""Calculate DOS from energies on triangular mesh (2D tetrahedron method).
@@ -273,7 +275,7 @@ def double_delta(x, y, f=None, eps=1e-7):
         unique = dict()
 
         if comm.rank == 0:
-            for group in misc.group(D, eps=eps):
+            for group in elphmod.misc.group(D, eps=eps):
                 d = np.average(D[group], axis=0)
                 w = np.average(W[group], axis=0)
                 unique[tuple(d)] = w
@@ -292,11 +294,11 @@ def isoline(energies):
     dk1 = [1, 0, -1, -1, 0, 1]
     dk2 = [0, 1, 1, 0, -1, -1]
 
-    fun = bravais.linear_interpolation(energies)
+    fun = elphmod.bravais.linear_interpolation(energies)
 
     for k1 in range(N):
         for k2 in range(N):
-            images = bravais.to_Voronoi(k1, k2, N)
+            images = elphmod.bravais.to_Voronoi(k1, k2, N)
 
             if len(images) == 1:
                 K1, K2 = images.pop()

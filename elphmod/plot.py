@@ -5,9 +5,11 @@
 
 import numpy as np
 
-from . import bravais, MPI, misc
+import elphmod.bravais
+import elphmod.MPI
+import elphmod.misc
 
-comm = MPI.comm
+comm = elphmod.MPI.comm
 
 def choose_backend():
     """Switch to non-GUI Matplotlib backend if necessary."""
@@ -19,8 +21,8 @@ def choose_backend():
         matplotlib.use('agg')
 
 def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
-        interpolation=bravais.linear_interpolation, angle=60, return_k=False,
-        broadcast=True):
+        interpolation=elphmod.bravais.linear_interpolation, angle=60,
+        return_k=False, broadcast=True):
     """Plot in Cartesian reciprocal coordinates."""
 
     nk, nk = mesh.shape
@@ -39,13 +41,13 @@ def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
 
     fun = interpolation(mesh, angle=angle)
 
-    a1, a2 = bravais.translations(180 - angle)
+    a1, a2 = elphmod.bravais.translations(180 - angle)
 
-    sizes, bounds = MPI.distribute(nky * nkx, bounds=True)
+    sizes, bounds = elphmod.MPI.distribute(nky * nkx, bounds=True)
 
     my_image = np.empty(sizes[comm.rank], dtype=mesh.dtype)
 
-    status = misc.StatusBar(sizes[comm.rank], title='plot')
+    status = elphmod.misc.StatusBar(sizes[comm.rank], title='plot')
 
     for n, m in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         i = m // nkx
@@ -74,8 +76,8 @@ def plot(mesh, kxmin=-1.0, kxmax=1.0, kymin=-1.0, kymax=1.0, resolution=100,
         return image
 
 def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
-        resolution=500, interpolation=bravais.linear_interpolation, angle=60,
-        outside=0.0, outlines=False, broadcast=True):
+        resolution=500, interpolation=elphmod.bravais.linear_interpolation,
+        angle=60, outside=0.0, outlines=False, broadcast=True):
     """Show f(q1, q2, k1, k2) on "Brillouin zone made of Brillouin zones"."""
 
     nQ, nk, nk = mesh.shape
@@ -99,13 +101,13 @@ def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
 
     qy = qy[::-1]
 
-    a1, a2 = bravais.translations(180 - angle)
+    a1, a2 = elphmod.bravais.translations(180 - angle)
 
-    sizes, bounds = MPI.distribute(nqy * nqx, bounds=True)
+    sizes, bounds = elphmod.MPI.distribute(nqy * nqx, bounds=True)
 
     my_image = np.empty(sizes[comm.rank], dtype=mesh.dtype)
 
-    status = misc.StatusBar(sizes[comm.rank], title='double plot')
+    status = elphmod.misc.StatusBar(sizes[comm.rank], title='double plot')
 
     for n, m in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         i = m // nqx
@@ -123,7 +125,7 @@ def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
         neighbors = [(Q1, Q2), (Q1, Q2 + 1), (Q1 + 1, Q2), (Q1 + 1, Q2 + 1)]
 
         nearest = min(neighbors, key=lambda q:
-            bravais.squared_distance(q[0] - q1, q[1] - q2, angle))
+            elphmod.bravais.squared_distance(q[0] - q1, q[1] - q2, angle))
 
         if nearest in fun:
             my_image[n] = fun[nearest](q1 * nk, q2 * nk)
@@ -146,7 +148,7 @@ def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
         h = 1 / np.sqrt(3)
         a = 1 / 3
 
-        b1, b2 = bravais.reciprocals(a1, a2)
+        b1, b2 = elphmod.bravais.reciprocals(a1, a2)
 
         miniBZ = []
 
@@ -217,9 +219,10 @@ def arrange(images, columns=None):
         axis=1) for row in range(rows)],
         axis=0)
 
-def toBZ(data=None, points=1000, interpolation=bravais.linear_interpolation,
-        angle=120, angle0=0, outside=0.0, return_k=False, return_only_k=False,
-        even=False, broadcast=True):
+def toBZ(data=None, points=1000,
+        interpolation=elphmod.bravais.linear_interpolation, angle=120, angle0=0,
+        outside=0.0, return_k=False, return_only_k=False, even=False,
+        broadcast=True):
     """Map data on uniform grid onto (wedge of) Brillouin zone.
 
     Parameters
@@ -229,8 +232,8 @@ def toBZ(data=None, points=1000, interpolation=bravais.linear_interpolation,
     angle0 : float
         Angle between x axis and first Bravais-lattice vector in degrees.
     """
-    a1, a2 = bravais.translations(angle, angle0)
-    b1, b2 = bravais.reciprocals(a1, a2)
+    a1, a2 = elphmod.bravais.translations(angle, angle0)
+    b1, b2 = elphmod.bravais.reciprocals(a1, a2)
 
     if angle == 60:
         a3 = a1 - a2
@@ -276,7 +279,7 @@ def toBZ(data=None, points=1000, interpolation=bravais.linear_interpolation,
 
     fun = list(map(interpolation, data))
 
-    sizes, bounds = MPI.distribute(nky * nkx, bounds=True)
+    sizes, bounds = elphmod.MPI.distribute(nky * nkx, bounds=True)
 
     my_image = np.empty(sizes[comm.rank],
         dtype=float if np.isrealobj(data) else complex)
@@ -286,7 +289,7 @@ def toBZ(data=None, points=1000, interpolation=bravais.linear_interpolation,
     angle0 *= np.pi / 180
     scale = ndata / (2 * np.pi)
 
-    status = misc.StatusBar(sizes[comm.rank], title='BZ plot')
+    status = elphmod.misc.StatusBar(sizes[comm.rank], title='BZ plot')
 
     for n, m in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         i = m // nkx
@@ -364,7 +367,7 @@ def rectify(image, width, height, lt, rt, lb, rb, *args, **kwargs):
     lb = np.array([Nx * lb[0], Ny * lb[1]])
     rb = np.array([Nx * rb[0], Ny * rb[1]])
 
-    fun = bravais.linear_interpolation(image, *args, **kwargs)
+    fun = elphmod.bravais.linear_interpolation(image, *args, **kwargs)
 
     image = np.empty((ny, nx))
 
@@ -414,11 +417,11 @@ def color(data, cmap=None, minimum=None, maximum=None, comm=comm):
     shape = data.shape
     data = data.flatten()
 
-    sizes, bounds = MPI.distribute(data.size, bounds=True, comm=comm)
+    sizes, bounds = elphmod.MPI.distribute(data.size, bounds=True, comm=comm)
 
     my_image = np.empty((sizes[comm.rank], 3))
 
-    status = misc.StatusBar(sizes[comm.rank], title='color')
+    status = elphmod.misc.StatusBar(sizes[comm.rank], title='color')
 
     for my_i, i in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         my_image[my_i] = cmap(data[i]).RGB()
@@ -461,9 +464,10 @@ def adjust_pixels(image, points, distances, width, height=None):
     new_image = np.empty((height, width) + image.shape[2:])
 
     for i in range(1, len(points)):
-        new_image[:, new_points[i - 1]:new_points[i] + 1] = bravais.resize(
-            image[:, points[i - 1]:points[i] + 1], angle=90, periodic=False,
-            shape=(height, new_points[i] - new_points[i - 1] + 1))
+        new_image[:, new_points[i - 1]:new_points[i] + 1] \
+            = elphmod.bravais.resize(image[:, points[i - 1]:points[i] + 1],
+                angle=90, periodic=False,
+                shape=(height, new_points[i] - new_points[i - 1] + 1))
 
     return new_image
 

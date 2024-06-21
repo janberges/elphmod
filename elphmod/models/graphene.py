@@ -4,7 +4,14 @@
 # This program is free software under the terms of the GNU GPLv3 or later.
 
 import numpy as np
-import elphmod
+
+import elphmod.bravais
+import elphmod.dispersion
+import elphmod.el
+import elphmod.elel
+import elphmod.elph
+import elphmod.misc
+import elphmod.ph
 
 Npm = (1e-10 * elphmod.misc.a0) ** 2 / (elphmod.misc.eVSI * elphmod.misc.Ry)
 

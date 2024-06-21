@@ -6,9 +6,12 @@
 import sys
 import numpy as np
 
-from . import bravais, dispersion, misc, MPI
+import elphmod.bravais
+import elphmod.dispersion
+import elphmod.misc
+import elphmod.MPI
 
-comm = MPI.comm
+comm = elphmod.MPI.comm
 
 class Model:
     r"""Localized model for electron-electron interaction.
@@ -84,7 +87,7 @@ class Model:
         ndarray
             Element of :attr:`data` or zero.
         """
-        index = misc.vector_index(self.R, (R1, R2, R3))
+        index = elphmod.misc.vector_index(self.R, (R1, R2, R3))
 
         if index is None:
             return np.zeros_like(self.data[0])
@@ -108,11 +111,11 @@ class Model:
 
         if a is None:
             a = np.zeros((3, 3))
-            a[:2, :2] = bravais.translations(angle)
+            a[:2, :2] = elphmod.bravais.translations(angle)
             a[2, 2] = 1.0
 
         if Wmat is not None:
-            R, data = misc.read_dat_mat(Wmat)
+            R, data = elphmod.misc.read_dat_mat(Wmat)
 
             self.size = data.shape[1]
         else:
@@ -162,7 +165,7 @@ class Model:
         """
         elel = Model()
 
-        supercell = bravais.supercell(N1, N2, N3)
+        supercell = elphmod.bravais.supercell(N1, N2, N3)
         elel.cells = supercell[-1]
 
         elel.size = len(elel.cells) * self.size
@@ -170,15 +173,15 @@ class Model:
         if comm.rank == 0:
             const = dict()
 
-            status = misc.StatusBar(len(elel.cells),
+            status = elphmod.misc.StatusBar(len(elel.cells),
                 title='map interaction onto supercell')
 
             for i in range(len(elel.cells)):
                 A = i * self.size
 
                 for n in range(len(self.R)):
-                    R, r = bravais.to_supercell(self.R[n] + elel.cells[i],
-                        supercell)
+                    R, r = elphmod.bravais.to_supercell(
+                        self.R[n] + elel.cells[i], supercell)
 
                     B = r * self.size
 
@@ -230,7 +233,7 @@ class Model:
 
             const = dict()
 
-            status = misc.StatusBar(len(self.R),
+            status = elphmod.misc.StatusBar(len(self.R),
                 title='standardize interaction data')
 
             for n in range(len(self.R)):
@@ -372,13 +375,14 @@ def q2r(elel, W, a, r, fft=True):
     WR = np.reshape(WR, (nq[0], nq[1], nq[2], elel.size, 1, elel.size, 1))
     WR = np.transpose(WR, (3, 5, 0, 1, 2, 4, 6))
 
-    elel.R, elel.data, l = bravais.short_range_model(WR, a, r, sgn=+1)
+    elel.R, elel.data, l = elphmod.bravais.short_range_model(WR, a, r, sgn=+1)
 
 def read_band_Coulomb_interaction(filename, nQ, nk, binary=False, share=False):
     """Read Coulomb interaction for single band in band basis."""
 
     if share:
-        node, images, U = MPI.shared_array((nQ, nk, nk, nk, nk), dtype=complex)
+        node, images, U = elphmod.MPI.shared_array((nQ, nk, nk, nk, nk),
+            dtype=complex)
     else:
         if comm.rank == 0:
             U = np.empty((nQ, nk, nk, nk, nk), dtype=complex)
@@ -439,20 +443,21 @@ def orbital2band(U, H, nq, nk, band=0, status=False, share=False, dd=False):
 
     # get eigenvectors of Hamiltonian:
 
-    psi = dispersion.dispersion_full_nosym(H, nk, vectors=True, gauge=True)[1]
+    psi = elphmod.dispersion.dispersion_full_nosym(H, nk, vectors=True,
+        gauge=True)[1]
     # psi[k, a, n] = <a k|n k>
 
     psi = psi[:, :, :, band].copy()
 
     # distribute work among processors:
 
-    Q = sorted(bravais.irreducibles(nq)) if comm.rank == 0 else None
+    Q = sorted(elphmod.bravais.irreducibles(nq)) if comm.rank == 0 else None
     Q = comm.bcast(Q)
     nQ = len(Q)
 
     size = nQ * nk ** 4
 
-    sizes = MPI.distribute(size)
+    sizes = elphmod.MPI.distribute(size)
 
     if comm.rank == 0:
         points = np.empty((size, 10), dtype=np.uint8)
@@ -490,7 +495,7 @@ def orbital2band(U, H, nq, nk, band=0, status=False, share=False, dd=False):
     # Chunk-wise scattering to overcome MPI's array-length limit of 2^32 - 1:
     # (adapted from L. Dalcin's reply to 'Gatherv seg fault?' on Google Groups)
 
-    chunk = MPI.MPI.UNSIGNED_CHAR.Create_contiguous(10).Commit()
+    chunk = elphmod.MPI.MPI.UNSIGNED_CHAR.Create_contiguous(10).Commit()
     comm.Scatterv((points, sizes, chunk), (my_points, chunk))
     chunk.Free()
 
@@ -532,7 +537,8 @@ def orbital2band(U, H, nq, nk, band=0, status=False, share=False, dd=False):
         print('Done.')
 
     if share:
-        node, images, V = MPI.shared_array((nQ, nk, nk, nk, nk), dtype=complex)
+        node, images, V = elphmod.MPI.shared_array((nQ, nk, nk, nk, nk),
+            dtype=complex)
     else:
         if comm.rank == 0:
             V = np.empty((nQ, nk, nk, nk, nk), dtype=complex)
@@ -556,7 +562,8 @@ def hartree_energy(rho_g, g_vect, ngm_g, uc_volume, a=1.0):
     from ``v_of_rho.f90``.
 
     All input parameters can be obtained from reading the formatted
-    charge-density output. Use :func:`el.read_rhoG_density` for this purpose.
+    charge-density output. Use :func:`elphmod.el.read_rhoG_density` for this
+    purpose.
 
     Parameters
     ----------
@@ -584,7 +591,7 @@ def hartree_energy(rho_g, g_vect, ngm_g, uc_volume, a=1.0):
 
     e2 = 2.0
     fpi = 4 * np.pi
-    tpiba2 = (2 * np.pi / (a / misc.a0)) ** 2
+    tpiba2 = (2 * np.pi / (a / elphmod.misc.a0)) ** 2
 
     fac = e2 * fpi / tpiba2
     ehart = ehart * fac

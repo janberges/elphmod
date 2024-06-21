@@ -5,9 +5,11 @@
 
 import numpy as np
 
-from . import bravais, misc, MPI
+import elphmod.bravais
+import elphmod.misc
+import elphmod.MPI
 
-comm = MPI.comm
+comm = elphmod.MPI.comm
 
 def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
         order=False, hermitian=True, broadcast=True, shared_memory=False,
@@ -72,7 +74,7 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
 
     # choose number of k points to be processed by each processor:
 
-    my_points = MPI.distribute(points)
+    my_points = elphmod.MPI.distribute(points)
 
     # initialize local lists of k points, eigenvalues and eigenvectors:
 
@@ -89,11 +91,12 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
 
     # diagonalize matrix for local lists of k points:
 
-    status = misc.StatusBar(my_points[comm.rank], title='calculate dispersion')
+    status = elphmod.misc.StatusBar(my_points[comm.rank],
+        title='calculate dispersion')
 
     if rotate:
-        a1, a2 = bravais.translations(180 - angle)
-        b1, b2 = bravais.reciprocals(a1, a2)
+        a1, a2 = elphmod.bravais.translations(180 - angle)
+        b1, b2 = elphmod.bravais.reciprocals(a1, a2)
 
     for point in range(len(my_k)):
         matrix_k = matrix(*my_k[point])
@@ -120,8 +123,8 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
             # rotate phonon eigenvectors by negative angle of k point:
 
             if rotate:
-                k1, k2 = bravais.to_Voronoi(*my_k[point, :2], nk=2 * np.pi,
-                    angle=angle)[0]
+                k1, k2 = elphmod.bravais.to_Voronoi(*my_k[point, :2],
+                    nk=2 * np.pi, angle=angle)[0]
 
                 x, y = k1 * b1 + k2 * b2
                 phi = np.arctan2(y, x)
@@ -131,7 +134,7 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
                 for atom in range(atoms):
                     for band in range(bands):
                         xy = point, [atom, atom + atoms], band
-                        my_V[xy] = bravais.rotate(my_V[xy], -phi)
+                        my_V[xy] = elphmod.bravais.rotate(my_V[xy], -phi)
         else:
             if bands == 1:
                 my_v[point] = matrix_k.real if hermitian else matrix_k
@@ -147,13 +150,13 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
 
     memory = dict(shared_memory=shared_memory, single_memory=not broadcast)
 
-    node, images, v = MPI.shared_array((points, bands), dtype=my_v.dtype,
-        **memory)
+    node, images, v = elphmod.MPI.shared_array((points, bands),
+        dtype=my_v.dtype, **memory)
 
     comm.Gatherv(my_v, (v, my_points * bands))
 
     if order or vectors:
-        node, images, V = MPI.shared_array((points, bands, bands),
+        node, images, V = elphmod.MPI.shared_array((points, bands, bands),
             dtype=complex, **memory)
 
         comm.Gatherv(my_V, (V, my_points * bands ** 2))
@@ -161,7 +164,7 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
     # order/disentangle bands:
 
     if order:
-        node, images, o = MPI.shared_array((points, bands),
+        node, images, o = elphmod.MPI.shared_array((points, bands),
             dtype=int, **memory)
 
         if comm.rank == 0:
@@ -219,7 +222,7 @@ def dispersion_full(matrix, size, angle=60, vectors=False, gauge=False,
 
     # choose irreducible set of k points:
 
-    k = np.array(sorted(bravais.irreducibles(size, angle=angle)))
+    k = np.array(sorted(elphmod.bravais.irreducibles(size, angle=angle)))
 
     points = len(k) # number of k points
 
@@ -280,7 +283,7 @@ def dispersion_full(matrix, size, angle=60, vectors=False, gauge=False,
             main_order = band_order(v[main_path], V[main_path], status=False,
                 **order_kwargs)
 
-            status = misc.StatusBar(points, title='disentangle bands')
+            status = elphmod.misc.StatusBar(points, title='disentangle bands')
 
             for n, N in zip(main_path, main_order):
                 side_path = [m for m in range(points) if on_side_path(n, m)]
@@ -306,22 +309,22 @@ def dispersion_full(matrix, size, angle=60, vectors=False, gauge=False,
 
     memory = dict(shared_memory=shared_memory, single_memory=not broadcast)
 
-    node, images, v_mesh = MPI.shared_array((size, size, bands), dtype=v.dtype,
-        **memory)
+    node, images, v_mesh = elphmod.MPI.shared_array((size, size, bands),
+        dtype=v.dtype, **memory)
 
     if vectors:
-        node, images, V_mesh = MPI.shared_array((size, size, bands, bands),
-            dtype=complex, **memory)
+        node, images, V_mesh = elphmod.MPI.shared_array(
+            (size, size, bands, bands), dtype=complex, **memory)
 
     if order:
-        node, images, o_mesh = MPI.shared_array((size, size, bands),
+        node, images, o_mesh = elphmod.MPI.shared_array((size, size, bands),
             dtype=int, **memory)
 
     if comm.rank == 0:
         # transfer data points from wedge to mesh:
 
         for point, (k1, k2) in enumerate(k):
-            for K1, K2 in bravais.images(k1, k2, size, angle=angle):
+            for K1, K2 in elphmod.bravais.images(k1, k2, size, angle=angle):
                 v_mesh[K1, K2] = v[point]
 
                 if vectors:
@@ -365,9 +368,9 @@ def dispersion_full_nosym(matrix, size, vectors=False, order=False,
 
     if comm.rank == 0:
         if hasattr(size, '__iter__') and not order:
-            k = bravais.mesh(*size)
+            k = elphmod.bravais.mesh(*size)
         else:
-            k = bravais.mesh(size, size)
+            k = elphmod.bravais.mesh(size, size)
     else:
         k = None
 
@@ -421,14 +424,14 @@ def sample(matrix, k, **kwargs):
     kshape = k.shape[:max(1, k.ndim - 1)]
     k = np.reshape(k, (np.prod(kshape), -1))
 
-    sizes, bounds = MPI.distribute(len(k), bounds=True)
+    sizes, bounds = elphmod.MPI.distribute(len(k), bounds=True)
 
     template = matrix(**kwargs)
 
     my_matrix = np.empty((sizes[comm.rank],) + template.shape,
         dtype=template.dtype)
 
-    status = misc.StatusBar(sizes[comm.rank], title='sample something')
+    status = elphmod.misc.StatusBar(sizes[comm.rank], title='sample something')
 
     for my_ik, ik in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         my_matrix[my_ik] = matrix(*k[ik], **kwargs)
@@ -473,7 +476,7 @@ def band_order(v, V, by_mean=True, dv=float('inf'), eps=1e-10, status=True):
     o[n0] = range(bands)
 
     if status:
-        bar = misc.StatusBar(points - 1, title='disentangle bands')
+        bar = elphmod.misc.StatusBar(points - 1, title='disentangle bands')
 
     for n in range(1, points):
         available = set(range(bands))
@@ -552,7 +555,7 @@ def unfolding_weights(k, R, U0, U, blocks0=None, blocks=None, sgn=-1):
     sgn : int
         Sign convention for Fourier transform in tight-binding model.
         The default sign ``-1`` is suitable for data from Wannier90 as provided
-        by :meth:`el.Model.H`.
+        by :meth:`elphmod.el.Model.H`.
         `Other conventions <https://doi.org/10.26092/elib/250>`_ require ``+1``.
 
     Returns
@@ -572,11 +575,11 @@ def unfolding_weights(k, R, U0, U, blocks0=None, blocks=None, sgn=-1):
 
     U0 = U0 / np.sqrt(bands / bands0)
 
-    sizes, bounds = MPI.distribute(len(k), bounds=True)
+    sizes, bounds = elphmod.MPI.distribute(len(k), bounds=True)
 
     my_w = np.empty((sizes[comm.rank], bands))
 
-    status = misc.StatusBar(sizes[comm.rank], title='unfold bands')
+    status = elphmod.misc.StatusBar(sizes[comm.rank], title='unfold bands')
 
     for my_ik, ik in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         my_w[my_ik] = sum(abs(sum(np.exp(sgn * 1j * np.dot(k[ik], R[ir]))

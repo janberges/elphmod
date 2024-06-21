@@ -5,10 +5,14 @@
 
 import numpy as np
 
-from . import bravais, dispersion, misc, MPI, occupations
+import elphmod.bravais
+import elphmod.dispersion
+import elphmod.misc
+import elphmod.MPI
+import elphmod.occupations
 
-comm = MPI.comm
-info = MPI.info
+comm = elphmod.MPI.comm
+info = elphmod.MPI.info
 
 class Model:
     r"""Tight-binding model for the electrons.
@@ -152,7 +156,7 @@ class Model:
         ndarray
             Element of :attr:`data` or zero.
         """
-        index = misc.vector_index(self.R, (R1, R2, R3))
+        index = elphmod.misc.vector_index(self.R, (R1, R2, R3))
 
         if index is None:
             return np.zeros_like(self.data[0])
@@ -175,7 +179,7 @@ class Model:
             seedname = seedname[:-7]
 
         if seedname.endswith('dat.h_mat_r'):
-            R, data = misc.read_dat_mat(seedname)
+            R, data = elphmod.misc.read_dat_mat(seedname)
             self.size = data.shape[1]
 
             if N is None:
@@ -183,7 +187,7 @@ class Model:
 
             if a is None:
                 info('Warning: You should really define the Bravais lattice!')
-                a = bravais.primitives(ibrav=1)
+                a = elphmod.bravais.primitives(ibrav=1)
 
             if r is None:
                 r = np.zeros((self.size, 3))
@@ -202,7 +206,7 @@ class Model:
             self.size = self.data.shape[1]
 
             if rydberg:
-                self.data /= misc.Ry
+                self.data /= elphmod.misc.Ry
 
             supvecs = read_wsvecdat('%s_wsvec.dat' % seedname)
 
@@ -247,31 +251,35 @@ class Model:
 
         if read_xsf:
             if buffer_wf:
-                self.W = MPI.load('%s_wf.npy' % seedname, shared_memory)
-                self.r = MPI.load('%s_xyz.npy' % seedname, shared_memory)
+                self.W = elphmod.MPI.load('%s_wf.npy' % seedname,
+                    shared_memory)
+
+                self.r = elphmod.MPI.load('%s_xyz.npy' % seedname,
+                    shared_memory)
 
             read_buffer = buffer_wf and self.W.size and self.r.size
 
-            r0, a, self.atom_order, self.tau, shape = misc.read_xsf(
+            r0, a, self.atom_order, self.tau, shape = elphmod.misc.read_xsf(
                 '%s_head.xsf' % seedname if read_buffer else
                 '%s_%05d.xsf' % (seedname, 1), only_header=True)
 
             self.dV = abs(np.dot(np.cross(a[0], a[1]), a[2])) / np.prod(shape)
 
             if not read_buffer:
-                self.r = misc.real_space_grid(shape, r0, a, shared_memory)
+                self.r = elphmod.misc.real_space_grid(shape, r0, a,
+                    shared_memory)
 
-                sizes, bounds = MPI.distribute(self.size, bounds=True)
+                sizes, bounds = elphmod.MPI.distribute(self.size, bounds=True)
 
                 my_W = np.empty((sizes[comm.rank],) + shape)
-                node, images, self.W = MPI.shared_array((self.size,) + shape,
-                    shared_memory=shared_memory)
+                node, images, self.W = elphmod.MPI.shared_array(
+                    (self.size,) + shape, shared_memory=shared_memory)
 
                 for my_n, n in enumerate(range(
                         *bounds[comm.rank:comm.rank + 2])):
 
-                    my_W[my_n] = misc.read_xsf('%s_%05d.xsf'
-                        % (seedname, n + 1), comm=MPI.I)[-1]
+                    my_W[my_n] = elphmod.misc.read_xsf('%s_%05d.xsf'
+                        % (seedname, n + 1), comm=elphmod.MPI.I)[-1]
 
                     if normalize_wf:
                         my_W[my_n] /= np.sqrt(np.sum(my_W[my_n] ** 2) * self.dV)
@@ -284,7 +292,7 @@ class Model:
                 comm.Barrier()
 
                 if buffer_wf and comm.rank == 0:
-                    misc.write_xsf('%s_head.xsf' % seedname, r0, a,
+                    elphmod.misc.write_xsf('%s_head.xsf' % seedname, r0, a,
                         self.atom_order, self.tau, shape, only_header=True)
 
                     np.save('%s_wf.npy' % seedname, self.W)
@@ -318,11 +326,11 @@ class Model:
 
         See Also
         --------
-        bravais.supercell
+        elphmod.bravais.supercell
         """
         el = Model()
 
-        supercell = bravais.supercell(N1, N2, N3)
+        supercell = elphmod.bravais.supercell(N1, N2, N3)
         el.N = list(map(tuple, supercell[1]))
         el.cells = supercell[-1]
 
@@ -332,7 +340,7 @@ class Model:
         el.rydberg = self.rydberg
 
         if sparse:
-            sparse_array = misc.get_sparse_array()
+            sparse_array = elphmod.misc.get_sparse_array()
 
             el.Hs = sparse_array((el.size, el.size))
 
@@ -342,14 +350,14 @@ class Model:
         if comm.rank == 0:
             const = dict()
 
-            status = misc.StatusBar(len(el.cells),
+            status = elphmod.misc.StatusBar(len(el.cells),
                 title='map hoppings onto supercell')
 
             for i in range(len(el.cells)):
                 A = i * self.size
 
                 for n in range(len(self.R)):
-                    R, r = bravais.to_supercell(self.R[n] + el.cells[i],
+                    R, r = elphmod.bravais.to_supercell(self.R[n] + el.cells[i],
                         supercell)
 
                     B = r * self.size
@@ -408,7 +416,7 @@ class Model:
         if comm.rank == 0:
             const = dict()
 
-            status = misc.StatusBar(len(self.R),
+            status = elphmod.misc.StatusBar(len(self.R),
                 title='map hoppings back to unit cell')
 
             for n in range(len(self.R)):
@@ -525,7 +533,7 @@ class Model:
 
             const = dict()
 
-            status = misc.StatusBar(len(self.R),
+            status = elphmod.misc.StatusBar(len(self.R),
                 title='standardize tight-binding data')
 
             for n in range(len(self.R)):
@@ -582,7 +590,7 @@ class Model:
         """
         if comm.rank == 0:
             write_hrdat(seedname, self.R,
-                self.data * misc.Ry if self.rydberg else self.data)
+                self.data * elphmod.misc.Ry if self.rydberg else self.data)
 
 def read_hrdat(seedname, divide_ndegen=True):
     """Read *_hr.dat* (or *_tb.dat*) file from Wannier90.
@@ -787,16 +795,16 @@ def k2r(el, H, a, r, fft=True, rydberg=False):
     t = np.reshape(t, (nk[0], nk[1], nk[2], el.size, 1, el.size, 1))
     t = np.transpose(t, (3, 5, 0, 1, 2, 4, 6))
 
-    el.R, el.data, l = bravais.short_range_model(t, a, r,
+    el.R, el.data, l = elphmod.bravais.short_range_model(t, a, r,
         sgn=+1, divide_ndegen=el.divide_ndegen)
 
     el.nk = tuple(nk)
 
     if rydberg != el.rydberg:
         if rydberg:
-            el.data *= misc.Ry
+            el.data *= elphmod.misc.Ry
         else:
-            el.data /= misc.Ry
+            el.data /= elphmod.misc.Ry
 
 def read_bands(filband):
     """Read bands from *filband* just like Quantum ESRESSO's ``plotband.x``.
@@ -1032,7 +1040,7 @@ def read_atomic_projections(atomic_proj_xml, order=False, from_fermi=True,
             eps -= mu
 
         if order:
-            o = dispersion.band_order(eps,
+            o = elphmod.dispersion.band_order(eps,
                 np.transpose(proj, axes=(0, 2, 1)).copy(), **order_kwargs)
 
             for ik in range(nk):
@@ -1122,7 +1130,7 @@ def read_atomic_projections_old(atomic_proj_xml, order=False, from_fermi=True,
             eps -= mu
 
         if order:
-            o = dispersion.band_order(eps,
+            o = elphmod.dispersion.band_order(eps,
                 np.transpose(proj, axes=(0, 2, 1)).copy(), **order_kwargs)
 
             for ik in range(nk):
@@ -1256,7 +1264,7 @@ def proj_sum(proj, orbitals, *groups, **kwargs):
         for n, group in enumerate(groups):
             indices = set()
 
-            for selection in map(info, misc.split(group)):
+            for selection in map(info, elphmod.misc.split(group)):
                 for a, orbital in enumerate(orbitals):
                     if all(A == B for A, B in zip(selection, orbital) if A):
                         indices.add(a)
@@ -1315,7 +1323,7 @@ def read_pwo(pw_scf_out):
                     eF = sum(map(float, line.split()[-2:])) / 2
 
                 elif line.startswith('!'):
-                    E = float(line.split()[-2]) * misc.Ry
+                    E = float(line.split()[-2]) * elphmod.misc.Ry
 
                 elif 'End of self-consistent calculation' in line:
                     try:
@@ -1426,7 +1434,7 @@ def read_eps_nk_from_qe_pwo(pw_scf_out):
     smearing_line = lines[line_index].split()
     nk = int(smearing_line[4])
     smearing_type = smearing_line[5]
-    f = occupations.smearing(smearing_type)
+    f = elphmod.occupations.smearing(smearing_type)
     kT = float(smearing_line[9])
 
     k_Points = np.empty([nk, 4])
@@ -1478,7 +1486,7 @@ def read_eps_nk_from_qe_pwo(pw_scf_out):
         energies[ik] = np.array(energies_per_k)
 
     # kT: from Ry to eV
-    kT *= misc.Ry
+    kT *= elphmod.misc.Ry
     # read chemical potential
     mu = read_Fermi_level(pw_scf_out)
     # calculate occupations for all energies (eps_nk)
@@ -1540,7 +1548,7 @@ def eband(pw_scf_out, subset=None):
             for iband in subset:
                 eband[ik, iband] = energies[ik, iband] * wk * f_occ[ik, iband]
 
-    eband = eband.sum() / misc.Ry
+    eband = eband.sum() / elphmod.misc.Ry
 
     return eband
 
@@ -1566,7 +1574,7 @@ def demet_from_qe_pwo(pw_scf_out, subset=None):
     nk, nbnd = energies.shape
     demet = np.zeros(energies.shape)
 
-    f = occupations.smearing(smearing_type)
+    f = elphmod.occupations.smearing(smearing_type)
 
     if subset == None:
         for ik in range(nk):
@@ -1582,7 +1590,7 @@ def demet_from_qe_pwo(pw_scf_out, subset=None):
                 w1gauss = -f.entropy((energies[ik, iband] - mu) / kT)
                 demet[ik, iband] = wk * kT * w1gauss
 
-    demet = demet.sum() / misc.Ry
+    demet = demet.sum() / elphmod.misc.Ry
 
     return demet
 
@@ -1633,8 +1641,8 @@ def decayH(seedname, **kwargs):
         Prefix of Wannier90 output file.
 
     **kwargs
-        Arguments for :func:`bravais.primitives`: Choose the right Bravais
-        lattice (``ibrav``) and lattice constants (``a, b, c, ...``).
+        Arguments for :func:`elphmod.bravais.primitives`: Choose the right
+        Bravais lattice (``ibrav``) and lattice constants (``a, b, c, ...``).
 
         For a simple cubic lattice: ``decayH(seedname, ibrav=1, a=a)``.
 
@@ -1647,7 +1655,7 @@ def decayH(seedname, **kwargs):
         The maximum absolute value of the elements of the Hamiltonian matrix in
         rydberg.
     """
-    bravais_vectors = bravais.primitives(**kwargs)
+    bravais_vectors = elphmod.bravais.primitives(**kwargs)
     el = Model(seedname, divide_ndegen=False)
 
     R = np.empty((len(el.R)))
@@ -1662,7 +1670,7 @@ def decayH(seedname, **kwargs):
         distance = distance.sum(axis=0)
 
         R[ii] = np.linalg.norm(distance)
-        H[ii] = np.max(abs(el.data[ii])) / misc.Ry
+        H[ii] = np.max(abs(el.data[ii])) / elphmod.misc.Ry
 
     return R, H
 
@@ -1779,7 +1787,7 @@ def read_pp_density(filename):
         kin_energy_cutoff = float(tmp[2])
 
         # calculate unit cell and brillouin zone volume
-        A = bravais.primitives(ibrav)
+        A = elphmod.bravais.primitives(ibrav)
         A[2, 2] = celldm[2]
         uc_volume = np.linalg.det(A) * celldm[0] ** 3
 #        B1, B2, B3 = elphmod.bravais.reciprocals(*A)
@@ -1869,13 +1877,13 @@ def read_rhoG_density(filename, ibrav, a=1.0, b=1.0, c=1.0):
 
         # get primitive lattice vectors
         # (must be the same as scf output)
-        A = bravais.primitives(ibrav, a=a, b=b, c=c)
+        A = elphmod.bravais.primitives(ibrav, a=a, b=b, c=c)
         A /= a
 
-        B1, B2, B3 = bravais.reciprocals(*A)
+        B1, B2, B3 = elphmod.bravais.reciprocals(*A)
 
         # calculate unit cell volume (for Hartree energy)
-        uc_volume = np.linalg.det(A) * (a / misc.a0) ** 3
+        uc_volume = np.linalg.det(A) * (a / elphmod.misc.a0) ** 3
 
         # calculate reciprocal G vectors
         g_vect = np.empty((ngm_g, 3))
@@ -1959,14 +1967,14 @@ def read_wfc(filename, ibrav, a=1.0, b=1.0, c=1.0):
 
         # get primitive lattice vectors
         # (must be the same as scf output)
-        A = bravais.primitives(ibrav, a=a, b=b, c=c)
+        A = elphmod.bravais.primitives(ibrav, a=a, b=b, c=c)
         A /= a
 
         # reciprocal lattice vectors for G
-        B1, B2, B3 = bravais.reciprocals(*A)
+        B1, B2, B3 = elphmod.bravais.reciprocals(*A)
 
         # transform k point
-        alat = a / misc.a0
+        alat = a / elphmod.misc.a0
         xk = xk * alat / (2 * np.pi)
 
 #        # normalize wfcs
