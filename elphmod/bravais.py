@@ -1523,7 +1523,8 @@ def path(points, N=30, recvec=None, qe=False, moveG=0, **kwargs):
 
     See Also
     --------
-    primitives, reciprocals
+    primitives
+    reciprocals
     """
     labels = {
         1: { # cubic (sc)

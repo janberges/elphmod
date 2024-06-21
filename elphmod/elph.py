@@ -108,7 +108,7 @@ class Model:
         broadcast : bool
             Broadcast result to all processors? If ``False``, returns ``None``
             on all but the first processor.
-        comm : MPI communicator
+        comm : MPI.Intracomm
             Group of processors running this function (for parallelization of
             Fourier transforms). Please note: To run this function serially,
             e.g., when parallelizing over q or k points, use ``elphmod.MPI.I``.
