@@ -22,5 +22,12 @@ class TestDispersion(unittest.TestCase):
 
         self.assertTrue(np.allclose(e_sym, e_nosym))
 
+        el = el.supercell(1, (1, 1, 0))
+
+        e_sym = elphmod.dispersion.dispersion_full(el.H, nk, angle=120)
+        e_nosym = elphmod.dispersion.dispersion_full_nosym(el.H, nk)
+
+        self.assertTrue(np.allclose(e_sym, e_nosym))
+
 if __name__ == '__main__':
     unittest.main()
