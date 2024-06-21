@@ -1841,6 +1841,9 @@ def q2r(ph, D_irr=None, q_irr=None, nq=None, D_full=None, angle=60,
         independent of ``ph.divide_mass``, which is always respected.
     """
     if D_full is None:
+        ph.size = D_irr.shape[-2]
+        ph.nat = ph.size // 3
+
         D_full = np.empty((nq, nq, ph.size, ph.size), dtype=complex)
 
         def rotation(phi, n=1):
@@ -1903,6 +1906,9 @@ def q2r(ph, D_irr=None, q_irr=None, nq=None, D_full=None, angle=60,
     nq_orig = tuple(nq)
     nq = np.ones(3, dtype=int)
     nq[:len(nq_orig)] = nq_orig
+
+    ph.size = D_full.shape[-2]
+    ph.nat = ph.size // 3
 
     D_full = np.reshape(D_full, (nq[0], nq[1], nq[2], ph.size, ph.size))
 

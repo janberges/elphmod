@@ -781,6 +781,7 @@ def k2r(el, H, a, r, fft=True, rydberg=False):
         independent of ``el.rydberg``, which is always respected.
     """
     nk = H.shape[:-2]
+    el.size = H.shape[-2]
 
     nk_orig = tuple(nk)
     nk = np.ones(3, dtype=int)
