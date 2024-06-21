@@ -37,8 +37,6 @@ class Model:
         Compute long-range terms in case of polar material?
     lr2d : bool
         Compute long-range terms for two-dimensional system if `lr`?
-    phid : ndarray
-        Force constants if `flfrc` is omitted.
     amass : ndarray
         Atomic masses if `flfrc` is omitted.
     at : ndarray
@@ -205,19 +203,22 @@ class Model:
 
     def __init__(self, flfrc=None, quadrupole_fmt=None, apply_asr=False,
         apply_asr_simple=False, apply_zasr=False, apply_rsr=False, lr=True,
-        lr2d=None, phid=np.zeros((1, 1, 1, 1, 1, 3, 3)), amass=np.ones(1),
-        at=np.eye(3), tau=np.zeros((1, 3)), atom_order=['X'], alph=None,
+        lr2d=None, amass=None, at=None, tau=None, atom_order=None, alph=None,
         epsil=None, zeu=None, Q=None, L=None, perp=True, divide_mass=True,
         divide_ndegen=True, ifc=None):
 
+        phid = nq = q0 = D0 = None
+
         if comm.rank == 0:
-            if flfrc is None:
-                model = (phid.copy(), amass, at, tau, atom_order,
-                    alph, epsil, zeu, phid.shape[2:5], None, None)
-            else:
+            if flfrc is not None:
                 try:
-                    model = read_flfrc(flfrc)
-                    model += [model[0].shape[2:5], None, None]
+                    (phid, amass, at, tau, atom_order,
+                        alph, epsil, zeu) = read_flfrc(flfrc)
+
+                    nq = phid.shape[2:5]
+
+                    if apply_asr_simple:
+                        asr(phid)
 
                 except FileNotFoundError:
                     xml = flfrc.lower().endswith('.xml')
@@ -262,36 +263,37 @@ class Model:
                     q0 = q0.reshape((-1,) + q0.shape[3:])
                     D0 = D0.reshape((-1,) + D0.shape[3:])
 
-                    model = (amass, at, tau, atom_order,
-                        alph, epsil, zeu, nq, q0, D0)
-
             if quadrupole_fmt is not None:
                 Q = read_quadrupole_fmt(quadrupole_fmt)
 
-            # optionally, apply acoustic sum rule:
+            if apply_zasr and zeu is not None:
+                zasr(zeu)
 
-            if apply_asr_simple and model[-1] is None:
-                asr(model[0])
+        phid = comm.bcast(phid)
+        self.nq = comm.bcast(nq)
+        self.q0 = comm.bcast(q0)
+        self.D0 = comm.bcast(D0)
 
-            if apply_zasr:
-                zasr(model[-4])
-        else:
-            model = None
+        self.M = comm.bcast(amass)
+        self.a = comm.bcast(at)
+        self.r = comm.bcast(tau)
+        self.atom_order = comm.bcast(atom_order)
 
-        model = comm.bcast(model)
-
+        self.alpha = comm.bcast(alph)
+        self.eps = comm.bcast(epsil)
+        self.Z = comm.bcast(zeu)
         self.Q = comm.bcast(Q)
         self.L = comm.bcast(L)
         self.perp = comm.bcast(perp)
 
-        (self.M, self.a, self.r, self.atom_order, self.alpha, self.eps, self.Z,
-            self.nq, self.q0, self.D0) = model[-10:]
-
-        self.nat = len(self.atom_order)
-        self.size = 3 * self.nat
-
         self.divide_mass = divide_mass
         self.divide_ndegen = divide_ndegen
+
+        if self.atom_order is None:
+            self.nat = self.size = None
+        else:
+            self.nat = len(self.atom_order)
+            self.size = 3 * self.nat
 
         self.cells = [(0, 0, 0)]
 
@@ -300,9 +302,8 @@ class Model:
 
         self.lr = lr and self.eps is not None and self.Z is not None
 
-        lr2d_guess = self.nq[0] != self.nq[2] == 1 != self.nq[1]
-
-        self.lr2d = lr2d_guess if lr2d is None else lr2d
+        self.lr2d = (self.nq[0] != self.nq[2] == 1 != self.nq[1]
+            if lr2d is None and self.nq is not None else lr2d)
 
         if self.lr:
             if self.lr2d != lr2d:
@@ -311,15 +312,19 @@ class Model:
 
             self.prepare_long_range()
 
-        if self.D0 is None:
+        if phid is not None:
             self.R, self.data, self.l = elphmod.bravais.short_range_model(
-                model[0], self.a, self.r, sgn=-1, divide_ndegen=divide_ndegen)
+                phid, self.a, self.r, sgn=-1, divide_ndegen=divide_ndegen)
 
             if divide_mass:
                 divide_by_mass(self.data, self.M)
-        else:
+
+        elif self.D0 is not None:
             self.update_short_range(flfrc=ifc,
                 apply_asr_simple=apply_asr_simple)
+
+        else:
+            return
 
         if apply_asr or apply_rsr:
             sum_rule_correction(self, asr=apply_asr, rsr=apply_rsr)

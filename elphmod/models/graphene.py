@@ -159,8 +159,7 @@ def create(prefix=None, rydberg=False, divide_mass=True):
     elphmod.el.k2r(el, H, at, r, rydberg=True)
     el.standardize(eps=1e-10)
 
-    ph = elphmod.ph.Model(phid=np.empty((2, 2) + nq + (3, 3)),
-        amass=[M] * 2, at=at, tau=r, atom_order=['C'] * 2,
+    ph = elphmod.ph.Model(amass=[M] * 2, at=at, tau=r, atom_order=['C'] * 2,
         divide_mass=divide_mass)
 
     elphmod.ph.q2r(ph, D_full=D)
