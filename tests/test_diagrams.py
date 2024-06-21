@@ -43,9 +43,8 @@ class TestDiagrams(unittest.TestCase):
         prefactor = 2 * kT / np.prod(nk)
 
         def E(H):
-            x = np.linalg.eigvalsh(H) / kT
-
-            return prefactor * ((f(x) * x).sum() - f.entropy(x).sum())
+            return elphmod.diagrams.grand_potential(np.linalg.eigvalsh(H),
+                kT=kT, occupations=f)
 
         diff = (E(H + eps * gu) - E(H - eps * gu)) / (2 * eps)
 
