@@ -479,7 +479,7 @@ class Model:
                                 B:B + self.el.size] += self.data[g, x, k].real
                         continue
 
-                    R = tuple(Rg[g]) + tuple(Rk[k])
+                    R = (*Rg[g], *Rk[k])
 
                     if R not in const:
                         const[R] = np.zeros((elph.ph.size,
@@ -587,7 +587,7 @@ class Model:
             for g in range(len(self.Rg)):
                 for k in range(len(self.Rk)):
                     if np.any(self.data[g, :, k] != 0):
-                        R = tuple(self.Rg[g]) + tuple(self.Rk[k])
+                        R = (*self.Rg[g], *self.Rk[k])
 
                         if R in const:
                             const[R] += self.data[g, :, k]
@@ -595,8 +595,7 @@ class Model:
                             const[R] = self.data[g, :, k].copy()
 
                         if symmetrize:
-                            R = tuple(self.Rg[g]
-                                - self.Rk[k]) + tuple(-self.Rk[k])
+                            R = (*self.Rg[g] - self.Rk[k], *-self.Rk[k])
 
                             g_adj = self.data[g, :, k].swapaxes(1, 2).conj()
 
@@ -870,12 +869,12 @@ def sample(g, q, nk=None, U=None, u=None, squared=False, broadcast=True,
 
     if U is not None:
         nel = U.shape[-1]
-        U = np.reshape(U, (nk[0], nk[1], nk[2], -1, nel))
+        U = np.reshape(U, (*nk, -1, nel))
 
     if u is not None:
         nph = u.shape[-1]
 
-    my_g = np.empty((sizes[row.rank], nph, nk[0], nk[1], nk[2], nel, nel),
+    my_g = np.empty((sizes[row.rank], nph, *nk, nel, nel),
         dtype=float if squared else complex)
 
     status = elphmod.misc.StatusBar(sizes[comm.rank] * nk.prod(),
@@ -917,8 +916,8 @@ def sample(g, q, nk=None, U=None, u=None, squared=False, broadcast=True,
 
                     status.update()
 
-    node, images, g = elphmod.MPI.shared_array((len(q), nph) + nk_orig
-        + (nel, nel), dtype=my_g.dtype, shared_memory=shared_memory,
+    node, images, g = elphmod.MPI.shared_array((len(q), nph, *nk_orig,
+        nel, nel), dtype=my_g.dtype, shared_memory=shared_memory,
         single_memory=not broadcast)
 
     if node.size == comm.size > 1 and broadcast: # shared memory on single node
@@ -1042,35 +1041,32 @@ def q2r(elph, nq, nk, g, r=None, divide_mass=True, shared_memory=False):
     nk = np.ones(3, dtype=int)
     nk[:len(nk_orig)] = nk_orig
 
-    g = np.reshape(g, (nq[0], nq[1], nq[2], elph.ph.size,
-        nk[0], nk[1], nk[2], elph.el.size, elph.el.size))
+    g = np.reshape(g, (*nq, elph.ph.size, *nk, elph.el.size, elph.el.size))
 
     M = np.mgrid[:elph.ph.size, :elph.el.size, :elph.el.size].reshape((3, -1)).T
 
     sizes, bounds = elphmod.MPI.distribute(len(M), bounds=True)
 
-    my_data = np.empty((sizes[comm.rank],
-        nq[0], nq[1], nq[2], nk[0], nk[1], nk[2]), dtype=complex)
+    my_data = np.empty((sizes[comm.rank], *nq, *nk), dtype=complex)
 
     for i, (nu, m, n) in enumerate(M[bounds[comm.rank]:bounds[comm.rank + 1]]):
         my_data[i] = np.fft.ifftn(g[:, :, :, nu, :, :, :, m, n].conj()).conj()
 
     if comm.rank == 0:
-        data = np.empty((elph.ph.size, elph.el.size, elph.el.size,
-            nq[0], nq[1], nq[2], nk[0], nk[1], nk[2]), dtype=complex)
+        data = np.empty((elph.ph.size, elph.el.size, elph.el.size, *nq, *nk),
+            dtype=complex)
     else:
         data = None
 
     comm.Gatherv(my_data, (data, comm.gather(my_data.size)))
 
     if r is not None:
-        elph.Rg, ndegen_g, wslen = elphmod.bravais.wigner(nq[0], nq[1], nq[2],
+        elph.Rg, ndegen_g, wslen = elphmod.bravais.wigner(*nq,
             elph.ph.a, r, elph.ph.r)
 
         elph.dg = ndegen_g.transpose(1, 2, 0)[np.newaxis]
 
-        elph.Rk, ndegen_k, wslen = elphmod.bravais.wigner(nk[0], nk[1], nk[2],
-            elph.ph.a, r)
+        elph.Rk, ndegen_k, wslen = elphmod.bravais.wigner(*nk, elph.ph.a, r)
 
         elph.dk = ndegen_k.transpose()
 

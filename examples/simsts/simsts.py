@@ -55,7 +55,7 @@ if comm.rank == 0:
     cells = range(-3, 4)
     R = np.array([(n1, n2, 0) for n1 in cells for n2 in cells])
 
-    W = np.empty((len(R),) + el.W.shape[:3])
+    W = np.empty((len(R), *el.W.shape[:3]))
     overlap = np.empty((len(R), el.size))
 
     norm = np.sqrt(np.pi * elphmod.misc.a0 ** 3)

@@ -794,7 +794,7 @@ class Driver:
             pw['ktyp'] = 'gamma'
         else:
             pw['ktyp'] = 'automatic'
-            pw['k_points'] = tuple(self.nk) + (0, 0, 0)
+            pw['k_points'] = (*self.nk, 0, 0, 0)
 
         pw.update(kwargs)
 

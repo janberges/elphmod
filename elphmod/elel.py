@@ -138,8 +138,7 @@ class Model:
                 self.data = data
                 return
 
-            WR = np.zeros((nq[0], nq[1], nq[2], self.size, self.size),
-                dtype=complex)
+            WR = np.zeros((*nq, self.size, self.size), dtype=complex)
 
             for iR, (R1, R2, R3) in enumerate(R):
                 WR[R1 % nq[0], R2 % nq[1], R3 % nq[2]] = data[iR]
@@ -314,9 +313,9 @@ def read_orbital_Coulomb_interaction(filename, nq, no, dd=False):
     """Read Coulomb interaction in orbital basis."""
 
     if dd:
-        U = np.empty((nq[0], nq[1], nq[2], no, no), dtype=complex)
+        U = np.empty((*nq, no, no), dtype=complex)
     else:
-        U = np.empty((nq[0], nq[1], nq[2], no, no, no, no), dtype=complex)
+        U = np.empty((*nq, no, no, no, no), dtype=complex)
 
     if comm.rank == 0:
         with open(filename) as data:
@@ -368,12 +367,12 @@ def q2r(elel, W, a, r, fft=True):
     nq[:len(nq_orig)] = nq_orig
 
     if fft:
-        Wq = np.reshape(W, (nq[0], nq[1], nq[2], elel.size, elel.size))
+        Wq = np.reshape(W, (*nq, elel.size, elel.size))
         WR = np.fft.ifftn(Wq.conj(), axes=(0, 1, 2)).conj()
     else:
         WR = W
 
-    WR = np.reshape(WR, (nq[0], nq[1], nq[2], elel.size, 1, elel.size, 1))
+    WR = np.reshape(WR, (*nq, elel.size, 1, elel.size, 1))
     WR = np.transpose(WR, (3, 5, 0, 1, 2, 4, 6))
 
     elel.R, elel.data, l = elphmod.bravais.short_range_model(WR, a, r, sgn=+1)

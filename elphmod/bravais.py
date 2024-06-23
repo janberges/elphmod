@@ -746,7 +746,7 @@ def stack(*points, **kwargs):
 
     # save "stacking", shift lowest point up by one period, and repeat:
 
-    stackings = np.empty(points.shape[:1] + points.shape, dtype=points.dtype)
+    stackings = np.empty((points.shape, *points.shape), dtype=points.dtype)
 
     stackings[0] = points
 
@@ -978,7 +978,7 @@ def resize(data, shape, angle=60, axes=(0, 1), period=None, polar=False,
     size = np.prod(shape)
     sizes, bounds = elphmod.MPI.distribute(size, bounds=True)
 
-    my_new_data = np.empty((sizes[comm.rank],) + data.shape[len(shape):],
+    my_new_data = np.empty((sizes[comm.rank], *data.shape[len(shape):]),
         dtype=data.dtype)
 
     if periodic:
@@ -992,7 +992,7 @@ def resize(data, shape, angle=60, axes=(0, 1), period=None, polar=False,
 
         my_new_data[n] = interpolant(*np.multiply(m, scale))
 
-    new_data = np.empty(tuple(shape) + data.shape[len(shape):],
+    new_data = np.empty((*shape, *data.shape[len(shape):]),
         dtype=data.dtype)
 
     comm.Allgatherv(my_new_data,
@@ -1445,7 +1445,7 @@ def Fourier_interpolation(data, angle=60, sign=-1, function=True):
 
     # construct smooth inverse transform (formally tight-binding model):
 
-    values = np.empty((N * N * 4,) + data.shape[2:], dtype=complex)
+    values = np.empty((N * N * 4, *data.shape[2:]), dtype=complex)
     points = np.empty((N * N * 4, 2), dtype=int)
     counts = np.empty((N * N * 4), dtype=int)
 

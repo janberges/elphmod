@@ -195,8 +195,8 @@ def polarization(e, U, kT=0.025, eps=1e-10, subspace=None, occupations='fd'):
     nk[:len(nk_orig)] = nk_orig
 
     nbnd = e.shape[-1]
-    e = np.reshape(e, (nk[0], nk[1], nk[2], nbnd))
-    U = np.reshape(U, (nk[0], nk[1], nk[2], -1, nbnd))
+    e = np.reshape(e, (*nk, nbnd))
+    U = np.reshape(U, (*nk, -1, nbnd))
     # U[k1, k2, k3, a, n] = <k a|k n>
     norb = U.shape[3]
 
@@ -335,17 +335,17 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
     nk[:len(nk_orig)] = nk_orig
 
     nbnd = e.shape[-1]
-    e = np.reshape(e, (nk[0], nk[1], nk[2], nbnd))
+    e = np.reshape(e, (*nk, nbnd))
 
     if g is None:
         if g2 is None:
             g2 = np.ones((nQ, 1))
         else:
-            g2 = np.reshape(g2, (nQ, -1, nk[0], nk[1], nk[2], nbnd, nbnd))
+            g2 = np.reshape(g2, (nQ, -1, *nk, nbnd, nbnd))
 
         phshape = g2.shape[1:2]
     else:
-        g = np.reshape(g, (nQ, -1, nk[0], nk[1], nk[2], nbnd, nbnd))
+        g = np.reshape(g, (nQ, -1, *nk, nbnd, nbnd))
 
         if G is None:
             G = g
@@ -388,15 +388,15 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
 
     U = np.array(U)
 
-    my_Pi = np.empty((sizes[comm.rank],) + phshape + omega.shape,
+    my_Pi = np.empty((sizes[comm.rank], *phshape, *omega.shape),
         dtype=float if np.isrealobj(omega) and np.isrealobj(g2)
             and np.isrealobj(g) and np.isrealobj(G) else complex)
 
     if fluctuations:
-        my_Pi_k = np.empty((sizes[comm.rank],) + phshape + omega.shape
-            + (nk[0], nk[1], nk[2], nbnd, nbnd), dtype=my_Pi.dtype)
+        my_Pi_k = np.empty((sizes[comm.rank], *phshape, *omega.shape,
+            *nk, nbnd, nbnd), dtype=my_Pi.dtype)
 
-    dfde = np.empty(omega.shape + (nk[0], nk[1], nk[2], nbnd, nbnd),
+    dfde = np.empty((*omega.shape, *nk, nbnd, nbnd),
         dtype=float if np.isrealobj(omega) else complex)
 
     k1 = slice(0, nk[0])
@@ -477,12 +477,12 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
 
             my_Pi[my_iq] += np.einsum('u...mn,...mn,v...mn->uv...', PiL, W, PiR)
 
-    Pi = np.empty((nQ,) + phshape + omega.shape, dtype=my_Pi.dtype)
+    Pi = np.empty((nQ, *phshape, *omega.shape), dtype=my_Pi.dtype)
 
     comm.Allgatherv(my_Pi, (Pi, comm.allgather(my_Pi.size)))
 
     if fluctuations:
-        Pi_k = np.empty((nQ,) + phshape + omega.shape + nk_orig + (nbnd, nbnd),
+        Pi_k = np.empty((nQ, *phshape, *omega.shape, *nk_orig, nbnd, nbnd),
             dtype=my_Pi_k.dtype)
 
         comm.Allgatherv(my_Pi_k, (Pi_k, comm.allgather(my_Pi_k.size)))
@@ -520,8 +520,8 @@ def phonon_self_energy_fermi_shift(e, g, kT=0.025, occupations='fd'):
     nk[:len(e.shape[:-1])] = e.shape[:-1]
 
     nbnd = e.shape[-1]
-    e = np.reshape(e, (nk[0], nk[1], nk[2], nbnd))
-    g = np.reshape(g, (-1, nk[0], nk[1], nk[2], nbnd, nbnd))
+    e = np.reshape(e, (*nk, nbnd))
+    g = np.reshape(g, (-1, *nk, nbnd, nbnd))
 
     x = e / kT
     d = occupations.delta(x) / kT
@@ -671,12 +671,12 @@ def renormalize_coupling_band(q, e, g, W, U, kT=0.025, eps=1e-10,
     nk[:len(nk_orig)] = nk_orig
 
     nbnd = e.shape[-1]
-    e = np.reshape(e, (nk[0], nk[1], nk[2], nbnd))
+    e = np.reshape(e, (*nk, nbnd))
 
-    U = np.reshape(U, (nk[0], nk[1], nk[2], -1, nbnd))
+    U = np.reshape(U, (*nk, -1, nbnd))
     norb = U.shape[3]
 
-    g = np.reshape(g, (nQ, -1, nk[0], nk[1], nk[2], nbnd, nbnd))
+    g = np.reshape(g, (nQ, -1, *nk, nbnd, nbnd))
     nmodes = g.shape[1]
 
     dd = W.ndim == 3
@@ -703,10 +703,9 @@ def renormalize_coupling_band(q, e, g, W, U, kT=0.025, eps=1e-10,
 
     sizes, bounds = elphmod.MPI.distribute(nQ, bounds=True)
 
-    my_g_ = np.empty((sizes[comm.rank],
-        nmodes, nk[0], nk[1], nk[2], nbnd, nbnd), dtype=complex)
+    my_g_ = np.empty((sizes[comm.rank], nmodes, *nk, nbnd, nbnd), dtype=complex)
 
-    dfde = np.empty((nk[0], nk[1], nk[2], nbnd_sub, nbnd_sub))
+    dfde = np.empty((*nk, nbnd_sub, nbnd_sub))
 
     for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         if status:
@@ -757,7 +756,7 @@ def renormalize_coupling_band(q, e, g, W, U, kT=0.025, eps=1e-10,
         #     /    b     d    /
         #    k n             K N
 
-    g_ = np.empty((nQ, nmodes) + nk_orig + (nbnd, nbnd), dtype=complex)
+    g_ = np.empty((nQ, nmodes, *nk_orig, nbnd, nbnd), dtype=complex)
 
     comm.Allgatherv(my_g_, (g_, sizes * nmodes * nk.prod() * nbnd * nbnd))
 
@@ -877,12 +876,12 @@ def Pi_g(q, e, g, U, kT=0.025, eps=1e-10, occupations='fd', dd=True,
     nk[:len(nk_orig)] = nk_orig
 
     nbnd = e.shape[-1]
-    e = np.reshape(e, (nk[0], nk[1], nk[2], nbnd))
+    e = np.reshape(e, (*nk, nbnd))
 
-    U = np.reshape(U, (nk[0], nk[1], nk[2], -1, nbnd))
+    U = np.reshape(U, (*nk, -1, nbnd))
     norb = U.shape[3]
 
-    g = np.reshape(g, (nQ, -1, nk[0], nk[1], nk[2], norb, norb))
+    g = np.reshape(g, (nQ, -1, *nk, norb, norb))
     nmodes = g.shape[1]
 
     x = e / kT
@@ -904,7 +903,7 @@ def Pi_g(q, e, g, U, kT=0.025, eps=1e-10, occupations='fd', dd=True,
     else:
         my_Pig = np.empty((sizes[comm.rank], nmodes, norb, norb), dtype=complex)
 
-    dfde = np.empty((nk[0], nk[1], nk[2], nbnd, nbnd))
+    dfde = np.empty((*nk, nbnd, nbnd))
 
     for my_iq, iq in enumerate(range(*bounds[comm.rank:comm.rank + 2])):
         if status:
@@ -1010,13 +1009,13 @@ def double_fermi_surface_average(q, e, g2=None, kT=0.025, occupations='fd',
     nk[:len(nk_orig)] = nk_orig
 
     nbnd = e.shape[-1]
-    e = np.reshape(e, (nk[0], nk[1], nk[2], nbnd))
+    e = np.reshape(e, (*nk, nbnd))
 
     if g2 is None:
         g2 = np.ones((nQ, 1))
 
     else:
-        g2 = np.reshape(g2, (nQ, -1, nk[0], nk[1], nk[2], nbnd, nbnd))
+        g2 = np.reshape(g2, (nQ, -1, *nk, nbnd, nbnd))
 
     nmodes = g2.shape[1]
 
@@ -1033,7 +1032,7 @@ def double_fermi_surface_average(q, e, g2=None, kT=0.025, occupations='fd',
         dtype=float if np.isrealobj(g2) else complex)
     my_deno = np.empty(sizes[comm.rank])
 
-    d2 = np.empty((nk[0], nk[1], nk[2], nbnd, nbnd))
+    d2 = np.empty((*nk, nbnd, nbnd))
 
     k1 = slice(0, nk[0])
     k2 = slice(0, nk[1])
@@ -1123,15 +1122,15 @@ def first_order(e, g, kT=0.025, U=None, eps=1e-10, occupations='fd'):
     nk[:len(e.shape[:-1])] = e.shape[:-1]
 
     nbnd = e.shape[-1]
-    e = np.reshape(e, (nk[0], nk[1], nk[2], nbnd))
+    e = np.reshape(e, (*nk, nbnd))
 
     if U is not None:
-        U = np.reshape(U, (nk[0], nk[1], nk[2], -1, nbnd))
+        U = np.reshape(U, (*nk, -1, nbnd))
         norb = U.shape[3]
 
-        g = np.reshape(g, (-1, nk[0], nk[1], nk[2], norb, norb))
+        g = np.reshape(g, (-1, *nk, norb, norb))
     else:
-        g = np.reshape(g, (-1, nk[0], nk[1], nk[2], nbnd, nbnd))
+        g = np.reshape(g, (-1, *nk, nbnd, nbnd))
 
     f = occupations(e / kT)
 
@@ -1223,10 +1222,10 @@ def triangle(q, Q, e, gq, gQ, gqQ, kT=0.025, eps=1e-10, occupations='fd',
     nk[:len(nk_orig)] = nk_orig
 
     nbnd = e.shape[-1]
-    e = np.reshape(e, (nk[0], nk[1], nk[2], nbnd))
-    gq = np.reshape(gq, (nk[0], nk[1], nk[2], nbnd, nbnd))
-    gQ = np.reshape(gQ, (nk[0], nk[1], nk[2], nbnd, nbnd))
-    gqQ = np.reshape(gqQ, (nk[0], nk[1], nk[2], nbnd, nbnd))
+    e = np.reshape(e, (*nk, nbnd))
+    gq = np.reshape(gq, (*nk, nbnd, nbnd))
+    gQ = np.reshape(gQ, (*nk, nbnd, nbnd))
+    gqQ = np.reshape(gqQ, (*nk, nbnd, nbnd))
 
     x = e / kT
 
@@ -1241,7 +1240,7 @@ def triangle(q, Q, e, gq, gQ, gqQ, kT=0.025, eps=1e-10, occupations='fd',
     scale = nk / (2 * np.pi)
     prefactor = 4 / nk.prod()
 
-    chi = np.empty((nbnd, nbnd, nbnd, nk[0], nk[1], nk[2]), dtype=complex)
+    chi = np.empty((nbnd, nbnd, nbnd, *nk), dtype=complex)
 
     q = np.round(q * scale).astype(int) % nk
     Q = np.round(Q * scale).astype(int) % nk
@@ -1311,7 +1310,7 @@ def triangle(q, Q, e, gq, gQ, gqQ, kT=0.025, eps=1e-10, occupations='fd',
     chi = prefactor * chi_k.sum()
 
     if fluctuations:
-        return chi, 4 * chi_k.reshape(nk_orig + (nbnd,) * 3)
+        return chi, 4 * chi_k.reshape((*nk_orig, nbnd, nbnd, nbnd))
     else:
         return chi
 
@@ -1358,9 +1357,9 @@ def fan_migdal_self_energy(k, e, w, g2, omega, kT=0.025, occupations='fd',
     nbnd = e.shape[-1]
     nmodes = w.shape[-1]
 
-    e = np.reshape(e, (nq[0], nq[1], nq[2], 1, nbnd, 1, 1))
-    w = np.reshape(w, (nq[0], nq[1], nq[2], nmodes, 1, 1, 1))
-    g2 = np.reshape(g2, (nq[0], nq[1], nq[2], nmodes, nK, nbnd, nbnd, 1))
+    e = np.reshape(e, (*nq, 1, nbnd, 1, 1))
+    w = np.reshape(w, (*nq, nmodes, 1, 1, 1))
+    g2 = np.reshape(g2, (*nq, nmodes, nK, nbnd, nbnd, 1))
     omega = np.reshape(omega, (1, 1, 1, 1, 1, 1, -1))
 
     f = occupations(e / kT)

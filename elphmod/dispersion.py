@@ -194,13 +194,13 @@ def dispersion(matrix, k, angle=60, vectors=False, gauge=False, rotate=False,
     # reshape results:
 
     if broadcast or comm.rank == 0:
-        v = np.reshape(v, kshape + (bands,))
+        v = np.reshape(v, (*kshape, bands))
 
         if vectors:
-            V = np.reshape(V, kshape + (bands, bands))
+            V = np.reshape(V, (*kshape, bands, bands))
 
         if order:
-            o = np.reshape(o, kshape + (bands,))
+            o = np.reshape(o, (*kshape, bands))
 
     # return results:
 
@@ -428,7 +428,7 @@ def sample(matrix, k, **kwargs):
 
     template = matrix(**kwargs)
 
-    my_matrix = np.empty((sizes[comm.rank],) + template.shape,
+    my_matrix = np.empty((sizes[comm.rank], *template.shape),
         dtype=template.dtype)
 
     status = elphmod.misc.StatusBar(sizes[comm.rank], title='sample something')
@@ -438,7 +438,7 @@ def sample(matrix, k, **kwargs):
 
         status.update()
 
-    matrix = np.empty(kshape + template.shape, dtype=template.dtype)
+    matrix = np.empty((*kshape, *template.shape), dtype=template.dtype)
 
     comm.Allgatherv(my_matrix, (matrix, sizes * template.size))
 

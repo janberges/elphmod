@@ -271,9 +271,9 @@ class Model:
 
                 sizes, bounds = elphmod.MPI.distribute(self.size, bounds=True)
 
-                my_W = np.empty((sizes[comm.rank],) + shape)
+                my_W = np.empty((sizes[comm.rank], *shape))
                 node, images, self.W = elphmod.MPI.shared_array(
-                    (self.size,) + shape, shared_memory=shared_memory)
+                    (self.size, *shape), shared_memory=shared_memory)
 
                 for my_n, n in enumerate(range(
                         *bounds[comm.rank:comm.rank + 2])):
@@ -788,12 +788,12 @@ def k2r(el, H, a, r, fft=True, rydberg=False):
     nk[:len(nk_orig)] = nk_orig
 
     if fft:
-        H = np.reshape(H, (nk[0], nk[1], nk[2], el.size, el.size))
+        H = np.reshape(H, (*nk, el.size, el.size))
         t = np.fft.ifftn(H.conj(), axes=(0, 1, 2)).conj()
     else:
         t = H
 
-    t = np.reshape(t, (nk[0], nk[1], nk[2], el.size, 1, el.size, 1))
+    t = np.reshape(t, (*nk, el.size, 1, el.size, 1))
     t = np.transpose(t, (3, 5, 0, 1, 2, 4, 6))
 
     el.R, el.data, l = elphmod.bravais.short_range_model(t, a, r,
@@ -1256,8 +1256,8 @@ def proj_sum(proj, orbitals, *groups, **kwargs):
 
     other = kwargs.get('other', False)
 
-    summed = np.empty(proj.shape[:2] + (len(groups) + 1 if other
-        else len(groups),))
+    summed = np.empty((*proj.shape[:2],
+        len(groups) + 1 if other else len(groups)))
 
     if comm.rank == 0:
         orbitals = list(map(info, orbitals))
@@ -1659,8 +1659,8 @@ def decayH(seedname, **kwargs):
     bravais_vectors = elphmod.bravais.primitives(**kwargs)
     el = Model(seedname, divide_ndegen=False)
 
-    R = np.empty((len(el.R)))
-    H = np.empty((len(el.R)))
+    R = np.empty(len(el.R))
+    H = np.empty(len(el.R))
 
     # loop over all Wigner-seitz grid points
     for ii in range(len(el.R)):

@@ -244,8 +244,8 @@ class Model:
                             ((q, D), amass, at, tau, atom_order,
                                 alph, epsil, zeu) = read_flfrc(fildyn)
 
-                            q0 = np.empty(nq + (3,), dtype=float)
-                            D0 = np.empty(nq + (3 * len(amass),) * 2,
+                            q0 = np.empty((*nq, 3), dtype=float)
+                            D0 = np.empty((*nq, 3 * len(amass), 3 * len(amass)),
                                 dtype=complex)
 
                         if divide_mass:
@@ -260,8 +260,8 @@ class Model:
                             q0[i] = q[iq]
                             D0[i] = D[iq]
 
-                    q0 = q0.reshape((-1,) + q0.shape[3:])
-                    D0 = D0.reshape((-1,) + D0.shape[3:])
+                    q0 = q0.reshape((-1, *q0.shape[3:]))
+                    D0 = D0.reshape((-1, *D0.shape[3:]))
 
             if quadrupole_fmt is not None:
                 Q = read_quadrupole_fmt(quadrupole_fmt)
@@ -1915,10 +1915,10 @@ def q2r(ph, D_irr=None, q_irr=None, nq=None, D_full=None, angle=60,
     ph.size = D_full.shape[-2]
     ph.nat = ph.size // 3
 
-    D_full = np.reshape(D_full, (nq[0], nq[1], nq[2], ph.size, ph.size))
+    D_full = np.reshape(D_full, (*nq, ph.size, ph.size))
 
     phid = np.fft.ifftn(D_full, axes=(0, 1, 2)).real
-    phid = np.reshape(phid, (nq[0], nq[1], nq[2], ph.nat, 3, ph.nat, 3))
+    phid = np.reshape(phid, (*nq, ph.nat, 3, ph.nat, 3))
     phid = np.transpose(phid, (3, 5, 0, 1, 2, 4, 6))
 
     if divide_mass:
@@ -2099,7 +2099,7 @@ def spectral_function(D, omega, eta):
     """
     sizes, bounds = elphmod.MPI.distribute(len(omega), bounds=True)
 
-    my_A = np.empty((sizes[comm.rank],) + D.shape[:-3])
+    my_A = np.empty((sizes[comm.rank], *D.shape[:-3]))
 
     status = elphmod.misc.StatusBar(sizes[comm.rank],
         title='calculate phonon spectral function')
@@ -2112,7 +2112,7 @@ def spectral_function(D, omega, eta):
 
         status.update()
 
-    A = np.empty((len(omega),) + D.shape[:-3])
+    A = np.empty((len(omega), *D.shape[:-3]))
 
     comm.Allgatherv(my_A, (A, comm.allgather(my_A.size)))
 

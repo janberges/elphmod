@@ -427,7 +427,7 @@ def color(data, cmap=None, minimum=None, maximum=None, comm=comm):
         my_image[my_i] = cmap(data[i]).RGB()
         status.update()
 
-    image = np.empty(shape + (3,))
+    image = np.empty((*shape, 3))
 
     comm.Allgatherv(my_image, (image, sizes * 3))
 
@@ -461,7 +461,7 @@ def adjust_pixels(image, points, distances, width, height=None):
     if height is None:
         height = image.shape[0]
 
-    new_image = np.empty((height, width) + image.shape[2:])
+    new_image = np.empty((height, width, *image.shape[2:]))
 
     for i in range(1, len(points)):
         new_image[:, new_points[i - 1]:new_points[i] + 1] \

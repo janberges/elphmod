@@ -19,5 +19,4 @@ mark are not necessarily a good idea.
 * Shift Wannier functions more accurately in STM and STS simulations.
 * Move I/O functions and numerical constants to separate modules.
 * Free local memory after data has been gathered in global memory.
-* Drop Python-2 support in favor of things like `(nq, nph, *nk, nel, nel)`?
 * Replace status arguments etc. by global `elphmod(.misc).verbosity`.

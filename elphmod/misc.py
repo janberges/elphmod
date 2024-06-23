@@ -469,7 +469,7 @@ def real_space_grid(shape, r0, a, shared_memory=False):
     ndarray
         Cartesian coordinates for all grid points.
     """
-    node, images, r = elphmod.MPI.shared_array(shape + (3,),
+    node, images, r = elphmod.MPI.shared_array((*shape, 3),
         shared_memory=shared_memory)
 
     if comm.rank == 0:
