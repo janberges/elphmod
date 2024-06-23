@@ -169,6 +169,7 @@ def create(prefix=None, rydberg=False, divide_mass=True):
 
     elel = elphmod.elel.Model()
     elphmod.elel.q2r(elel, U * elphmod.misc.Ry, at, r)
+    elel.standardize(eps=1e-10)
 
     if prefix is not None:
         el.to_hrdat(prefix)
