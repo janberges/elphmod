@@ -7,7 +7,6 @@ import collections
 import numpy as np
 import sys
 
-import elphmod
 import elphmod.MPI
 
 comm = elphmod.MPI.comm

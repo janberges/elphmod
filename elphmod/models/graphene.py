@@ -155,13 +155,11 @@ def create(prefix=None, rydberg=False, divide_mass=True):
     U = elphmod.dispersion.sample(coulomb_interaction, q)
 
     el = elphmod.el.Model(rydberg=rydberg)
-    el.size = H.shape[-1]
     elphmod.el.k2r(el, H, at, r, rydberg=True)
     el.standardize(eps=1e-10)
 
     ph = elphmod.ph.Model(amass=[M] * 2, at=at, tau=r, atom_order=['C'] * 2,
         divide_mass=divide_mass)
-
     elphmod.ph.q2r(ph, D_full=D)
     ph.standardize(eps=1e-10)
 
@@ -170,7 +168,6 @@ def create(prefix=None, rydberg=False, divide_mass=True):
     elph.standardize(eps=1e-10)
 
     elel = elphmod.elel.Model()
-    elel.size = U.shape[-1]
     elphmod.elel.q2r(elel, U * elphmod.misc.Ry, at, r)
 
     if prefix is not None:

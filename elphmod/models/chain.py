@@ -86,13 +86,11 @@ def create(prefix=None, rydberg=False, divide_mass=True):
     g = elphmod.elph.sample(coupling, Q, nk)
 
     el = elphmod.el.Model(rydberg=rydberg)
-    el.size = H.shape[-1]
     elphmod.el.k2r(el, H, at, r, rydberg=True)
     el.standardize(eps=1e-10)
 
     ph = elphmod.ph.Model(amass=[M], at=at, tau=r, atom_order=['X'],
         divide_mass=divide_mass)
-
     elphmod.ph.q2r(ph, D_full=D)
     ph.standardize(eps=1e-10)
 
