@@ -361,6 +361,7 @@ def q2r(elel, W, a, r, fft=True):
         Wigner-Seitz cell is performed.
     """
     nq = W.shape[:-2]
+    elel.size = W.shape[-2]
 
     nq_orig = tuple(nq)
     nq = np.ones(3, dtype=int)
