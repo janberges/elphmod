@@ -347,7 +347,7 @@ def q2r(elel, W, a, r, fft=True):
 
     Parameters
     ----------
-    elel : object
+    elel : :class:`elphmod.elel.Model`
         Localized model for electron-electron interaction.
     W : ndarray
         Density-density interaction matrices on complete uniform q-point mesh.

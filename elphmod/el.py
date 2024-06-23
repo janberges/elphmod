@@ -765,7 +765,7 @@ def k2r(el, H, a, r, fft=True, rydberg=False):
 
     Parameters
     ----------
-    el : object
+    el : :class:`Model`
         Tight-binding model.
     H : ndarray
         Hamiltonian matrices on complete uniform k-point mesh.

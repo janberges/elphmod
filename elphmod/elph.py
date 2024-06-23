@@ -25,9 +25,9 @@ class Model:
         File with electron-phonon coupling in localized bases from EPW.
     wigner : str
         File with definition of Wigner-Seitz supercells from modified EPW.
-    el : object
+    el : :class:`elphmod.el.Model`
         Tight-binding model for the electrons.
-    ph : object
+    ph : :class:`elphmod.ph.Model`
         Mass-spring model for the phonons.
     Rk, Rg : ndarray
         Lattice vectors of Wigner-Seitz supercells if `wigner` is omitted.
@@ -47,8 +47,10 @@ class Model:
 
     Attributes
     ----------
-    el, ph : object
-        Tight-binding and mass-spring models.
+    el : :class:`elphmod.el.Model`
+        Tight-binding model for the electrons.
+    ph : :class:`elphmod.ph.Model`
+        Mass-spring model for the phonons.
     Rk, Rg : ndarray
         Lattice vectors :math:`\vec R', \vec R` of Wigner-Seitz supercells.
     dk, dg : ndarray
@@ -1015,7 +1017,7 @@ def q2r(elph, nq, nk, g, r=None, divide_mass=True, shared_memory=False):
 
     Parameters
     ----------
-    elph : object
+    elph : :class:`Model`
         Localized model for electron-phonon coupling.
     nq, nk : tuple of int
         Number of q and k points along axes, i.e., shapes of uniform meshes.

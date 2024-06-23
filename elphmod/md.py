@@ -24,7 +24,7 @@ class Driver:
 
     Parameters
     ----------
-    elph : object
+    elph : :class:`elphmod.elph.Model`
         Localized model for electron-phonon coupling. Initialize ``el`` with
         ``rydberg=True`` and ``ph`` and ``elph`` with ``divide_mass=False`` and
         map everthing to the appropriate supercell before (``elph.supercell``).

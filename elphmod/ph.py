@@ -1636,7 +1636,7 @@ def sum_rule_correction(ph, asr=True, rsr=True, eps=1e-15, report=True):
 
     Parameters
     ----------
-    ph : object
+    ph : :class:`Model`
         Mass-spring model for the phonons.
     asr : bool
         Enforce acoustic sum rule?
@@ -1817,7 +1817,7 @@ def q2r(ph, D_irr=None, q_irr=None, nq=None, D_full=None, angle=60,
 
     Parameters
     ----------
-    ph : object
+    ph : :class:`Model`
         Mass-spring model.
     D_irr : list of square arrays
         Dynamical matrices for all irreducible q points.
