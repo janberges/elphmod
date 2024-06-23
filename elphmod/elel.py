@@ -47,7 +47,7 @@ class Model:
     Attributes
     ----------
     R : ndarray
-        Lattice vectors :attr:`\vec R` of Wigner-Seitz supercell.
+        Lattice vectors :math:`\vec R` of Wigner-Seitz supercell.
     data : ndarray
         Corresponding density-density interaction in orbital basis.
     size : int
