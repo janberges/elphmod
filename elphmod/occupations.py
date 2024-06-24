@@ -334,8 +334,7 @@ def smearing(smearing='gaussian', **ignore):
     if name in {'heaviside'}:
         return heaviside
 
-def find_Fermi_level(n, e, kT=0.025, f=fermi_dirac, mu=None, tol=1e-5,
-        eps=1e-10):
+def find_Fermi_level(n, e, kT=0.025, f='fd', mu=None, tol=1e-5, eps=1e-10):
     """Determine chemical potential via fixed-point iteration.
 
     See Eqs. 4.21 and 4.22 of https://janberges.de/theses/Master_Jan_Berges.pdf.
@@ -363,6 +362,8 @@ def find_Fermi_level(n, e, kT=0.025, f=fermi_dirac, mu=None, tol=1e-5,
     float
         Chemical potential.
     """
+    f = smearing(f)
+
     # map number of electrons to whole system and spinless electrons:
 
     scale = 0.5 * e.size / e.shape[-1]
@@ -391,7 +392,7 @@ def find_Fermi_level(n, e, kT=0.025, f=fermi_dirac, mu=None, tol=1e-5,
 
         mu = (n - e.size * f0 + (e * w).sum()) / w.sum()
 
-def find_Fermi_level_simple(n, e, kT=0.025, f=fermi_dirac, mu=None, tol=1e-5,
+def find_Fermi_level_simple(n, e, kT=0.025, f='fd', mu=None, tol=1e-5,
         damp=1e-2):
     """Determine chemical potential via simple fixed-point iteration.
 
@@ -419,6 +420,8 @@ def find_Fermi_level_simple(n, e, kT=0.025, f=fermi_dirac, mu=None, tol=1e-5,
     float
         Chemical potential.
     """
+    f = smearing(f)
+
     # map number of electrons to whole system and spinless electrons:
 
     scale = 0.5 * e.size / e.shape[-1]

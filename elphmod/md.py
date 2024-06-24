@@ -97,7 +97,7 @@ class Driver:
         self.elph = copy.copy(elph)
 
         self.kT = kT
-        self.f = f
+        self.f = elphmod.occupations.smearing(f)
 
         self.n = n
         self.mu = None
