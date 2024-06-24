@@ -64,5 +64,44 @@ class TestPhonon(unittest.TestCase):
 
                 self.assertTrue(np.allclose(ph.data, ph2.data))
 
+    def test_supercell_phrenorm(self, nq=2, nk=2, N=2,
+            kT=0.01, f=elphmod.occupations.fermi_dirac):
+        """Verify that phonon renormalization and supercell mapping commute."""
+
+        el, ph, elph, elel = elphmod.models.graphene.create(rydberg=True)
+        mu = elphmod.models.graphene.t
+
+        data = []
+
+        for step in range(2):
+            q = elphmod.bravais.mesh(nq, nq, flat=True)
+
+            e, U = elphmod.dispersion.dispersion_full_nosym(elph.el.H, nk,
+                vectors=True)
+            e -= mu
+            D = elphmod.dispersion.sample(elph.ph.D, q)
+            g = elph.sample(q, U=U)
+
+            D += elphmod.diagrams.phonon_self_energy(q, e, g=g,
+                kT=kT, occupations=f)
+
+            D[0] += elphmod.diagrams.phonon_self_energy_fermi_shift(e, g[0],
+                kT=kT, occupations=f)
+
+            phrenorm = copy.copy(elph.ph)
+            elphmod.ph.q2r(phrenorm, D_full=D, nq=(nq, nq))
+
+            if not step:
+                phrenorm = phrenorm.supercell(N, N)
+
+                elph = elph.supercell(N, N)
+
+                nq //= N
+                nk //= N
+
+            data.append(phrenorm.data)
+
+        self.assertTrue(np.allclose(data[0], data[1]))
+
 if __name__ == '__main__':
     unittest.main()

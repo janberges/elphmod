@@ -38,7 +38,6 @@ Also make sure to install the Python requirements before:
 * `supercell_elel.py` - supercell mapping and unfolding for el.-el. interaction
 * `supercell_elph.py` - supercell mapping and unfolding for el.-ph. interaction
 * `supercell_ph.py` - supercell mapping and unfolding for phonons
-* `supercell_phrenorm.py` - commutation of renormalization and supercell mapping
 * `susceptibility.py` - bare electronic susceptibility with hybridization
 * `tetrahedron.py` - some computer algebra behind tetrahedron method
 
