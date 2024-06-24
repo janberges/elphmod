@@ -2644,7 +2644,7 @@ def cartesian_to_crystal(R_CARTESIAN, a1, a2, a3):
     return R_CRYSTAL
 
 def mesh(*n, flat=False):
-    """Generate uniform mesh.
+    r"""Generate uniform mesh.
 
     Parameters
     ----------
