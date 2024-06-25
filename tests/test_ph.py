@@ -99,6 +99,8 @@ class TestPhonon(unittest.TestCase):
                 nq //= N
                 nk //= N
 
+            phrenorm.standardize()
+
             data.append(phrenorm.data)
 
         self.assertTrue(np.allclose(data[0], data[1]))
