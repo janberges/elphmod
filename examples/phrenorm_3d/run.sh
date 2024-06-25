@@ -19,15 +19,20 @@ mpirun pw.x -nk $nk < scf.in | tee scf.out
 mpirun pw.x -nk $nk < nscf.in | tee nscf.out
 mpirun projwfc.x -nk $nk < projwfc.in | tee projwfc.out
 
+mpirun pw.x -nk $nk < scf.in | tee scf.out
+
 for method in dfpt cdfpt
 do
-    mpirun pw.x -nk $nk < scf.in | tee scf.out
     mpirun ph.x -nk $nk < $method.in | tee $method.out
-
     mpirun q2r.x < q2r-$method.in | tee q2r-$method.out
-    fildyn=$method.dyn dvscf_dir=$method.save ph2epw
 
-    mpirun pw.x -nk $nk < nscf.in | tee nscf.out
+    fildyn=$method.dyn dvscf_dir=$method.save ph2epw
+done
+
+mpirun pw.x -nk $nk < nscf.in | tee nscf.out
+
+for method in dfpt cdfpt
+do
     mpirun -n $nk epw.x -nk $nk < epw-$method.in | tee epw-$method.out
 
     mv work/polonium.epmatwp $method.epmatwp
