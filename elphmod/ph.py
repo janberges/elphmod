@@ -174,12 +174,10 @@ class Model:
     def D_lr(self, q1=0, q2=0, q3=0):
         """Calculate long-range part of dynamical matrix."""
 
-        Dq = self.D0_lr.copy()
+        factor, vector = self.generate_long_range(q1, q2, q3)
 
-        for val, vec in self.generate_long_range(q1, q2, q3):
-            Dq += val * np.outer(vec.conj(), vec)
-
-        return Dq
+        return self.D0_lr + np.einsum('g,gi,gj->ij',
+            factor, vector.conj(), vector)
 
     def C(self, R1=0, R2=0, R3=0):
         """Get interatomic force constants for arbitrary lattice vector.
@@ -393,6 +391,8 @@ class Model:
                     if GeG < self.scale * G_max:
                         self.G.append(G)
 
+        self.G = np.array(self.G)
+
         self.z = np.copy(self.Z)
         self.q = np.copy(self.Q)
 
@@ -425,68 +425,79 @@ class Model:
         eps : float
             Tolerance for vanishing lattice vectors.
 
-        Yields
-        ------
-        float
-            Scalar prefactor.
+        Returns
+        -------
         ndarray
-            Direction-dependent term.
+            Scalar prefactor for relevant reciprocal lattice vectors.
+        ndarray
+            Direction-dependent term for relevant reciprocal lattice vectors.
         """
         if perp is None:
             perp = self.perp
 
-        for G in self.G:
-            K = G + q1 * self.b[0] + q2 * self.b[1] + q3 * self.b[2]
+        K = self.G + q1 * self.b[0] + q2 * self.b[1] + q3 * self.b[2]
+
+        if self.lr2d:
+            KeK = (K ** 2).sum(axis=1)
+        else:
+            KeK = np.einsum('gx,xy,gy->g', K, self.eps, K)
+
+        use = KeK > eps
+
+        KeK = KeK[use]
+        K = K[use]
+
+        if self.lr2d:
+            KrK = np.einsum('gx,xy,gy->g',
+                K[:, :2], self.r_eff[:2, :2], K[:, :2])
+
+        if self.lr2d and self.L is not None:
+            K_norm = np.sqrt(KeK)
+            f = 1 - np.tanh(K_norm * self.L / 2)
+
+            factor = self.prefactor * f / K_norm
+            factor /= 1 + f / K_norm * KrK
+
+            if perp:
+                KrK_perp = self.r_eff[2, 2]
+
+                factor_perp = -self.prefactor * f / K_norm
+                factor_perp /= 1 - f * K_norm * KrK_perp
+        else:
+            factor = self.prefactor * np.exp(-KeK / self.scale)
 
             if self.lr2d:
-                KeK = (K ** 2).sum()
+                factor /= np.sqrt(KeK) + KrK
             else:
-                KeK = np.einsum('i,ij,j', K, self.eps, K)
+                factor /= KeK
 
-            if KeK > eps:
-                if self.lr2d:
-                    KrK = np.einsum('i,ij,j', K[:2], self.r_eff[:2, :2], K[:2])
+        exp = np.exp(-1j * np.einsum('gx,nx->gn', K, self.r))
+        exp = exp[:, :, np.newaxis]
 
-                if self.lr2d and self.L is not None:
-                    K_norm = np.sqrt(KeK)
-                    f = 1 - np.tanh(K_norm * self.L / 2)
+        dot = 1j * np.einsum('gx,nxz->gnz', K, self.z)
 
-                    factor = self.prefactor * f / K_norm
-                    factor /= 1 + f / K_norm * KrK
+        if self.Q is not None:
+            dot += 0.5 * np.einsum('gx,nzxy,gy->gnz', K, self.q, K)
 
-                    if perp:
-                        KrK_perp = self.r_eff[2, 2]
+            if self.lr2d and self.L is not None:
+                dot -= 0.5 * np.einsum('g,nz->gnz',
+                    K_norm ** 2, self.q[:, :, 2, 2])
 
-                        factor_perp = -self.prefactor * f / K_norm
-                        factor_perp /= 1 - f * K_norm * KrK_perp
-                else:
-                    factor = self.prefactor * np.exp(-KeK / self.scale)
+        vector = np.reshape(dot * exp, (len(K), self.size))
 
-                    if self.lr2d:
-                        factor /= np.sqrt(KeK) + KrK
-                    else:
-                        factor /= KeK
+        if self.lr2d and self.L is not None and perp:
+            dot_perp = 1j * np.einsum('g,nz->gnz', K_norm, self.z[:, 2, :])
 
-                exp = np.exp(-1j * np.dot(self.r, K))
-                exp = exp[:, np.newaxis]
+            if self.Q is not None:
+                dot_perp += np.einsum('g,nzy,gy->gnz',
+                    K_norm, self.q[:, :, 2, :2], K[:, :2])
 
-                dot = 1j * np.dot(K, self.z)
+            vector_perp = np.reshape(dot_perp * exp, (len(K), self.size))
 
-                if self.Q is not None:
-                    dot += 0.5 * K.dot(self.q).dot(K)
+            factor = np.concatenate((factor, factor_perp))
+            vector = np.concatenate((vector, vector_perp))
 
-                    if self.lr2d and self.L is not None:
-                        dot -= 0.5 * K_norm * self.q[..., 2, 2] * K_norm
-
-                yield factor, (dot * exp).ravel()
-
-                if self.lr2d and self.L is not None and perp:
-                    dot_perp = 1j * K_norm * self.z[:, 2, :]
-
-                    if self.Q is not None:
-                        dot_perp += K_norm * self.q[..., 2, :2].dot(K[:2])
-
-                    yield factor_perp, (dot_perp * exp).ravel()
+        return factor, vector
 
     def sample_orig(self):
         """Sample dynamical matrix on original q-point mesh."""

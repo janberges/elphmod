@@ -198,12 +198,9 @@ class Model:
     def g_lr(self, q1=0, q2=0, q3=0):
         """Calculate long-range part of electron-phonon coupling."""
 
-        gq = np.zeros(self.ph.size, dtype=complex)
+        factor, vector = self.ph.generate_long_range(q1, q2, q3, perp=False)
 
-        for val, vec in self.ph.generate_long_range(q1, q2, q3, perp=False):
-            gq += val * vec
-
-        return gq
+        return np.einsum('g,gi->i', factor, vector)
 
     def gR(self, Rq1=0, Rq2=0, Rq3=0, Rk1=0, Rk2=0, Rk3=0):
         """Get electron-phonon matrix elements for arbitrary lattice vectors.
