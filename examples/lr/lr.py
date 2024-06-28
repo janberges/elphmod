@@ -31,8 +31,6 @@ el = elphmod.el.Model('TaS2')
 ph = elphmod.ph.Model('dyn', apply_asr_simple=True, apply_zasr=True)
 elph = elphmod.elph.Model('work/TaS2.epmatwp', 'wigner.fmt', el, ph)
 
-w = elphmod.ph.sgnsqrt(elphmod.dispersion.dispersion(ph.D, q, order=True))
-
 g = np.absolute([elph.g(q1, q2, q3, elbnd=True, phbnd=True)
     for q1, q2, q3 in q])
 

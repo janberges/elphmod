@@ -2,8 +2,6 @@
     prefix = 'TaS2'
     outdir = 'work'
     pseudo_dir = '.'
-
-    calculation = 'scf'
 /
 &SYSTEM
     ibrav = 4
