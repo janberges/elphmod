@@ -474,22 +474,22 @@ class Model:
         exp = np.exp(-1j * np.einsum('gx,nx->gn', K, self.r))
         exp = exp[:, :, np.newaxis]
 
-        dot = 1j * np.einsum('gx,nxz->gnz', K, self.z)
+        dot = 1j * np.einsum('ge,neu->gnu', K, self.z) # we use zeu, not zue
 
         if self.Q is not None:
-            dot += 0.5 * np.einsum('gx,nzxy,gy->gnz', K, self.q, K)
+            dot += 0.5 * np.einsum('gx,nuxy,gy->gnu', K, self.q, K)
 
             if self.lr2d and self.L is not None:
-                dot -= 0.5 * np.einsum('g,nz->gnz',
+                dot -= 0.5 * np.einsum('g,nu->gnu',
                     K_norm ** 2, self.q[:, :, 2, 2])
 
         vector = np.reshape(dot * exp, (len(K), self.size))
 
         if self.lr2d and self.L is not None and perp:
-            dot_perp = 1j * np.einsum('g,nz->gnz', K_norm, self.z[:, 2, :])
+            dot_perp = 1j * np.einsum('g,nu->gnu', K_norm, self.z[:, 2, :])
 
             if self.Q is not None:
-                dot_perp += np.einsum('g,nzy,gy->gnz',
+                dot_perp += np.einsum('g,nuy,gy->gnu',
                     K_norm, self.q[:, :, 2, :2], K[:, :2])
 
             vector_perp = np.reshape(dot_perp * exp, (len(K), self.size))
