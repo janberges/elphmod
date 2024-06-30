@@ -11,7 +11,7 @@ import sys
 comm = elphmod.MPI.comm
 
 path = 'KGM'
-q, x, corners = elphmod.bravais.path(path, ibrav=4, N=100, moveG=0.1)
+q, x, corners = elphmod.bravais.path(path, ibrav=4, N=50, moveG=0.1)
 
 if len(sys.argv) > 1 and sys.argv[1] == '--prepare-q':
     if comm.rank == 0:
@@ -27,9 +27,9 @@ if len(sys.argv) > 1 and sys.argv[1] == '--prepare-q':
 
     raise SystemExit
 
-el = elphmod.el.Model('TaS2')
+el = elphmod.el.Model('MoS2')
 ph = elphmod.ph.Model('dyn', apply_asr_simple=True, apply_zasr=True)
-elph = elphmod.elph.Model('work/TaS2.epmatwp', 'wigner.fmt', el, ph)
+elph = elphmod.elph.Model('work/MoS2.epmatwp', 'wigner.fmt', el, ph)
 
 g = np.absolute([elph.g(q1, q2, q3, elbnd=True, phbnd=True)
     for q1, q2, q3 in q])

@@ -1,4 +1,3 @@
-*.UPF
 *.bib
 *.bvec
 *.chk
@@ -10,6 +9,7 @@
 *.nnkp
 *.out
 *.ukk
+*.upf
 *.win
 *.wout
 decay.*

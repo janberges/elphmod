@@ -1,5 +1,5 @@
 &CONTROL
-    prefix = 'TaS2'
+    prefix = 'MoS2'
     outdir = 'work'
     pseudo_dir = '.'
 /
@@ -8,26 +8,25 @@
     ntyp = 2
     nat = 3
 
-    a = 3.37
-    c = 10.0
+    a = 3.19
+    c = 11.0
 
-    ecutwfc = 10.0
+    ecutwfc = 15.0
 
-    occupations = 'smearing'
-    degauss = 0.02
+    assume_isolated = '2D'
 /
 &ELECTRONS
     conv_thr = 1e-12
 /
 
 ATOMIC_SPECIES
-Ta 180.95 Ta.pbe-hgh.UPF
-S   32.06  S.pbe-hgh.UPF
+Mo 95.95 Mo.upf
+S  32.06  S.upf
 
 ATOMIC_POSITIONS crystal
-S   0.333333333  0.666666667  0.160998168
-Ta  0.000000000  0.000000000  0.000000000
-S   0.333333333  0.666666667 -0.160998168
+Mo  0.3333333333  0.6666666667  0.0000000000
+S   0.6666666667  0.3333333333 -0.1370722907
+S   0.6666666667  0.3333333333  0.1370722907
 
 K_POINTS automatic
-4 4 1 0 0 0
+3 3 1 0 0 0

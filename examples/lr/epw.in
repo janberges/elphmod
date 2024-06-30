@@ -1,6 +1,6 @@
-TaS2
+MoS2
 &INPUTEPW
-    prefix = 'TaS2'
+    prefix = 'MoS2'
     outdir = 'work'
     dvscf_dir = 'save'
 
@@ -13,18 +13,17 @@ TaS2
     prtgkk = .true.
 
     nbndsub = 3
-    bands_skipped = 'exclude_bands = 1:8'
+    bands_skipped = 'exclude_bands = 1:12'
 
-    proj(1) = 'Ta: dz2; dx2-y2; dxy'
+    proj(1) = 'Mo: dz2; dx2-y2; dxy'
 
-    dis_win_min = 1.0
-    dis_froz_max = 5.0
+    dis_froz_max = -4.0
 
     num_iter = 0
     wdata(1) = 'dis_num_iter 10000'
 
-    nk1 = 4, nk2 = 4, nk3 = 1
-    nq1 = 2, nq2 = 2, nq3 = 1
+    nk1 = 3, nk2 = 3, nk3 = 1
+    nq1 = 3, nq2 = 3, nq3 = 1
 
     nkf1 = 1, nkf2 = 1, nkf3 = 1
     filqf = 'q.dat'

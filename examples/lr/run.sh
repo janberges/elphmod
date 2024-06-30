@@ -5,15 +5,15 @@
 
 eval `elphmodenv`
 
-echo 'Using Hartwigsen-Goedecker-Hutter pseudopotentials'
-echo '[1] Hartwigsen et al., Phys. Rev. B 58, 3641 (1998)'
-echo '[2] Goedecker et al., Phys. Rev. B 54, 1703 (1996)'
+echo 'Using normconserving pseudopotentials from PseudoDojo'
+echo '[1] van Setten et al., Comput. Phys. Commun. 226, 39 (2018)'
+echo '[2] Hamann, Phys. Rev. B 88, 085117 (2013)'
 
-url=https://pseudopotentials.quantum-espresso.org/upf_files
+url=http://www.pseudo-dojo.org/pseudos/nc-sr-04_pbe_standard
 
-for pp in S.pbe-hgh.UPF Ta.pbe-hgh.UPF
+for pp in Mo.upf S.upf
 do
-    test -e $pp || wget $url/$pp
+    test -e $pp || (wget $url/$pp.gz && gunzip $pp)
 done
 
 nk=2

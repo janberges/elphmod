@@ -1,17 +1,15 @@
-TaS2
+MoS2
 &INPUTPH
-    prefix = 'TaS2'
+    prefix = 'MoS2'
     outdir = 'work'
 
     fildyn = 'dyn'
     fildvscf = 'dvscf'
 
     ldisp = .true.
-    nq1 = 2
-    nq2 = 2
+    nq1 = 3
+    nq2 = 3
     nq3 = 1
 
     tr2_ph = 1e-12
-
-    cdfpt_bnd = 9
 /
