@@ -1363,6 +1363,31 @@ def read_prtgkk(epw_out, nq, nmodes, nk, nbnd):
 
     return w, g
 
+def read_L(epw_out):
+    """Read range-separation parameter from EPW output
+
+    Parameters
+    ----------
+    epw_out : str
+        Name of EPW output file.
+
+    Returns
+    -------
+    float
+        Range-separation parameter if found, ``None`` otherwise.
+    """
+    L = None
+
+    if comm.rank == 0:
+        with open(epw_out) as lines:
+            for line in lines:
+                columns = line.split()
+
+                if columns and columns[0] == 'L':
+                    L = float(columns[1])
+
+    return comm.bcast(L)
+
 def read_patterns(filename, q, nrep, status=True):
     """Read XML files with displacement patterns from QE."""
 
