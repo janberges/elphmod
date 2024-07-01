@@ -1283,7 +1283,19 @@ def proj_sum(proj, orbitals, *groups, **kwargs):
     return summed
 
 def read_Fermi_level(pw_scf_out):
-    """Read Fermi level from output of self-consistent PW run."""
+    """Read Fermi level from output of self-consistent PW run.
+
+    Parameters
+    ----------
+    pw_scf_out : str
+        PWscf output file.
+
+    Returns
+    -------
+    float
+        Fermi level if found, ``None`` otherwise.
+    """
+    eF = None
 
     if comm.rank == 0:
         with open(pw_scf_out) as data:
@@ -1292,12 +1304,8 @@ def read_Fermi_level(pw_scf_out):
                     eF = float(line.split()[-2])
                 elif 'highest occupied level' in line:
                     eF = float(line.split()[-1])
-    else:
-        eF = None
 
-    eF = comm.bcast(eF)
-
-    return eF
+    return comm.bcast(eF)
 
 def read_pwo(pw_scf_out):
     """Read energies from PW output file."""
