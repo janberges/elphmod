@@ -4,12 +4,13 @@ MoS2
     outdir = 'work'
     dvscf_dir = 'save'
 
-    wannierize = .true.
+    wannierize = .false.
     elph = .true.
     use_ws = .true.
+    epbread = .true.
     epwwrite = .true.
     lpolar = .true.
-    system_2d = 'gaussian'
+    system_2d = 'quadrupole'
     prtgkk = .true.
 
     nbndsub = 3

@@ -2,6 +2,7 @@
 *.bvec
 *.chk
 *.dat
+*.epmatwp
 *.fmt
 *.kgmap
 *.kmap
@@ -17,3 +18,4 @@ dyn*
 input_tmp.in
 save
 work
+!_quadrupole.fmt

@@ -26,6 +26,16 @@ mpirun ph.x -nk $nk < ph.in | tee ph.out
 ph2epw
 
 mpirun pw.x -nk $nk < nscf.in | tee nscf.out
-mpirun -n $nk epw.x -nk $nk < epw.in | tee epw.out
+
+for lr in 'no_lr' '3d' 'gaussian' 'dipole_sp' 'quadrupole'
+do
+    test $lr = 'quadrupole' && mv _quadrupole.fmt quadrupole.fmt
+
+    mpirun -n $nk epw.x -nk $nk < epw_$lr.in | tee epw_$lr.out
+
+    test $lr = 'quadrupole' && mv quadrupole.fmt _quadrupole.fmt
+
+    mv work/MoS2.epmatwp $lr.epmatwp
+done
 
 mpirun python3 lr.py
