@@ -1602,7 +1602,7 @@ def write_data(filename, data):
             text.write('\n')
 
 def read_data(filename):
-    """Read array to ASCII file."""
+    """Read array from ASCII file."""
 
     with open(filename) as text:
         columns = text.next().split()
