@@ -327,7 +327,7 @@ class Model:
         if apply_asr or apply_rsr:
             sum_rule_correction(self, asr=apply_asr, rsr=apply_rsr)
 
-    def prepare_long_range(self, G_max=28.0):
+    def prepare_long_range(self, G_max=28.0, G_2d=False):
         """Prepare calculation of long-range terms for polar materials.
 
         The following two routines are based on ``rgd_blk`` and ``rgd_blk_epw``
@@ -349,6 +349,9 @@ class Model:
         ----------
         G_max : float
             Cutoff for reciprocal lattice vectors.
+        G_2d : bool, default False
+            Do not sample out-of-plane reciprocal lattice vectors regardless of
+            :attr:`lr2d`?
         """
         self.b = np.array(elphmod.bravais.reciprocals(*self.a))
 
@@ -372,7 +375,7 @@ class Model:
         nr = 1 + (np.sqrt(self.scale * G_max)
             / np.linalg.norm(2 * np.pi * self.b, axis=1)).astype(int)
 
-        if self.lr2d:
+        if self.lr2d or G_2d:
             nr[2] = 0
 
         self.G = []
