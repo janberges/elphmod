@@ -48,14 +48,15 @@ More sophisticated examples have their own subdirectory. Most of them require a
 * `fluctuations` - fluctuation diagnostics of phonon anomalies in 1H-TaS2
 * `goldstone` - Goldstone modes of nitrogen molecule
 * `lambda` - electron-phonon coupling for superconductivity
+* `lr` - long-range terms in PHonon, EPW, and elphmod
 * `md` - interface with i-PI code for molecular-dynamics simulations
 * `modes` - decomposition of CDW modes into harmonic eigenmodes from DFPT
 * `phrenorm` - phonon renormalization in 1H-TaS2
 * `phrenorm_3d` - phonon renormalization in polonium
 * `phrenorm_graphene` - phonon renormalization in graphene
 * `ph_vs_epw` - comparison of couplings from PHonon and EPW
-* `projwfc_1d` - projected band structure of carbon chain
 * `projwfc` - projected band structure of graphene
+* `projwfc_1d` - projected band structure of carbon chain
 * `projwfc_3d` - projected band structure of polonium
 * `quadrupole` - optimization of quadrupole tensor for bare phonons of 1H-TaS2
 * `simstm` - simulated STM image of 1H-TaS2
