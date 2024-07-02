@@ -25,7 +25,42 @@ if len(sys.argv) > 1 and sys.argv[1] == '--prepare-q':
                 filqf.write('%12.10f %12.10f %12.10f %12.10f\n'
                     % (q1, q2, q3, weight))
 
+        for lr in '3d', 'gaussian':
+            elphmod.bravais.write_matdyn('matdyn_%s.in' % lr, dict(
+                flfrc='%s.ifc' % lr,
+                flfrq='%s.freq' % lr,
+                nq=len(q),
+                q=q,
+                q_in_cryst_coord=True,
+                asr='simple',
+                loto_2d=lr != '3d',
+                fldos=' ',
+                fleig=' ',
+                flvec=' ',
+                ))
+
     raise SystemExit
+
+for lr in '3d', 'gaussian':
+    ph = elphmod.ph.Model('%s.ifc' % lr, apply_asr_simple=True, apply_zasr=True,
+        lr2d=lr != '3d', lr=True)
+
+    if '3d' in lr:
+        ph.prepare_long_range(G_2d=True)
+
+    w = elphmod.ph.sgnsqrt(elphmod.dispersion.dispersion(ph.D, q))
+
+    q0, x0, w0 = elphmod.el.read_bands('%s.freq' % lr)
+
+    if comm.rank == 0:
+        plt.plot(x, w0.T * 1e3 * elphmod.misc.cmm1, 'ok')
+        plt.plot(x, w * 1e3 * elphmod.misc.Ry, '-k')
+
+        plt.title(lr)
+        plt.ylabel('Phonon energy (meV)')
+        plt.xlabel('Wave vector')
+        plt.xticks(x[corners], path)
+        plt.show()
 
 el = elphmod.el.Model('MoS2')
 

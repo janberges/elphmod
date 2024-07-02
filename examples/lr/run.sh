@@ -23,6 +23,12 @@ python3 lr.py --prepare-q
 mpirun pw.x -nk $nk < pw.in | tee pw.out
 mpirun ph.x -nk $nk < ph.in | tee ph.out
 
+for lr in '3d' 'gaussian'
+do
+    mpirun q2r.x < q2r_$lr.in | tee q2r_$lr.out
+    mpirun matdyn.x < matdyn_$lr.in | tee matdyn_$lr.out
+done
+
 ph2epw
 
 mpirun pw.x -nk $nk < nscf.in | tee nscf.out

@@ -1,0 +1,8 @@
+&INPUT
+    fildyn = 'dyn'
+    flfrc = 'gaussian.ifc'
+
+    zasr = 'simple'
+
+    loto_2d = .true.
+/

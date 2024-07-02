@@ -1,0 +1,8 @@
+&INPUT
+    fildyn = 'dyn'
+    flfrc = '3d.ifc'
+
+    zasr = 'simple'
+
+    loto_2d = .false.
+/

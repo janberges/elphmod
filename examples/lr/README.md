@@ -1,6 +1,7 @@
-# Long-range terms in EPW and elphmod
+# Long-range terms in PHonon, EPW, and elphmod
 
-This example verifies that EPW and elphmod yield identical long-range terms.
+This example verifies that PHonon, EPW, and elphmod yield identical long-range
+terms for phonons and coupling.
 
 The values of the quadrupole tensors originate from Poncé, Royo, Gibertini,
 Marzari, and Stengel, *Accurate prediction of Hall mobilities in two-dimensional

@@ -4,6 +4,9 @@
 *.dat
 *.epmatwp
 *.fmt
+*.freq
+*.gp
+*.ifc
 *.kgmap
 *.kmap
 *.mmn
@@ -16,6 +19,7 @@
 decay.*
 dyn*
 input_tmp.in
+matdyn*.in
 save
 work
 !_quadrupole.fmt
