@@ -2367,15 +2367,15 @@ def write_matdyn(matdyn, struct):
     with open(matdyn, 'w') as data:
         data.write('&INPUT\n')
 
-        for key in ['flfrc', 'flfrq', 'asr', 'q_in_band_form',
-                'q_in_cryst_coord']:
+        for key in ['flfrc', 'flfrq', 'fldos', 'fleig', 'flvec', 'asr',
+                'loto_2d', 'q_in_band_form', 'q_in_cryst_coord']:
             if key in struct:
                 data.write('%s = %r\n' % (key, struct[key]))
 
         data.write('/\n')
         data.write('%d\n' % struct['nq'])
-        for (kx, ky, kz, wk) in struct['q']:
-            data.write('%12.9f %12.9f %12.9f %.12g\n' % (kx, ky, kz, wk))
+        for point in struct['q']:
+            data.write(' '.join('%12.9f' % q for q in point) + '\n')
 
 def read_epw(filename):
     """Read input parameters from Quantum ESPRESSO's ``epw.x`` input file.
