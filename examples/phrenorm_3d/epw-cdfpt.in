@@ -8,7 +8,7 @@ polonium
     elph = .true.
     use_ws = .true.
     epwwrite = .true.
-    lpolar = .true.
+    lpolar = .false.
 
     nbndsub = 3
     bands_skipped = 'exclude_bands = 1:6'

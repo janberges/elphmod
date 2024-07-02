@@ -43,7 +43,7 @@ info('Prepare phonons')
 ph = dict()
 
 for method in 'cdfpt', 'dfpt':
-    ph[method] = elphmod.ph.Model('%s.dyn' % method)
+    ph[method] = elphmod.ph.Model('%s.dyn' % method, lr=False)
 
 info('Prepare electron-phonon coupling')
 
