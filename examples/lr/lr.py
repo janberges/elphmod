@@ -90,7 +90,7 @@ for lr in 'no_lr', '3d', 'gaussian', 'dipole_sp', 'quadrupole':
         plt.plot(x, g[:, :, 0, 0] * (1e3 * elphmod.misc.Ry) ** 1.5, '-k')
 
         plt.title(lr)
-        plt.ylabel('Electron-phonon coupling (meV)')
+        plt.ylabel('Electron-phonon coupling (meV$^{3 / 2}$)')
         plt.xlabel('Wave vector')
         plt.xticks(x[corners], path)
         plt.show()
