@@ -24,7 +24,6 @@ mpirun pw.x -nk $nk < scf.in | tee scf.out
 for method in dfpt cdfpt
 do
     mpirun ph.x -nk $nk < $method.in | tee $method.out
-    mpirun q2r.x < q2r-$method.in | tee q2r-$method.out
 
     fildyn=$method.dyn dvscf_dir=$method.save ph2epw
 done

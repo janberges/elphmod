@@ -1,6 +1,0 @@
-&INPUT
-    fildyn = 'cdfpt.dyn'
-    flfrc = 'cdfpt.ifc'
-
-    loto_2d = .true.
-/

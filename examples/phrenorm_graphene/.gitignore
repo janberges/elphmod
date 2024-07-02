@@ -4,7 +4,6 @@
 *.dyn*
 *.epmatwp
 *.fmt
-*.ifc
 *.kgmap
 *.kmap
 *.mmn
@@ -20,7 +19,6 @@
 *_hr.dat
 *_wsvec.dat
 decay.*
-ifc
 input_tmp.in
 wigner.dat
 work

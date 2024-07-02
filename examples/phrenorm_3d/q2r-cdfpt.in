@@ -1,4 +1,0 @@
-&INPUT
-    fildyn = 'cdfpt.dyn'
-    flfrc = 'cdfpt.ifc'
-/
