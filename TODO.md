@@ -8,7 +8,6 @@ mark are not necessarily a good idea.
 * Set `ph.D0` and `elph.g0` when generating models with `q2r`?
 * Read Wannier-function centres from `_centres.xyz`.
 * Add long-range argument `lr` to electron-phonon class `elph`?
-* Save `_wsvec.dat` together with `_hr.dat` file (important for small meshes).
 * Remember order of atomic species in header of force-constant files.
 * Use generic (argument agnostic) function to write all QE input files.
 * Use `assume_isolated = '2D'` in all examples with 2D systems.
