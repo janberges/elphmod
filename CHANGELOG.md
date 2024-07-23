@@ -3,6 +3,14 @@
 See [Git commits](https://github.com/janberges/elphmod/commits) for more
 detailed list of changes.
 
+## v0.27/2024-07-23
+
+* Faster calculation of long-range terms
+* Syntax upgrade (absolute imports, Python 3)
+* New function to define uniform meshes
+* Fixed methods to shift orbitals and atoms
+* Various new unit tests
+
 ## v0.26/2024-06-17
 
 * Small but relevant bugfix in new EPW interface
