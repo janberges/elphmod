@@ -11,7 +11,7 @@ nu = 8 # ionic displacement
 a = 0 # electronic orbital
 
 el = elphmod.el.Model('TaS2')
-ph = elphmod.ph.Model('dfpt.ifc', apply_asr_simple=True)
+ph = elphmod.ph.Model('dfpt.dyn', apply_asr_simple=True)
 elph = elphmod.elph.Model('dfpt.epmatwp', 'wigner.fmt', el, ph,
     divide_mass=False)
 
