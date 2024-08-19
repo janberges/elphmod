@@ -768,7 +768,7 @@ class Driver:
 
                         pos = np.array(list(map(float, cols[1:4])))
 
-                        self.u[ph.group(na)] = pos - self.elph.ph.r[na]
+                        self.u[elphmod.ph.group(na)] = pos - self.elph.ph.r[na]
 
                     if self.interactive:
                         self.update_plot()
