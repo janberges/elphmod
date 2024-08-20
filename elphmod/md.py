@@ -133,8 +133,9 @@ class Driver:
         if supercell is not None:
             self.elph.ph = copy.copy(self.elph.ph)
 
-            elphmod.ph.q2r(self.elph.ph, nq=self.nq, D_full=self.C0,
-                divide_mass=False)
+            if unscreen:
+                elphmod.ph.q2r(self.elph.ph, nq=self.nq, D_full=self.C0,
+                    divide_mass=False)
 
             self.elph = self.elph.supercell(*supercell, sparse=True)
 
