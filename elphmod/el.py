@@ -375,8 +375,9 @@ class Model:
 
                 status.update()
 
-            el.R = np.array(list(const.keys()), dtype=int)
-            el.data = np.array(list(const.values()))
+            el.R = np.array(list(const.keys()), dtype=int).reshape((-1, 3))
+            el.data = np.array(list(const.values())).reshape((-1,
+                el.size, el.size))
 
             count = len(const)
             const.clear()

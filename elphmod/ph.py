@@ -654,8 +654,9 @@ class Model:
 
                 status.update()
 
-            ph.R = np.array(list(const.keys()), dtype=int)
-            ph.data = np.array(list(const.values()))
+            ph.R = np.array(list(const.keys()), dtype=int).reshape((-1, 3))
+            ph.data = np.array(list(const.values())).reshape((-1,
+                ph.size, ph.size))
 
             count = len(const)
             const.clear()

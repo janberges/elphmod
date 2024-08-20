@@ -508,10 +508,10 @@ class Model:
             return elph
 
         elph.Rg = np.array(sorted(set().union(*comm.allgather([R[:3]
-            for R in const]))))
+            for R in const])))).reshape((-1, 3))
 
         elph.Rk = np.array(sorted(set().union(*comm.allgather([R[3:]
-            for R in const]))))
+            for R in const])))).reshape((-1, 3))
 
         elph.node, elph.images, elph.data = elphmod.MPI.shared_array(
             (len(elph.Rg), elph.ph.size, len(elph.Rk), elph.el.size,
