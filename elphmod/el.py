@@ -581,6 +581,12 @@ class Model:
 
         self.standardize(symmetrize=True)
 
+    def clear(self):
+        """Delete all lattice vectors and associated matrix elements."""
+
+        self.R = np.zeros_like(self.R[:0, :])
+        self.data = np.zeros_like(self.data[:0, :, :])
+
     def to_hrdat(self, seedname):
         """Save tight-binding model to *_hr.dat* file.
 

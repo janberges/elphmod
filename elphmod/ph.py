@@ -922,6 +922,12 @@ class Model:
 
         return l[nonzero], C[nonzero]
 
+    def clear(self):
+        """Delete all lattice vectors and associated matrix elements."""
+
+        self.R = np.zeros_like(self.R[:0, :])
+        self.data = np.zeros_like(self.data[:0, :, :])
+
     def to_pwi(self, pwi, **kwargs):
         """Save atomic positions etc. to PWscf input file.
 

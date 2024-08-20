@@ -751,11 +751,8 @@ class Model:
     def clear(self):
         """Delete all lattice vectors and associated matrix elements."""
 
-        self.el.R = np.zeros_like(self.el.R[:0, :])
-        self.ph.R = np.zeros_like(self.ph.R[:0, :])
-
-        self.el.data = np.zeros_like(self.el.data[:0, :, :])
-        self.ph.data = np.zeros_like(self.ph.data[:0, :, :])
+        self.el.clear()
+        self.ph.clear()
 
         self.Rk = np.zeros_like(self.Rk[:0, :])
         self.Rg = np.zeros_like(self.Rg[:0, :])
