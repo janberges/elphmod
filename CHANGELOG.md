@@ -3,6 +3,11 @@
 See [Git commits](https://github.com/janberges/elphmod/commits) for more
 detailed list of changes.
 
+## v0.28/2024-08-23
+
+* Support for `mpi4py` version 4.0.0
+* Loading of *.xyz* files (needed for i-PI example) was broken in version 0.27
+
 ## v0.27/2024-07-23
 
 * Faster calculation of long-range terms
