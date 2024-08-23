@@ -508,7 +508,7 @@ def map_dispersions(V1, V2):
 
     shape = V1.shape
 
-    points = np.prod(shape[:-2])
+    points = np.prod(shape[:-2], dtype=int)
     bands = shape[-2]
 
     V1 = np.reshape(V1, (points, bands, bands))

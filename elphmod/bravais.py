@@ -996,7 +996,7 @@ def resize(data, shape, angle=60, axes=(0, 1), period=None, polar=False,
         dtype=data.dtype)
 
     comm.Allgatherv(my_new_data,
-        (new_data, sizes * np.prod(data.shape[len(shape):])))
+        (new_data, sizes * np.prod(data.shape[len(shape):], dtype=int)))
 
     # restore original order of axes and return:
 

@@ -223,7 +223,11 @@ def shared_array(shape, dtype=float, shared_memory=True, single_memory=False,
         # 'Shared memory for data structures and mpi4py.MPI.Win.Allocate_shared'
 
         if node.size > 1:
-            size = np.prod(shape) * dtype.itemsize if node.rank == 0 else 0
+            if node.rank == 0:
+                size = np.prod(shape, dtype=int) * dtype.itemsize
+            else:
+                size = 0
+
             window = MPI.Win.Allocate_shared(size, dtype.itemsize, comm=node)
             buffer, itemsize = window.Shared_query(0)
 
