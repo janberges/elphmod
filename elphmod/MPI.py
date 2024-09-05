@@ -371,6 +371,8 @@ def info(message, error=False, comm=comm):
 
         print(message)
 
+        sys.stdout.flush()
+
     if error:
         sys.exit()
 
