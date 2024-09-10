@@ -19,12 +19,15 @@ class TestMD(unittest.TestCase):
         el, ph, elph, elel = elphmod.models.graphene.create(rydberg=True,
             divide_mass=False)
 
-        ElPh = elph.supercell(N, N)
+        elph_dense = elph.supercell(N, N)
 
-        driver_dense = elphmod.md.Driver(ElPh, kT, f, n=ElPh.el.size)
+        driver_dense = elphmod.md.Driver(elph_dense, kT, f,
+            n=elph_dense.el.size)
 
-        driver_sparse = elphmod.md.Driver(elph, kT, f, n=elph.el.size,
-            nk=(N, N), nq=(N, N), supercell=(N, N))
+        elph_sparse = elph.supercell(N, N, sparse=True)
+
+        driver_sparse = elphmod.md.Driver(elph_sparse, kT, f,
+            n=elph_sparse.el.size)
 
         driver_dense.random_displacements()
         driver_sparse.u[:] = driver_dense.u
@@ -42,8 +45,13 @@ class TestMD(unittest.TestCase):
         el, ph, elph = elphmod.models.tas2.create(rydberg=True,
             divide_mass=False)
 
-        driver_dense, driver_sparse = [elphmod.md.Driver(elph, kT, f, n=1.0,
-            nk=(N, N), nq=(N, N), supercell=sc) for sc in [(N, N), None]]
+        driver_dense = elphmod.md.Driver(elph, kT, f, nk=(N, N), nq=(N, N),
+            n=1.0)
+
+        elph_sparse = elph.supercell(N, N, sparse=True)
+
+        driver_sparse = elphmod.md.Driver(elph_sparse, kT, f,
+            n=len(elph_sparse.cells))
 
         driver_dense.diagonalize()
         driver_sparse.diagonalize()
