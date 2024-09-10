@@ -42,7 +42,9 @@ class Driver:
         matrices are used for Hamiltonian, dynamical matrix, and electron-phonon
         coupling to save memory. Note that `elph` should belong to the primitive
         cell in this case, and `nq` and `nk` are only used for the unscreening,
-        which is still done one the primitive cell.
+        which is still done one the primitive cell. To do the unscreening on the
+        supercell (recommended), a sparse supercell model `elph` can be directly
+        provided instead of using this option.
     unscreen : bool, default True
         Unscreen phonons? Otherwise, they are assumed to be unscreened already.
     shared_memory : bool, default True
@@ -112,49 +114,32 @@ class Driver:
         self.k = elphmod.bravais.mesh(*self.nk)
         self.q = elphmod.bravais.mesh(*self.nq, flat=True)
 
-        self.H0 = elphmod.dispersion.sample(self.elph.el.H, self.k)
-
-        self.d0 = self.elph.sample(self.q, self.nk, shared_memory=shared_memory)
-        self.node, self.images, self.d = elphmod.MPI.shared_array(self.d0.shape,
-            dtype=self.d0.dtype, shared_memory=shared_memory)
-
-        self.u = np.zeros(self.elph.ph.size)
-
-        self.sparse = False
-        self.diagonalize()
-
-        self.C0 = np.zeros((len(self.q), self.elph.ph.size, self.elph.ph.size),
-            dtype=complex)
-
-        if unscreen:
-            self.C0 -= self.hessian(gamma_only=False)
-
-        self.C0 += elphmod.dispersion.sample(self.elph.ph.D, self.q)
-
-        if supercell is not None:
-            if unscreen:
-                self.elph.ph = copy.copy(self.elph.ph)
-
-                elphmod.ph.q2r(self.elph.ph, nq=self.nq, D_full=self.C0,
-                    divide_mass=False)
-
-            self.elph = self.elph.supercell(*supercell, sparse=True)
-
+        try:
             self.H0 = self.elph.el.Hs.toarray()
             self.C0 = self.elph.ph.Ds.toarray()[np.newaxis]
             self.d0 = self.elph.gs
 
-            self.n *= len(self.elph.cells)
-            self.u = np.tile(self.u, len(self.elph.cells))
-
-            self.nk = np.ones(3, dtype=int)
-            self.nq = np.ones(3, dtype=int)
-
-            self.k = np.zeros((1, 1, 1, 3))
-            self.q = np.zeros((1, 3))
+            if self.nk.prod() != 1 or self.nq.prod() != 1:
+                info('MD using sparse matrices requires q = k = 0!', error=True)
 
             self.sparse = True
-            self.diagonalize()
+
+        except AttributeError:
+            self.H0 = elphmod.dispersion.sample(self.elph.el.H, self.k)
+            self.C0 = elphmod.dispersion.sample(self.elph.ph.D, self.q)
+
+            self.d0 = self.elph.sample(self.q, self.nk, shared_memory=shared_memory)
+            self.node, self.images, self.d = elphmod.MPI.shared_array(self.d0.shape,
+                dtype=self.d0.dtype, shared_memory=shared_memory)
+
+            self.sparse = False
+
+        self.u = np.zeros(self.elph.ph.size)
+
+        self.diagonalize()
+
+        if unscreen:
+            self.C0 -= self.hessian(gamma_only=False) - self.C0
 
         self.F0 = np.zeros(self.elph.ph.size)
         self.F0 = -self.jacobian(show=False)
@@ -167,6 +152,18 @@ class Driver:
 
         for name, value in kwargs.items():
             setattr(self, name, value)
+
+        if supercell is not None:
+            if unscreen:
+                self.elph.ph = copy.copy(self.elph.ph)
+
+                elphmod.ph.q2r(self.elph.ph, nq=self.nq, D_full=self.C0,
+                    divide_mass=False)
+
+            elph = self.elph.supercell(*supercell, sparse=True)
+
+            self.__init__(elph, self.kT, self.f, self.n * len(elph.cells),
+                unscreen=False, **kwargs)
 
     def random_displacements(self, amplitude=0.01):
         """Displace atoms randomly from unperturbed positions.
