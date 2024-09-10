@@ -128,9 +128,11 @@ class Driver:
             self.H0 = elphmod.dispersion.sample(self.elph.el.H, self.k)
             self.C0 = elphmod.dispersion.sample(self.elph.ph.D, self.q)
 
-            self.d0 = self.elph.sample(self.q, self.nk, shared_memory=shared_memory)
-            self.node, self.images, self.d = elphmod.MPI.shared_array(self.d0.shape,
-                dtype=self.d0.dtype, shared_memory=shared_memory)
+            self.d0 = self.elph.sample(self.q, self.nk,
+                shared_memory=shared_memory)
+
+            self.node, self.images, self.d = elphmod.MPI.shared_array(
+                self.d0.shape, dtype=self.d0.dtype, shared_memory=shared_memory)
 
             self.sparse = False
 
