@@ -132,9 +132,9 @@ class Driver:
         self.C0 += elphmod.dispersion.sample(self.elph.ph.D, self.q)
 
         if supercell is not None:
-            self.elph.ph = copy.copy(self.elph.ph)
-
             if unscreen:
+                self.elph.ph = copy.copy(self.elph.ph)
+
                 elphmod.ph.q2r(self.elph.ph, nq=self.nq, D_full=self.C0,
                     divide_mass=False)
 
