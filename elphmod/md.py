@@ -40,8 +40,9 @@ class Driver:
         Supercell lattice vectors as multiples of primitive lattice vectors. If
         given, the simulation is performed on a supercell for q = k = 0. Sparse
         matrices are used for Hamiltonian, dynamical matrix, and electron-phonon
-        coupling to save memory. The calculation of phonons is not implemented.
-        Note that `elph` should belong to the primitive cell in this case.
+        coupling to save memory. Note that `elph` should belong to the primitive
+        cell in this case, and `nq` and `nk` are only used for the unscreening,
+        which is still done one the primitive cell.
     unscreen : bool, default True
         Unscreen phonons? Otherwise, they are assumed to be unscreened already.
     shared_memory : bool, default True
