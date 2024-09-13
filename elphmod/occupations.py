@@ -17,7 +17,8 @@ xmax = 709.0 # approx. log([max. double] / 2 - 1)
 def bose_einstein(x):
     """Calculate Bose-Einstein function."""
 
-    x = np.minimum(x, xmax)
+    x = np.array(x)
+    x.real = np.minimum(x.real, xmax)
 
     return 1 / (np.exp(x) - 1)
 
@@ -26,28 +27,32 @@ def fermi_dirac(x):
 
     # return 1 - 0.5 * np.tanh(0.5 * x)
 
-    x = np.minimum(x, xmax)
+    x = np.array(x)
+    x.real = np.minimum(x.real, xmax)
 
     return 1 / (np.exp(x) + 1)
 
 def fermi_dirac_delta(x):
     """Calculate negative derivative of Fermi function."""
 
-    x = np.minimum(np.absolute(x), xmax)
+    x = np.array(x)
+    x.real = np.minimum(abs(x.real), xmax)
 
     return 1 / (2 * np.cosh(x) + 2)
 
 def fermi_dirac_delta_prime(x):
     """Calculate negative 2nd derivative of Fermi function."""
 
-    x = np.sign(x) * np.minimum(np.absolute(x), xmax)
+    x = np.array(x)
+    x.real = np.sign(x.real) * np.minimum(abs(x.real), xmax)
 
     return -np.sinh(x) / (2 * (np.cosh(x) + 1) ** 2)
 
 def fermi_dirac_entropy(x):
     """Calculate electronic entropy."""
 
-    x = np.sign(x) * np.minimum(np.absolute(x), xmax)
+    x = np.array(x)
+    x.real = np.sign(x.real) * np.minimum(abs(x.real), xmax)
 
     f = fermi_dirac(x)
 
