@@ -41,7 +41,9 @@ g2dd, dd = elphmod.diagrams.double_fermi_surface_average(q, e, g2, kTel, f)
 g2dd[dangerous] = 0.0
 g2dd /= 2 * w
 
-omega, domega = np.linspace(0.0, w.max(), 500, endpoint=False, retstep=True)
+omega, domega = np.linspace(0.0, 1.1 * w.max(), 500,
+    endpoint=False, retstep=True)
+
 omega += domega / 2
 
 sizes, bounds = elphmod.MPI.distribute(len(omega), bounds=True, comm=comm)
