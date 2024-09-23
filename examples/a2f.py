@@ -6,7 +6,7 @@
 # See Allen and Dynes, Phys. Rev. B 12, 905 (1975) for the formulas used here.
 
 import elphmod
-import elphmod.models.tas2
+import elphmod.models.graphene
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -14,16 +14,13 @@ comm = elphmod.MPI.comm
 
 nk = nq = 36
 kTel = 0.3
-kTph = 0.0003
+kTph = 0.0015
 f = elphmod.occupations.fermi_dirac
 eps = 1e-10
 
-elphmod.models.tas2.create('data/TaS2')
+el, ph, elph, elel = elphmod.models.graphene.create()
 
-el = elphmod.el.Model('data/TaS2')
-ph = elphmod.ph.Model('data/TaS2.ifc')
 ph.data *= elphmod.misc.Ry ** 2
-elph = elphmod.elph.Model('data/TaS2.epmatwp', 'data/TaS2.wigner', el, ph)
 elph.data *= elphmod.misc.Ry ** 1.5
 
 q = sorted(elphmod.bravais.irreducibles(nq))
