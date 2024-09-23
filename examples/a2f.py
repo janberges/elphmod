@@ -84,9 +84,14 @@ if elphmod.MPI.comm.rank == 0:
     print('lambda = %g (%g)' % (lamda_int, lamda))
     print('omega_log = %g eV (%g eV)' % (wlog_int, wlog))
 
-    plt.ylabel('Density (1/eV)')
-    plt.xlabel('Phonon energy (eV)')
-    plt.fill_between(omega, 0.0, DOS, facecolor='lightgray', label='DOS')
-    plt.plot(omega, 2 * a2F / omega, label=r'$2 \alpha^2 F / \omega$')
-    plt.legend()
+    fig, ax1 = plt.subplots()
+    ax2 = ax1.twinx()
+
+    ax1.set_xlabel('Phonon energy (eV)')
+    ax1.set_ylabel('Phonon density of states (1/eV)')
+    ax2.set_ylabel('Eliashberg spectral function')
+
+    ax1.fill_between(omega, 0.0, DOS, facecolor='lightgray')
+    ax2.plot(omega, a2F)
+
     plt.show()
