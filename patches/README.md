@@ -5,14 +5,15 @@ version of Quantum ESPRESSO (QE). We provide the corresponding patches for
 different versions of QE. To apply them, go to the QE repository and run, e.g.,
 the following commands:
 
-    git checkout qe-7.3
-    git apply /path/to/elphmod/patches/qe-7.3.patch
+    git checkout qe-7.4
+    git apply /path/to/elphmod/patches/qe-7.4.patch
     ./configure
     make pw pp ph epw
 
 The patch files have been created using `git diff -U1`.
 
 The following description applies to `qe-6.7MaX-Release` and higher versions.
+Since `qe-7.4`, the changes in EPW are part of QE and do not require a patch.
 The patch for `qe-6.3-backports` uses different formats for input and output,
 which requires using `elphmod.elph.Model(old_ws=True)`.
 

@@ -40,7 +40,7 @@ Also make sure to install the Python requirements before:
 * `susceptibility.py` - bare electronic susceptibility with hybridization
 * `tetrahedron.py` - some computer algebra behind tetrahedron method
 
-More sophisticated examples have their own subdirectory. Most of them require a
+More sophisticated examples have their own subdirectory. Some of them require a
 [patched](../patches) version of Quantum ESPRESSO.
 
 * `bare` - bare phonon dispersion

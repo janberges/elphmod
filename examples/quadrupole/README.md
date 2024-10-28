@@ -16,5 +16,8 @@ we optimize L for Q = 0, minimizing the short-range part of the force constants.
 Second, we optimize Q for constant L. A simultaneous optimization would also be
 possible, but it is only important that L is in the correct range.
 
+For the bare phonons, you need a modified version of Quantum ESPRESSO. You
+can use the provided [patch](../../patches) to apply the required changes.
+
 Note that the results obtained in this example are not converged. The parameters
 have been chosen such that the calculations can be done on a personal computer.
