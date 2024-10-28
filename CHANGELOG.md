@@ -3,6 +3,10 @@
 See [Git commits](https://github.com/janberges/elphmod/commits) for more
 detailed list of changes.
 
+## v0.29
+
+* QE-7.4 support (cDFPT patch, EPW patch not needed anymore)
+
 ## v0.28/2024-08-23
 
 * Support for `mpi4py` version 4.0.0
