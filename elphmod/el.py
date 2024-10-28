@@ -850,7 +850,8 @@ def read_bands(filband):
 
     if comm.rank == 0:
         for ik in range(nks):
-            k[ik] = list(map(float, next(data).split()))
+            k[ik] = list(map(float,
+                next(data).strip().rstrip('*').split()[:3]))
 
             energies = []
 
