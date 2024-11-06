@@ -490,7 +490,7 @@ class Driver:
 
         return ph
 
-    def superconductivity(self, eps=1e-10, tol=None, kT=None):
+    def superconductivity(self, eps=1e-10, kT=None):
         r"""Calculate effective couplings and phonon frequencies.
 
         Note that :attr:`d` is destroyed.
@@ -515,6 +515,8 @@ class Driver:
             Logarithmic average phonon energy.
         float
             Second-moment average phonon energy.
+        float
+            Minimum phonon energy. Imaginary frequencies are given as negative.
         """
         if kT is None:
             kT = self.kT
@@ -531,8 +533,7 @@ class Driver:
 
         w2, u = np.linalg.eigh(D)
 
-        if tol is not None and np.any(w2 < tol):
-            return None, None, None
+        wmin = elphmod.ph.sgnsqrt(w2.min())
 
         if self.sparse:
             g2dd *= mm12[np.newaxis, np.newaxis, :]
@@ -571,7 +572,7 @@ class Driver:
         wlog = np.exp((V * np.log(w2) / 2).sum() / V.sum())
         w2nd = np.sqrt((V * w2).sum() / V.sum())
 
-        return lamda, wlog, w2nd
+        return lamda, wlog, w2nd, wmin
 
     def density(self):
         """Calculate electron density for all orbitals.
