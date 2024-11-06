@@ -24,7 +24,7 @@ class Model:
     epmatwp : str
         File with electron-phonon coupling in localized bases from EPW.
     wigner : str
-        File with definition of Wigner-Seitz supercells from modified EPW.
+        File with definition of Wigner-Seitz supercells from EPW.
     el : :class:`elphmod.el.Model`
         Tight-binding model for the electrons.
     ph : :class:`elphmod.ph.Model`
