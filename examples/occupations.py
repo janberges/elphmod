@@ -12,7 +12,7 @@ if MPI.comm.rank:
 
 x = np.linspace(-10, 10, 2001)
 
-d = 2.0
+d = 5.0
 
 style = dict(color='lightgray', linestyle='dashed')
 
@@ -28,6 +28,7 @@ plt.plot(x, occupations.gauss(x), label='Gauss')
 plt.plot(x, occupations.marzari_vanderbilt(x), label='Marzari-Vanderbilt')
 plt.plot(x, occupations.methfessel_paxton(x), label='Methfessel-Paxton')
 plt.plot(x, occupations.double_fermi_dirac(x, d), label='Double Fermi-Dirac')
+plt.plot(x, occupations.two_fermi_dirac(x, d), label='Two Fermi-Dirac')
 plt.plot(x, occupations.lorentz(x), label='Lorentz')
 
 plt.xlabel(r'$x$')
@@ -46,6 +47,7 @@ plt.plot(x, occupations.marzari_vanderbilt.delta(x), label='Marzari-Vanderbilt')
 plt.plot(x, occupations.methfessel_paxton.delta(x), label='Methfessel-Paxton')
 plt.plot(x, occupations.double_fermi_dirac.delta(x, d),
     label='Double Fermi-Dirac')
+plt.plot(x, occupations.two_fermi_dirac.delta(x, d), label='Two Fermi-Dirac')
 plt.plot(x, occupations.lorentz.delta(x), label='Lorentz')
 
 plt.xlabel(r'$x$')
@@ -66,6 +68,8 @@ plt.plot(x, occupations.methfessel_paxton.delta_prime(x),
     label='Methfessel-Paxton')
 plt.plot(x, occupations.double_fermi_dirac.delta_prime(x, d),
     label='Double Fermi-Dirac')
+plt.plot(x, occupations.two_fermi_dirac.delta_prime(x, d),
+    label='Two Fermi-Dirac')
 plt.plot(x, occupations.lorentz.delta_prime(x), label='Lorentz')
 
 plt.xlabel(r'$x$')
@@ -85,6 +89,7 @@ plt.plot(x, occupations.marzari_vanderbilt.entropy(x),
 plt.plot(x, occupations.methfessel_paxton.entropy(x), label='Methfessel-Paxton')
 plt.plot(x, occupations.double_fermi_dirac.entropy(x, d),
     label='Double Fermi-Dirac')
+plt.plot(x, occupations.two_fermi_dirac.entropy(x, d), label='Two Fermi-Dirac')
 
 plt.xlabel(r'$x$')
 plt.ylabel(r'$-\int_{-\infty}^x y \delta(y) dy$')
