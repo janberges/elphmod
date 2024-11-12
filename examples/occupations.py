@@ -30,6 +30,7 @@ plt.plot(x, occupations.methfessel_paxton(x), label='Methfessel-Paxton')
 plt.plot(x, occupations.double_fermi_dirac(x, d), label='Double Fermi-Dirac')
 plt.plot(x, occupations.two_fermi_dirac(x, d), label='Two Fermi-Dirac')
 plt.plot(x, occupations.lorentz(x), label='Lorentz')
+plt.plot(x, occupations.heaviside(x), label='Heaviside')
 
 plt.xlabel(r'$x$')
 plt.ylabel(r'$f(x)$')
