@@ -55,7 +55,7 @@ def coupling(q1=0, q2=0, q3=0, k1=0, k2=0, k3=0, **ignore):
 
     g = np.zeros((3, 1, 1), dtype=complex)
 
-    g[0, 0, 0] = 1j * g0 * (np.sin(k1) - np.sin(k1 + q1))
+    g[0, 0, 0] = 1j * g0 * (np.sin(k1 + q1) - np.sin(k1))
 
     return g
 
