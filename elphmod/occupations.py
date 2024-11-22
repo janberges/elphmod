@@ -169,78 +169,99 @@ def methfessel_paxton_term(x, order=1, diff=0):
 
     return s * gauss_delta(x)
 
-def methfessel_paxton(x, N=1):
+def methfessel_paxton(x):
     """Calculate Methfessel-Paxton step function."""
 
-    return gauss(x) + methfessel_paxton_term(x, order=N, diff=0)
+    return gauss(x) + methfessel_paxton_term(x,
+        order=methfessel_paxton.order, diff=0)
 
-def methfessel_paxton_delta(x, N=1):
+def methfessel_paxton_delta(x):
     """Calculate negative derivative of Methfessel-Paxton step function."""
 
-    return gauss.delta(x) - methfessel_paxton_term(x, order=N, diff=1)
+    return gauss.delta(x) - methfessel_paxton_term(x,
+        order=methfessel_paxton.order, diff=1)
 
-def methfessel_paxton_delta_prime(x, N=1):
+def methfessel_paxton_delta_prime(x):
     """Calculate negative 2nd derivative of Methfessel-Paxton step function."""
 
-    return gauss.delta_prime(x) - methfessel_paxton_term(x, order=N, diff=2)
+    return gauss.delta_prime(x) - methfessel_paxton_term(x,
+        order=methfessel_paxton.order, diff=2)
 
-def methfessel_paxton_entropy(x, N=1):
+def methfessel_paxton_entropy(x):
     """Calculate Methfessel-Paxton generalized electronic entropy."""
 
-    return -methfessel_paxton_term(x, order=N, diff=1) / 2
+    return -0.5 * methfessel_paxton_term(x,
+        order=methfessel_paxton.order, diff=1)
 
+methfessel_paxton.order = 1
 methfessel_paxton.delta = methfessel_paxton_delta
 methfessel_paxton.delta_prime = methfessel_paxton_delta_prime
 methfessel_paxton.entropy = methfessel_paxton_entropy
 
-def double_fermi_dirac(x, d):
+def double_fermi_dirac(x):
     """Calculate double Fermi function."""
 
-    return (fermi_dirac(x - d) + fermi_dirac(x + d)) / 2
+    return (fermi_dirac(x - double_fermi_dirac.d)
+          + fermi_dirac(x + double_fermi_dirac.d)) / 2
 
-def double_fermi_dirac_delta(x, d):
+def double_fermi_dirac_delta(x):
     """Calculate negative derivative of double Fermi function."""
 
-    return (fermi_dirac.delta(x - d) + fermi_dirac.delta(x + d)) / 2
+    return (fermi_dirac.delta(x - double_fermi_dirac.d)
+          + fermi_dirac.delta(x + double_fermi_dirac.d)) / 2
 
-def double_fermi_dirac_delta_prime(x, d):
+def double_fermi_dirac_delta_prime(x):
     """Calculate negative 2nd derivative of double Fermi function."""
 
-    return (fermi_dirac.delta_prime(x - d) + fermi_dirac.delta_prime(x + d)) / 2
+    return (fermi_dirac.delta_prime(x - double_fermi_dirac.d)
+          + fermi_dirac.delta_prime(x + double_fermi_dirac.d)) / 2
 
-def double_fermi_dirac_entropy(x, d):
+def double_fermi_dirac_entropy(x):
     """Calculate double-Fermi-Dirac generalized electronic entropy."""
 
-    return (fermi_dirac.entropy(x - d) + fermi_dirac.entropy(x + d)
-        + d * (fermi_dirac(x - d) - fermi_dirac(x + d))) / 2
+    return (fermi_dirac.entropy(x - double_fermi_dirac.d)
+          + fermi_dirac.entropy(x + double_fermi_dirac.d)
+        + double_fermi_dirac.d * (fermi_dirac(x - double_fermi_dirac.d)
+                                - fermi_dirac(x + double_fermi_dirac.d))) / 2
 
+double_fermi_dirac.d = 5.0
 double_fermi_dirac.delta = double_fermi_dirac_delta
 double_fermi_dirac.delta_prime = double_fermi_dirac_delta_prime
 double_fermi_dirac.entropy = double_fermi_dirac_entropy
 
-def two_fermi_dirac(x, d):
+def two_fermi_dirac(x):
     """Calculate two Fermi functions."""
 
-    return fermi_dirac(x + 2 * (x < 0) * d - d)
+    dy = (x < 0) * two_fermi_dirac.d
+    dx = 2 * dy - two_fermi_dirac.d
 
-def two_fermi_dirac_delta(x, d):
+    return fermi_dirac(x + dx)
+
+def two_fermi_dirac_delta(x):
     """Calculate negative derivative of two Fermi functions."""
 
-    return fermi_dirac.delta(x + 2 * (x < 0) * d - d)
+    dy = (x < 0) * two_fermi_dirac.d
+    dx = 2 * dy - two_fermi_dirac.d
 
-def two_fermi_dirac_delta_prime(x, d):
+    return fermi_dirac.delta(x + dx)
+
+def two_fermi_dirac_delta_prime(x):
     """Calculate negative 2nd derivative of two Fermi functions."""
 
-    return fermi_dirac.delta_prime(x + 2 * (x < 0) * d - d)
+    dy = (x < 0) * two_fermi_dirac.d
+    dx = 2 * dy - two_fermi_dirac.d
 
-def two_fermi_dirac_entropy(x, d):
+    return fermi_dirac.delta_prime(x + dx)
+
+def two_fermi_dirac_entropy(x):
     """Calculate generalized electronic entropy for two Fermi functions."""
 
-    dy = (x < 0) * d
-    dx = 2 * dy - d
+    dy = (x < 0) * two_fermi_dirac.d
+    dx = 2 * dy - two_fermi_dirac.d
 
     return fermi_dirac.entropy(x + dx) - dx * fermi_dirac(x + dx) + dy
 
+two_fermi_dirac.d = 5.0
 two_fermi_dirac.delta = two_fermi_dirac_delta
 two_fermi_dirac.delta_prime = two_fermi_dirac_delta_prime
 two_fermi_dirac.entropy = two_fermi_dirac_entropy

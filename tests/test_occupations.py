@@ -7,16 +7,6 @@ from elphmod import occupations
 import numpy as np
 import unittest
 
-def d(f):
-    def g(x):
-        return f(x, 2.0)
-    return g
-
-double_fermi_dirac = d(occupations.double_fermi_dirac)
-double_fermi_dirac.delta = d(occupations.double_fermi_dirac.delta)
-double_fermi_dirac.delta_prime = d(occupations.double_fermi_dirac.delta_prime)
-double_fermi_dirac.entropy = d(occupations.double_fermi_dirac.entropy)
-
 tol = dict(rtol=1e-5, atol=1e-4)
 
 class TestOccupations(unittest.TestCase):
@@ -32,7 +22,7 @@ class TestOccupations(unittest.TestCase):
 
         for f in [occupations.fermi_dirac, occupations.gauss,
                 occupations.lorentz, occupations.marzari_vanderbilt,
-                occupations.methfessel_paxton, double_fermi_dirac]:
+                occupations.methfessel_paxton, occupations.double_fermi_dirac]:
 
             self.assertTrue(np.allclose(f.delta(xd),
                 -np.diff(f(x)) / dx, **tol))
