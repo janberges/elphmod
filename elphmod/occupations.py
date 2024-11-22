@@ -190,6 +190,9 @@ def methfessel_paxton_delta_prime(x):
 def methfessel_paxton_entropy(x):
     """Calculate Methfessel-Paxton generalized electronic entropy."""
 
+    if methfessel_paxton.order != 1:
+        raise NotImplementedError('MP entropy only implemented for 1st order.')
+
     return -0.5 * methfessel_paxton_term(x,
         order=methfessel_paxton.order, diff=1)
 
