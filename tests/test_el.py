@@ -4,7 +4,6 @@
 # This program is free software under the terms of the GNU GPLv3 or later.
 
 import copy
-import elphmod
 import elphmod.models.graphene
 import numpy as np
 import unittest

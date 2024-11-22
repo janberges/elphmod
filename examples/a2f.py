@@ -5,7 +5,6 @@
 
 # See Allen and Dynes, Phys. Rev. B 12, 905 (1975) for the formulas used here.
 
-import elphmod
 import elphmod.models.graphene
 import matplotlib.pyplot as plt
 import numpy as np
