@@ -221,25 +221,25 @@ double_fermi_dirac.entropy = double_fermi_dirac_entropy
 def two_fermi_dirac(x, d):
     """Calculate two Fermi functions."""
 
-    return fermi_dirac(x - d) + fermi_dirac(x + d) - heaviside(x)
+    return fermi_dirac(x + 2 * (x < 0) * d - d)
 
 def two_fermi_dirac_delta(x, d):
     """Calculate negative derivative of two Fermi functions."""
 
-    return (fermi_dirac.delta(x - d) + fermi_dirac.delta(x + d)
-        - heaviside.delta(x))
+    return fermi_dirac.delta(x + 2 * (x < 0) * d - d)
 
 def two_fermi_dirac_delta_prime(x, d):
     """Calculate negative 2nd derivative of two Fermi functions."""
 
-    return (fermi_dirac.delta_prime(x - d) + fermi_dirac.delta_prime(x + d)
-        - heaviside.delta_prime(x))
+    return fermi_dirac.delta_prime(x + 2 * (x < 0) * d - d)
 
 def two_fermi_dirac_entropy(x, d):
     """Calculate generalized electronic entropy for two Fermi functions."""
 
-    return (fermi_dirac.entropy(x - d) + fermi_dirac.entropy(x + d)
-        - heaviside.entropy(x) + d * (fermi_dirac(x - d) - fermi_dirac(x + d)))
+    dy = (x < 0) * d
+    dx = 2 * dy - d
+
+    return fermi_dirac.entropy(x + dx) - dx * fermi_dirac(x + dx) + dy
 
 two_fermi_dirac.delta = two_fermi_dirac_delta
 two_fermi_dirac.delta_prime = two_fermi_dirac_delta_prime
