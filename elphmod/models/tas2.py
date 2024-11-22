@@ -25,9 +25,9 @@ e_z2 = 1.85 / elphmod.misc.Ry
 e_x2y2 = 2.3 / elphmod.misc.Ry
 t_z2 = -0.14 / elphmod.misc.Ry
 t_z2_x2y2 = 0.48 / elphmod.misc.Ry
-t_z2_xy = 0.38 / elphmod.misc.Ry
+t_z2_xy = -0.38 / elphmod.misc.Ry
 t_x2y2 = -0.26 / elphmod.misc.Ry
-t_x2y2_xy = -0.31 / elphmod.misc.Ry
+t_x2y2_xy = 0.31 / elphmod.misc.Ry
 t_xy = 0.32 / elphmod.misc.Ry
 
 ax = 43.8 * Npm
