@@ -3,9 +3,13 @@
 See [Git commits](https://github.com/janberges/elphmod/commits) for more
 detailed list of changes.
 
-## v0.29
+## v0.29/2024-11-23
 
 * QE-7.4 support (cDFPT patch, EPW patch not needed anymore)
+* Fixed sign of model electron-phonon coupling (TaS₂ and chain)
+* Phonon unscreening also possible on supercell (sparse MD driver)
+* Preliminary implementation of two Fermi levels
+* No buffering of info messages
 
 ## v0.28/2024-08-23
 
