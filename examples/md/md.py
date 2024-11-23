@@ -27,3 +27,5 @@ time.sleep(2) # wait for i-PI to load and create a socket
 driver.plot(interactive=True)
 
 ipi._driver.driver.run_driver(unix=True, address='localhost', driver=driver)
+
+driver.plot(interactive=False)
