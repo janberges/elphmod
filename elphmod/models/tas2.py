@@ -334,7 +334,7 @@ def create(prefix=None, rydberg=False, divide_mass=True):
     """
     H = elphmod.dispersion.sample(hamiltonian, k)
     D = elphmod.dispersion.sample(dynamical_matrix, q)
-    g = elphmod.elph.sample(coupling, Q.reshape((-1, 3)), nk)
+    g = elphmod.elph.sample(coupling, Q, nk)
 
     el = elphmod.el.Model(rydberg=rydberg)
     elphmod.el.k2r(el, H, at, r[:1].repeat(3, axis=0), rydberg=True)
