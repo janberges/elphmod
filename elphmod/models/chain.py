@@ -17,7 +17,7 @@ c = 20.0 # AA
 
 M = elphmod.misc.uRy
 
-t = 1.0 / elphmod.misc.Ry
+t = 0.5 / elphmod.misc.Ry
 w0 = 0.05 / elphmod.misc.Ry
 g0 = 0.02 / elphmod.misc.Ry ** 1.5
 
@@ -37,7 +37,7 @@ def hamiltonian(k1=0, k2=0, k3=0):
 
     H = np.empty((1, 1))
 
-    H[0, 0] = -t * np.cos(k1)
+    H[0, 0] = -2 * t * np.cos(k1)
 
     return H
 
