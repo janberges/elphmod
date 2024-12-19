@@ -746,7 +746,7 @@ def stack(*points, **kwargs):
 
     # save "stacking", shift lowest point up by one period, and repeat:
 
-    stackings = np.empty((points.shape, *points.shape), dtype=points.dtype)
+    stackings = np.empty((points.shape[0], *points.shape), dtype=points.dtype)
 
     stackings[0] = points
 
