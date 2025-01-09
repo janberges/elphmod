@@ -19,7 +19,14 @@
    modules/eliashberg
    modules/plot
    modules/misc
-   modules/models
+
+.. toctree::
+   :caption: Models
+   :hidden:
+
+   modules/models/graphene
+   modules/models/tas2
+   modules/models/chain
 
 .. toctree::
    :caption: Further information

@@ -1,4 +1,4 @@
-TaS2
+TaS₂
 ====
 
 .. automodule:: elphmod.models.tas2
