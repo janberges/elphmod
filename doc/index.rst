@@ -1,11 +1,9 @@
 .. include:: ../README.md
    :parser: myst_parser.sphinx_
 
-Modules
--------
-
 .. toctree::
-   :maxdepth: 1
+   :caption: Modules
+   :hidden:
 
    modules/el
    modules/ph
@@ -23,17 +21,16 @@ Modules
    modules/misc
    modules/models
 
-Further information
--------------------
-
 .. toctree::
-   :maxdepth: 1
+   :caption: Further information
+   :hidden:
 
    pages/changelog
    pages/patches
 
-Indices and tables
-------------------
+.. toctree::
+   :caption: Indices and tables
+   :hidden:
 
-* :ref:`genindex`
-* :ref:`search`
+   genindex
+   search
