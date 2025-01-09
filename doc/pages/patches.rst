@@ -1,1 +1,2 @@
-.. mdinclude:: ../../patches/README.md
+.. include:: ../../patches/README.md
+   :parser: myst_parser.sphinx_
