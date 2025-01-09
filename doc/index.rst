@@ -29,15 +29,10 @@
    modules/models/chain
 
 .. toctree::
-   :caption: Further information
+   :caption: More
    :hidden:
 
    pages/changelog
    pages/patches
-
-.. toctree::
-   :caption: Indices and tables
-   :hidden:
-
    genindex
    search
