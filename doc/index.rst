@@ -35,4 +35,3 @@
    pages/changelog
    pages/patches
    genindex
-   search
