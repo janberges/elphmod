@@ -48,7 +48,7 @@ and install the requirements of examples and documentation:
 
 ## Documentation
 
-The documentation can be found at <https://janberges.github.io/elphmod>.
+The documentation can be found at <https://io.janberges.de/elphmod>.
 
 Please also have a look at the examples directory.
 
