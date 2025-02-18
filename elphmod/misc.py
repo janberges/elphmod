@@ -219,6 +219,29 @@ def group(points, eps=1e-7):
 
     return [np.where(groups == group)[0] for group in set(groups)]
 
+def differential(x):
+    """Calculate weights for numerical integration with trapezoidal rule.
+
+    Parameters
+    ----------
+    x : ndarray
+        Sample points.
+
+    Returns
+    -------
+    ndarray
+        Integration Weights.
+    """
+    dx = np.empty_like(x)
+
+    dx[0] = x[1] - x[0]
+    dx[1:-1] = x[2:] - x[:-2]
+    dx[-1] = x[-1] - x[-2]
+
+    dx /= 2
+
+    return dx
+
 def read_cube(cube, only_header=False, comm=comm):
     """Read Gaussian cube file.
 

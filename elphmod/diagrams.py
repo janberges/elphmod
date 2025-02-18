@@ -1433,16 +1433,6 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10, occupations='fd',
     """
     occupations = elphmod.occupations.smearing(occupations)
 
-    domega = omega[1] - omega[0]
-
-    if np.any(abs(np.diff(omega) - domega) > eps):
-        info('Frequency sampling must be equidistant!', error=True)
-
-    iw0 = np.argmin(abs(omega))
-
-    if abs(omega[iw0]) > eps and not dc_only:
-        info('Frequency sampling should include zero!', error=True)
-
     nbnd = A.shape[-2]
     nq = A.size // nbnd // len(omega)
     ndim = v.size // nq // nbnd
@@ -1452,12 +1442,24 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10, occupations='fd',
     x = omega[:, np.newaxis, np.newaxis] / kT
     d = occupations.delta(x) / kT
 
-    prefactor = 4 * np.pi * domega / nq # including e^2 = 2 and 2 / nq
+    prefactor = 4 * np.pi / nq # including e^2 = 2 and 2 / nq
 
     if dc_only:
-        sigma = prefactor * np.sum(d * np.sum(vA[:, :, :, np.newaxis]
+        domega = elphmod.misc.differential(omega)[:, np.newaxis, np.newaxis]
+
+        sigma = prefactor * np.sum(domega * d * np.sum(vA[:, :, :, np.newaxis]
             * vA[:, :, np.newaxis, :], axis=0), axis=0)
     else:
+        domega = omega[1] - omega[0]
+
+        if np.any(abs(np.diff(omega) - domega) > eps):
+            info('Frequency sampling must be equidistant!', error=True)
+
+        iw0 = np.argmin(abs(omega))
+
+        if abs(omega[iw0]) > eps:
+            info('Frequency sampling should include zero!', error=True)
+
         f = occupations(x)
 
         sizes, bounds = elphmod.MPI.distribute(len(omega), bounds=True,
@@ -1479,7 +1481,7 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10, occupations='fd',
             b = np.sum(vA[:, slmp, :, np.newaxis] * vA[:, slpm, np.newaxis, :],
                 axis=0)
 
-            my_sigma[my_iw] = prefactor * np.sum(a * b, axis=0)
+            my_sigma[my_iw] = prefactor * domega * np.sum(a * b, axis=0)
 
             status.update()
 
