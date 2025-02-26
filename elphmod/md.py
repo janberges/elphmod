@@ -34,6 +34,8 @@ class Driver:
         Particle distribution as a function of energy divided by `kT`.
     n : float
         Number of electrons per primitive cell.
+    nx : float, default 0.0
+        Number of photoexcited electrons per primitive cell.
     nk, nq : tuple of int, optional
         Shape of k and q mesh. By default, only k = q = 0 is used.
     supercell : ndarray, optional
@@ -88,8 +90,9 @@ class Driver:
         Communicators between processes that share memory or same ``node.rank``
         if `shared_memory`.
     """
-    def __init__(self, elph, kT, f, n, nk=(1,), nq=(1,), supercell=None,
-            unscreen=True, shared_memory=True, **kwargs):
+    def __init__(self, elph, kT, f, n, nx=0.0, nk=(1,), nq=(1,),
+            supercell=None, unscreen=True, shared_memory=True, **kwargs):
+
         if not elph.el.rydberg:
             info("Initialize 'el' with 'rydberg=True'!", error=True)
 
@@ -103,6 +106,7 @@ class Driver:
         self.f = elphmod.occupations.smearing(f)
 
         self.n = n
+        self.nx = nx
         self.mu = None
 
         self.nk = np.ones(3, dtype=int)
@@ -165,7 +169,7 @@ class Driver:
             elph = self.elph.supercell(*supercell, sparse=True)
 
             self.__init__(elph, self.kT, self.f, self.n * len(elph.cells),
-                unscreen=False, **kwargs)
+                self.nx * len(elph.cells), unscreen=False, **kwargs)
 
     def random_displacements(self, amplitude=0.01):
         """Displace atoms randomly from unperturbed positions.
@@ -195,8 +199,24 @@ class Driver:
         float
             New chemical potential.
         """
-        self.mu = elphmod.occupations.find_Fermi_level(self.n, self.e, self.kT,
-            self.f, self.mu)
+        if self.f is elphmod.occupations.two_fermi_dirac:
+            if self.n % 2:
+                info('Photoexcitation requires even number of electrons!',
+                    error=True)
+
+            muv = elphmod.occupations.find_Fermi_level(self.n - self.nx,
+                self.e[..., :int(self.n) // 2], self.kT,
+                elphmod.occupations.fermi_dirac, self.mu)
+
+            muc = elphmod.occupations.find_Fermi_level(self.nx,
+                self.e[..., int(self.n) // 2:], self.kT,
+                elphmod.occupations.fermi_dirac, self.mu)
+
+            self.f.d = (muc - muv) / (2 * self.kT)
+            self.mu = (muc + muv) / 2
+        else:
+            self.mu = elphmod.occupations.find_Fermi_level(self.n,
+                self.e, self.kT, self.f, self.mu)
 
         return self.mu
 
