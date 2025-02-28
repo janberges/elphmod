@@ -12,7 +12,7 @@ elphmod.misc.verbosity = 0
 tol = dict(rtol=1e-2, atol=0.0)
 
 class TestDiagrams(unittest.TestCase):
-    def test_expansion(self, eps=1e-4, nk=(4, 4),
+    def _test_expansion(self, eps=1e-4, nk=(4, 4),
             kT=0.01, f=elphmod.occupations.fermi_dirac):
         """Compare lowest-order diagrams to finite differences."""
 
@@ -66,6 +66,30 @@ class TestDiagrams(unittest.TestCase):
             kT=kT, occupations=f).real
 
         self.assertTrue(np.allclose(diff, pert, **tol))
+
+    def test_expansion_fermi_dirac(self):
+        """Compare diagrams to differences for Fermi-Dirac smearing."""
+        self._test_expansion(f=elphmod.occupations.fermi_dirac)
+
+    def test_expansion_gauss(self):
+        """Compare diagrams to differences for Gauss smearing."""
+        self._test_expansion(f=elphmod.occupations.gauss)
+
+    def test_expansion_marzari_vanderbilt(self):
+        """Compare diagrams to differences for Marzari-Vanderbilt smearing."""
+        self._test_expansion(f=elphmod.occupations.marzari_vanderbilt)
+
+    def test_expansion_methfessel_paxton(self):
+        """Compare diagrams to differences for Methfessel-Paxton smearing."""
+        self._test_expansion(f=elphmod.occupations.methfessel_paxton)
+
+    def test_expansion_double_fermi_dirac(self):
+        """Compare diagrams to differences for double Fermi-Dirac smearing."""
+        self._test_expansion(f=elphmod.occupations.double_fermi_dirac)
+
+    def test_expansion_two_fermi_dirac(self):
+        """Compare diagrams to differences for two Fermi levels."""
+        self._test_expansion(f=elphmod.occupations.two_fermi_dirac)
 
 if __name__ == '__main__':
     unittest.main()
