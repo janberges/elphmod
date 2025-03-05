@@ -323,12 +323,29 @@ class Buffer:
             with open(self.buf, 'wb') as data:
                 pickle.dump(obj, data, protocol=4)
 
-def load(filename, shared_memory=False, comm=comm):
-    """Read and broadcast NumPy data."""
+def load(filename, shared_memory=False, txt=False, comm=comm):
+    """Read and broadcast NumPy data.
 
+    Parameters
+    ----------
+    shared_memory : bool, default False
+        Use shared memory?
+    txt : bool, default False
+        Load data from text file?
+
+    Returns
+    -------
+    ndarray
+        Data.
+    """
     if comm.rank == 0:
         try:
-            data = np.load(filename, mmap_mode='r' if shared_memory else None)
+            if txt:
+                data = np.loadtxt(filename)
+            else:
+                data = np.load(filename,
+                    mmap_mode='r' if shared_memory else None)
+
         except IOError:
             data = np.empty(0)
 
