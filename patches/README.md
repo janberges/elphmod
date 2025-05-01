@@ -23,8 +23,8 @@ The following inputs are used for constrained density-functional perturbation
 theory (cDFPT) [Nomura and Arita, Phys. Rev. B **92**, 245108 (2015)]. If not
 set, a standard DFPT calculation is done.
 
-- `cdfpt_bnd`: Definition of cDFPT active subspace via list of band indices.
-  The band indices are defined by QE, where bands are sorted by energy.
+- `cdfpt_bnd`: Definition of cDFPT active subspace via list of one-based band
+  indices. The band indices are defined by QE, where bands are sorted by energy.
 - `cdfpt_orb`: Definition of cDFPT active subspace via list of orbital indices.
   This requires that a `projwfc.x` calculation for the complete uniform _k_ mesh
   used in the phonon calculation is done before. The orbital indices are defined
