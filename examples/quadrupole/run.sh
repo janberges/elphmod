@@ -9,11 +9,11 @@ echo 'Using normconserving pseudopotentials from PseudoDojo'
 echo '[1] van Setten et al., Comput. Phys. Commun. 226, 39 (2018)'
 echo '[2] Hamann, Phys. Rev. B 88, 085117 (2013)'
 
-url=http://www.pseudo-dojo.org/pseudos/nc-sr-04_pbe_standard # [1, 2]
+gh=https://raw.githubusercontent.com/PseudoDojo/ONCVPSP-PBE-SR/refs/heads/master
 
-for pp in Ta.upf S.upf
+for X in Ta S
 do
-    test -e $pp || (wget $url/$pp.gz && gunzip $pp)
+    test -e $X.upf || (wget $gh/$X/${X}_std.upf && mv ${X}_std.upf $X.upf)
 done
 
 nk=2
