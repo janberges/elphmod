@@ -9,9 +9,9 @@ echo 'Using normconserving pseudopotentials from PseudoDojo'
 echo '[1] van Setten et al., Comput. Phys. Commun. 226, 39 (2018)'
 echo '[2] Hamann, Phys. Rev. B 88, 085117 (2013)'
 
-gh=https://raw.githubusercontent.com/PseudoDojo/ONCVPSP-PBE-SR/refs/heads/master
-X=N
-test -e $X.upf || (wget $gh/$X/${X}_std.upf && mv ${X}_std.upf $X.upf)
+url=http://www.pseudo-dojo.org/pseudos/nc-sr-04_pbe_standard
+pp=N.upf
+test -e $pp || (wget $url/$pp.gz && gunzip $pp)
 
 mpirun pw.x < pw.in | tee pw.out
 
