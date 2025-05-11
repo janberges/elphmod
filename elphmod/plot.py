@@ -212,12 +212,10 @@ def arrange(images, columns=None):
 
     rows = len(images) // columns
 
-    return \
-        np.concatenate([
-        np.concatenate(
-            images[columns * row:columns * (row + 1)],
-        axis=1) for row in range(rows)],
-        axis=0)
+    images = [np.concatenate(images[columns * row:columns * (row + 1)], axis=1)
+        for row in range(rows)]
+
+    return np.concatenate(images, axis=0)
 
 def toBZ(data=None, points=1000,
         interpolation=elphmod.bravais.linear_interpolation, angle=120, angle0=0,

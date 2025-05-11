@@ -58,7 +58,7 @@ class Model:
         Primitive vectors of supercell if the model describes a supercell.
     """
     def W(self, q1=0, q2=0, q3=0):
-        """Set up density-density Coulomb matrix for arbitrary q point.
+        r"""Set up density-density Coulomb matrix for arbitrary q point.
 
         Parameters
         ----------

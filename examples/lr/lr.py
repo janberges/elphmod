@@ -69,8 +69,7 @@ for lr in 'no_lr', '3d', 'gaussian', 'dipole_sp', 'quadrupole':
         lr=lr != 'no_lr',
         lr2d=lr != '3d',
         L=elphmod.elph.read_L('epw_%s.out' % lr),
-        quadrupole_fmt='_quadrupole.fmt' if lr == 'quadrupole' else None,
-        )
+        quadrupole_fmt='_quadrupole.fmt' if lr == 'quadrupole' else None)
 
     if '3d' in lr:
         ph.prepare_long_range(G_2d=True)

@@ -566,7 +566,7 @@ def read_namelists(filename):
                 key, n = re.match(r'([^(]*)[( ]*(\d*)', item.lower()).groups()
                 n = int(n) - 1 if n else 0
 
-                if not key in data[name]:
+                if key not in data[name]:
                     data[name][key] = []
 
                 while len(data[name][key]) < n:

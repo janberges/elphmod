@@ -143,7 +143,7 @@ class Model:
         Constant part of long-range correction to dynamical matrix if `lr`.
     """
     def D(self, q1=0, q2=0, q3=0):
-        """Set up dynamical matrix for arbitrary q point.
+        r"""Set up dynamical matrix for arbitrary q point.
 
         Parameters
         ----------
@@ -200,10 +200,10 @@ class Model:
             return self.data[index]
 
     def __init__(self, flfrc=None, quadrupole_fmt=None, apply_asr=False,
-        apply_asr_simple=False, apply_zasr=False, apply_rsr=False, lr=True,
-        lr2d=None, amass=None, at=None, tau=None, atom_order=None, alph=None,
-        epsil=None, zeu=None, Q=None, L=None, perp=True, divide_mass=True,
-        divide_ndegen=True, ifc=None):
+            apply_asr_simple=False, apply_zasr=False, apply_rsr=False, lr=True,
+            lr2d=None, amass=None, at=None, tau=None, atom_order=None,
+            alph=None, epsil=None, zeu=None, Q=None, L=None, perp=True,
+            divide_mass=True, divide_ndegen=True, ifc=None):
 
         phid = nq = q0 = D0 = None
 
@@ -1635,8 +1635,7 @@ def asr(phid):
     nat, nr1, nr2, nr3 = phid.shape[1:5]
 
     for na1 in range(nat):
-        phid[na1, na1, 0, 0, 0] = -sum(
-        phid[na1, na2, m1, m2, m3]
+        phid[na1, na1, 0, 0, 0] = -sum(phid[na1, na2, m1, m2, m3]
             for na2 in range(nat)
             for m1 in range(nr1)
             for m2 in range(nr2)
@@ -2060,7 +2059,7 @@ def interpolate_dynamical_matrices(D, q, nq, fildyn_template, fildyn, flfrc,
             D[:, group(na), :] *= np.sqrt(amass[na])
             D[:, :, group(na)] *= np.sqrt(amass[na])
 
-    sizes, bounds = MPI.distribute(len(q), bounds=True)
+    sizes, bounds = elphmod.MPI.distribute(len(q), bounds=True)
 
     for iq in range(*bounds[comm.rank:comm.rank + 2]):
         fildynq = fildyn + str(iq + 1)

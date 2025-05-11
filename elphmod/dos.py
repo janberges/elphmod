@@ -235,8 +235,7 @@ def double_delta(x, y, f=None, eps=1e-7):
         for i in range(N)
         for j in range(N)
         for k in range(2)
-        if comm.rank == ((i * N + j) * 2 + k) % comm.size
-        ]
+        if comm.rank == ((i * N + j) * 2 + k) % comm.size]
 
     indices = [tuple(v.T % N) for v in triangles]
 

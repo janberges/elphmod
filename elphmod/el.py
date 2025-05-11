@@ -97,7 +97,7 @@ class Model:
         Have energies been converted from eV to Ry?
     """
     def H(self, k1=0, k2=0, k3=0):
-        """Set up Hamilton operator for arbitrary k point.
+        r"""Set up Hamilton operator for arbitrary k point.
 
         Parameters
         ----------
@@ -124,7 +124,7 @@ class Model:
         return np.einsum('Rab,R->ab', self.data, np.exp(1j * self.R.dot(k)))
 
     def v(self, k1=0, k2=0, k3=0):
-        """Set up band-velocity operator for arbitrary k point.
+        r"""Set up band-velocity operator for arbitrary k point.
 
         Parameters
         ----------
@@ -164,8 +164,9 @@ class Model:
             return self.data[index]
 
     def __init__(self, seedname=None, N=None, a=None, r=None,
-        divide_ndegen=True, read_xsf=False, normalize_wf=False, buffer_wf=False,
-        check_ortho=False, rydberg=False, shared_memory=False):
+            divide_ndegen=True, read_xsf=False, normalize_wf=False,
+            buffer_wf=False, check_ortho=False, rydberg=False,
+            shared_memory=False):
 
         self.divide_ndegen = divide_ndegen
         self.rydberg = rydberg
@@ -1553,10 +1554,9 @@ def eband(pw_scf_out, subset=None):
     nk, nbnd = energies.shape
     eband = np.zeros(energies.shape)
 
-    if subset == None:
+    if subset is None:
         for ik in range(nk):
-            # weights wk
-            wk = kpoints[ik, 3]
+            wk = kpoints[ik, 3] # weights
             for iband in range(nbnd):
                 eband[ik, iband] = energies[ik, iband] * wk * f_occ[ik, iband]
     else:
@@ -1593,7 +1593,7 @@ def demet_from_qe_pwo(pw_scf_out, subset=None):
 
     f = elphmod.occupations.smearing(smearing_type)
 
-    if subset == None:
+    if subset is None:
         for ik in range(nk):
             wk = kpoints[ik, 3]
             for iband in range(nbnd):

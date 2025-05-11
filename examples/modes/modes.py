@@ -50,7 +50,7 @@ file.write('Lattice parameter of the unit cell a = %3.12f \n' % (a))
 a1, a2 = elphmod.bravais.translations(two_dimensional=False)
 a1 *= a
 a2 *= a
-a3 = np.array((0,0,C))
+a3 = np.array([0.0, 0.0, C])
 
 # Load real space supercell vectors
 A1, A2, A3 = supercell_vectors(cdw_data, N1, N2, A, a, a1, a2, a3)
@@ -125,7 +125,7 @@ if symmetrize:
     distance_to_original_uc = np.empty((nat))
 
     for atom_index in range(nat):
-        if at_cdw[atom_index]!=at_sym[original_atom_index]:
+        if at_cdw[atom_index] != at_sym[original_atom_index]:
             distance_to_original_uc[atom_index] = 1e10
         else:
             distance_to_original_uc[atom_index] = np.linalg.norm(
@@ -162,11 +162,11 @@ if symmetrize:
 
     R_cdw = (BC_sym - BC_cdw) + R_cdw
 
-if at_cdw!=at_sym:
+if at_cdw != at_sym:
     file.write('Atom order does not match. Starting permutation...\n')
     R_cdw, at_cdw = permutation_finder(nat, R_cdw, R_sym, at_cdw, at_sym,
         eps=0.5 * a)
-    if at_cdw!=at_sym:
+    if at_cdw != at_sym:
         file.write('Atom order still does not match.  Stopping program...\n')
         sys.exit()
 
@@ -174,7 +174,7 @@ if at_cdw!=at_sym:
 # Calculate some important distances:
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-#Total displacement vector
+# Total displacement vector
 U_tot = np.sqrt(((R_cdw - R_sym) ** 2).sum())
 file.write('Total displacement vector (angstrom): U = %3.4f \n' % U_tot)
 
@@ -187,7 +187,7 @@ file.write('Maximal displacement of %s atom is %1.2f %s \n'
 
 file.close()
 
-#%% Plot structures
+# Plot structures
 
 for atom_index in range(nat):
     if at_sym[atom_index] == transition_metal:

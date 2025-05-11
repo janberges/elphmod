@@ -2582,8 +2582,7 @@ def point_on_path(test_point, point_A, point_B, eps=1e-14):
             squared_distance = (
                 (point_B - point_A)[0] ** 2 + (point_B - point_A)[1] ** 2)
 
-            if dot <= squared_distance:
-                #'The test point is between A and B'
+            if dot <= squared_distance: # test point between A and B
                 return True
 
 def crystal_to_cartesian(R_CRYSTAL, a1, a2, a3=None):
