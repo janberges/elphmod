@@ -73,11 +73,11 @@ def hexDOS(energies, minimum=None, maximum=None):
             energies[(i + k) % N, (j + k) % N],
             energies[(i + 1) % N, j],
             energies[i, (j + 1) % N],
-            ])
+        ])
         for i in range(N)
         for j in range(N)
         for k in range(2)
-        ]
+    ]
 
     if minimum is not None:
         triangles = [v for v in triangles if v[2] >= minimum]
@@ -154,11 +154,11 @@ def hexa2F(energies, couplings, minimum=None, maximum=None):
             ((i + k) % N, (j + k) % N),
             ((i + 1) % N, j),
             (i, (j + 1) % N),
-            ], key=lambda x: energies[x])
+        ], key=lambda x: energies[x])
         for i in range(N)
         for j in range(N)
         for k in range(2)
-        ]
+    ]
 
     if minimum is not None:
         triangles = [v for v in triangles if energies[v[2]] >= minimum]
@@ -307,7 +307,7 @@ def isoline(energies):
                         (K1, K2),
                         (K1 + dk1[n], K2 + dk2[n]),
                         (K1 + dk1[n + 1], K2 + dk2[n + 1]),
-                        ]
+                    ]
 
                     for n, (c1, c2) in enumerate(triangle):
                         if c1 - c2 > N:
@@ -344,7 +344,7 @@ def isoline(energies):
                     my_points.append((
                         tuple(i * (1 - alpha) + j * alpha),
                         tuple(i * (1 - beta) + k * beta),
-                        ))
+                    ))
 
             elif B <= E < C:
                 if E == A == B:
@@ -355,7 +355,7 @@ def isoline(energies):
                     my_points.append((
                         tuple(j * (1 - alpha) + k * alpha),
                         tuple(i * (1 - beta) + k * beta),
-                        ))
+                    ))
 
         points = set()
 

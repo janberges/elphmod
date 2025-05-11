@@ -1183,7 +1183,7 @@ def read_projwfc_out(projwfc_out, other=True):
             ['dz2', 'dxz', 'dyz', 'dx2-y2', 'dxy'],
             ['fz3', 'fxz2', 'fyz2', 'fz(x2-y2)', 'fxyz', 'fx(x2-3y2)',
                 'fy(3x2-y2)'],
-            ]
+        ]
 
         with open(projwfc_out) as data:
             for line in data:

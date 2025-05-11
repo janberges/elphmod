@@ -11,7 +11,7 @@ N = [ # 3 x 3 (60 degrees instead of 120 degrees)
     [3, 0, 0],
     [3, 3, 0],
     [0, 0, 1],
-    ]
+]
 
 ph = elphmod.ph.Model('data/NbSe2_cDFPT.ifc', apply_asr_simple=True)
 Ph = ph.supercell(*N)

@@ -15,7 +15,7 @@ N = [ # 3 x 3 (60 degrees instead of 120 degrees)
     [3, 0, 0],
     [3, 3, 0],
     [0, 0, 1],
-    ]
+]
 
 if use_model:
     import elphmod.models.graphene

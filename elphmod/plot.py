@@ -162,7 +162,7 @@ def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
                     (qx - 0.5, qy + 0.5),
                     (qx - 0.5, qy - 0.5),
                     (qx + 0.5, qy - 0.5),
-                    ])
+                ])
             else:
                 miniBZ.append([
                     (qx + a * 2, qy),
@@ -172,7 +172,7 @@ def double_plot(mesh, q, nq, qxmin=-0.8, qxmax=0.8, qymin=-0.8, qymax=0.8,
                     (qx - a, qy - h),
                     (qx + a, qy - h),
                     (qx + a * 2, qy),
-                    ])
+                ])
 
         return image, np.array(miniBZ) / nq
 

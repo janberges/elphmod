@@ -73,14 +73,14 @@ t0 = np.array([
     [ t_z2,      t_z2_x2y2, t_z2_xy  ],
     [ t_z2_x2y2, t_x2y2,    t_x2y2_xy],
     [-t_z2_xy,  -t_x2y2_xy, t_xy     ],
-    ])
+])
 
 def R2(phi):
     return np.array([
         [1,               0,                0],
         [0, np.cos(2 * phi), -np.sin(2 * phi)],
         [0, np.sin(2 * phi),  np.cos(2 * phi)],
-        ])
+    ])
 
 def hopping(t0, phi):
     return R2(phi) @ t0 @ R2(-phi)
@@ -90,7 +90,7 @@ def dR2_dphi(phi):
         [0,                0,                0],
         [0, -np.sin(2 * phi), -np.cos(2 * phi)],
         [0,  np.cos(2 * phi), -np.sin(2 * phi)],
-        ])
+    ])
 
 def derivative(t0, phi):
     dt_dr = -beta / a * hopping(t0, phi)
@@ -121,14 +121,14 @@ def hamiltonian(k1=0.0, k2=0.0, k3=0.0):
         + t[4] * np.exp(-1j * (k1 + k2))
         + t[2] * np.exp(1j * k2)
         + t[5] * np.exp(-1j * k2)
-        )
+    )
 
 def R(phi):
     return np.array([
         [np.cos(phi), -np.sin(phi), 0],
         [np.sin(phi),  np.cos(phi), 0],
         [          0,            0, 1],
-        ])
+    ])
 
 def rotate(matrix, phi):
     return R(phi) @ matrix @ R(-phi)
@@ -153,7 +153,7 @@ A0 = np.array([
     [ax,  0,  axz],
     [0,   ay, 0  ],
     [azx, 0,  az ],
-    ])
+])
 
 A1 = rotate(A0, -30 * deg)
 A2 = rotate(A0, 90 * deg)
@@ -174,7 +174,7 @@ D1 = np.array([
     [ dx, 0,   0  ],
     [ 0,  dy,  dyz],
     [-0,  dyz, dz ],
-    ])
+])
 
 D3 = rotate(D1, 120 * deg)
 D5 = rotate(D1, 240 * deg)
@@ -193,7 +193,7 @@ F1 = np.array([
     [fx, 0,   0  ],
     [0,  fy,  fyz],
     [0, -fyz, fz ],
-    ])
+])
 
 F3 = rotate(F1, 120 * deg)
 F5 = rotate(F1, 240 * deg)
@@ -235,7 +235,7 @@ def dynamical_matrix(q1=0.0, q2=0.0, q3=0.0):
         + C4 * (1 - np.exp(-1j * q1))
         + C5 * (1 - np.exp(-1j * (q1 + q2)))
         + C6 * (1 - np.exp(-1j * q2))
-        )
+    )
 
     both = (
         + D1 * (1 - np.exp(1j * q1))
@@ -244,7 +244,7 @@ def dynamical_matrix(q1=0.0, q2=0.0, q3=0.0):
         + D4 * (1 - np.exp(-1j * q1))
         + D5 * (1 - np.exp(-1j * (q1 + q2)))
         + D6 * (1 - np.exp(-1j * q2))
-        )
+    )
 
     D[3:6, 3:6] += both
     D[6:9, 6:9] += zreflect(both)
@@ -254,7 +254,7 @@ def dynamical_matrix(q1=0.0, q2=0.0, q3=0.0):
         + E1 * np.exp(1j * (q1 + q2))
         + E2 * np.exp(-1j * (q1 - q2))
         + E3 * np.exp(-1j * (q1 + q2))
-        )
+    )
 
     D[0:3, 0:3] += intra
     D[0:3, 3:6] -= inter
@@ -275,7 +275,7 @@ def dynamical_matrix(q1=0.0, q2=0.0, q3=0.0):
         + F4 * np.exp(-1j * q1)
         + F5 * np.exp(-1j * (q1 + q2))
         + F6 * np.exp(-1j * q2)
-        )
+    )
 
     D[6:9, 6:9] += intra
     D[6:9, 3:6] -= inter
@@ -308,7 +308,7 @@ def coupling(q1=0, q2=0, q3=0, k1=0, k2=0, k3=0, **ignore):
         + dt[4] * (np.exp(-1j * (K1 + K2)) - np.exp(-1j * (k1 + k2)))
         + dt[2] * (np.exp(1j * K2) - np.exp(1j * k2))
         + dt[5] * (np.exp(-1j * K2) - np.exp(-1j * k2))
-        ) / sqrtM
+    ) / sqrtM
 
 def create(prefix=None, rydberg=False, divide_mass=True):
     """Create tight-binding, mass-spring, and coupling data files for TMDCs.

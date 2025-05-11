@@ -35,7 +35,7 @@ def rotate(vector, angle, two_dimensional=True):
         rotation = np.array([
             [cos, -sin],
             [sin,  cos],
-            ])
+        ])
 
         return np.dot(rotation, vector)
     else:
@@ -43,7 +43,7 @@ def rotate(vector, angle, two_dimensional=True):
             [cos, -sin, 0.0],
             [sin,  cos, 0.0],
             [0.0,  0.0, 1.0],
-            ])
+        ])
 
         return np.dot(rotation, vector)
 
@@ -120,28 +120,28 @@ def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
             [-1.0, 0.0, 1.0],
             [ 0.0, 1.0, 1.0],
             [-1.0, 1.0, 0.0],
-            ]) * celldm[0] / 2
+        ]) * celldm[0] / 2
 
     if ibrav == 3: # cubic (bcc)
         return np.array([
             [ 1.0,  1.0, 1.0],
             [-1.0,  1.0, 1.0],
             [-1.0, -1.0, 1.0],
-            ]) * celldm[0] / 2
+        ]) * celldm[0] / 2
 
     if ibrav == -3: # cubic (bcc, more symmetric axis)
         return np.array([
             [-1.0,  1.0,  1.0],
             [ 1.0, -1.0,  1.0],
             [ 1.0,  1.0, -1.0],
-            ]) * celldm[0] / 2
+        ]) * celldm[0] / 2
 
     if ibrav == 4: # hexagonal & trigonal
         return np.array([
             [ 1.0,              0.0,       0.0],
             [-0.5, 0.5 * np.sqrt(3),       0.0],
             [ 0.0,              0.0, celldm[2]],
-            ]) * celldm[0]
+        ]) * celldm[0]
 
     if ibrav == 5: # trigonal (3-fold axis c)
         tx = np.sqrt((1 - celldm[3]) / 2)
@@ -152,7 +152,7 @@ def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
             [ tx,    -ty, tz],
             [  0, 2 * ty, tz],
             [-tx,    -ty, tz],
-            ]) * celldm[0]
+        ]) * celldm[0]
 
     if ibrav == -5: # trigonal (3-fold axis <111>)
         tx = np.sqrt((1 - celldm[3]) / 2)
@@ -166,21 +166,21 @@ def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
             [u, v, v],
             [v, u, v],
             [v, v, u],
-            ]) * celldm[0] / np.sqrt(3)
+        ]) * celldm[0] / np.sqrt(3)
 
     if ibrav == 6: # tetragonal (st)
         return np.array([
             [ 1.0, 0.0,       0.0],
             [ 0.0, 1.0,       0.0],
             [ 0.0, 0.0, celldm[2]],
-            ]) * celldm[0]
+        ]) * celldm[0]
 
     if ibrav == 7: # tetragonal (bct)
         return np.array([
             [ 1.0, -1.0, celldm[2]],
             [ 1.0,  1.0, celldm[2]],
             [-1.0, -1.0, celldm[2]],
-            ]) * celldm[0] / 2
+        ]) * celldm[0] / 2
 
     if ibrav == 8: # orthorhombic
         return np.diag([1.0, celldm[1], celldm[2]]) * celldm[0]
@@ -190,35 +190,35 @@ def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
             [ 0.5, 0.5 * celldm[1],       0.0],
             [-0.5, 0.5 * celldm[1],       0.0],
             [ 0.0,             0.0, celldm[2]],
-            ]) * celldm[0]
+        ]) * celldm[0]
 
     if ibrav == -9: # orthorhombic (bco, alternate description)
         return np.array([
             [0.5, -0.5 * celldm[1],       0.0],
             [0.5,  0.5 * celldm[1],       0.0],
             [0.0,              0.0, celldm[2]],
-            ]) * celldm[0]
+        ]) * celldm[0]
 
     if ibrav == 91: # orthorhombic (A-type)
         return np.array([
             [1.0,             0.0,              0.0],
             [0.0, 0.5 * celldm[1], -0.5 * celldm[2]],
             [0.0, 0.5 * celldm[1],  0.5 * celldm[2]],
-            ]) * celldm[0]
+        ]) * celldm[0]
 
     if ibrav == 10: # orthorhombic (fco)
         return np.array([
             [1.0,       0.0, celldm[2]],
             [1.0, celldm[1],       0.0],
             [0.0, celldm[1], celldm[2]],
-            ]) * celldm[0] / 2
+        ]) * celldm[0] / 2
 
     if ibrav == 11: # orthorhombic (bco)
         return np.array([
             [ 1.0,  celldm[1], celldm[2]],
             [-1.0,  celldm[1], celldm[2]],
             [-1.0, -celldm[1], celldm[2]],
-            ]) * celldm[0] / 2
+        ]) * celldm[0] / 2
 
     if ibrav == 12: # monoclinic (unique axis c)
         cos = celldm[3]
@@ -228,7 +228,7 @@ def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
             [            1.0,             0.0,       0.0],
             [celldm[1] * cos, celldm[1] * sin,       0.0],
             [            0.0,             0.0, celldm[2]],
-            ]) * celldm[0]
+        ]) * celldm[0]
 
     if ibrav == -12: # monoclinic (unique axis b)
         cos = celldm[4]
@@ -238,7 +238,7 @@ def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
             [            1.0,       0.0,             0.0],
             [            0.0, celldm[1],             0.0],
             [celldm[2] * cos,       0.0, celldm[2] * sin],
-            ]) * celldm[0]
+        ]) * celldm[0]
 
     if ibrav == 13: # monoclinic (bcm, unique axis c)
         cos = celldm[3]
@@ -248,7 +248,7 @@ def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
             [            0.5,             0.0, -0.5 * celldm[2]],
             [celldm[1] * cos, celldm[1] * sin,              0.0],
             [            0.5,             0.0,  0.5 * celldm[2]],
-            ]) * celldm[0]
+        ]) * celldm[0]
 
     if ibrav == -13: # monoclinic (bcm, unique axis b)
         cos = celldm[4]
@@ -258,7 +258,7 @@ def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
             [            0.5, 0.5 * celldm[1],             0.0],
             [           -0.5, 0.5 * celldm[1],             0.0],
             [celldm[2] * cos,             0.0, celldm[2] * sin],
-            ]) * celldm[0]
+        ]) * celldm[0]
 
     if ibrav == 14: # triclinic
         cosc = celldm[5]
@@ -275,7 +275,7 @@ def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
             [             1.0,              0.0,            0.0],
             [celldm[1] * cosc, celldm[1] * sinc,            0.0],
             [celldm[2] * cosb, celldm[2] * ex1, celldm[2] * ex2],
-            ]) * celldm[0]
+        ]) * celldm[0]
 
     info('Bravais lattice %s unknown!' % ibrav, error=True)
 
@@ -1275,15 +1275,16 @@ def wigner(nr1, nr2, nr3, at, tau, tau2=None, eps=1e-7, sgn=+1, nsc=2):
 
                 # determine equivalent unit cells within considered supercells:
 
-                copies = sgn * np.array([[
+                copies = sgn * np.array([
+                    [
                         M1 * nr1 + m1,
                         M2 * nr2 + m2,
                         M3 * nr3 + m3,
-                        ]
+                    ]
                     for M1 in supercells
                     for M2 in supercells
                     for M3 in supercells
-                    ])
+                ])
 
                 # calculate corresponding translation vectors:
 
@@ -1531,45 +1532,45 @@ def path(points, N=30, recvec=None, qe=False, moveG=0, **kwargs):
             'M': [0.0, 0.5, 0.5],
             'R': [0.5, 0.5, 0.5],
             'X': [0.0, 0.0, 0.5],
-            },
+        },
         2: { # cubic (fcc)
             'X': [0.0, 0.5, 0.5],
             'L': [0.5, 0.5, 0.5],
             'W': [0.25, 0.75, 0.5],
             'U': [0.25, 0.625, 0.625],
             'K': [0.375, 0.75, 0.375],
-            },
+        },
         3: { # cubic (bcc) (*)
             'H': [0.5, 0.5, 0.5],
             'P': [0.75, 0.25, -0.25],
             'N': [0.5, 0.5, 0.0],
-            },
+        },
         -3: { # cubic (bcc, more symmetric axis)
             'H': [0.5, 0.5, -0.5],
             'P': [0.25, 0.25, 0.25],
             'N': [0.5, 0.0, 0.0],
-            },
+        },
         4: { # hexagonal & trigonal
             'A': [0.0, 0.0, 0.5],
             'M': [0.0, 0.5, 0.0],
             'L': [0.0, 0.5, 0.5],
             'K': [1 / 3, 1 / 3, 0.0],
             'H': [1 / 3, 1 / 3, 0.5],
-            },
+        },
         6: { # tetragonal (st)
             'X': [0.5, 0.0, 0.0],
             'M': [0.5, 0.5, 0.0],
             'Z': [0.0, 0.0, 0.5],
             'R': [0.5, 0.0, 0.5],
             'A': [0.5, 0.5, 0.5],
-            },
+        },
         7: { # tetragonal (bct) (generated from 6)
             'X': [0.25, 0.25, -0.25],
             'M': [0.00, 0.50, -0.50],
             'Z': [0.25, 0.25, 0.25],
             'R': [0.50, 0.50, 0.00],
             'A': [0.25, 0.75, -0.25],
-            },
+        },
         8: { # orthorhombic
             'X': [0.5, 0.0, 0.0],
             'Y': [0.0, 0.5, 0.0],
@@ -1578,7 +1579,7 @@ def path(points, N=30, recvec=None, qe=False, moveG=0, **kwargs):
             'T': [0.0, 0.5, 0.5],
             'U': [0.5, 0.0, 0.5],
             'R': [0.5, 0.5, 0.5],
-            },
+        },
         9: { # orthorhombic (bco) (*)
             'Y': [0.5, -0.5, 0.0],
             'y': [0.5, 0.5, 0.0],
@@ -1587,7 +1588,7 @@ def path(points, N=30, recvec=None, qe=False, moveG=0, **kwargs):
             't': [0.5, 0.5, 0.5],
             'S': [0.5, 0.0, 0.0],
             'R': [0.5, 0.0, 0.5],
-            },
+        },
         -9: { # orthorhombic (bco, alternate description)
             'Y': [0.5, 0.5, 0.0],
             'y': [-0.5, 0.5, 0.0],
@@ -1596,7 +1597,7 @@ def path(points, N=30, recvec=None, qe=False, moveG=0, **kwargs):
             't': [-0.5, 0.5, 0.5],
             'S': [0.0, 0.5, 0.0],
             'R': [0.0, 0.5, 0.5],
-            },
+        },
         12: { # monoclinic (unique axis c) (*)
             'B': [-0.5, 0.0, 0.0],
             'Y': [0.0, 0.5, 0.0],
@@ -1605,7 +1606,7 @@ def path(points, N=30, recvec=None, qe=False, moveG=0, **kwargs):
             'C': [0.0, 0.5, 0.5],
             'A': [-0.5, 0.0, 0.5],
             'E': [-0.5, 0.5, 0.5],
-            },
+        },
         -12: { # monoclinic (unique axis b)
             'B': [-0.5, 0.0, 0.0],
             'Y': [0.0, 0.5, 0.0],
@@ -1614,8 +1615,8 @@ def path(points, N=30, recvec=None, qe=False, moveG=0, **kwargs):
             'C': [0.0, 0.5, 0.5],
             'A': [-0.5, 0.0, 0.5],
             'E': [-0.5, 0.5, 0.5],
-            },
-        }.get(kwargs.get('ibrav', 8), {})
+        },
+    }.get(kwargs.get('ibrav', 8), {})
 
     # (*) generated from points for Bravais lattice with index of opposite sign
     # through X'[k] = X[i] b[i, j] a'[k, j], where b are the reciprocals of a.

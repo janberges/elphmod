@@ -11,7 +11,7 @@ N = [ # 3 x 3 (60 degrees instead of 120 degrees)
     [3, 0, 0],
     [3, 3, 0],
     [0, 0, 1],
-    ]
+]
 
 a = elphmod.bravais.primitives(ibrav=4)
 b = elphmod.bravais.reciprocals(*a)

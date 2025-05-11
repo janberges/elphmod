@@ -11,7 +11,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'numpydoc',
     'myst_parser',
-    ]
+]
 
 exclude_patterns = ['README.md']
 
@@ -27,9 +27,9 @@ mathjax_config = {
             'bra': [r'\langle#1|', 1],
             'bracket': [r'\langle#1|#2\rangle', 2],
             'ket': [r'|#1\rangle', 1],
-            },
         },
-    }
+    },
+}
 
 rst_epilog = '''
 .. include:: <isogrk1.txt>
@@ -40,7 +40,7 @@ html_logo = '../logo/elphmod.svg'
 html_theme_options = {
     'logo_only': True,
     'style_nav_header_background': '#e7f2fa',
-    }
+}
 html_css_files = ['style.css']
 html_static_path = html_css_files
 

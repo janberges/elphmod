@@ -434,7 +434,7 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
                         envelope = (
                               Theta[kq1, kq2, kq3, m] * delta[k1, k2, k3, n]
                             + delta[kq1, kq2, kq3, m] * Theta[k1, k2, k3, n]
-                            )
+                        )
                     else:
                         envelope = (Theta[kq1, kq2, kq3, m]
                             * Theta[k1, k2, k3, n])

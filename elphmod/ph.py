@@ -1876,7 +1876,7 @@ def q2r(ph, D_irr=None, q_irr=None, nq=None, D_full=None, angle=60,
                 [np.cos(phi), -np.sin(phi), 0],
                 [np.sin(phi),  np.cos(phi), 0],
                 [0,            0,           1],
-                ])
+            ])
 
             return np.kron(np.eye(n), block)
 

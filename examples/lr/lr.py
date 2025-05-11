@@ -37,7 +37,7 @@ if len(sys.argv) > 1 and sys.argv[1] == '--prepare-q':
                 fldos=' ',
                 fleig=' ',
                 flvec=' ',
-                ))
+            ))
 
     raise SystemExit
 

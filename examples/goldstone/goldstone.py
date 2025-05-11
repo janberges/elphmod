@@ -46,7 +46,7 @@ D = [
     ph['cdfpt'].D() + Pi / ph['dfpt'].M[0],
     ph['dfpt_asr'].D(),
     ph['dfpt_rsr'].D(),
-    ]
+]
 
 Shorten = 0.1
 shorten = 0.01

@@ -25,7 +25,7 @@ nk = 1000 # number of k points
 def h(k1=0.0):
     T = -np.array([
         [t * np.exp(1j * k1)],
-        ])
+    ])
 
     return T + T.transpose().conj()
 
@@ -40,7 +40,7 @@ def H(k1=0.0):
         [0.0, 0.0, t02 * np.exp(1j * k1)],
         [t10, 0.0, 0.0],
         [0.0, t21, 0.0],
-        ])
+    ])
 
     return T + T.transpose().conj()
 
