@@ -52,15 +52,15 @@ class TestDiagrams(unittest.TestCase):
 
         self.assertTrue(np.allclose(diff, pert, **tol))
 
-        diff = (E(H - eps * gu) - 2 * E(H) + E(H + eps * gu)) / eps ** 2
+        diff = (E(H + eps * gu) - 2 * E(H) + E(H - eps * gu)) / eps ** 2
 
         pert = elphmod.diagrams.phonon_self_energy(q, e, g2=abs(gu) ** 2,
             kT=kT, occupations=f)[0, 0].real
 
         self.assertTrue(np.allclose(diff, pert, **tol))
 
-        diff = (-E(H - 2 * eps * gu) / 2 + E(H - eps * gu) - E(H + eps * gu)
-            + E(H + 2 * eps * gu) / 2) / eps ** 3
+        diff = (E(H + 2 * eps * gu) - 2 * E(H + eps * gu) + 2 * E(H - eps * gu)
+            - E(H - 2 * eps * gu)) / (2 * eps ** 3)
 
         pert = elphmod.diagrams.triangle(q[0], q[0], e, gu, gu, gu,
             kT=kT, occupations=f).real
