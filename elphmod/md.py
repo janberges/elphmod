@@ -260,11 +260,8 @@ class Driver:
         if self.interactive:
             self.update_plot()
 
-        prefactor = 2 / self.nk.prod()
-
-        E = prefactor * (self.f(self.e / self.kT) * self.e).sum() # E - mu N
-        E += self.mu * self.n # mu N
-        E -= prefactor * self.kT * self.f.entropy(self.e / self.kT).sum() # T S
+        E = elphmod.diagrams.grand_potential(self.e,
+            self.kT, self.f) + self.mu * self.n
 
         E += 0.5 * self.u.dot(self.C0[0].real).dot(self.u)
 

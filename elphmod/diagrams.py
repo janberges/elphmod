@@ -1088,8 +1088,8 @@ def grand_potential(e, kT=0.025, occupations='fd'):
     if occupations is elphmod.occupations.fermi_dirac: # faster alternative
         return prefactor * np.log(occupations(-x)).sum()
 
-    return prefactor * ((occupations(x) * x).sum()
-        - occupations.entropy(x).sum()) # U - T S - mu N (where mu = 0)
+    return prefactor * ((occupations(x) * x).sum() # U - mu N
+        - occupations.entropy(x).sum()) # - T S
 
 def first_order(e, g, kT=0.025, U=None, eps=1e-10, occupations='fd'):
     r"""Calculate first-order diagram of grand potential.
