@@ -13,7 +13,7 @@ tol = dict(rtol=1e-2, atol=0.0)
 
 class TestDiagrams(unittest.TestCase):
     def _test_expansion(self, eps=1e-4, nk=(4, 4),
-            kT=0.01, f=elphmod.occupations.fermi_dirac):
+            kT=0.01, f=elphmod.occupations.fermi_dirac, n=None):
         """Compare lowest-order diagrams to finite differences."""
 
         k = elphmod.bravais.mesh(*nk)
@@ -31,6 +31,9 @@ class TestDiagrams(unittest.TestCase):
 
         e, U = np.linalg.eigh(H)
 
+        if n:
+            e -= elphmod.occupations.find_Fermi_level(n, e, kT, f)
+
         H = e[..., np.newaxis] * np.eye(elph.el.size)
 
         u = 1 - 2 * np.random.rand(1, elph.ph.size, 1)
@@ -42,8 +45,20 @@ class TestDiagrams(unittest.TestCase):
         prefactor = 2 * kT / np.prod(nk)
 
         def E(H):
-            return elphmod.diagrams.grand_potential(np.linalg.eigvalsh(H),
-                kT=kT, occupations=f)
+            """Compute grand potential or free energy for given Hamiltonian."""
+
+            e = np.linalg.eigvalsh(H)
+
+            if n:
+                mu = elphmod.occupations.find_Fermi_level(n, e, kT, f)
+                e -= mu
+
+            Phi = elphmod.diagrams.grand_potential(e, kT, f)
+
+            if n:
+                return Phi + mu * n
+
+            return Phi
 
         diff = (E(H + eps * gu) - E(H - eps * gu)) / (2 * eps)
 
@@ -57,7 +72,14 @@ class TestDiagrams(unittest.TestCase):
         pert = elphmod.diagrams.phonon_self_energy(q, e, g2=abs(gu) ** 2,
             kT=kT, occupations=f)[0, 0].real
 
+        if n:
+            pert += elphmod.diagrams.phonon_self_energy_fermi_shift(e, gu,
+                kT=kT, occupations=f)[0, 0].real
+
         self.assertTrue(np.allclose(diff, pert, **tol))
+
+        if n:
+            return
 
         diff = (E(H + 2 * eps * gu) - 2 * E(H + eps * gu) + 2 * E(H - eps * gu)
             - E(H - 2 * eps * gu)) / (2 * eps ** 3)
@@ -90,6 +112,30 @@ class TestDiagrams(unittest.TestCase):
     def test_expansion_two_fermi_dirac(self):
         """Compare diagrams to differences for two Fermi levels."""
         self._test_expansion(f=elphmod.occupations.two_fermi_dirac)
+
+    def test_free_energy_fermi_dirac(self):
+        """Check free-energy derivatives for Fermi-Dirac smearing."""
+        self._test_expansion(f=elphmod.occupations.fermi_dirac, n=1.0)
+
+    def test_free_energy_gauss(self):
+        """Check free-energy derivatives for Gauss smearing."""
+        self._test_expansion(f=elphmod.occupations.gauss, n=1.0)
+
+    def test_free_energy_marzari_vanderbilt(self):
+        """Check free-energy derivatives for Marzari-Vanderbilt smearing."""
+        self._test_expansion(f=elphmod.occupations.marzari_vanderbilt, n=1.0)
+
+    def test_free_energy_methfessel_paxton(self):
+        """Check free-energy derivatives for Methfessel-Paxton smearing."""
+        self._test_expansion(f=elphmod.occupations.methfessel_paxton, n=1.0)
+
+    def test_free_energy_double_fermi_dirac(self):
+        """Check free-energy derivatives for double Fermi-Dirac smearing."""
+        self._test_expansion(f=elphmod.occupations.double_fermi_dirac, n=1.0)
+
+    def test_free_energy_two_fermi_dirac(self):
+        """Check free-energy derivatives for two Fermi levels."""
+        self._test_expansion(f=elphmod.occupations.two_fermi_dirac, n=1.0)
 
 if __name__ == '__main__':
     unittest.main()
