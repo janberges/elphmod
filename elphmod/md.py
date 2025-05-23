@@ -176,7 +176,7 @@ class Driver:
 
         Parameters
         ----------
-        amplitude : float
+        amplitude : float, default 0.01
             Maximum displacement.
         """
         if comm.rank == 0:
@@ -317,9 +317,9 @@ class Driver:
         ----------
         parameters : ndarray
             Dummy positional argument for optimization routines.
-        gamma_only : default True
+        gamma_only : bool, default True
             Calculate Hessian for q = 0 only?
-        apply_asr_simple : default False
+        apply_asr_simple : bool, default False
             Apply simple acoustic sum rule correction to force constants
             according to Eq. 81 of Gonze and Lee, Phys. Rev. B 55, 10355 (1997)?
             This is done before saving the Hessian to file.
