@@ -3,6 +3,14 @@
 See [Git commits](https://github.com/janberges/elphmod/commits) for more
 detailed list of changes.
 
+## v0.30/2025-05-23
+
+* cDFPT patches for patch versions QE-7.3.1 and QE-7.4.1
+* New occupation function with two Fermi levels
+* Reproducible random numbers
+* Improved documentation
+* Various bugfixes and optimizations
+
 ## v0.29/2024-11-23
 
 * QE-7.4 support (cDFPT patch, EPW patch not needed anymore)
