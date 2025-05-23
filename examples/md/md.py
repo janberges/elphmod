@@ -4,9 +4,13 @@
 # This program is free software under the terms of the GNU GPLv3 or later.
 
 import elphmod.models.tas2
-import ipi._driver.driver
 import subprocess
 import time
+
+try:
+    import ipi_driver
+except ModuleNotFoundError:
+    import ipi._driver.driver as ipi_driver
 
 el, ph, elph = elphmod.models.tas2.create(rydberg=True, divide_mass=False)
 
@@ -26,6 +30,6 @@ time.sleep(2) # wait for i-PI to load and create a socket
 
 driver.plot(interactive=True)
 
-ipi._driver.driver.run_driver(unix=True, address='localhost', driver=driver)
+ipi_driver.run_driver(unix=True, address='localhost', driver=driver)
 
 driver.plot(interactive=False)
