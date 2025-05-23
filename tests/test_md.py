@@ -28,7 +28,7 @@ class TestMD(unittest.TestCase):
         driver_sparse = elphmod.md.Driver(elph_sparse, kT, f,
             n=elph_sparse.el.size)
 
-        driver_dense.random_displacements()
+        driver_dense.random_displacements(reproducible=True)
         driver_sparse.u[:] = driver_dense.u
 
         self.assertTrue(np.isclose(driver_dense.free_energy(show=False),

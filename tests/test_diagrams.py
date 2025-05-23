@@ -36,7 +36,7 @@ class TestDiagrams(unittest.TestCase):
 
         H = e[..., np.newaxis] * np.eye(elph.el.size)
 
-        u = 1 - 2 * np.random.rand(1, elph.ph.size, 1)
+        u = 1 - 2 * elphmod.misc.rand(1, elph.ph.size, 1)
 
         elphmod.MPI.comm.Bcast(u)
 

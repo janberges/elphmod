@@ -242,6 +242,33 @@ def differential(x):
 
     return dx
 
+def rand(*shape, a=48271, m=2147483647):
+    """Create array with MINSTD random values in a given shape.
+
+    Parameters
+    ----------
+    *shape : int
+        Array dimensions.
+    a, m : int
+        Parameters of Park–Miller random-number generator.
+
+    Returns
+    -------
+    ndarray
+        Random values.
+    """
+    array = np.empty(np.prod(shape))
+
+    for n in range(array.size):
+        rand.i *= a
+        rand.i %= m
+
+        array[n] = rand.i / m
+
+    return array.reshape(shape)
+
+rand.i = 1
+
 def read_cube(cube, only_header=False, comm=comm):
     """Read Gaussian cube file.
 

@@ -171,16 +171,19 @@ class Driver:
             self.__init__(elph, self.kT, self.f, self.n * len(elph.cells),
                 self.nx * len(elph.cells), unscreen=False, **kwargs)
 
-    def random_displacements(self, amplitude=0.01):
+    def random_displacements(self, amplitude=0.01, reproducible=False):
         """Displace atoms randomly from unperturbed positions.
 
         Parameters
         ----------
         amplitude : float, default 0.01
             Maximum displacement.
+        reproducible : bool, default False
+            Use same random numbers in each program run?
         """
         if comm.rank == 0:
-            self.u = amplitude * (1 - 2 * np.random.rand(self.u.size))
+            rand = elphmod.misc.rand if reproducible else np.random.rand
+            self.u = amplitude * (1 - 2 * rand(self.u.size))
             self.center_mass()
 
         comm.Bcast(self.u)
