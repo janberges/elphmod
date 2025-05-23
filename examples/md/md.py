@@ -20,7 +20,7 @@ driver = elphmod.md.Driver(elph, nk=(12, 12), nq=(2, 2), supercell=(9, 9),
 driver.kT = 0.005
 driver.f = elphmod.occupations.fermi_dirac
 
-driver.random_displacements()
+driver.random_displacements(amplitude=0.05)
 
 driver.to_xyz('init.xyz')
 
