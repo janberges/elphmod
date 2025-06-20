@@ -365,7 +365,7 @@ def smearing(smearing='gaussian', **ignore):
         ``lorentzian``, ``lorentz``, and ``heaviside``. If no string is passed,
         it is returned as is.
     **ignore
-        Ignored keyword arguments, e.g., parameters from 'func'`read_pwi`.
+        Ignored keyword arguments, e.g., parameters from :func:`read_pwi`.
 
     Returns
     -------

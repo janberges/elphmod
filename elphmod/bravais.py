@@ -67,9 +67,9 @@ def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
     bohr : bool, default False
         Return lattice vectors in angstrom or bohr?
     r_cell, cell_units
-        Cell parameters from 'func'`read_pwi` used if `ibrav` is zero.
+        Cell parameters from :func:`read_pwi` used if `ibrav` is zero.
     **ignore
-        Ignored keyword arguments, e.g., parameters from 'func'`read_pwi`.
+        Ignored keyword arguments, e.g., parameters from :func:`read_pwi`.
 
     Returns
     -------
@@ -1509,7 +1509,7 @@ def path(points, N=30, recvec=None, qe=False, moveG=0, **kwargs):
         This is useful, e.g., to plot phonon dispersions with TO-LO splitting.
     **kwargs
         Arguments passed to :func:`primitives`, e.g., parameters from
-        'func'`read_pwi`, particularly the Bravais-lattice index `ibrav`.
+        :func:`read_pwi`, particularly the Bravais-lattice index `ibrav`.
 
     Returns
     -------
