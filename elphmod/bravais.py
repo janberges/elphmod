@@ -47,8 +47,43 @@ def rotate(vector, angle, two_dimensional=True):
 
         return np.dot(rotation, vector)
 
-def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
-        celldm=None, bohr=False, r_cell=None, cell_units=None, **ignore):
+def abc2celldm(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
+        **ignore):
+    """Convert traditional crystallographic constants to QE's cell dimensions.
+
+    Parameters
+    ----------
+    a, b, c, cosbc, cosac, cosab : float
+        Traditional crystallographic constants in angstrom.
+    **ignore
+        Ignored keyword arguments, e.g., parameters from :func:`read_pwi`.
+
+    Returns
+    -------
+    ndarray
+        QE's cell dimensions.
+    """
+    celldm = np.zeros(6)
+
+    celldm[0] = a / elphmod.misc.a0
+    celldm[1] = b / a
+    celldm[2] = c / a
+
+    if ibrav in {0, 14}:
+        celldm[3] = cosbc
+        celldm[4] = cosac
+        celldm[5] = cosab
+
+    elif ibrav in {-13, -12}:
+        celldm[4] = cosac
+
+    elif ibrav in {-5, 5, 12, 13}:
+        celldm[3] = cosab
+
+    return celldm
+
+def primitives(ibrav=8, celldm=None, bohr=False, r_cell=None, cell_units=None,
+        **const):
     """Get primitive vectors of Bravais lattice as in QE.
 
     Adapted from Modules/latgen.f90 of Quantum ESPRESSO.
@@ -59,8 +94,6 @@ def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
     ----------
     ibrav : int
         Bravais-lattice index.
-    a, b, c, cosbc, cosac, cosab : float
-        Traditional crystallographic constants in angstrom.
     celldm : list of float
         Alternative crystallographic constants. The first element is the
         lattice constant in bohr; the other elements are dimensionless.
@@ -68,8 +101,8 @@ def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
         Return lattice vectors in angstrom or bohr?
     r_cell, cell_units
         Cell parameters from :func:`read_pwi` used if `ibrav` is zero.
-    **ignore
-        Ignored keyword arguments, e.g., parameters from :func:`read_pwi`.
+    **const : float
+        Traditional crystallographic constants passed to :func:`abc2celldm`.
 
     Returns
     -------
@@ -77,22 +110,7 @@ def primitives(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
         Matrix of primitive Bravais lattice vectors.
     """
     if celldm is None:
-        celldm = np.zeros(6)
-
-        celldm[0] = a / elphmod.misc.a0
-        celldm[1] = b / a
-        celldm[2] = c / a
-
-        if ibrav in {0, 14}:
-            celldm[3] = cosbc
-            celldm[4] = cosac
-            celldm[5] = cosab
-
-        elif ibrav in {-13, -12}:
-            celldm[4] = cosac
-
-        elif ibrav in {-5, 5, 12, 13}:
-            celldm[3] = cosab
+        celldm = abc2celldm(ibrav, **const)
 
     if not bohr:
         celldm[0] *= elphmod.misc.a0
