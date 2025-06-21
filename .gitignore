@@ -10,6 +10,7 @@ build
 dist
 doctrees
 html
+info
 tags
 
 !elphmod.png

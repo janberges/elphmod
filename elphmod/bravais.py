@@ -82,6 +82,101 @@ def abc2celldm(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
 
     return celldm
 
+def irreducibles_qe(ibrav=1, nk1=1, nk2=1, nk3=1, **const):
+    """Get irreducible k points and weights from QE's ``kpoints.x``.
+
+    Parameters
+    ----------
+    ibrav : int
+        Bravais-lattice index.
+    nk1, nk2, nk3 : int
+        Number of points along axis.
+    **const : float
+        Traditional crystallographic constants passed to :func:`abc2celldm`.
+
+    Returns
+    -------
+    ndarray
+        Irreducible k points in crystal coordinates with period :math:`2 \pi`.
+    ndarray
+        Weights of irreducible k points.
+
+    Warnings
+    --------
+    The program ``kpoints.x`` creates and potentially overwrites the file *info*
+    in the current directory.
+    """
+    nk = (nk1, nk2, nk3)
+
+    if comm.rank == 0:
+        import subprocess
+
+        proc = subprocess.Popen(['kpoints.x'],
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
+
+        celldm = abc2celldm(ibrav, **const)
+
+        kpoints = []
+        weights = []
+
+        while True:
+            out = ''
+
+            while True:
+                char = proc.stdout.read(1) # waits for output while process runs
+
+                if not char: # no output remains and process has finished
+                    break
+
+                out += char
+
+                if out.endswith(' >> '):
+                    break
+
+            if 'bravais lattice' in out:
+                inp = str(ibrav)
+
+            elif 'filout' in out:
+                inp = '/dev/stdout'
+
+            elif 'n1 n2 n3' in out:
+                inp = '%d %d %d' % nk
+
+            elif 'k1 k2 k3' in out:
+                inp = '0 0 0'
+
+            elif 'write all k?' in out:
+                inp = 'false'
+
+            elif 'celldm' in out:
+                inp = '%g' % celldm[int(out[-7]) - 1]
+
+            elif 'k-points' in out:
+                for line in out.split('\n'):
+                    if '!' in line:
+                        print('Warning: Problem with k mesh from QE!')
+                        break
+
+                    columns = line.split()
+
+                    if len(columns) == 5:
+                        kpoints.append(list(map(float, columns[1:4])))
+                        weights.append(int(float(columns[4])))
+
+                break
+
+            proc.stdin.write(inp + '\n')
+            proc.stdin.flush()
+    else:
+        kpoints = weights = None
+
+    kpoints = np.reshape(comm.bcast(kpoints), (-1, 3))
+    weights = np.array(comm.bcast(weights))
+
+    a = elphmod.bravais.primitives(ibrav, **const)
+
+    return 2 * np.pi * np.round(kpoints.dot(a.T) * nk) / nk, weights
+
 def primitives(ibrav=8, celldm=None, bohr=False, r_cell=None, cell_units=None,
         **const):
     """Get primitive vectors of Bravais lattice as in QE.
