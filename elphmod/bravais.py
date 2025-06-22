@@ -82,15 +82,15 @@ def abc2celldm(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
 
     return celldm
 
-def irreducibles_qe(ibrav=1, nk1=1, nk2=1, nk3=1, **const):
+def irreducibles_qe(nk1=1, nk2=1, nk3=1, ibrav=1, **const):
     """Get irreducible k points and weights from QE's ``kpoints.x``.
 
     Parameters
     ----------
-    ibrav : int
-        Bravais-lattice index.
     nk1, nk2, nk3 : int
         Number of points along axis.
+    ibrav : int
+        Bravais-lattice index.
     **const : float
         Traditional crystallographic constants passed to :func:`abc2celldm`.
 
