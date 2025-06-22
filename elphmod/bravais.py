@@ -108,13 +108,13 @@ def irreducibles_qe(nk1=1, nk2=1, nk3=1, ibrav=1, **const):
     """
     nk = (nk1, nk2, nk3)
 
+    celldm = abc2celldm(ibrav, **const)
+
     if comm.rank == 0:
         import subprocess
 
         proc = subprocess.Popen(['kpoints.x'],
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
-
-        celldm = abc2celldm(ibrav, **const)
 
         kpoints = []
         weights = []
@@ -173,7 +173,7 @@ def irreducibles_qe(nk1=1, nk2=1, nk3=1, ibrav=1, **const):
     kpoints = np.reshape(comm.bcast(kpoints), (-1, 3))
     weights = np.array(comm.bcast(weights))
 
-    a = elphmod.bravais.primitives(ibrav, **const)
+    a = elphmod.bravais.primitives(ibrav, bohr=True, **const) / celldm[0]
 
     return 2 * np.pi * np.round(kpoints.dot(a.T) * nk) / nk, weights
 
