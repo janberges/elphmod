@@ -137,5 +137,24 @@ class TestDiagrams(unittest.TestCase):
         """Check free-energy derivatives for two Fermi levels."""
         self._test_expansion(f=elphmod.occupations.two_fermi_dirac, n=1.0)
 
+    def test_polarization(self, nk=8, nq=4,
+            kT=0.01, f=elphmod.occupations.fermi_dirac):
+        """Compare different implementations of RPA polarization."""
+
+        k = elphmod.bravais.mesh(nk, nk)
+        q = elphmod.bravais.mesh(nq, nq, flat=True)
+
+        el, ph, elph = elphmod.models.tas2.create()
+
+        e, U = elphmod.dispersion.dispersion(el.H, k, vectors=True)
+
+        Pi1 = elphmod.dispersion.sample(elphmod.diagrams.polarization(e, U,
+            kT=kT, occupations=f), q)
+
+        Pi2 = elphmod.diagrams.phonon_self_energy(q, e, psi=U,
+            kT=kT, occupations=f)
+
+        self.assertTrue(np.allclose(Pi1, Pi2))
+
 if __name__ == '__main__':
     unittest.main()

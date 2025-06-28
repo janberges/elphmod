@@ -262,7 +262,7 @@ def polarization(e, U, kT=0.025, eps=1e-10, subspace=None, occupations='fd'):
 def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
         occupations='fd', fluctuations=False, Delta=None, Delta_diff=False,
         Delta_occupations='gauss', Delta_kT=0.025, g=None, G=None,
-        symmetrize=True, diagonal=False, U=0.0, comm=comm):
+        symmetrize=True, diagonal=False, U=0.0, psi=None, comm=comm):
     r"""Calculate phonon self-energy.
 
     .. math::
@@ -315,6 +315,10 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
         Contact interaction (a matrix in band indices) to model the effect of
         excitons. Only used if `g` is present. Associated terms are currently
         excluded from the integrand provided for fluctuation diagnostics.
+    psi : ndarray
+        Eigenvectors of Wannier Hamiltonian belonging to considered bands. If
+        present, the RPA polarization in the orbital basis is calculated instead
+        of the phonon self-energy in the basis of phonon modes or displacements.
 
     Returns
     -------
@@ -337,7 +341,11 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
     nbnd = e.shape[-1]
     e = np.reshape(e, (*nk, nbnd))
 
-    if g is None:
+    if psi is not None:
+        psi = np.reshape(np.moveaxis(psi, -2, 0), (1, nbnd, *nk, nbnd))
+
+        phshape = (nbnd, nbnd)
+    elif g is None:
         if g2 is None:
             g2 = np.ones((nQ, 1))
         else:
@@ -379,6 +387,9 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
             if Delta_diff:
                 delta = np.tile(delta, (2, 2, 2, 1))
 
+        if psi is not None:
+            psi = np.tile(psi, (1, 1, 2, 2, 2, 1))
+
     scale = nk / (2 * np.pi)
     prefactor = 2 / nk.prod()
 
@@ -389,7 +400,7 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
     U = np.array(U)
 
     my_Pi = np.empty((sizes[comm.rank], *phshape, *omega.shape),
-        dtype=float if np.isrealobj(omega) and np.isrealobj(g2)
+        dtype=float if psi is None and np.isrealobj(omega) and np.isrealobj(g2)
             and np.isrealobj(g) and np.isrealobj(G) else complex)
 
     if fluctuations:
@@ -440,6 +451,11 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
                             * Theta[k1, k2, k3, n])
 
                     dfde[..., m, n] *= envelope
+
+        if psi is not None:
+            G = g = (psi[:, :, kq1, kq2, kq3, :, np.newaxis].conj()
+                * psi[:, :, k1, k2, k3, np.newaxis, :])
+            iq = 0
 
         for nu in np.ndindex(*phshape):
             if g is None:
