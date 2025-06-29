@@ -45,5 +45,16 @@ class TestBravais(unittest.TestCase):
 
         self._test_wigner_2d(120)
 
+    def test_irreducibles(self, nk=12):
+        """Compare different functions to obtain irreducible k points."""
+
+        for ibrav, angle in (4, 60), (6, 90):
+            irr1 = sorted(elphmod.bravais.irreducibles_ibrav(nk, nk, 1, ibrav))
+            irr2 = sorted(elphmod.bravais.irreducibles(nk, angle))
+
+            irr2 = [(k1, k2, 0) for k1, k2 in irr2]
+
+            self.assertTrue(irr1 == irr2)
+
 if __name__ == '__main__':
     unittest.main()
