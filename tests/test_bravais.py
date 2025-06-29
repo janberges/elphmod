@@ -45,6 +45,18 @@ class TestBravais(unittest.TestCase):
 
         self._test_wigner_2d(120)
 
+    def test_images(self, k1=7, k2=3, nk=12):
+        """Compare different functions to obtain equivalent k points."""
+
+        for ibrav, angle in (4, 60), (6, 90):
+            img1 = sorted(elphmod.bravais.images_ibrav(k1, k2, 1,
+                nk, nk, 1, ibrav))
+            img2 = sorted(elphmod.bravais.images(k1, k2, nk, angle))
+
+            img2 = [(k1, k2, 0) for k1, k2 in img2]
+
+            self.assertTrue(img1 == img2)
+
     def test_irreducibles(self, nk=12):
         """Compare different functions to obtain irreducible k points."""
 

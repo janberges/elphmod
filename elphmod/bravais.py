@@ -664,20 +664,18 @@ def irreducibles(nk, angle=60):
 
     return irreducible
 
-def irreducibles_ibrav(nk1=1, nk2=1, nk3=1, ibrav=1):
-    r"""Generate set of irreducible k points from symmetries defined in QE.
+def symmetries_ibrav(ibrav=1):
+    """Provide symmetries defined in QE.
 
     Parameters
     ----------
-    nk1, nk2, nk3 : int
-        Number of mesh points per dimension.
     ibrav : int
         Bravais-lattice index.
 
     Returns
     -------
-    set
-        Mesh-point indices of irreducible k points.
+    ndarray
+        Symmetry operations.
     """
     symmetries = {
         1: '''
@@ -757,8 +755,44 @@ def irreducibles_ibrav(nk1=1, nk2=1, nk3=1, ibrav=1):
         ''',
     }.get(ibrav, '+000+000+')
 
-    symmetries = np.reshape([['-0+'.index(sgn) - 1 for sgn in symmetry]
+    return np.reshape([['-0+'.index(sgn) - 1 for sgn in symmetry]
         for symmetry in symmetries.split()], (-1, 3, 3))
+
+def images_ibrav(k1=1, k2=1, k3=1, nk1=1, nk2=1, nk3=1, ibrav=1):
+    """Generate symmetry-equivalent k points from symmetries defined in QE.
+
+    Parameters
+    ----------
+    k1, k2, k3 : int
+        Indices of point in uniform mesh.
+    nk1, nk2, nk3 : int
+        Number of mesh points per dimension.
+        Bravais-lattice index.
+
+    Returns
+    -------
+    set
+        Mesh-point indices of all equivalent k points.
+    """
+    return set(tuple(map(int, symmetry @ (k1, k2, k3) % (nk1, nk2, nk3)))
+        for symmetry in symmetries_ibrav(ibrav))
+
+def irreducibles_ibrav(nk1=1, nk2=1, nk3=1, ibrav=1):
+    r"""Generate set of irreducible k points from symmetries defined in QE.
+
+    Parameters
+    ----------
+    nk1, nk2, nk3 : int
+        Number of mesh points per dimension.
+    ibrav : int
+        Bravais-lattice index.
+
+    Returns
+    -------
+    set
+        Mesh-point indices of irreducible k points.
+    """
+    symmetries = symmetries_ibrav(ibrav)
 
     points = [
         (k1, k2, k3)
