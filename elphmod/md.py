@@ -1,7 +1,58 @@
 # Copyright (C) 2017-2025 elphmod Developers
 # This program is free software under the terms of the GNU GPLv3 or later.
 
-"""Charge-density-wave dynamics on supercells."""
+r"""Charge-density-wave dynamics on supercells.
+
+We model the free energy as a function of atomic displacments :math:`\vec u` as
+
+.. math::
+
+    F(\vec u) = \frac 2 N \sum_{\vec k n}
+    \bigl[
+        f(\epsilon_{\vec k n}) \epsilon_{\vec k n}
+        - \int_{-\infty}^{\epsilon_{\vec k n}}
+            \D \epsilon \, \epsilon \delta(\epsilon)
+    \bigr]
+    + \vec{\mathcal F}(0) \vec u
+    + \frac12 \vec u^T \bigl[ C_0 \super{DFPT} - \mathcal C_0(0) \bigr] \vec u,
+
+where :math:`f(\epsilon)` is the occupation function, :math:`\delta(\epsilon)`
+is its negative derivative, :math:`C_{\vec q} \super{DFPT}` are the interatomic
+force constants from first prinicples, and :math:`\epsilon_{\vec k n}` are the
+eigenvalues of the linearized active-space Hamiltonian
+
+.. math::
+
+    H_{\vec k \alpha \beta}(\vec u) = H_{\vec k \alpha \beta}(0)
+        + \vec u \vec g_{0 \vec k \alpha \beta}.
+
+This yields the electronic contribution to the forces
+
+.. math::
+
+    \vec{\mathcal F}(\vec u) = -\frac 2 N \sum_{\vec k n}
+        f(\epsilon_{\vec k n}) \vec g_{0 \vec k n n}
+
+and the interatomic force constants
+
+.. math::
+
+    \mathcal C_{\vec q}(\vec u) = \frac 2 N \sum_{\vec k m n}
+    \vec g_{\vec q \vec k m n}
+    \frac
+        {f(\epsilon_{\vec k n}) - f(\epsilon_{\vec k + \vec q m})}
+        {\epsilon_{\vec k n} - \epsilon_{\vec k + \vec q m}}
+    \vec g_{\vec q \vec k m n}^H
+    + \frac 2 N \frac
+        {\sum_{\vec k n} \delta(\epsilon_{\vec k n}) \vec g_{0 \vec k n n}
+         \sum_{\vec k n} \delta(\epsilon_{\vec k n}) \vec g_{0 \vec k n n}^T}
+        {\sum_{\vec k n} \delta(\epsilon_{\vec k n})}
+    \delta_{\vec q 0}.
+
+See
+`SciPost Phys. 16, 046 (2024) <https://doi.org/10.21468/SciPostPhys.16.2.046>`__
+for more information.
+"""
 
 import copy
 import numpy as np

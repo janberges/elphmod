@@ -27,6 +27,8 @@ mathjax_config = {
             'bra': [r'\langle#1|', 1],
             'bracket': [r'\langle#1|#2\rangle', 2],
             'ket': [r'|#1\rangle', 1],
+            'sub': [r'_{\mathrm{#1}}', 1],
+            'super': [r'^{\mathrm{#1}}', 1],
         },
     },
 }
