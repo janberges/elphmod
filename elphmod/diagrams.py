@@ -5,6 +5,7 @@
 
 import numpy as np
 
+import elphmod.bravais
 import elphmod.misc
 import elphmod.MPI
 import elphmod.occupations
@@ -1419,11 +1420,10 @@ def fan_migdal_self_energy(k, e, w, g2, omega, kT=0.025, occupations='fd',
     return Sigma
 
 def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10, occupations='fd',
-        dc_only=False, comm=comm):
+        a=np.eye(3), dc_only=False, comm=comm):
     r"""Calculate Green-Kubo optical conductivity (to be tested).
 
     See Eq. (8) by Abramovitch et al., Phys. Rev. Mater. 7, 093801 (2023).
-    Note that we have omitted the division by the unit-cell volume.
 
     Parameters
     ----------
@@ -1439,6 +1439,8 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10, occupations='fd',
         Negligible difference between two floating-point numbers.
     occupations : function
         Particle distribution as a function of energy divided by `kT`.
+    a : ndarray
+        Bravais lattice vectors used to calculate unit-cell volume.
     dc_only : bool
         Only compute DC resistivity tensor (zero-frequency limit)?
 
@@ -1504,5 +1506,10 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10, occupations='fd',
         sigma = np.empty((len(omega), ndim, ndim))
 
         comm.Allgatherv(my_sigma, (sigma, comm.allgather(my_sigma.size)))
+
+    if a is None:
+        a = elphmod.bravais.primitives(ibrav=1)
+
+    sigma /= abs(np.dot(a[0], np.cross(a[1], a[2])))
 
     return sigma
