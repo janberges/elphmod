@@ -990,7 +990,7 @@ def read_atomic_projections(atomic_proj_xml, order=False, from_fermi=True,
         next(data)
 
         header = next(data).strip('<HEADER />\n')
-        header = dict([item.split('=') for item in header.split(' ')])
+        header = dict(item.split('=') for item in header.split(' '))
         header = dict((key, value.strip('"')) for key, value in header.items())
 
         bands = int(header['NUMBER_OF_BANDS'])
