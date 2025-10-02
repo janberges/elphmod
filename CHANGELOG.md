@@ -3,6 +3,13 @@
 See [Git commits](https://github.com/janberges/elphmod/commits) for more
 detailed list of changes.
 
+## v0.31/2025-10-02
+
+* QE-7.5 support (cDFPT patch)
+* Irreducible points for all Bravais lattices
+* Polarizability on mesh from phonon-self-energy function
+* Improved documentation
+
 ## v0.30/2025-05-23
 
 * cDFPT patches for patch versions QE-7.3.1 and QE-7.4.1
