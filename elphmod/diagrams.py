@@ -1468,7 +1468,12 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10, occupations='fd',
     x = omega[:, np.newaxis, np.newaxis] / kT
     d = occupations.delta(x) / kT
 
-    prefactor = 4 * np.pi / nq # including e^2 = 2 and 2 / nq
+    if a is None:
+        a = elphmod.bravais.primitives(ibrav=1)
+
+    # including e^2 = 2 in Rydberg units and 2 from spin:
+
+    prefactor = 4 * np.pi / (nq * abs(np.dot(a[0], np.cross(a[1], a[2]))))
 
     if dc_only:
         domega = elphmod.misc.differential(omega)[:, np.newaxis, np.newaxis]
@@ -1514,10 +1519,5 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10, occupations='fd',
         sigma = np.empty((len(omega), ndim, ndim))
 
         comm.Allgatherv(my_sigma, (sigma, comm.allgather(my_sigma.size)))
-
-    if a is None:
-        a = elphmod.bravais.primitives(ibrav=1)
-
-    sigma /= abs(np.dot(a[0], np.cross(a[1], a[2])))
 
     return sigma
