@@ -264,7 +264,7 @@ class Model:
                 '%s_head.xsf' % seedname if read_buffer else
                 '%s_%05d.xsf' % (seedname, 1), only_header=True)
 
-            self.dV = abs(np.dot(np.cross(a[0], a[1]), a[2])) / np.prod(shape)
+            self.dV = elphmod.bravais.volume(*a) / np.prod(shape)
 
             if not read_buffer:
                 self.r = elphmod.misc.real_space_grid(shape, r0, a,

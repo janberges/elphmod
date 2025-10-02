@@ -365,8 +365,7 @@ class Model:
             area = np.linalg.norm(np.cross(self.a[0], self.a[1]))
             self.prefactor = 2 * np.pi * e2 / area
         else:
-            volume = abs(np.dot(self.a[0], np.cross(self.a[1], self.a[2])))
-            self.prefactor = 4 * np.pi * e2 / volume
+            self.prefactor = 4 * np.pi * e2 / elphmod.bravais.volume(*self.a)
 
         a = np.linalg.norm(self.a[0])
 

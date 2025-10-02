@@ -1473,7 +1473,7 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10, occupations='fd',
 
     # including e^2 = 2 in Rydberg units and 2 from spin:
 
-    prefactor = 4 * np.pi / (nq * abs(np.dot(a[0], np.cross(a[1], a[2]))))
+    prefactor = 4 * np.pi / (nq * elphmod.bravais.volume(*a))
 
     if dc_only:
         domega = elphmod.misc.differential(omega)[:, np.newaxis, np.newaxis]
