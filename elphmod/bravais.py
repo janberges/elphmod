@@ -667,6 +667,9 @@ def irreducibles(nk, angle=60):
 def symmetries_ibrav(ibrav=1):
     """Provide symmetries defined in Quantum ESPRESSO.
 
+    These symmetry operations have been obtained from the file *info* generated
+    by Quantum ESPRESSO's ``kpoints.x``.
+
     Parameters
     ----------
     ibrav : int
