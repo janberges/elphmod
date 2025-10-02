@@ -1386,7 +1386,7 @@ def read_L(epw_out):
     return comm.bcast(L)
 
 def read_patterns(filename, q, nrep, status=True):
-    """Read XML files with displacement patterns from QE."""
+    """Read XML files with displacement patterns from Quantum ESPRESSO."""
 
     if not hasattr(q, '__len__'):
         q = range(q)
@@ -1634,7 +1634,7 @@ def ph2epw(fildyn='dyn', outdir='work', dvscf_dir='save'):
     dyn : str
         Prefix of dynamical-matrix files.
     outdir : str
-        QE output directory.
+        Quantum ESPRESSO output directory.
     dvscf_dir : str
         EPW input directory.
     """

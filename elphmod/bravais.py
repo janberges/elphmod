@@ -61,7 +61,7 @@ def abc2celldm(ibrav=8, a=1.0, b=1.0, c=1.0, cosbc=0.0, cosac=0.0, cosab=0.0,
     Returns
     -------
     ndarray
-        QE's cell dimensions.
+        Quantum ESPRESSO's cell dimensions.
     """
     celldm = np.zeros(6)
 
@@ -179,7 +179,7 @@ def irreducibles_qe(nk1=1, nk2=1, nk3=1, ibrav=1, **const):
 
 def primitives(ibrav=8, celldm=None, bohr=False, r_cell=None, cell_units=None,
         **const):
-    """Get primitive vectors of Bravais lattice as in QE.
+    """Get primitive vectors of Bravais lattice as in Quantum ESPRESSO.
 
     Adapted from Modules/latgen.f90 of Quantum ESPRESSO.
 
@@ -665,7 +665,7 @@ def irreducibles(nk, angle=60):
     return irreducible
 
 def symmetries_ibrav(ibrav=1):
-    """Provide symmetries defined in QE.
+    """Provide symmetries defined in Quantum ESPRESSO.
 
     Parameters
     ----------
@@ -1763,7 +1763,7 @@ def path(points, N=30, recvec=None, qe=False, moveG=0, **kwargs):
     recvec : ndarray, optional
         List of reciprocal lattice vectors.
     qe : bool, default False
-        Also return path in QE input format?
+        Also return path in Quantum ESPRESSO's input format?
     moveG : float, default 0
         Move Gamma point to the closest nonzero point multiplied by this value.
         This is useful, e.g., to plot phonon dispersions with TO-LO splitting.
