@@ -1352,8 +1352,15 @@ def read_prtgkk(epw_out, nq, nmodes, nk, nbnd):
                             for nu in range(nmodes):
                                 columns = next(lines).split()
 
-                                w[iq, nu] = float(columns[-2])
-                                g[iq, nu, ik, ibnd, jbnd] = float(columns[-1])
+                                if len(columns) > 7: # since EPW v6.0
+                                    cw = -5
+                                    cg = -3 # not symmetrized
+                                else:
+                                    cw = -2
+                                    cg = -1 # symmetrized
+
+                                w[iq, nu] = float(columns[cw])
+                                g[iq, nu, ik, ibnd, jbnd] = float(columns[cg])
 
     comm.Bcast(w)
     comm.Bcast(g)
