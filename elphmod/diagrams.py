@@ -1421,7 +1421,15 @@ def fan_migdal_self_energy(k, e, w, g2, omega, kT=0.025, occupations='fd',
 
 def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10, occupations='fd',
         a=np.eye(3), dc_only=False, comm=comm):
-    r"""Calculate Green-Kubo optical conductivity (to be tested).
+    r"""Calculate Green-Kubo optical conductivity in the bubble approximation.
+
+    .. math::
+
+        \sigma_{x y}(\omega) = \frac{\pi \hbar e^2}{V \sub{uc}}
+            \frac 2 N \sum_{\vec k n} \int_{-\infty}^\infty \D \omega'
+            \frac {f(\omega') - f(\omega' + \omega)} \omega
+            v_{\vec k n x} v_{\vec k n y}
+            A_{\vec k n}(\omega') A_{\vec k n}(\omega' + \omega)
 
     See Eq. (8) by Abramovitch et al., Phys. Rev. Mater. 7, 093801 (2023).
 
