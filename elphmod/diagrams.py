@@ -1433,6 +1433,9 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10, occupations='fd',
 
     See Eq. (8) by Abramovitch et al., Phys. Rev. Mater. 7, 093801 (2023).
 
+    It is also possible to consider the off-diagonal elements of the velocities,
+    see Eq. (85) by Lihm and Ponce', arXiv:2506.18139 (2025).
+
     Parameters
     ----------
     v : ndarray
@@ -1461,9 +1464,18 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10, occupations='fd',
 
     nbnd = A.shape[-2]
     nk = A.size // nbnd // len(omega)
-    ndim = v.size // nk // nbnd
+    ndim = v.shape[-1]
 
-    vA = v.reshape((-1, 1, ndim)) * A.reshape((-1, len(omega), 1))
+    diagonal = v.size == nk * nbnd * ndim
+
+    if diagonal:
+        v = v.reshape((nk, nbnd, 1, ndim))
+    else:
+        v = v.reshape((nk, nbnd, nbnd, 1, ndim))
+
+    v2 = (v[..., :, np.newaxis].conj() * v[..., np.newaxis, :]).real
+
+    A = A.reshape((nk, nbnd, len(omega), 1, 1))
 
     x = omega[:, np.newaxis, np.newaxis] / kT
     d = occupations.delta(x) / kT
@@ -1478,8 +1490,13 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10, occupations='fd',
     if dc_only:
         domega = elphmod.misc.differential(omega)[:, np.newaxis, np.newaxis]
 
-        sigma = prefactor * np.sum(domega * d * np.sum(vA[:, :, :, np.newaxis]
-            * vA[:, :, np.newaxis, :], axis=0), axis=0)
+        if diagonal:
+            b = np.sum(v2 * A ** 2, axis=(0, 1))
+        else:
+            b = np.sum(v2 * A[:, :, np.newaxis] * A[:, np.newaxis, :],
+                axis=(0, 1, 2))
+
+        sigma = prefactor * np.sum(domega * d * b, axis=0)
     else:
         domega = omega[1] - omega[0]
 
@@ -1509,8 +1526,13 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10, occupations='fd',
             slpm = slice(diwp, len(omega) - diwm)
 
             a = d if iw == iw0 else (f[slmp] - f[slpm]) / omega[iw]
-            b = np.sum(vA[:, slmp, :, np.newaxis] * vA[:, slpm, np.newaxis, :],
-                axis=0)
+
+            if diagonal:
+                b = np.sum(v2 * A[:, :, slpm] * A[:, :, slmp], axis=(0, 1))
+            else:
+                b = np.sum(v2
+                    * A[:, :, np.newaxis, slpm] * A[:, np.newaxis, :, slmp],
+                    axis=(0, 1, 2))
 
             my_sigma[my_iw] = prefactor * domega * np.sum(a * b, axis=0)
 
