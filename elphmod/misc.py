@@ -21,6 +21,9 @@ verbosity = 3
 - ``3``: Display status bars.
 """
 
+memory = int(1e9)
+"""Minimum available memory (bytes)."""
+
 # exact constants in SI units:
 
 cSI = 299792458.0

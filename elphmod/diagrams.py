@@ -1487,14 +1487,23 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10, occupations='fd',
 
     prefactor = 4 * np.pi / (nk * elphmod.bravais.volume(*a))
 
+    chunks = int(np.ceil(v2.nbytes * len(omega) / elphmod.misc.memory))
+
+    slices = [slice(chunk * nk // chunks, (chunk + 1) * nk // chunks)
+        for chunk in range(chunks)]
+
     if dc_only:
         domega = elphmod.misc.differential(omega)[:, np.newaxis, np.newaxis]
 
-        if diagonal:
-            b = np.sum(v2 * A ** 2, axis=(0, 1))
-        else:
-            b = np.sum(v2 * A[:, :, np.newaxis] * A[:, np.newaxis, :],
-                axis=(0, 1, 2))
+        b = np.zeros((len(omega), ndim, ndim))
+
+        for k in slices:
+            if diagonal:
+                b += np.sum(v2[k] * A[k] ** 2,
+                    axis=(0, 1))
+            else:
+                b += np.sum(v2[k] * A[k, :, np.newaxis] * A[k, np.newaxis, :],
+                    axis=(0, 1, 2))
 
         sigma = prefactor * np.sum(domega * d * b, axis=0)
     else:
@@ -1527,12 +1536,16 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10, occupations='fd',
 
             a = d if iw == iw0 else (f[slmp] - f[slpm]) / omega[iw]
 
-            if diagonal:
-                b = np.sum(v2 * A[:, :, slpm] * A[:, :, slmp], axis=(0, 1))
-            else:
-                b = np.sum(v2
-                    * A[:, :, np.newaxis, slpm] * A[:, np.newaxis, :, slmp],
-                    axis=(0, 1, 2))
+            b = np.zeros((len(omega) - diwm - diwp, ndim, ndim))
+
+            for k in slices:
+                if diagonal:
+                    b += np.sum(v2[k] * A[k, :, slpm] * A[k, :, slmp],
+                        axis=(0, 1))
+                else:
+                    b += np.sum(v2[k]
+                        * A[k, :, np.newaxis, slpm] * A[k, np.newaxis, :, slmp],
+                        axis=(0, 1, 2))
 
             my_sigma[my_iw] = prefactor * domega * np.sum(a * b, axis=0)
 
