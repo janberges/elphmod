@@ -1460,8 +1460,8 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10, occupations='fd',
     occupations = elphmod.occupations.smearing(occupations)
 
     nbnd = A.shape[-2]
-    nq = A.size // nbnd // len(omega)
-    ndim = v.size // nq // nbnd
+    nk = A.size // nbnd // len(omega)
+    ndim = v.size // nk // nbnd
 
     vA = v.reshape((-1, 1, ndim)) * A.reshape((-1, len(omega), 1))
 
@@ -1473,7 +1473,7 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10, occupations='fd',
 
     # including e^2 = 2 in Rydberg units and 2 from spin:
 
-    prefactor = 4 * np.pi / (nq * elphmod.bravais.volume(*a))
+    prefactor = 4 * np.pi / (nk * elphmod.bravais.volume(*a))
 
     if dc_only:
         domega = elphmod.misc.differential(omega)[:, np.newaxis, np.newaxis]
