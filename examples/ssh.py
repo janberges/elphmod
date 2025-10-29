@@ -31,7 +31,7 @@ driver = elphmod.md.Driver(elph, kT=kT, f=elphmod.occupations.fermi_dirac,
     nk=(nk,), nq=(nq,), supercell=(N,) if sparse else None, n=elph.el.size,
     unscreen=False, basis=[[0]])
 
-driver.random_displacements(amplitude=0.05)
+driver.random_displacements(amplitude=0.05, reproducible=True)
 
 driver.plot(interactive=True, scale=20.0)
 

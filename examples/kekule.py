@@ -40,7 +40,7 @@ driver = elphmod.md.Driver(elph, kT=kT0, f=elphmod.occupations.fermi_dirac,
 
 driver.kT = kT
 
-driver.random_displacements(amplitude=0.05)
+driver.random_displacements(amplitude=0.05, reproducible=True)
 
 driver.plot(interactive=True)
 

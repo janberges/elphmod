@@ -19,7 +19,7 @@ driver = elphmod.md.Driver(elph, kT=0.02, f=elphmod.occupations.gauss,
 
 driver.kT = 0.002
 
-driver.random_displacements()
+driver.random_displacements(reproducible=True)
 
 driver.plot(interactive=True, scale=25, elev=0)
 
