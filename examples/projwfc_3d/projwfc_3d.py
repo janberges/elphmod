@@ -37,4 +37,5 @@ for n in range(eps.shape[1]):
             label=None if n else label)
 
 plt.legend()
+plt.savefig('projwfc_3d.png')
 plt.show()

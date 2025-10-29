@@ -40,4 +40,5 @@ if comm.rank == 0:
     plt.ylabel('Phonon energy (meV)')
     plt.xlabel('Wave vector')
     plt.xticks(x[corners], path)
+    plt.savefig('bare.png')
     plt.show()

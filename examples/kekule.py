@@ -48,6 +48,7 @@ scipy.optimize.minimize(driver.free_energy, driver.u, jac=driver.jacobian,
     method='BFGS', options=dict(gtol=1e-8, norm=np.inf))
 
 driver.plot(interactive=False)
+driver.plot(filename='kekule_1.png')
 
 path = 'GMKG'
 k, x, corners = elphmod.bravais.path(path, ibrav=4, N=150)
@@ -62,6 +63,7 @@ if comm.rank == 0:
     plt.ylabel('Electron energy (eV)')
     plt.xlabel('Wave vector')
     plt.xticks(x[corners], path)
+    plt.savefig('kekule_2.png')
     plt.show()
 
 ph = driver.phonons()
@@ -75,6 +77,7 @@ if comm.rank == 0:
     plt.ylabel('Phonon energy (meV)')
     plt.xlabel('Wave vector')
     plt.xticks(x[corners], path)
+    plt.savefig('kekule_3.png')
     plt.show()
 
 u1 = driver.u.copy()
@@ -115,4 +118,5 @@ if comm.rank == 0:
 
     plt.ylabel('Free energy (meV/cell)')
     plt.xlabel('Lattice distortion (relaxed displacement)')
+    plt.savefig('kekule_4.png')
     plt.show()

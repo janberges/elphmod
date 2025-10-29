@@ -32,4 +32,5 @@ if elphmod.MPI.comm.rank == 0:
         r'($\mathrm{eV/\AA}$)')
     plt.xticks(x[corners], path)
     plt.plot(x, g.real)
+    plt.savefig('defpot.png')
     plt.show()

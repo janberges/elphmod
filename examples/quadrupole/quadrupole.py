@@ -178,4 +178,5 @@ ax2.set_xticks(x[corners])
 ax2.set_xticklabels(path)
 ax2.legend()
 
+plt.savefig('quadrupole.png')
 plt.show()

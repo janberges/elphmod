@@ -69,6 +69,7 @@ if comm.rank == 0:
     ax2.plot(k[:ik], integral[:ik, 0])
     ax2.set_ylim(0.0, 2 * el.size)
 
+    plt.savefig('fan_migdal_1.png')
     plt.show()
 
 info('Calculate resistivity')
@@ -102,4 +103,5 @@ if comm.rank == 0:
 
     plt.ylabel('Resistivity (\u03bc\u03a9m)')
     plt.xlabel('Temperature (K)')
+    plt.savefig('fan_migdal_2.png')
     plt.show()

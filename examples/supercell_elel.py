@@ -46,4 +46,5 @@ if elphmod.MPI.comm.rank == 0:
     plt.ylabel('Coulomb interaction (eV)')
     plt.xlabel('Wave vector')
     plt.xticks(x[corners], path)
+    plt.savefig('supercell_elel.png')
     plt.show()

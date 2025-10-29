@@ -60,4 +60,5 @@ for n in range(2):
         axes[n].axis('off')
 
 if comm.rank == 0:
+    plt.savefig('double_delta.png')
     plt.show()

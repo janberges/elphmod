@@ -45,4 +45,5 @@ if elphmod.MPI.comm.rank == 0:
     for n in range(ph.nat):
         ax.text(*ph.r[n], str(n))
 
+    plt.savefig('skiing.png')
     plt.show()

@@ -41,6 +41,8 @@ if len(sys.argv) > 1 and sys.argv[1] == '--prepare-q':
 
     raise SystemExit
 
+number = iter(range(1, 99))
+
 for lr in '3d', 'gaussian':
     ph = elphmod.ph.Model('%s.ifc' % lr, apply_asr_simple=True, apply_zasr=True,
         lr2d=lr != '3d', lr=True)
@@ -60,6 +62,7 @@ for lr in '3d', 'gaussian':
         plt.ylabel('Phonon energy (meV)')
         plt.xlabel('Wave vector')
         plt.xticks(x[corners], path)
+        plt.savefig('lr_%d.png' % next(number))
         plt.show()
 
 el = elphmod.el.Model('MoS2')
@@ -92,4 +95,5 @@ for lr in 'no_lr', '3d', 'gaussian', 'dipole_sp', 'quadrupole':
         plt.ylabel('Electron-phonon coupling (meV$^{3 / 2}$)')
         plt.xlabel('Wave vector')
         plt.xticks(x[corners], path)
+        plt.savefig('lr_%d.png' % next(number))
         plt.show()

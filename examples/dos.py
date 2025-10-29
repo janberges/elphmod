@@ -33,4 +33,5 @@ if elphmod.MPI.comm.rank == 0:
     plt.fill_between(e, 0.0, DOS_tetra, facecolor='lightgray', label='tetra.')
     plt.plot(e, DOS_smear, color='red', label='smear.')
     plt.legend()
+    plt.savefig('dos.png')
     plt.show()

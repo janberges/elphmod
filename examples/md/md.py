@@ -33,3 +33,4 @@ driver.plot(interactive=True)
 ipi_driver.run_driver(unix=True, address='localhost', driver=driver)
 
 driver.plot(interactive=False)
+driver.plot(filename='md.png')

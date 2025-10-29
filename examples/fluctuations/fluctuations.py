@@ -71,4 +71,5 @@ if comm.rank == 0:
         axes[n].axis('image')
         axes[n].axis('off')
 
+    plt.savefig('fluctuations.png')
     plt.show()

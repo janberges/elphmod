@@ -13,4 +13,5 @@ plot = elphmod.plot.plot(data[:, :, data.shape[2] // 4], angle=120)
 if elphmod.MPI.comm.rank == 0:
     plt.imshow(plot, cmap='afmhot')
     plt.axis('off')
+    plt.savefig('simstm.png')
     plt.show()

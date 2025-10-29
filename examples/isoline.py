@@ -27,4 +27,5 @@ if comm.rank == 0:
 
     plt.axis('image')
     plt.axis('off')
+    plt.savefig('isoline.png')
     plt.show()

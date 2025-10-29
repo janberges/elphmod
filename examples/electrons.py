@@ -62,4 +62,5 @@ if comm.rank == 0:
 
     ax2.fill(DOS, w, color=colors[0], linewidth=0.0)
 
+    plt.savefig('electrons.png')
     plt.show()

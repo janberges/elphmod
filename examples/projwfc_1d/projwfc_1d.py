@@ -48,4 +48,5 @@ for n in range(el.size):
     plt.plot(X, E[:, n], 'y:', label=None if n else 'W90')
 
 plt.legend()
+plt.savefig('projwfc_1d.png')
 plt.show()

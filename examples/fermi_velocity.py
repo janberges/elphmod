@@ -27,6 +27,7 @@ dedk = np.sqrt(dedkx ** 2 + dedky ** 2)
 if comm.rank == 0:
     plt.imshow(dedk, cmap='Greys')
     plt.axis('off')
+    plt.savefig('fermi_velocity.png')
     plt.show()
 
 info('Min./max./mean number of k-points for meV resolution:')

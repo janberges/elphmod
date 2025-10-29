@@ -46,4 +46,5 @@ if elphmod.MPI.comm.rank == 0:
     plt.ylabel('Electron energy (eV)')
     plt.xlabel('Wave vector')
     plt.xticks(x[corners], path)
+    plt.savefig('supercell_el.png')
     plt.show()

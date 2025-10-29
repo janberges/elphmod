@@ -92,4 +92,5 @@ if elphmod.MPI.comm.rank == 0:
     ax1.fill_between(omega, 0.0, DOS, facecolor='lightgray')
     ax2.plot(omega, a2F)
 
+    plt.savefig('a2f.png')
     plt.show()

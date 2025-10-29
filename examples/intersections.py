@@ -44,4 +44,5 @@ if elphmod.MPI.comm.rank == 0:
     plt.plot(x, y, 'ob')
     plt.axis('image')
     plt.axis('off')
+    plt.savefig('intersections.png')
     plt.show()

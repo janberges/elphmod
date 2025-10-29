@@ -83,6 +83,7 @@ if comm.rank == 0:
     plt.ylabel('Electron energy (eV)')
     plt.xlabel('Wave vector')
     plt.xticks(x[corners], path)
+    plt.savefig('phrenorm_3d_1.png')
     plt.show()
 
 info('Plot cDFPT, DFPT and renormalized phonons')
@@ -103,4 +104,5 @@ if comm.rank == 0:
     plt.xlabel('Wave vector')
     plt.xticks(x[corners], path)
     plt.legend()
+    plt.savefig('phrenorm_3d_2.png')
     plt.show()

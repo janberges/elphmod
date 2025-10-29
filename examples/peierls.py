@@ -77,4 +77,5 @@ if comm.rank == 0:
 
     plt.ylabel('Electron energy (eV)')
     plt.xlabel(r'Wave vector ($2 \pi / a$)')
+    plt.savefig('peierls.png')
     plt.show()

@@ -39,3 +39,4 @@ scipy.optimize.minimize(driver.free_energy, driver.u, jac=driver.jacobian,
     method='BFGS', options=dict(gtol=1e-8, norm=float('inf')))
 
 driver.plot(interactive=False)
+driver.plot(filename='ssh.png')

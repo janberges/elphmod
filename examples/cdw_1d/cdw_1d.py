@@ -27,6 +27,7 @@ scipy.optimize.minimize(driver.free_energy, driver.u, jac=driver.jacobian,
     method='BFGS', tol=1e-8)
 
 driver.plot(interactive=False)
+driver.plot(filename='cdw_1d_1.png')
 
 ph = driver.phonons()
 
@@ -42,4 +43,5 @@ if elphmod.MPI.comm.rank == 0:
     plt.ylabel('Phonon energy (meV)')
     plt.xlabel('Wave vector')
     plt.xticks(x[corners], path)
+    plt.savefig('cdw_1d_2.png')
     plt.show()

@@ -116,6 +116,7 @@ plot = elphmod.plot.plot(STM, angle=120)
 if comm.rank == 0:
     plt.imshow(plot, cmap='afmhot')
     plt.axis('off')
+    plt.savefig('simsts_1.png')
     plt.show()
 
 info('Calculate scanning-tunnelling spectrum')
@@ -132,4 +133,5 @@ if comm.rank == 0:
     plt.ylabel('Density of states (1/eV)')
     plt.xlabel('Electron energy (eV)')
     plt.legend()
+    plt.savefig('simsts_2.png')
     plt.show()

@@ -21,4 +21,5 @@ if elphmod.MPI.comm.rank == 0:
     plt.ylabel('Hopping (eV)')
     plt.xlabel(r'Distance ($\mathrm{\AA}$)')
     plt.legend()
+    plt.savefig('decay.png')
     plt.show()

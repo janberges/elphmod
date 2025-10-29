@@ -108,4 +108,5 @@ if comm.rank == 0:
     ax2.plot(x, integral)
     ax2.set_ylim(0.0, 2 * ph.size)
 
+    plt.savefig('specfun.png')
     plt.show()

@@ -32,6 +32,7 @@ if elphmod.MPI.comm.rank == 0:
     plt.plot(x, chi_q, 'o', label='w/o hybridization')
     plt.plot(x, chi_hyb_q, 'o', label='with hybridization')
     plt.legend()
+    plt.savefig('susceptibility_1.png')
     plt.show()
 
 nq = 36
@@ -43,6 +44,7 @@ if comm.rank == 0:
     plt.imshow(BZ, cmap='Greys')
     plt.axis('image')
     plt.axis('off')
+    plt.savefig('susceptibility_2.png')
     plt.show()
 
 i = np.arange(nq)
@@ -68,4 +70,5 @@ if comm.rank == 0:
     plt.scatter(x, y, c=z, s=10, marker='h')
     plt.axis('image')
     plt.axis('off')
+    plt.savefig('susceptibility_3.png')
     plt.show()

@@ -62,4 +62,5 @@ if comm.rank == 0:
     plt.plot(kT, DDI_smear, 'b', label='DDI (smear.)')
 
     plt.legend()
+    plt.savefig('smear_tetra.png')
     plt.show()

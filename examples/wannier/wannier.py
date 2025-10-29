@@ -35,4 +35,5 @@ if comm.rank == 0:
     plt.xlabel('Wave vector')
     plt.xticks(x[corners], path)
     plt.legend()
+    plt.savefig('wannier.png')
     plt.show()

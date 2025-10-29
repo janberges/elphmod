@@ -23,4 +23,5 @@ delta = elphmod.occupations.fermi_dirac.delta(e / kT)
 if elphmod.MPI.comm.rank == 0:
     plt.imshow(delta, cmap='magma')
     plt.axis('off')
+    plt.savefig('fermi_surface.png')
     plt.show()

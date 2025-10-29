@@ -218,4 +218,5 @@ plt.plot([Start_Pos[0] + A1[0], Start_Pos[0] + A2[0] + A1[0]],
 
 plt.axis('off')
 plt.axis('equal')
+plt.savefig('modes.png')
 plt.show()

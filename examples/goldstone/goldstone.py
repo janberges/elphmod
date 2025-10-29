@@ -80,4 +80,5 @@ plt.xticks(range(len(D)),
 plt.legend(handles=[pts.Patch(color=color, label=label)
     for color, label in zip(colors, labels)])
 
+plt.savefig('goldstone.png')
 plt.show()

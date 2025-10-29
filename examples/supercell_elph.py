@@ -72,4 +72,5 @@ if elphmod.MPI.comm.rank == 0:
     plt.ylabel(r'Electron-phonon coupling ($\mathrm{eV/\AA}$)')
     plt.xlabel('Wave vector')
     plt.xticks(x[corners], path)
+    plt.savefig('supercell_elph.png')
     plt.show()
