@@ -765,6 +765,7 @@ class Driver:
             plt.show()
         else:
             plt.savefig(filename)
+            plt.close()
 
     def update_plot(self):
         """Update open plot."""
