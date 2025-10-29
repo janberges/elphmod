@@ -17,9 +17,12 @@ from modes_modules import (supercell_vectors, permutation_finder,
     align_structures)
 import matplotlib.pyplot as plt
 
+comm = elphmod.MPI.comm
+
 symmetrize = True
 
-file = open('info.dat', 'w')
+if comm.rank == 0:
+    file = open('info.dat', 'w')
 
 material = 'NbSe2'
 N1 = 3
@@ -28,7 +31,8 @@ cdw_path = '%s_3x3_CDW.in' % (material)
 transition_metal = 'Nb'
 chalcogen = 'Se'
 
-file.write('Charge-density-wave structure: %d x %d \n' % (N1, N2))
+if comm.rank == 0:
+    file.write('Charge-density-wave structure: %d x %d\n' % (N1, N2))
 
 # Load symmetric structure
 cdw_data = elphmod.bravais.read_pwi(cdw_path)
@@ -44,7 +48,8 @@ C = cdw_data['c']
 a = A / N1
 #alat = a / elphmod.misc.a0
 
-file.write('Lattice parameter of the unit cell a = %3.12f \n' % (a))
+if comm.rank == 0:
+    file.write('Lattice parameter of the unit cell a = %3.12f\n' % a)
 
 # Load lattice translations
 a1, a2 = elphmod.bravais.translations(two_dimensional=False)
@@ -64,15 +69,17 @@ coords_type_QE = ['crystal', 'bohr', 'angstrom', 'alat']
 flag_coords_type = False
 for coords_type in coords_type_QE:
     if re.search(coords_type, coords_input, re.IGNORECASE):
-        file.write('Coordinates are given in %s \n' % (coords_type))
+        if comm.rank == 0:
+            file.write('Coordinates are given in %s\n' % coords_type)
         flag_coords_type = True
         if coords_type == 'crystal':
             # Transform from crystal to cartesian coordinates
             R_cdw = elphmod.bravais.crystal_to_cartesian(R_cdw, A1, A2, A3)
 
 if not flag_coords_type:
-    file.write('Did not find coordinate type in input file. '
-        'Stopping program...\n')
+    if comm.rank == 0:
+        file.write('Did not find coordinate type in input file. '
+            'Stopping program...\n')
     sys.exit()
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -163,11 +170,13 @@ if symmetrize:
     R_cdw = (BC_sym - BC_cdw) + R_cdw
 
 if at_cdw != at_sym:
-    file.write('Atom order does not match. Starting permutation...\n')
+    if comm.rank == 0:
+        file.write('Atom order does not match. Starting permutation...\n')
     R_cdw, at_cdw = permutation_finder(nat, R_cdw, R_sym, at_cdw, at_sym,
         eps=0.5 * a)
     if at_cdw != at_sym:
-        file.write('Atom order still does not match.  Stopping program...\n')
+        if comm.rank == 0:
+            file.write('Atom order still does not match. Stopping program...\n')
         sys.exit()
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -176,18 +185,23 @@ if at_cdw != at_sym:
 
 # Total displacement vector
 U_tot = np.sqrt(((R_cdw - R_sym) ** 2).sum())
-file.write('Total displacement vector (angstrom): U = %3.4f \n' % U_tot)
+if comm.rank == 0:
+    file.write('Total displacement vector (angstrom): U = %3.4f\n' % U_tot)
 
 distance = np.empty((nat))
 for atom_index in range(nat):
     distance[atom_index] = np.linalg.norm(R_cdw[atom_index] - R_sym[atom_index])
 
-file.write('Maximal displacement of %s atom is %1.2f %s \n'
-    % (at_cdw[np.argmax(distance)], np.max(distance) / a * 100, '%'))
+if comm.rank == 0:
+    file.write('Maximal displacement of %s atom is %1.2f %s\n'
+        % (at_cdw[np.argmax(distance)], np.max(distance) / a * 100, '%'))
 
-file.close()
+    file.close()
 
 # Plot structures
+
+if comm.rank != 0:
+    raise SystemExit
 
 for atom_index in range(nat):
     if at_sym[atom_index] == transition_metal:
