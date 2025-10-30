@@ -6,3 +6,5 @@
 
 .. image:: ../../examples/phrenorm/phrenorm_1.png
 .. image:: ../../examples/phrenorm/phrenorm_2.png
+.. image:: ../../examples/phrenorm/phrenorm_3.png
+.. image:: ../../examples/phrenorm/phrenorm_4.png

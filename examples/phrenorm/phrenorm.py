@@ -76,6 +76,8 @@ info('Plot electrons')
 e, U, order = elphmod.dispersion.dispersion(el.H, k, vectors=True, order=True)
 e -= mu
 
+number = iter(range(1, 99))
+
 if comm.rank == 0:
     proj = 0.1 * abs(U) ** 2
 
@@ -88,7 +90,7 @@ if comm.rank == 0:
     plt.ylabel('Electron energy (eV)')
     plt.xlabel('Wave vector')
     plt.xticks(x[corners], path)
-    plt.savefig('phrenorm_1.png')
+    plt.savefig('phrenorm_%d.png' % next(number))
     plt.show()
 
 info('Plot cDFPT, DFPT and renormalized phonons')
@@ -111,5 +113,5 @@ for method in sorted(ph):
         plt.ylabel('Phonon energy (meV)')
         plt.xlabel('Wave vector')
         plt.xticks(x[corners], path)
-        plt.savefig('phrenorm_2.png')
+        plt.savefig('phrenorm_%d.png' % next(number))
         plt.show()
