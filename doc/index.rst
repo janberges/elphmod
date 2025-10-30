@@ -51,11 +51,11 @@
    examples/isoline
    examples/kekule
    examples/lr
+   examples/modes
    examples/md
    examples/occupations
    examples/peierls
    examples/phonons
-   examples/modes
    examples/phrenorm_graphene
    examples/phrenorm
    examples/phrenorm_3d
