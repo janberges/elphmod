@@ -41,7 +41,7 @@ Also make sure to install the Python requirements before:
 * `tetrahedron.py` - some computer algebra behind tetrahedron method
 
 More sophisticated examples have their own subdirectory. Some of them require a
-[patched](../patches) version of Quantum ESPRESSO.
+patched version of Quantum ESPRESSO, see the sibling directory `patches`.
 
 * `bare` - bare phonon dispersion
 * `cdw_1d` - downfolding and CDW relaxation for carbon chain

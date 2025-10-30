@@ -17,7 +17,7 @@ Second, we optimize Q for constant L. A simultaneous optimization would also be
 possible, but it is only important that L is in the correct range.
 
 For the bare phonons, you need a modified version of Quantum ESPRESSO. You
-can use the provided [patch](../../patches) to apply the required changes.
+can use the provided patches to apply the required changes.
 
 Note that the results obtained in this example are not converged. The parameters
 have been chosen such that the calculations can be done on a personal computer.
