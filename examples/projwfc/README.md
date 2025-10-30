@@ -1,4 +1,4 @@
-# Projected band structure of graphene
+# Projected bands (graphene)
 
 This example shows how to
 

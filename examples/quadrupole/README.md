@@ -1,4 +1,4 @@
-# Optimization of quadrupole tensors
+# Quadrupole fitting
 
 This is a minimal working example of the optimization of quadrupole tensors as
 done by J. Berges, N. Girotto, T. Wehling, N. Marzari, and S. Poncé, *Phonon

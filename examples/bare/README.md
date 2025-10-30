@@ -1,4 +1,4 @@
-# Bare phonon dispersion with correct long-range behavior
+# Bare phonons
 
 This example will show you how to calculate a bare phonon dispersion, excluding
 any response of the electron density to displacements of the (pseudo-)ions. This

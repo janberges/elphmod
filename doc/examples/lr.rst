@@ -1,5 +1,5 @@
-Long-range terms
-================
+.. include:: ../../examples/lr/README.md
+   :parser: myst_parser.sphinx_
 
 .. literalinclude:: ../../examples/lr/lr.py
    :language: python

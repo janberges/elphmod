@@ -1,5 +1,5 @@
-STS simulation
-==============
+.. include:: ../../examples/simsts/README.md
+   :parser: myst_parser.sphinx_
 
 .. literalinclude:: ../../examples/simsts/simsts.py
    :language: python

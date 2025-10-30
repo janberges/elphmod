@@ -1,4 +1,4 @@
-# Projected band structure of polonium
+# Projected bands (α-Po)
 
 This example shows how to
 

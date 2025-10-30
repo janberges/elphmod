@@ -1,4 +1,4 @@
-# Goldstone modes of the nitrogen molecule
+# Goldstone modes
 
 The movement of the atoms of a diatomic molecule can be classified into the
 following six eigenmodes:

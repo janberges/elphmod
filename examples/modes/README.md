@@ -1,4 +1,4 @@
-# Decomposition of charge-density-wave (CDW) modes into harmonic eigenmodes from DFPT
+# Phonon modes
 
 This example is still work in progress,
 but at the moment we can insert
@@ -11,4 +11,5 @@ and the code aligns the CDW and the symmetric structure.
 Returns the file: info.dat
 
 Open issues:
+- decomposition of CDW modes into harmonic eigenmodes from DFPT
 - it does not work for rotated structures

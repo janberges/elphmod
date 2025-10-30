@@ -1,4 +1,4 @@
-# Long-range terms in PHonon, EPW, and elphmod
+# Long-range terms
 
 This example verifies that PHonon, EPW, and elphmod yield identical long-range
 terms for phonons and coupling.

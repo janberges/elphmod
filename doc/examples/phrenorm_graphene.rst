@@ -1,5 +1,5 @@
-Phonon renormalization (graphene)
-=================================
+.. include:: ../../examples/phrenorm_graphene/README.md
+   :parser: myst_parser.sphinx_
 
 .. literalinclude:: ../../examples/phrenorm_graphene/phrenorm_graphene.py
    :language: python

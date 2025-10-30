@@ -1,4 +1,4 @@
-# Phonon renormalization in 1H-TaS2
+# Phonon renormalization (TaS₂)
 
 This example shows how to
 

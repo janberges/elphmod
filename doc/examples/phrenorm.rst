@@ -1,5 +1,5 @@
-Phonon renormalization (TaS₂)
-=============================
+.. include:: ../../examples/phrenorm/README.md
+   :parser: myst_parser.sphinx_
 
 .. literalinclude:: ../../examples/phrenorm/phrenorm.py
    :language: python

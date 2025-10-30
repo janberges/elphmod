@@ -1,4 +1,4 @@
-# Simulated STM image of 1H-TaS2
+# STM simulation
 
 This example shows how to
 

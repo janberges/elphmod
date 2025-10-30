@@ -1,4 +1,4 @@
-# Phonon renormalization in graphene
+# Phonon renormalization (graphene)
 
 This example shows how to
 

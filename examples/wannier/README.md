@@ -1,3 +1,3 @@
-# Wannier interpolation in 1H-TaS2
+# Wannier interpolation
 
 This example tests the Wannier90 interface `elphmod.el.Model`.

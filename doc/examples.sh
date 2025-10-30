@@ -11,11 +11,19 @@ do
     if ls $folder/$name*.png > /dev/null 2>&1
     then
         rst=examples/$name.rst
+        readme=../examples/$name/README.md
 
         if ! test -f $rst
         then
-            echo $name > $rst
-            echo $name | sed 's/./=/g' >> $rst
+            if test -f $readme
+            then
+                echo ".. include:: ../$readme" >> $rst
+                echo "   :parser: myst_parser.sphinx_" >> $rst
+            else
+                echo $name > $rst
+                echo $name | sed 's/./=/g' >> $rst
+            fi
+
             echo >> $rst
             echo ".. literalinclude:: ../$example" >> $rst
             echo "   :language: python" >> $rst
@@ -27,6 +35,12 @@ do
             done
         fi
 
-        printf "%-40s %s\n" "`head -n 1 $rst`" examples/$name
+        if test -f $readme
+        then
+            title=`head -n 1 $readme`
+            printf "%-40s %s\n" "${title#\# }" examples/$name
+        else
+            printf "%-40s %s\n" "`head -n 1 $rst`" examples/$name
+        fi
     fi
 done

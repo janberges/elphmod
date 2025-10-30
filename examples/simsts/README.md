@@ -1,4 +1,4 @@
-# Simulated STS spectrum of graphene
+# STS simulation
 
 This example shows how to
 

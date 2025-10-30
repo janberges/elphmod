@@ -1,4 +1,4 @@
-# Phonon renormalization in polonium
+# Phonon renormalization (α-Po)
 
 This example shows how to
 

@@ -1,5 +1,5 @@
-Goldstone modes
-===============
+.. include:: ../../examples/goldstone/README.md
+   :parser: myst_parser.sphinx_
 
 .. literalinclude:: ../../examples/goldstone/goldstone.py
    :language: python

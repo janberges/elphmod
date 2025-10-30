@@ -1,4 +1,4 @@
-# Projected band structure of carbon chain
+# Projected bands (carbon chain)
 
 This example shows how to
 
