@@ -5,6 +5,7 @@
 
 import numpy as np
 import sys
+import time
 
 try:
     from mpi4py import MPI
@@ -392,6 +393,45 @@ def info(message, error=False, comm=comm):
 
     if error:
         sys.exit()
+
+def idle_wait(busy=0, sleep=0.2, comm=comm):
+    """Wait for busy process to finish without using up much CPU time.
+
+    This can be used to efficiently run an OpenMP-parallelized program from one
+    of the MPI processes. In the below example, without calling this function,
+    the other processes would usually busy-wait for the program to finish, using
+    up most of the CPU time that could otherwise be used by the OpenMP threads.
+
+    .. code-block:: python
+
+        if comm.rank == 0:
+            results = openmp_program()
+        else:
+            results = None
+
+        idle_wait()
+
+        results = comm.bcast(results)
+
+    Parameters
+    ----------
+    busy : int, default 0
+        Rank of busy process.
+    sleep : float, default 0.2
+        Sleeping period in seconds between checking if process is still busy.
+    """
+    if comm.size == 1:
+        return
+
+    if comm.rank == busy:
+        for rank in range(comm.size):
+            if rank != busy:
+                comm.isend(None, dest=rank)
+    else:
+        request = comm.irecv(source=busy)
+
+        while not request.test()[0]:
+            time.sleep(sleep)
 
 def elphmodenv(num_threads=1):
     """Print commands to change number of threads.
