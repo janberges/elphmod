@@ -1419,19 +1419,27 @@ def fan_migdal_self_energy(k, e, w, g2, omega, kT=0.025, occupations='fd',
 
     return Sigma
 
-def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10, occupations='fd',
-        a=np.eye(3), dc_only=False, comm=comm):
+def green_kubo_conductivity(v, A, omega, kT=0.025, eta=0.01, eps=1e-10,
+        occupations='fd', a=np.eye(3), dc_only=False, comm=comm):
     r"""Calculate Green-Kubo optical conductivity in the bubble approximation.
 
     .. math::
 
-        \sigma_{x y}(\omega) = \frac{\pi \hbar e^2}{V \sub{uc}}
+        \Re \sigma_{x y}(\omega) = \frac{\pi \hbar e^2}{V \sub{uc}}
             \frac 2 N \sum_{\vec k n} \int_{-\infty}^\infty \D \omega'
             \frac {f(\omega') - f(\omega' + \omega)} \omega
             v_{\vec k n x} v_{\vec k n y}
             A_{\vec k n}(\omega') A_{\vec k n}(\omega' + \omega)
 
     See Eq. (8) by Abramovitch et al., Phys. Rev. Mater. 7, 093801 (2023).
+
+    The imaginary part can be computed through the Kramers-Kronig relation:
+
+    .. math::
+
+        \Im \sigma_{x y}(\omega) \approx \frac 1 \pi L(\omega) \int \D \omega'
+            \Re \sigma_{x y}(\omega') \omega' L(\omega - \omega'),
+            \quad L(\omega) = \frac \omega {\omega^2 + \eta^2}
 
     It is also possible to consider the off-diagonal elements of the velocities,
     see Eq. (85) by Lihm and Ponce', arXiv:2506.18139 (2025).
@@ -1446,6 +1454,9 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10, occupations='fd',
         Frequency argument excluding small imaginary regulator.
     kT : float
         Smearing temperature.
+    eta : float
+        Absolute value of "infinitesimal" imaginary number in denominator. Only
+        used to compute the imaginary part through the Kramers-Kronig relation.
     eps : float
         Negligible difference between two floating-point numbers.
     occupations : function
@@ -1554,5 +1565,20 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eps=1e-10, occupations='fd',
         sigma = np.empty((len(omega), ndim, ndim))
 
         comm.Allgatherv(my_sigma, (sigma, comm.allgather(my_sigma.size)))
+
+        pi = -domega / np.pi * sigma * omega[:, np.newaxis, np.newaxis]
+
+        l = omega / (omega ** 2 + eta ** 2)
+
+        im = np.empty_like(pi)
+
+        for x in range(ndim):
+            for y in range(ndim):
+                # same as np.sum(pi[slpm, x, y] * l[slmp]) for each omega:
+
+                im[:, x, y] = np.convolve(pi[:, x, y],
+                    l[::-1])[-iw0 - len(omega):-iw0]
+
+        sigma = sigma + 1j * im * l[:, np.newaxis, np.newaxis]
 
     return sigma
