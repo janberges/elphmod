@@ -80,5 +80,6 @@
    :hidden:
 
    pages/changelog
+   pages/contributing
    pages/patches
    genindex
