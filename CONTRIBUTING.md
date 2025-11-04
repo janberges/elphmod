@@ -1,4 +1,19 @@
-# To do
+# Contributing
+
+Patches, merge request, issue reports, and feature requests are most welcome,
+either via email or through any of the web platforms where elphmod is hosted.
+
+## Code checks
+
+The following checks should be performed regularly and especially before
+publishing a new version.
+
+* Check if all examples work for the latest QE patch and i-PI installed.
+* Update documentation (which should also reveal changes in the examples).
+* Run tests both serially and in parallel for different Python versions.
+* Reformat source code with ``frettipy`` and manually wrap overlong lines.
+
+## To do
 
 The following things should/could be done sooner or later. Items with question
 mark are not necessarily a good idea.
