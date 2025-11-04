@@ -12,6 +12,7 @@ publishing a new version.
 * Update documentation (which should also reveal changes in the examples).
 * Run tests both serially and in parallel for different Python versions.
 * Reformat source code with ``frettipy`` and manually wrap overlong lines.
+* Validate source code using ``flake8`` and fix all errors and warnings.
 
 ## To do
 
