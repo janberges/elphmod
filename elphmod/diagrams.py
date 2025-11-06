@@ -1425,21 +1425,20 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eta=0.01, eps=1e-10,
 
     .. math::
 
-        \Re \sigma_{x y}(\omega) = \frac{\pi \hbar e^2}{V \sub{uc}}
-            \frac 2 N \sum_{\vec k n} \int_{-\infty}^\infty \D \omega'
-            \frac {f(\omega') - f(\omega' + \omega)} \omega
+        \Re \sigma_{x y}(\Omega) = \frac{\pi \hbar e^2}{V \sub{uc}}
+            \frac 2 N \sum_{\vec k n} \int_{-\infty}^\infty \D \omega
+            \frac {f(\omega) - f(\omega + \Omega)} \Omega
             v_{\vec k n x} v_{\vec k n y}
-            A_{\vec k n}(\omega') A_{\vec k n}(\omega' + \omega)
+            A_{\vec k n}(\omega) A_{\vec k n}(\omega + \Omega)
 
     See Eq. (8) by Abramovitch et al., Phys. Rev. Mater. 7, 093801 (2023).
 
-    The imaginary part can be computed through the Kramers-Kronig relation:
+    The imaginary part can be computed through the Kramers--Kronig relation:
 
     .. math::
 
-        \Im \sigma_{x y}(\omega) \approx \frac 1 \pi \int \D \omega'
-            \Re \sigma_{x y}(\omega') L(\omega - \omega'),
-            \quad L(\omega) = \frac \omega {\omega^2 + \eta^2}
+        \Im \sigma_{x y}(\Omega) = -\frac 1 \pi \int_{-\infty}^\infty \D \omega
+            \frac \omega {\omega^2 + \eta^2} \Re \sigma_{x y}(\omega + \Omega)
 
     It is also possible to consider the off-diagonal elements of the velocities,
     see Eq. (85) by Lihm and Ponce', arXiv:2506.18139 (2025).
@@ -1566,18 +1565,16 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eta=0.01, eps=1e-10,
 
         comm.Allgatherv(my_sigma, (sigma, comm.allgather(my_sigma.size)))
 
-        pi = -domega / np.pi * sigma
+        kernel = -domega / np.pi * omega / (omega ** 2 + eta ** 2)
 
-        l = omega / (omega ** 2 + eta ** 2)
-
-        im = np.empty_like(pi)
+        im = np.empty_like(sigma)
 
         for x in range(ndim):
             for y in range(ndim):
-                # same as np.sum(pi[slpm, x, y] * l[slmp]) for each omega:
+                # same as sum(sigma[slpm, x, y] * kernel[slmp]) for each omega:
 
-                im[:, x, y] = np.convolve(pi[:, x, y],
-                    l[::-1])[-iw0 - len(omega):-iw0]
+                im[:, x, y] = np.convolve(sigma[:, x, y],
+                    kernel[::-1])[-iw0 - len(omega):-iw0]
 
         sigma = sigma + 1j * im
 
