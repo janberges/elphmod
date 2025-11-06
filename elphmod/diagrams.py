@@ -1437,8 +1437,8 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eta=0.01, eps=1e-10,
 
     .. math::
 
-        \Im \sigma_{x y}(\omega) \approx \frac 1 \pi L(\omega) \int \D \omega'
-            \Re \sigma_{x y}(\omega') \omega' L(\omega - \omega'),
+        \Im \sigma_{x y}(\omega) \approx \frac 1 \pi \int \D \omega'
+            \Re \sigma_{x y}(\omega') L(\omega - \omega'),
             \quad L(\omega) = \frac \omega {\omega^2 + \eta^2}
 
     It is also possible to consider the off-diagonal elements of the velocities,
@@ -1566,7 +1566,7 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eta=0.01, eps=1e-10,
 
         comm.Allgatherv(my_sigma, (sigma, comm.allgather(my_sigma.size)))
 
-        pi = -domega / np.pi * sigma * omega[:, np.newaxis, np.newaxis]
+        pi = -domega / np.pi * sigma
 
         l = omega / (omega ** 2 + eta ** 2)
 
@@ -1579,6 +1579,6 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eta=0.01, eps=1e-10,
                 im[:, x, y] = np.convolve(pi[:, x, y],
                     l[::-1])[-iw0 - len(omega):-iw0]
 
-        sigma = sigma + 1j * im * l[:, np.newaxis, np.newaxis]
+        sigma = sigma + 1j * im
 
     return sigma
