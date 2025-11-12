@@ -1420,7 +1420,7 @@ def fan_migdal_self_energy(k, e, w, g2, omega, kT=0.025, occupations='fd',
     return Sigma
 
 def green_kubo_conductivity(v, A, omega, kT=0.025, eta=0.01, eps=1e-10,
-        occupations='fd', a=np.eye(3), dc_only=False, comm=comm):
+        occupations='fd', a=np.eye(3), weights=None, dc_only=False, comm=comm):
     r"""Calculate Green-Kubo optical conductivity in the bubble approximation.
 
     .. math::
@@ -1462,6 +1462,10 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eta=0.01, eps=1e-10,
         Particle distribution as a function of energy divided by `kT`.
     a : ndarray
         Bravais lattice vectors used to calculate unit-cell volume.
+    weights : nparray
+        Weights of k points. Only needed if `v` and `A` are given for the
+        irreducible k points only. Note that this requires symmetrizing the
+        resulting conductivity.
     dc_only : bool
         Only compute DC resistivity tensor (zero-frequency limit)?
 
@@ -1473,8 +1477,14 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eta=0.01, eps=1e-10,
     occupations = elphmod.occupations.smearing(occupations)
 
     nbnd = A.shape[-2]
-    nk = A.size // nbnd // len(omega)
     ndim = v.shape[-1]
+
+    if weights is None:
+        nk = A.size // nbnd // len(omega)
+
+        weights = np.ones(nk)
+    else:
+        nk = len(weights)
 
     diagonal = v.size == nk * nbnd * ndim
 
@@ -1484,6 +1494,8 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eta=0.01, eps=1e-10,
         v = v.reshape((nk, nbnd, nbnd, 1, ndim))
 
     v2 = (v[..., :, np.newaxis].conj() * v[..., np.newaxis, :]).real
+
+    v2.T[...] *= weights
 
     A = A.reshape((nk, nbnd, len(omega), 1, 1))
 
@@ -1495,7 +1507,7 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eta=0.01, eps=1e-10,
 
     # including e^2 = 2 in Rydberg units and 2 from spin:
 
-    prefactor = 4 * np.pi / (nk * elphmod.bravais.volume(*a))
+    prefactor = 4 * np.pi / (sum(weights) * elphmod.bravais.volume(*a))
 
     chunks = int(np.ceil(v2.nbytes * len(omega) / elphmod.misc.memory))
 
