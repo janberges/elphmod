@@ -8,7 +8,7 @@ log=run_py_versions_conda.log
 
 echo "Tests for different Python versions" > $log
 
-for minor in `seq 5 13`
+for minor in `seq 5 14`
 do
     conda create -y -p $env python=3.$minor
     conda activate $env
