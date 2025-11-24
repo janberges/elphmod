@@ -3,6 +3,13 @@
 See [Git commits](https://github.com/janberges/elphmod/commits) for more
 detailed list of changes.
 
+## v0.32/2025-11-24
+
+* Contributing guidelines
+* Idle waiting (useful when single MPI rank uses multiple OpenMP threads)
+* Examples shown in documentation
+* Improved function to calculate optical conductivity
+
 ## v0.31/2025-10-02
 
 * QE-7.5 support (cDFPT patch)
