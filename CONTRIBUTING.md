@@ -5,14 +5,14 @@ either via email or through any of the web platforms where elphmod is hosted.
 
 ## Code checks
 
-The following checks should be performed regularly and especially before
+The following tasks should be performed regularly and especially before
 publishing a new version.
 
-* Check if all examples work for the latest QE patch and i-PI installed.
-* Update documentation (which should also reveal changes in the examples).
-* Run tests both serially and in parallel for different Python versions.
 * Reformat source code with ``frettipy`` and manually wrap overlong lines.
 * Validate source code using ``flake8`` and fix all errors and warnings.
+* Run tests both serially and in parallel for different Python versions.
+* Check if all examples work for the latest QE patch and i-PI installed.
+* Update documentation (which should also reveal changes in the examples).
 
 ## To do
 
