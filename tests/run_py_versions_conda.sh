@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # conda install conda-build
-# source ./conda.sh
+# source run_py_versions_conda.sh
 
 env=/dev/shm/env
 log=run_py_versions_conda.log
