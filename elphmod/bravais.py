@@ -664,7 +664,7 @@ def irreducibles(nk, angle=60):
 
     return irreducible
 
-def symmetries_ibrav(ibrav=1):
+def symmetries_ibrav(ibrav=1, cartesian=False, **kwargs):
     """Provide symmetries defined in Quantum ESPRESSO.
 
     These symmetry operations have been obtained from the file *info* generated
@@ -674,6 +674,11 @@ def symmetries_ibrav(ibrav=1):
     ----------
     ibrav : int
         Bravais-lattice index.
+    cartesian : bool
+        Transform symmetry matrices to Cartesian basis?
+    **kwargs
+        Arguments passed to :func:`primitives`, e.g., parameters from
+        :func:`read_pwi`.
 
     Returns
     -------
@@ -758,8 +763,15 @@ def symmetries_ibrav(ibrav=1):
         ''',
     }.get(ibrav, '+000+000+')
 
-    return np.reshape([['-0+'.index(sgn) - 1 for sgn in symmetry]
+    S = np.reshape([['-0+'.index(sgn) - 1 for sgn in symmetry]
         for symmetry in symmetries.split()], (-1, 3, 3))
+
+    if cartesian:
+        a = primitives(ibrav, **kwargs)
+
+        S = np.transpose(reciprocals(*a)) @ S @ a
+
+    return S
 
 def images_ibrav(k1=1, k2=1, k3=1, nk1=1, nk2=1, nk3=1, ibrav=1):
     """Generate symmetry-equivalent k points from symmetries defined in QE.
