@@ -173,7 +173,7 @@ def irreducibles_qe(nk1=1, nk2=1, nk3=1, ibrav=1, **const):
     kpoints = np.reshape(comm.bcast(kpoints), (-1, 3))
     weights = np.array(comm.bcast(weights))
 
-    a = elphmod.bravais.primitives(ibrav, bohr=True, **const) / celldm[0]
+    a = primitives(ibrav, bohr=True, **const) / celldm[0]
 
     return 2 * np.pi * np.round(kpoints.dot(a.T) * nk) / nk, weights
 
