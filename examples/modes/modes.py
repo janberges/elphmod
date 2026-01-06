@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (C) 2017-2025 elphmod Developers
+# Copyright (C) 2017-2026 elphmod Developers
 # This program is free software under the terms of the GNU GPLv3 or later.
 
 """
