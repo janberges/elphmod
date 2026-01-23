@@ -25,7 +25,7 @@ def bose_einstein(x):
 def fermi_dirac(x):
     """Calculate Fermi function."""
 
-    # return 1 - 0.5 * np.tanh(0.5 * x)
+    # return 0.5 - 0.5 * np.tanh(0.5 * x)
 
     x = np.array(x)
     x.real = np.minimum(x.real, xmax)
