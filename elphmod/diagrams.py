@@ -1103,7 +1103,11 @@ def grand_potential(e, kT=0.025, occupations='fd'):
     prefactor = 2 * kT / np.prod(e.shape[:-1])
 
     if occupations is elphmod.occupations.fermi_dirac: # faster alternative
-        return prefactor * np.log(occupations(-x)).sum()
+        ok = x.real > -elphmod.occupations.xmax
+        Omega = x
+        Omega[ok] = -np.log(np.exp(-x[ok]) + 1)
+
+        return prefactor * Omega.sum()
 
     return prefactor * ((occupations(x) * x).sum() # U - mu N
         - occupations.entropy(x).sum()) # - T S
