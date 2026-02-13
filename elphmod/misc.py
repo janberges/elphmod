@@ -66,8 +66,11 @@ Ha = 2 * Ry
 a0 = 0.529177210903
 """Bohr radius (AA) [2018 CODATA]."""
 
-cmm1 = 100.0 * hSI * cSI / eVSI
+cmm1 = 100.0 * cSI * hSI / eVSI
 """"Inverse cm" (eV)."""
+
+THz = 1e12 * hSI / eVSI
+"""Terahertz (eV)."""
 
 kB = kBSI / eVSI
 """Boltzmann constant (eV/K)."""
