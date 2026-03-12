@@ -27,7 +27,7 @@ if comm.rank == 0:
 material = 'NbSe2'
 N1 = 3
 N2 = 3
-cdw_path = '%s_3x3_CDW.in' % (material)
+cdw_path = '%s_3x3_CDW.in' % material
 transition_metal = 'Nb'
 chalcogen = 'Se'
 
