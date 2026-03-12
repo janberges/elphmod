@@ -2189,7 +2189,8 @@ def write_pwi(pwi, struct):
         data.write('&CONTROL\n')
 
         for key in ['title', 'prefix', 'outdir', 'pseudo_dir', 'calculation',
-                'tprnfor', 'tstress', 'nstep', 'forc_conv_thr']:
+                'etot_conv_thr', 'forc_conv_thr', 'tprnfor', 'tstress',
+                'nstep']:
             if key in struct:
                 data.write('%s = %r\n' % (key, struct[key]))
 
