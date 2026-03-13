@@ -256,7 +256,7 @@ def primitives(ibrav=8, celldm=None, bohr=False, r_cell=None, cell_units=None,
             [ 0.0,              0.0, celldm[2]],
         ]) * celldm[0]
 
-    if ibrav == 5: # trigonal (3-fold axis c)
+    if ibrav == 5: # trigonal/rhombohedral (3-fold axis c)
         tx = np.sqrt((1 - celldm[3]) / 2)
         ty = np.sqrt((1 - celldm[3]) / 6)
         tz = np.sqrt((1 + 2 * celldm[3]) / 3)
@@ -267,7 +267,7 @@ def primitives(ibrav=8, celldm=None, bohr=False, r_cell=None, cell_units=None,
             [-tx,    -ty, tz],
         ]) * celldm[0]
 
-    if ibrav == -5: # trigonal (3-fold axis <111>)
+    if ibrav == -5: # trigonal/rhombohedral (3-fold axis <111>)
         tx = np.sqrt((1 - celldm[3]) / 2)
         ty = np.sqrt((1 - celldm[3]) / 6)
         tz = np.sqrt((1 + 2 * celldm[3]) / 3)
@@ -1773,6 +1773,7 @@ def path(points, N=30, recvec=None, qe=False, moveG=0, **kwargs):
         List of high-symmetry points in crystal coordinates. Some well-known
         labels such as ``G`` (|Ggr|), ``M``, or ``K`` may also be used. Mostly,
         the definitions follow https://lampx.tugraz.at/~hadley/ss1/bzones/.
+        See also: Setyawan and Curtarolo, Comput. Mater. Sci. 49, 299 (2010).
     N : float
         Number of points per :math:`2 \pi / a`.
     recvec : ndarray, optional
@@ -1831,6 +1832,12 @@ def path(points, N=30, recvec=None, qe=False, moveG=0, **kwargs):
             'L': [0.0, 0.5, 0.5],
             'K': [1 / 3, 1 / 3, 0.0],
             'H': [1 / 3, 1 / 3, 0.5],
+        },
+        5: { # trigonal/rhombohedral (3-fold axis c)
+            'L': [0.5, 0.0, 0.0],
+        },
+        -5: { # trigonal/rhombohedral (3-fold axis <111>)
+            'L': [0.5, 0.0, 0.0],
         },
         6: { # tetragonal (st)
             'X': [0.5, 0.0, 0.0],
