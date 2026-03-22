@@ -33,5 +33,4 @@ u /= u.max()
 
 plot = elphmod.plot.AtomsPlot(ph.r, ph.atom_order)
 plot.set_displacements(u)
-plot.plot(filename='skiing.png', scale=1.0, label=True)
-plot.plot(label=True)
+plot.plot('skiing.png', scale=1.0, label=True)

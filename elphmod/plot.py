@@ -558,13 +558,14 @@ class AtomsPlot:
         self.s = np.reshape(radii, self.s.shape)
 
     def plot(self, filename=None, interactive=None, scale=None, padding=1.0,
-            size=None, pause=None, label=False, elev=None, azim=None):
+            size=None, pause=None, label=False, elev=None, azim=None,
+            show=True):
         """Plot crystal structure and displacements.
 
         Parameters
         ----------
         filename : str, optional
-            Figure filename. If given, the plot is saved rather than shown.
+            Figure filename.
         interactive : bool, optional
             Shall the plot be updated? If given, this sets the eponymous
             attribute, which is used by default.
@@ -581,6 +582,8 @@ class AtomsPlot:
             Show atom indices?
         elev, azim : float, optional
             Elevation and azimuthal view angles.
+        show : bool, optional
+            Show figure?
         """
         if comm.rank != 0:
             return
@@ -634,10 +637,12 @@ class AtomsPlot:
 
         plt.subplots_adjust(left=0, right=1, bottom=0, top=1)
 
-        if filename is None:
+        if filename is not None:
+            plt.savefig(filename)
+
+        if show:
             plt.show()
         else:
-            plt.savefig(filename)
             plt.close()
 
     def update(self):
