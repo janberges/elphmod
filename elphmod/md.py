@@ -125,14 +125,6 @@ class Driver:
         Electron-phonon coupling in band basis.
     sparse : bool
         Is the simulation performed on a supercell using sparse matrices?
-    interactive : bool, default False
-        Shall plots be updated interactively?
-    scale : float, default 10.0
-        Displacement scaling factor for plots.
-    size : float, default 100.0
-        Marker size for atoms in points squared.
-    pause : float, default 1e-3
-        Minimal frame duration for interactive plots in seconds.
     basis : list of list, default None
         For each basis atom in the first primitive cell, indices of orbitals
         located at this atom. Matching atom and orbital orders as ensured by
@@ -201,10 +193,9 @@ class Driver:
         self.F0 = np.zeros(self.elph.ph.size)
         self.F0 = -self.jacobian(show=False)
 
-        self.interactive = False
-        self.scale = 10.0
-        self.size = 100.0
-        self.pause = 1e-3
+        self.figure = elphmod.plot.AtomsPlot(self.elph.ph.r,
+            self.elph.ph.atom_order)
+
         self.basis = None
 
         for name, value in kwargs.items():
@@ -311,8 +302,8 @@ class Driver:
 
         self.diagonalize()
 
-        if self.interactive:
-            self.update_plot()
+        if self.figure.interactive:
+            self.plot(update=True)
 
         E = elphmod.diagrams.grand_potential(self.e,
             self.kT, self.f) + self.mu * self.n
@@ -675,117 +666,30 @@ class Driver:
 
         return rho_at
 
-    def plot(self, filename=None, interactive=None, scale=None, padding=1.0,
-            size=None, pause=None, label=False, elev=None, azim=None):
+    def plot(self, update=False, **kwargs):
         """Plot crystal structure and displacements.
 
         Parameters
         ----------
-        filename : str, optional
-            Figure filename. If given, the plot is saved rather than shown.
-        interactive : bool, optional
-            Shall the plot be updated? If given, this sets the eponymous
-            attribute, which is used by default.
-        scale : float, optional
-            Displacement scaling factor. If given, this sets the eponymous
-            attribute, which is used by default.
-        padding : float, optional
-            Padding between crystal and plotting box in angstrom.
-        size : float, optional
-            Marker size for atoms.
-        pause : float, optional
-            Minimal frame duration for interactive plots in seconds.
-        label : bool, optional
-            Show atom indices?
-        elev, azim : float, optional
-            Elevation and azimuthal view angles.
+        update : bool, default False
+            Update open interactive plot?
+        **kwargs
+            Keyword arguments passed to :meth:`plot.AtomsPlot.plot`.
         """
-        if comm.rank != 0:
-            return
 
-        global plt
-        import matplotlib.pyplot as plt
+        self.figure.set_positions(self.elph.ph.r
+            + self.u.reshape(self.elph.ph.r.shape))
 
-        if interactive is not None:
-            self.interactive = interactive
-
-        if scale is not None:
-            self.scale = scale
-
-        if size is not None:
-            self.size = size
-
-        if pause is not None:
-            self.pause = pause
-
-        u = self.u.reshape(self.elph.ph.r.shape).T
-        r = self.elph.ph.r.T + u
-
-        if elev is None:
-            elev = self.axes.elev if hasattr(self, 'axes') else 90
-
-        if azim is None:
-            azim = self.axes.azim if hasattr(self, 'axes') else -90
-
-        self.axes = plt.axes(projection='3d')
-        self.axes.view_init(elev, azim)
-
-        sizes = self.size
+        self.figure.set_displacements(self.u)
 
         if self.basis is not None:
             rho = self.density_per_atom()
-            sizes *= rho / rho.max()
+            self.figure.set_radii(rho / rho.max())
 
-        self.scatter = self.axes.scatter(*r, s=sizes, c=['#%02x%02x%02x'
-            % elphmod.misc.colors[X] for X in self.elph.ph.atom_order])
-
-        self.quiver = self.axes.quiver(*r, *self.scale * u, color='gray')
-
-        if label:
-            for na in range(self.elph.ph.nat):
-                self.axes.text(*r[:, na], str(na))
-
-        lims = [self.axes.set_xlim, self.axes.set_ylim, self.axes.set_zlim]
-
-        for i, lim in enumerate(lims):
-            lim(self.elph.ph.r[:, i].min() - padding,
-                self.elph.ph.r[:, i].max() + padding)
-
-        self.axes.set_box_aspect(np.ptp(self.elph.ph.r, axis=0) + 2 * padding)
-        self.axes.set_axis_off()
-
-        if self.interactive:
-            plt.ion()
+        if update:
+            self.figure.update(**kwargs)
         else:
-            plt.ioff()
-
-        plt.subplots_adjust(left=0, right=1, bottom=0, top=1)
-
-        if filename is None:
-            plt.show()
-        else:
-            plt.savefig(filename)
-            plt.close()
-
-    def update_plot(self):
-        """Update open plot."""
-
-        if comm.rank != 0:
-            return
-
-        u = self.u.reshape(self.elph.ph.r.shape).T
-        r = self.elph.ph.r.T + u
-
-        self.scatter._offsets3d = tuple(r)
-
-        if self.basis is not None:
-            rho = self.density_per_atom()
-            self.scatter.set_sizes(self.size * rho / rho.max())
-
-        self.quiver.remove()
-        self.quiver = self.axes.quiver(*r, *self.scale * u, color='gray')
-
-        plt.pause(self.pause)
+            self.figure.plot(**kwargs)
 
     def to_xyz(self, xyz, append=False):
         """Save current atomic positions.
@@ -844,8 +748,8 @@ class Driver:
 
                         self.u[elphmod.ph.group(na)] = pos - self.elph.ph.r[na]
 
-                    if self.interactive:
-                        self.update_plot()
+                    if self.figure.interactive:
+                        self.plot(update=True)
 
         comm.Bcast(self.u)
 
@@ -882,8 +786,8 @@ class Driver:
         filename : str
             Filename for pickled representation of driver.
         """
-        interactive = self.interactive
-        self.interactive = False
+        interactive = self.figure.interactive
+        self.figure.interactive = False
 
         comms = self.node, self.images
 
@@ -898,7 +802,7 @@ class Driver:
 
         elphmod.MPI.Buffer(filename).set(self)
 
-        self.interactive = interactive
+        self.figure.interactive = interactive
 
         self.node, self.images = comms
 

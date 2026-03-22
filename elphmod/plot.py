@@ -508,3 +508,150 @@ def compline(x, y, composition, center=True):
         sgn *= -1
 
     return XY
+
+class AtomsPlot:
+    """3D plot of atomic positions and displacements.
+
+    Parameters
+    ----------
+    positions : ndarray
+        Atomic positions in Cartesian coordinates.
+    elements : list of str
+        Element symbols determining marker colors.
+
+    Attributes
+    ----------
+    interactive : bool, default False
+        Shall plots be updated interactively?
+    scale : float, default 10.0
+        Displacement scaling factor for plots.
+    size : float, default 100.0
+        Marker size for atoms in points squared.
+    pause : float, default 1e-3
+        Minimal frame duration for interactive plots in seconds.
+    """
+    def __init__(self, positions, elements):
+        self.r = np.reshape(positions, (-1, 3))
+        self.u = np.zeros_like(self.r)
+        self.s = np.ones(len(self.r))
+
+        self.lower = self.r.min(axis=0)
+        self.upper = self.r.max(axis=0)
+
+        self.elements = elements
+
+        self.interactive = False
+        self.scale = 10.0
+        self.size = 100.0
+        self.pause = 1e-3
+
+    def set_positions(self, positions):
+        """Set atomic positions."""
+        self.r = np.reshape(positions, self.r.shape)
+
+    def set_displacements(self, displacements):
+        """Set atomic displacements."""
+        self.u = np.reshape(displacements, self.u.shape)
+
+    def set_radii(self, radii):
+        """Set atomic radii, i.e., scaling factors for marker size."""
+        self.s = np.reshape(radii, self.s.shape)
+
+    def plot(self, filename=None, interactive=None, scale=None, padding=1.0,
+            size=None, pause=None, label=False, elev=None, azim=None):
+        """Plot crystal structure and displacements.
+
+        Parameters
+        ----------
+        filename : str, optional
+            Figure filename. If given, the plot is saved rather than shown.
+        interactive : bool, optional
+            Shall the plot be updated? If given, this sets the eponymous
+            attribute, which is used by default.
+        scale : float, optional
+            Displacement scaling factor. If given, this sets the eponymous
+            attribute, which is used by default.
+        padding : float, optional
+            Padding between crystal and plotting box in angstrom.
+        size : float, optional
+            Marker size for atoms.
+        pause : float, optional
+            Minimal frame duration for interactive plots in seconds.
+        label : bool, optional
+            Show atom indices?
+        elev, azim : float, optional
+            Elevation and azimuthal view angles.
+        """
+        if comm.rank != 0:
+            return
+
+        global plt
+        import matplotlib.pyplot as plt
+
+        if interactive is not None:
+            self.interactive = interactive
+
+        if scale is not None:
+            self.scale = scale
+
+        if size is not None:
+            self.size = size
+
+        if pause is not None:
+            self.pause = pause
+
+        if elev is None:
+            elev = self.axes.elev if hasattr(self, 'axes') else 90
+
+        if azim is None:
+            azim = self.axes.azim if hasattr(self, 'axes') else -90
+
+        self.axes = plt.axes(projection='3d')
+        self.axes.view_init(elev, azim)
+
+        self.scatter = self.axes.scatter(*self.r.T, s=self.size * self.s,
+            c=['#%02x%02x%02x' % elphmod.misc.colors[X] for X in self.elements])
+
+        self.quiver = self.axes.quiver(*self.r.T, *self.scale * self.u.T,
+            color='gray')
+
+        if label:
+            for na in range(len(self.r)):
+                self.axes.text(*self.r[na], str(na))
+
+        lims = [self.axes.set_xlim, self.axes.set_ylim, self.axes.set_zlim]
+
+        for i, lim in enumerate(lims):
+            lim(self.lower[i] - padding, self.upper[i] + padding)
+
+        self.axes.set_box_aspect(self.upper - self.lower + 2 * padding)
+        self.axes.set_axis_off()
+
+        if self.interactive:
+            plt.ion()
+        else:
+            plt.ioff()
+
+        plt.subplots_adjust(left=0, right=1, bottom=0, top=1)
+
+        if filename is None:
+            plt.show()
+        else:
+            plt.savefig(filename)
+            plt.close()
+
+    def update(self):
+        """Update open plot."""
+
+        if comm.rank != 0:
+            return
+
+        self.scatter._offsets3d = tuple(self.r.T)
+
+        self.scatter.set_sizes(self.size * self.s)
+
+        self.quiver.remove()
+        self.quiver = self.axes.quiver(*self.r.T, *self.scale * self.u.T,
+            color='gray')
+
+        plt.pause(self.pause)

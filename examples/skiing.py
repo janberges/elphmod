@@ -4,7 +4,6 @@
 # This program is free software under the terms of the GNU GPLv3 or later.
 
 import elphmod
-import matplotlib.pyplot as plt
 import numpy as np
 import scipy.optimize
 
@@ -32,18 +31,7 @@ else:
 u = scipy.optimize.minimize(E2, u).x
 u /= u.max()
 
-if elphmod.MPI.comm.rank == 0:
-    ax = plt.axes(projection='3d')
-    ax.set_box_aspect(np.ptp(ph.r, axis=0))
-    ax.set_axis_off()
-
-    ax.scatter(*ph.r.T, s=100.0, c=['#%02x%02x%02x' % elphmod.misc.colors[X]
-        for X in ph.atom_order])
-
-    ax.quiver(*ph.r.T, *u.reshape(ph.r.shape).T, color='k')
-
-    for n in range(ph.nat):
-        ax.text(*ph.r[n], str(n))
-
-    plt.savefig('skiing.png')
-    plt.show()
+plot = elphmod.plot.AtomsPlot(ph.r, ph.atom_order)
+plot.set_displacements(u)
+plot.plot(filename='skiing.png', scale=1.0, label=True)
+plot.plot(label=True)
