@@ -275,6 +275,55 @@ def rand(*shape, a=48271, m=2147483647):
 
 rand.i = 1
 
+def read_xyz(xyz):
+    """Iterate over atomic configurations in *.xyz* file.
+
+    Parameters
+    ----------
+    xyz : str
+        Name of *.xyz* file.
+
+    Yields
+    ------
+    list of str
+        Element symbols.
+    ndarray
+        Atomic positions.
+    """
+    if comm.rank == 0:
+        lines = open(xyz)
+
+    while True:
+        if comm.rank == 0:
+            nat = int(next(lines, -1))
+        else:
+            nat = None
+
+        nat = comm.bcast(nat)
+
+        if nat < 0:
+            break
+
+        elements = []
+        positions = np.empty((nat, 3))
+
+        if comm.rank == 0:
+            next(lines) # skip comment line
+
+            for na in range(nat):
+                cols = next(lines).split()
+
+                elements.append(cols[0])
+                positions[na] = list(map(float, cols[1:4]))
+
+        elements = comm.bcast(elements)
+        comm.Bcast(positions)
+
+        yield elements, positions
+
+    if comm.rank == 0:
+        lines.close()
+
 def read_cube(cube, only_header=False, comm=comm):
     """Read Gaussian cube file.
 

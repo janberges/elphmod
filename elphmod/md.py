@@ -723,35 +723,20 @@ class Driver:
         Parameters
         ----------
         xyz : str
-            Name of .xyz file.
+            Name of *.xyz* file.
         """
-        if comm.rank == 0:
-            with open(xyz) as lines:
-                for line in lines:
-                    nat = int(line)
+        for atom_order, r in elphmod.misc.read_xyz(xyz):
+            if len(r) != self.elph.ph.nat:
+                info("Wrong number of atoms in '%s'!" % xyz, error=True)
 
-                    if nat != self.elph.ph.nat:
-                        print("Error: Wrong number of atoms in '%s'!" % xyz)
-                        break
+            for na in range(self.elph.ph.nat):
+                if atom_order[na] != self.elph.ph.atom_order[na]:
+                    info("Unexpected element in '%s'!" % xyz, error=True)
 
-                    next(lines) # skip comment line
+            self.u = (r - self.elph.ph.r).ravel()
 
-                    for na in range(nat):
-                        cols = next(lines).split()
-
-                        if cols[0] != self.elph.ph.atom_order[na]:
-                            print("Warning: Unexpected atom %d in '%s' ignored!"
-                                % (na + 1, xyz))
-                            continue
-
-                        pos = np.array(list(map(float, cols[1:4])))
-
-                        self.u[elphmod.ph.group(na)] = pos - self.elph.ph.r[na]
-
-                    if self.figure.interactive:
-                        self.plot(update=True)
-
-        comm.Bcast(self.u)
+            if self.figure.interactive:
+                self.plot(update=True)
 
     def to_pwi(self, pwi, **kwargs):
         """Save current atomic positions etc. to PWscf input file.
