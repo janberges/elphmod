@@ -100,6 +100,9 @@ class Driver:
         provided instead of using this option.
     unscreen : bool, default True
         Unscreen phonons? Otherwise, they are assumed to be unscreened already.
+    kT0, f0, n0 : optional
+        Model smearing temperature, distribution function, and electron number
+        to be used for unscreening. By default, `kT`, `f`, and `n` are used.
     shared_memory : bool, default True
         Store :attr:`d0` and :attr:`d` in shared memory?
     **kwargs
@@ -133,8 +136,9 @@ class Driver:
         Communicators between processes that share memory or same ``node.rank``
         if `shared_memory`.
     """
-    def __init__(self, elph, kT, f, n, nx=0.0, nk=(1,), nq=(1,),
-            supercell=None, unscreen=True, shared_memory=True, **kwargs):
+    def __init__(self, elph, kT, f, n, nx=0.0, nk=(1,), nq=(1,), supercell=None,
+            unscreen=True, kT0=None, f0=None, n0=None, shared_memory=True,
+            **kwargs):
 
         if not elph.el.rydberg:
             info("Initialize 'el' with 'rydberg=True'!", error=True)
@@ -145,10 +149,10 @@ class Driver:
 
         self.elph = copy.copy(elph)
 
-        self.kT = kT
-        self.f = elphmod.occupations.smearing(f)
+        self.kT = kT0 if kT0 is not None else kT
+        self.f = elphmod.occupations.smearing(f0 if f0 is not None else f)
 
-        self.n = n
+        self.n = n0 if n0 is not None else n
         self.nx = nx
         self.mu = None
 
@@ -192,6 +196,10 @@ class Driver:
 
         self.F0 = np.zeros(self.elph.ph.size)
         self.F0 = -self.jacobian(show=False)
+
+        self.kT = kT
+        self.f = elphmod.occupations.smearing(f)
+        self.n = n
 
         self.figure = elphmod.plot.AtomsPlot(self.elph.ph.r,
             self.elph.ph.atom_order)

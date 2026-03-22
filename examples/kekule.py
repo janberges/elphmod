@@ -16,9 +16,6 @@ N = 6
 nk = 6
 nq = 6
 
-kT0 = 2.0
-kT = 0.02
-
 elphmod.models.graphene.create('data/graphene')
 
 el = elphmod.el.Model('data/graphene', rydberg=True)
@@ -34,11 +31,8 @@ if not sparse:
     nk //= N
     nq //= N
 
-driver = elphmod.md.Driver(elph, kT=kT0, f=elphmod.occupations.fermi_dirac,
-    nk=(nk, nk), nq=(nq, nq), supercell=(N, N) if sparse else None,
-    n=elph.el.size)
-
-driver.kT = kT
+driver = elphmod.md.Driver(elph, kT=0.02, f='fd', n=elph.el.size,
+    nk=(nk, nk), nq=(nq, nq), supercell=(N, N) if sparse else None, kT0=2.0)
 
 driver.random_displacements(amplitude=0.05, reproducible=True)
 

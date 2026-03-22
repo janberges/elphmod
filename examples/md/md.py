@@ -14,11 +14,8 @@ except ModuleNotFoundError:
 
 el, ph, elph = elphmod.models.tas2.create(rydberg=True, divide_mass=False)
 
-driver = elphmod.md.Driver(elph, nk=(12, 12), nq=(2, 2), supercell=(9, 9),
-    kT=0.02, f=elphmod.occupations.marzari_vanderbilt, n=1.0)
-
-driver.kT = 0.005
-driver.f = elphmod.occupations.fermi_dirac
+driver = elphmod.md.Driver(elph, kT=0.005, f='fd', n=1.0,
+    nk=(12, 12), nq=(2, 2), supercell=(9, 9), kT0=0.02, f0='mv')
 
 driver.random_displacements(amplitude=0.05, reproducible=True)
 

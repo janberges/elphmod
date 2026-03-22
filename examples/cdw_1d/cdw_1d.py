@@ -14,10 +14,8 @@ elph = elphmod.elph.Model('work/C.epmatwp', 'wigner.fmt',
 
 elph = elph.supercell(1, 1, 2)
 
-driver = elphmod.md.Driver(elph, kT=0.02, f=elphmod.occupations.gauss,
-    nk=(1, 1, 100), nq=(1, 1, 4), n=elph.el.size)
-
-driver.kT = 0.002
+driver = elphmod.md.Driver(elph, kT=0.002, f='gauss', n=elph.el.size,
+    nk=(1, 1, 100), nq=(1, 1, 4), kT0=0.02)
 
 driver.random_displacements(reproducible=True)
 
