@@ -103,6 +103,10 @@ class Driver:
     kT0, f0, n0 : optional
         Model smearing temperature, distribution function, and electron number
         to be used for unscreening. By default, `kT`, `f`, and `n` are used.
+    export : str, optional
+        Name of input file for `elphy` code.
+    eps : float, optional
+        Matrix-element threshold for export in Hartree atomic units.
     shared_memory : bool, default True
         Store :attr:`d0` and :attr:`d` in shared memory?
     **kwargs
@@ -137,8 +141,8 @@ class Driver:
         if `shared_memory`.
     """
     def __init__(self, elph, kT, f, n, nx=0.0, nk=(1,), nq=(1,), supercell=None,
-            unscreen=True, kT0=None, f0=None, n0=None, shared_memory=True,
-            **kwargs):
+            unscreen=True, kT0=None, f0=None, n0=None, export=None, eps=1e-10,
+            shared_memory=True, **kwargs):
 
         if not elph.el.rydberg:
             info("Initialize 'el' with 'rydberg=True'!", error=True)
@@ -209,13 +213,17 @@ class Driver:
         for name, value in kwargs.items():
             setattr(self, name, value)
 
+        if unscreen and (export is not None or supercell is not None):
+            self.elph.ph = copy.copy(self.elph.ph)
+
+            elphmod.ph.q2r(self.elph.ph, nq=self.nq, D_full=self.C0,
+                divide_mass=False)
+
+        if export is not None:
+            self.elph.export(export, self.kT, self.n, nspin=2, strain=0.0,
+                supercell=(1,) if supercell is None else supercell, eps=eps)
+
         if supercell is not None:
-            if unscreen:
-                self.elph.ph = copy.copy(self.elph.ph)
-
-                elphmod.ph.q2r(self.elph.ph, nq=self.nq, D_full=self.C0,
-                    divide_mass=False)
-
             elph = self.elph.supercell(*supercell, sparse=True)
 
             self.__init__(elph, self.kT, self.f, self.n * len(elph.cells),

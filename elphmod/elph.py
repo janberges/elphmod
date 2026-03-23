@@ -813,6 +813,127 @@ class Model:
 
                         buf.swapaxes(-2, -1).astype(np.complex128).tofile(data)
 
+    def export(self, filename, kT, n, nspin=2, strain=0.0, supercell=(1, 1, 1),
+            econv=0.5, lconv=1.0, eps=1e-10):
+        """Export model to input file for `elphy`.
+
+        Parameters
+        ----------
+        filename : str
+            Name of input file for `elphy`.
+        kT : float
+            Smearing temperature.
+        n : float
+            Number of electrons per primitive cell.
+        nspin : int, default 2
+            Number of spins per orbital.
+        strain : int, default 0.0
+            Isotropic strain.
+        supercell : tuple of (int or tuple of int), default (1, 1, 1)
+            Supercell lattice vectors in units of primitive lattice vectors.
+        econv : float, default 0.5
+            Energy conversion factor. The default converts Rydberg to Hartree
+            atomic units.
+        lconv : float, default 1.0
+            Length conversion factor. By default, length units are not changed.
+        eps : float, default 1e-10
+            Matrix-element threshold in output units.
+        """
+        supercell = elphmod.bravais.supercell(*supercell)[1]
+
+        if comm.rank != 0:
+            return
+
+        kconv = econv ** 2 if self.ph.divide_mass else econv / lconv ** 2
+        gconv = econv ** 3 if self.divide_mass else econv / lconv
+
+        tused = eps < econv * abs(self.el.data.real)
+        kused = eps < kconv * abs(self.ph.data.real)
+        gused = eps < gconv * abs(self.data.real)
+
+        R = set()
+        R.update(map(tuple, self.el.R[np.any(tused, axis=(1, 2))]))
+        R.update(map(tuple, self.ph.R[np.any(kused, axis=(1, 2))]))
+        R.update(map(tuple, self.Rg[np.any(gused, axis=(1, 2, 3, 4))]))
+        R.update(map(tuple, self.Rk[np.any(gused, axis=(0, 1, 3, 4))]))
+        R = sorted(R)
+
+        with open(filename, 'w') as dat:
+            dat.write('%s\n' % (kT * econv))
+            dat.write('%s\n' % n)
+            dat.write('%d\n' % self.el.size)
+            dat.write('%d\n' % nspin)
+            dat.write('%s\n' % strain)
+
+            for i in range(3):
+                dat.write('%2d %2d %2d\n' % tuple(supercell[i]))
+
+            for i in range(3):
+                dat.write('%15.9f %15.9f %15.9f\n'
+                    % tuple(self.ph.a[i] * lconv))
+
+            dat.write('%d\n' % self.ph.nat)
+
+            for i in range(self.ph.nat):
+                dat.write('%2s %15.9f %15.9f %15.9f 0 0 0\n'
+                    % (self.ph.atom_order[i], *self.ph.r[i] * lconv))
+
+            dat.write('%d\n' % len(R))
+
+            for r in R:
+                dat.write('%2d %2d %2d\n' % r)
+
+            f = '%% .%df' % max(0, -int(np.floor(np.log10(2 * eps))))
+
+            dat.write('%d\n' % tused.sum())
+
+            for ri in range(len(self.el.R)):
+                try:
+                    i = R.index(tuple(self.el.R[ri]))
+                except ValueError:
+                    continue
+                for a in range(self.el.size):
+                    for b in range(self.el.size):
+                        if tused[ri, a, b]:
+                            dat.write('%d %d %d %s\n'
+                                % (i, a, b, f)
+                                % (self.el.data[ri, a, b].real * econv))
+
+            dat.write('%d\n' % kused.sum())
+
+            for rj in range(len(self.ph.R)):
+                try:
+                    j = R.index(tuple(self.ph.R[rj]))
+                except ValueError:
+                    continue
+                for x in range(self.ph.size):
+                    for y in range(self.ph.size):
+                        if kused[rj, x, y]:
+                            dat.write('%d %d %d %s\n'
+                                % (j, x, y, f)
+                                % (self.ph.data[rj, x, y].real * kconv))
+
+            dat.write('%d\n' % gused.sum())
+
+            for rk in range(len(self.Rg)):
+                try:
+                    k = R.index(tuple(self.Rg[rk]))
+                except ValueError:
+                    continue
+                for z in range(self.ph.size):
+                    for rl in range(len(self.Rk)):
+                        try:
+                            l = R.index(tuple(self.Rk[rl]))
+                        except ValueError:
+                            continue
+                        for c in range(self.el.size):
+                            for d in range(self.el.size):
+                                if gused[rk, z, rl, c, d]:
+                                    dat.write('%d %d %d %d %d %s\n'
+                                        % (k, z, l, c, d, f)
+                                        % (self.data[rk, z, rl, c, d].real
+                                            * gconv))
+
 def sample(g, q, nk=None, U=None, u=None, squared=False, broadcast=True,
         shared_memory=False):
     r"""Sample coupling for given q and k points and transform to band basis.
