@@ -814,7 +814,7 @@ class Model:
                         buf.swapaxes(-2, -1).astype(np.complex128).tofile(data)
 
     def export(self, filename, kT, n, nspin=2, strain=0.0, supercell=(1, 1, 1),
-            econv=0.5, lconv=1.0, eps=1e-10):
+            forces=None, econv=0.5, lconv=1.0, eps=1e-10):
         """Export model to input file for `elphy`.
 
         Parameters
@@ -831,6 +831,8 @@ class Model:
             Isotropic strain.
         supercell : tuple of (int or tuple of int), default (1, 1, 1)
             Supercell lattice vectors in units of primitive lattice vectors.
+        forces : ndarray, optional
+            Force correction for all atoms in the primitive cell.
         econv : float, default 0.5
             Energy conversion factor. The default converts Rydberg to Hartree
             atomic units.
@@ -874,9 +876,15 @@ class Model:
 
             dat.write('%d\n' % self.ph.nat)
 
+            if forces is None:
+                forces = np.zeros_like(self.ph.r)
+            else:
+                forces = np.reshape(forces, self.ph.r.shape)
+
             for i in range(self.ph.nat):
-                dat.write('%2s %15.9f %15.9f %15.9f 0 0 0\n'
-                    % (self.ph.atom_order[i], *self.ph.r[i] * lconv))
+                dat.write('%2s %15.9f %15.9f %15.9f %13.9f %13.9f %13.9f\n'
+                    % (self.ph.atom_order[i], *self.ph.r[i] * lconv,
+                        *forces[i] * econv / lconv))
 
             dat.write('%d\n' % len(R))
 
