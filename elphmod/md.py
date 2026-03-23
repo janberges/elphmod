@@ -220,6 +220,8 @@ class Driver:
                 divide_mass=False)
 
         if export is not None:
+            self.elph.ph.standardize()
+
             self.elph.export(export, self.kT, self.n, nspin=2, strain=0.0,
                 supercell=(1,) if supercell is None else supercell, eps=eps)
 
