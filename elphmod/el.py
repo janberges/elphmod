@@ -769,7 +769,7 @@ def read_wsvecdat(wsvecdat):
     return supvecs
 
 def k2r(el, H, a, r, fft=True, rydberg=False):
-    """Interpolate Hamilontian matrices on uniform k-point mesh.
+    """Interpolate Hamiltonian matrices on uniform k-point mesh.
 
     Parameters
     ----------
@@ -816,7 +816,7 @@ def k2r(el, H, a, r, fft=True, rydberg=False):
             el.data /= elphmod.misc.Ry
 
 def read_bands(filband):
-    """Read bands from *filband* just like Quantum ESRESSO's ``plotband.x``.
+    """Read bands from *filband* just like Quantum ESPRESSO's ``plotband.x``.
 
     Parameters
     ----------
@@ -826,7 +826,7 @@ def read_bands(filband):
     Returns
     -------
     k : ndarray
-        k points in Cartesian coordiantes.
+        k points in Cartesian coordinates.
     bands : ndarray
         Band energies.
     """
@@ -883,7 +883,7 @@ def write_bands(filband, k, bands, fmt='%8.3f', cols=10):
     filband : str
         Filename.
     k : ndarray
-        k points in Cartesian coordiantes.
+        k points in Cartesian coordinates.
     bands : ndarray
         Band energies.
     fmt : str

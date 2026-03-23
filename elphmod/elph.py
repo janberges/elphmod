@@ -89,7 +89,7 @@ class Model:
     """
     def g(self, q1=0, q2=0, q3=0, k1=0, k2=0, k3=0, elbnd=False, phbnd=False,
             broadcast=True, comm=comm):
-        r"""Calculate electron-phonon coupling for arbitary points k and k + q.
+        r"""Calculate electron-phonon coupling for arbitrary points k and k + q.
 
         Parameters
         ----------
@@ -765,7 +765,7 @@ class Model:
 
         If :attr:`divide_ndegen`, the division by the degeneracies of the
         Wigner-Seitz points is not undone before writing the *.epmatwp* file.
-        Instead, all degeneracies in the *.wiger* file are set to one.
+        Instead, all degeneracies in the *.wigner* file are set to one.
 
         Parameters
         ----------
@@ -1322,7 +1322,7 @@ def read_EPW_output(epw_out, q, nq, nmodes, nk, bands=1, eps=1e-4,
     epw_out : str
         Name of EPW output file.
     q : list of int
-        List of q points as integer recriprocal lattice units.
+        List of q points as integer reciprocal lattice units.
     nq : int
         Number of q points per dimension.
     nmodes : int
@@ -1334,7 +1334,7 @@ def read_EPW_output(epw_out, q, nq, nmodes, nk, bands=1, eps=1e-4,
     eps : float
         Tolerance for q and k points.
     squeeze : bool
-        In single-band case, skip dimensions of output arrary corresponding to
+        In single-band case, skip dimensions of output array corresponding to
         electronic bands?
     status : bool
         Report currently processed q point?

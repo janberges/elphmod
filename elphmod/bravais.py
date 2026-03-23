@@ -1501,7 +1501,7 @@ def read_wigner_file(name, old_ws=False, nat=None):
     return data
 
 def wigner(nr1, nr2, nr3, at, tau, tau2=None, eps=1e-7, sgn=+1, nsc=2):
-    """Determine Wigner-Seitz lattice vectors with degenercies and lengths.
+    """Determine Wigner-Seitz lattice vectors with degeneracies and lengths.
 
     Parameters
     ----------
@@ -2636,7 +2636,7 @@ def read_matdyn(filename):
     return struct
 
 def write_matdyn(matdyn, struct):
-    """Write input data to matdyn file (Quantum ESPRRESO).
+    """Write input parameters to Quantum ESPRESSO's ``matdyn.x`` input file.
 
     Parameters
     ----------
@@ -2706,7 +2706,7 @@ def read_epw(filename):
     return struct
 
 def write_epw(epw, struct):
-    """Write input data to epw file (Quantum ESPRRESO).
+    """Write input parameters to Quantum ESPRESSO's ``epw.x`` input file.
 
     Parameters
     ----------

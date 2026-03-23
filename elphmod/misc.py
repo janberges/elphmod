@@ -724,7 +724,7 @@ def read_dat_mat(filename):
     ndarray
         Lattice vectors.
     ndarray
-        Direct (screened) Coulomb or hoppling matrix elements, depending on the
+        Direct (screened) Coulomb or hopping matrix elements, depending on the
         input file.
     """
     with open(filename) as respack_file:

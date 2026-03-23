@@ -389,7 +389,7 @@ def color(data, cmap=None, minimum=None, maximum=None, comm=comm):
         Data on two-dimensional mesh.
     cmap : function
         Colormap from StoryLines.
-    minimum, maxmimum : float
+    minimum, maximum : float
         Data values corresponding to minimum and maximum of color scale.
 
     Returns

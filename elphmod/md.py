@@ -3,7 +3,7 @@
 
 r"""Charge-density-wave dynamics on supercells.
 
-We model the free energy as a function of atomic displacments :math:`\vec u` as
+We model the free energy as a function of atomic displacements :math:`\vec u` as
 
 .. math::
 
@@ -18,7 +18,7 @@ We model the free energy as a function of atomic displacments :math:`\vec u` as
 
 where :math:`f(\epsilon)` is the occupation function, :math:`\delta(\epsilon)`
 is its negative derivative, :math:`C_{\vec q} \super{DFPT}` are the interatomic
-force constants from first prinicples, and :math:`\epsilon_{\vec k n}` are the
+force constants from first principles, and :math:`\epsilon_{\vec k n}` are the
 eigenvalues of the linearized active-space Hamiltonian
 
 .. math::

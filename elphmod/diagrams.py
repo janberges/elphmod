@@ -1466,7 +1466,7 @@ def green_kubo_conductivity(v, A, omega, kT=0.025, eta=0.01, eps=1e-10,
         Particle distribution as a function of energy divided by `kT`.
     a : ndarray
         Bravais lattice vectors used to calculate unit-cell volume.
-    weights : nparray
+    weights : ndarray
         Weights of k points. Only needed if `v` and `A` are given for the
         irreducible k points only. Note that this requires symmetrizing the
         resulting conductivity.
