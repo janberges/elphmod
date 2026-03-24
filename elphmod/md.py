@@ -104,7 +104,8 @@ class Driver:
         Model smearing temperature, distribution function, and electron number
         to be used for unscreening. By default, `kT`, `f`, and `n` are used.
     export : str, optional
-        Name of input file for ``elphy`` code.
+        Name of input file for ``elphy`` code, a faster rewrite of parts of this
+        driver. For more information, see https://codeberg.org/janberges/elphy.
     eps : float, optional
         Matrix-element threshold for export in Hartree atomic units.
     shared_memory : bool, default True
