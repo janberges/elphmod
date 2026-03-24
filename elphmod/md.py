@@ -214,11 +214,16 @@ class Driver:
         for name, value in kwargs.items():
             setattr(self, name, value)
 
-        if unscreen and (export is not None or supercell is not None):
-            self.elph.ph = copy.copy(self.elph.ph)
+        if export is not None or supercell is not None:
+            if self.sparse:
+                info("'elph' must not be sparse with 'export' or 'supercell'!",
+                    error=True)
 
-            elphmod.ph.q2r(self.elph.ph, nq=self.nq, D_full=self.C0,
-                divide_mass=False)
+            if unscreen:
+                self.elph.ph = copy.copy(self.elph.ph)
+
+                elphmod.ph.q2r(self.elph.ph, nq=self.nq, D_full=self.C0,
+                    divide_mass=False)
 
         if export is not None:
             self.elph.ph.standardize()
