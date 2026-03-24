@@ -3,6 +3,12 @@
 See [Git commits](https://github.com/janberges/elphmod/commits) for more
 detailed list of changes.
 
+## v0.33/2026-03-24
+
+* Export of electron-phonon model to input file for ``elphy`` code
+* 3D displacements plots and loading of *.xyz* files without MD driver
+* Fewer typos in documentation
+
 ## v0.32/2025-11-24
 
 * Contributing guidelines
