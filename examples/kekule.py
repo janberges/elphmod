@@ -41,8 +41,7 @@ driver.plot(interactive=True)
 scipy.optimize.minimize(driver.free_energy, driver.u, jac=driver.jacobian,
     method='BFGS', options=dict(gtol=1e-8, norm=np.inf))
 
-driver.plot(interactive=False)
-driver.plot(filename='kekule_1.png')
+driver.plot(interactive=False, filename='kekule_1.png')
 
 path = 'GMKG'
 k, x, corners = elphmod.bravais.path(path, ibrav=4, N=150)

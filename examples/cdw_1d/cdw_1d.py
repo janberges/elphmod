@@ -24,8 +24,7 @@ driver.plot(interactive=True, scale=25, elev=0)
 scipy.optimize.minimize(driver.free_energy, driver.u, jac=driver.jacobian,
     method='BFGS', tol=1e-8)
 
-driver.plot(interactive=False)
-driver.plot(filename='cdw_1d_1.png')
+driver.plot(interactive=False, filename='cdw_1d_1.png')
 
 ph = driver.phonons()
 
