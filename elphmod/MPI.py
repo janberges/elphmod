@@ -436,13 +436,13 @@ def idle_wait(busy=0, sleep=0.2, comm=comm):
 def elphmodenv(num_threads=1):
     """Print commands to change number of threads.
 
-    Run `eval $(elphmodenv)` before your Python scripts to prevent NumPy from
+    Run ``eval $(elphmodenv)`` before your Python scripts to prevent NumPy from
     using multiple processors for linear algebra. This is advantageous when
-    parallelizing with MPI already (`mpirun python3 script.py`) or on shared
+    parallelizing with MPI already (``mpirun python3 script.py``) or on shared
     servers, where CPU resources must be used with restraint.
 
-    Combine `eval $(elphmodenv X)` with `mpirun -n Y python3 script.py`, where
-    the product of X an Y is the number of available CPUs, for hybrid
+    Combine ``eval $(elphmodenv X)`` with ``mpirun -n Y python3 script.py``,
+    where the product of X an Y is the number of available CPUs, for hybrid
     parallelization.
     """
     if len(sys.argv) > 1:

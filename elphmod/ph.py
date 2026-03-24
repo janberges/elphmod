@@ -1827,8 +1827,8 @@ def q2r(ph, D_irr=None, q_irr=None, nq=None, D_full=None, angle=60,
         divide_mass=True):
     r"""Interpolate dynamical matrices given for irreducible wedge of q points.
 
-    This function replaces `interpolate_dynamical_matrices`, which depends on
-    Quantum ESPRESSO. For 2D lattices, it is sufficient to provide dynamical
+    This function replaces :func:`interpolate_dynamical_matrices`, which depends
+    on Quantum ESPRESSO. For 2D lattices, it is sufficient to provide dynamical
     matrices `D_irr` for the irreducible q points `q_irr`. Here, for the square
     lattice, the rotation symmetry (90 degrees) is currently disabled! In turn,
     for 1D and 2D lattices, dynamical matrices `D_full` on the complete uniform

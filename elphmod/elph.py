@@ -815,12 +815,12 @@ class Model:
 
     def export(self, filename, kT, n, nspin=2, strain=0.0, supercell=(1, 1, 1),
             forces=None, econv=0.5, lconv=1.0, eps=1e-10):
-        """Export model to input file for `elphy`.
+        """Export model to input file for ``elphy``.
 
         Parameters
         ----------
         filename : str
-            Name of input file for `elphy`.
+            Name of input file for ``elphy``.
         kT : float
             Smearing temperature.
         n : float
@@ -1761,7 +1761,7 @@ def read_data(filename):
 def ph2epw(fildyn='dyn', outdir='work', dvscf_dir='save'):
     """Convert PHonon output to EPW input.
 
-    Based on script `pp.py` provided with EPW code (C) 2015 Samuel Ponce.
+    Based on script ``pp.py`` provided with EPW code (C) 2015 Samuel Ponce.
 
     All arguments can be overwritten by environment variables of the same name.
 
