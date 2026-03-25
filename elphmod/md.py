@@ -196,11 +196,11 @@ class Driver:
 
         self.diagonalize()
 
+        self.F0 = np.zeros(self.elph.ph.size)
+
         if unscreen:
             self.C0 -= self.hessian(gamma_only=False) - self.C0
-
-        self.F0 = np.zeros(self.elph.ph.size)
-        self.F0 = -self.jacobian(show=False)
+            self.F0 = -self.jacobian(show=False)
 
         self.kT = kT
         self.f = elphmod.occupations.smearing(f)
@@ -233,6 +233,8 @@ class Driver:
 
         if supercell is not None:
             elph = self.elph.supercell(*supercell, sparse=True)
+
+            kwargs['F0'] = np.tile(self.F0, len(elph.cells))
 
             self.__init__(elph, self.kT, self.f, self.n * len(elph.cells),
                 self.nx * len(elph.cells), unscreen=False, **kwargs)
