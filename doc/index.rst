@@ -27,6 +27,7 @@
    modules/models/graphene
    modules/models/tas2
    modules/models/chain
+   modules/models/be
 
 .. toctree::
    :caption: Examples
