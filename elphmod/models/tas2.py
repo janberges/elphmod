@@ -346,7 +346,7 @@ def create(prefix=None, rydberg=False, divide_mass=True):
     ph.standardize(eps=1e-10)
 
     elph = elphmod.elph.Model(el=el, ph=ph, divide_mass=divide_mass)
-    elphmod.elph.q2r(elph, nQ, nk, g, r=np.repeat(r[:1], el.size, axis=0))
+    elphmod.elph.q2r(elph, nQ, nk, g, r=r[:1].repeat(el.size, axis=0))
     elph.standardize(eps=1e-10)
 
     if prefix is not None:
