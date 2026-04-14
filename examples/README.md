@@ -17,6 +17,7 @@ Also make sure to install the Python requirements before:
 * `a2f.py` - Eliashberg spectral function of monolayer TaS2
 * `coulomb.py` - Coulomb interaction from VASP
 * `dos.py` - density of states via smearing and tetrahedron methods
+* `double_bz.py` - double Brillouin-zone plot of coupling of beryllium monolayer
 * `double_delta.py` - double-delta integral via smearing and tetrahedron methods
 * `electrons.py` - electronic band structure and density of states
 * `fan_migdal.py` - electron renormalization from Fan-Migdal self-energy

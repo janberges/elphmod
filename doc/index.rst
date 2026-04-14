@@ -40,6 +40,7 @@
    examples/dos
    examples/cdw_1d
    examples/ssh
+   examples/double_bz
    examples/double_delta
    examples/electrons
    examples/a2f
