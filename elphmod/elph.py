@@ -814,7 +814,7 @@ class Model:
                         buf.swapaxes(-2, -1).astype(np.complex128).tofile(data)
 
     def export(self, filename, kT, n, nspin=2, strain=0.0, supercell=(1, 1, 1),
-            forces=None, econv=0.5, lconv=1.0, eps=1e-10):
+            forces=None, econv=0.5, lconv=1.0, eps=1e-10, fmt='%18.12f'):
         """Export model to input file for ``elphy`` code.
 
         See https://codeberg.org/janberges/elphy.
@@ -842,6 +842,8 @@ class Model:
             Length conversion factor. By default, length units are not changed.
         eps : float, default 1e-10
             Matrix-element threshold in output units.
+        fmt : str, default '%18.12f'
+            Format string for Cartesian coordinates.
         """
         supercell = elphmod.bravais.supercell(*supercell)[1]
 
@@ -873,7 +875,7 @@ class Model:
                 dat.write('%2d %2d %2d\n' % tuple(supercell[i]))
 
             for i in range(3):
-                dat.write('%15.9f %15.9f %15.9f\n'
+                dat.write('{0} {0} {0}\n'.format(fmt)
                     % tuple(self.ph.a[i] * lconv))
 
             dat.write('%d\n' % self.ph.nat)
@@ -884,7 +886,7 @@ class Model:
                 forces = np.reshape(forces, self.ph.r.shape)
 
             for i in range(self.ph.nat):
-                dat.write('%2s %15.9f %15.9f %15.9f %13.9f %13.9f %13.9f\n'
+                dat.write('%2s {0} {0} {0} {0} {0} {0}\n'.format(fmt)
                     % (self.ph.atom_order[i], *self.ph.r[i] * lconv,
                         *forces[i] * econv / lconv))
 
