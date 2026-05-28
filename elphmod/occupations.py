@@ -390,7 +390,7 @@ def smearing(smearing='gaussian', **ignore):
     if name in {'heaviside'}:
         return heaviside
 
-def find_Fermi_level(n, e, kT=0.025, f='fd', mu=None, tol=1e-5, eps=1e-10):
+def find_Fermi_level(n, e, kT=0.025, f='fd', mu=None, tol=1e-7, eps=1e-10):
     """Determine chemical potential via fixed-point iteration.
 
     See Eqs. 4.21 and 4.22 of https://janberges.de/theses/Master_Jan_Berges.pdf.
