@@ -106,8 +106,14 @@ class Driver:
     export : str, optional
         Name of input file for ``elphy`` code, a faster rewrite of parts of this
         driver. For more information, see https://codeberg.org/janberges/elphy.
-    eps : float, optional
-        Matrix-element threshold for export in Hartree atomic units.
+    econv : float, default 0.5
+        Energy conversion factor for export. The default converts Rydberg to
+        Hartree atomic units.
+    lconv : float, default 1.0
+        Length conversion factor for export. By default, length units are not
+        changed.
+    eps : float, default 1e-10
+        Matrix-element threshold for export in output units.
     shared_memory : bool, default True
         Store :attr:`d0` and :attr:`d` in shared memory?
     **kwargs
@@ -142,8 +148,8 @@ class Driver:
         if `shared_memory`.
     """
     def __init__(self, elph, kT, f, n, nx=0.0, nk=(1,), nq=(1,), supercell=None,
-            unscreen=True, kT0=None, f0=None, n0=None, export=None, eps=1e-10,
-            shared_memory=True, **kwargs):
+            unscreen=True, kT0=None, f0=None, n0=None, export=None, econv=0.5,
+            lconv=1.0, eps=1e-10, shared_memory=True, **kwargs):
 
         if not elph.el.rydberg:
             info("Initialize 'el' with 'rydberg=True'!", error=True)
@@ -229,7 +235,8 @@ class Driver:
             self.elph.ph.standardize()
 
             self.elph.export(export, self.kT, self.n, forces=-self.F0,
-                supercell=(1,) if supercell is None else supercell, eps=eps)
+                supercell=(1,) if supercell is None else supercell,
+                econv=econv, lconv=lconv, eps=eps)
 
         if supercell is not None:
             elph = self.elph.supercell(*supercell, sparse=True)
