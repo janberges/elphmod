@@ -679,7 +679,6 @@ def read_hrdat(seedname, divide_ndegen=True):
         size = num_wann ** 2
 
         for n in range(nrpts):
-
             if tb:
                 cells[n] = list(map(int, cols()))
 
