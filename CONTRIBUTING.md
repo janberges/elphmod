@@ -21,7 +21,6 @@ mark are not necessarily a good idea.
 
 * Use size-consistent tolerance for electron number when finding Fermi level?
 * Set `ph.D0` and `elph.g0` when generating models with `q2r`?
-* Read Wannier-function centres from `_centres.xyz`.
 * Add long-range argument `lr` to electron-phonon class `elph`?
 * Remember order of atomic species in header of force-constant files.
 * Use generic (argument agnostic) function to write all QE input files.

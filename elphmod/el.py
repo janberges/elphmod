@@ -85,10 +85,12 @@ class Model:
         Wannier functions in position representation if `read_xsf`.
     r : ndarray, optional
         Cartesian positions belonging to Wannier functions if `read_xsf`.
+    rc : ndarray
+        Positions of orbital centers given or read from *seedname_centres.xyz*.
     tau : ndarray, optional
-        Positions of basis atoms if `read_xsf`.
+        Positions of basis atoms if `read_xsf` or *seedname_centres.xyz* found.
     atom_order : list of str, optional
-        Ordered list of atoms if `read_xsf`.
+        Ordered list of atoms if `read_xsf` or *seedname_centres.xyz* found.
     dV : float, optional
         Volume element/voxel volume belonging to `r` if `read_xsf`.
     divide_ndegen : bool
@@ -213,6 +215,17 @@ class Model:
                 supvecs = None
             else:
                 supvecs = read_wsvecdat('%s_wsvec.dat' % seedname)
+
+            if r is None:
+                self.rc = np.zeros((self.size, 3))
+
+                for X, r in elphmod.misc.read_xyz('%s_centres.xyz' % seedname,
+                        error=False):
+                    X = np.array(X)
+                    centers = X == 'X'
+                    self.rc = r[centers]
+                    self.tau = r[~centers]
+                    self.atom_order = X[~centers]
 
         self.nk = tuple(2 * self.R[np.all(self.R[:, x] == 0,
             axis=1)].max(initial=1) for x in [[1, 2], [2, 0], [0, 1]])
@@ -773,7 +786,7 @@ def read_wsvecdat(wsvecdat):
 
     return supvecs
 
-def k2r(el, H, a, r, fft=True, rydberg=False):
+def k2r(el, H, a, r=None, fft=True, rydberg=False):
     """Interpolate Hamiltonian matrices on uniform k-point mesh.
 
     Parameters
@@ -785,7 +798,7 @@ def k2r(el, H, a, r, fft=True, rydberg=False):
     a : ndarray
         Bravais lattice vectors.
     r : ndarray
-        Positions of orbital centers.
+        Positions of orbital centers to overwrite :attr:`el.rc`.
     fft : bool
         Perform Fourier transform? If ``False``, only the mapping to the
         Wigner-Seitz cell is performed.
@@ -793,6 +806,9 @@ def k2r(el, H, a, r, fft=True, rydberg=False):
         Is input Hamiltonian given in Ry rather than eV units? This is
         independent of ``el.rydberg``, which is always respected.
     """
+    if r is not None:
+        el.rc = r
+
     nk = H.shape[:-2]
     el.size = H.shape[-2]
 
@@ -809,7 +825,7 @@ def k2r(el, H, a, r, fft=True, rydberg=False):
     t = np.reshape(t, (*nk, el.size, 1, el.size, 1))
     t = np.transpose(t, (3, 5, 0, 1, 2, 4, 6))
 
-    el.R, el.data, l = elphmod.bravais.short_range_model(t, a, r,
+    el.R, el.data, l = elphmod.bravais.short_range_model(t, a, el.rc,
         sgn=+1, divide_ndegen=el.divide_ndegen)
 
     el.nk = tuple(nk)
