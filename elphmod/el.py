@@ -322,6 +322,7 @@ class Model:
                         if (m * self.size + n) % comm.size == comm.rank:
                             print('%3d %3d %12.4f' % (m, n,
                                 np.sum(self.W[m] * self.W[n]) * self.dV))
+                comm.Barrier()
 
     def supercell(self, N1=1, N2=1, N3=1, sparse=False):
         """Map tight-binding model onto supercell.
