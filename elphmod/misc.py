@@ -275,13 +275,15 @@ def rand(*shape, a=48271, m=2147483647):
 
 rand.i = 1
 
-def read_xyz(xyz):
+def read_xyz(xyz, error=True):
     """Iterate over atomic configurations in *.xyz* file.
 
     Parameters
     ----------
     xyz : str
         Name of *.xyz* file.
+    error : bool, default False
+        Raise error if file does not exist.
 
     Yields
     ------
@@ -290,8 +292,20 @@ def read_xyz(xyz):
     ndarray
         Atomic positions.
     """
+    found = True
+
     if comm.rank == 0:
-        lines = open(xyz)
+        try:
+            lines = open(xyz)
+        except FileNotFoundError:
+            found = False
+
+    found = comm.bcast(found)
+
+    if not found:
+        if error:
+            info('File "%s" does not exist!' % xyz, error=True)
+        return
 
     while True:
         if comm.rank == 0:
