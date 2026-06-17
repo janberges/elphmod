@@ -225,6 +225,8 @@ class Model:
                     self.rc = r[centers]
                     self.tau = r[~centers]
                     self.atom_order = X[~centers]
+            else:
+                self.rc = r
 
         self.nk = tuple(2 * self.R[np.all(self.R[:, x] == 0,
             axis=1)].max(initial=1) for x in [[1, 2], [2, 0], [0, 1]])
