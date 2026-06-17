@@ -362,6 +362,25 @@ class Model:
         el.divide_ndegen = self.divide_ndegen
         el.rydberg = self.rydberg
 
+        if self.a is not None:
+            el.a = np.dot(el.N, self.a)
+
+            cells = np.array([n1 * self.a[0] + n2 * self.a[1] + n3 * self.a[2]
+                for n1, n2, n3 in el.cells])
+
+            el.rc = np.array([cell + self.rc[a] for cell in cells
+                for a in range(self.size)])
+
+            if hasattr(self, 'tau'):
+                el.tau = np.array([cell + self.tau[na] for cell in cells
+                    for na in range(len(self.tau))])
+        else:
+            el.a = None
+            el.rc = None
+
+        if hasattr(self, 'atom_order'):
+            el.atom_order = list(self.atom_order) * len(el.cells)
+
         if sparse:
             sparse_array = elphmod.misc.get_sparse_array()
 
@@ -821,6 +840,8 @@ def k2r(el, H, a=None, r=None, fft=True, rydberg=False):
 
     if r is not None:
         el.rc = r
+    elif el.rc is None:
+        info('"k2r" requires orbital centers!', error=True)
 
     nk = H.shape[:-2]
     el.size = H.shape[-2]
