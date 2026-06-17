@@ -543,13 +543,16 @@ class Driver:
         el = copy.deepcopy(self.elph.el)
         el.rydberg = rydberg
 
-        cells = len(getattr(el, 'cells', [(0, 0, 0)]))
+        if el.a is None:
+            el.a = self.elph.ph.a
 
-        r = self.elph.ph.r[::self.elph.ph.nat // cells]
-        r = np.repeat(r, el.size // r.shape[0], axis=0)
-        r -= r[0]
+            cells = len(getattr(el, 'cells', [(0, 0, 0)]))
 
-        elphmod.el.k2r(el, H, self.elph.ph.a, r, rydberg=True)
+            el.rc = self.elph.ph.r[::self.elph.ph.nat // cells]
+            el.rc = np.repeat(el.rc, el.size // el.rc.shape[0], axis=0)
+            el.rc -= el.rc[0]
+
+        elphmod.el.k2r(el, H, rydberg=True)
 
         el.standardize(eps=1e-10)
 
