@@ -543,14 +543,11 @@ class Driver:
         el = copy.deepcopy(self.elph.el)
         el.rydberg = rydberg
 
-        if hasattr(self.elph.el, 'cells'):
-            assert self.elph.el.cells == self.elph.ph.cells
+        cells = len(getattr(el, 'cells', [(0, 0, 0)]))
 
-            r = self.elph.ph.r[::self.elph.ph.nat // len(self.elph.ph.cells)]
-            r = np.repeat(r, self.elph.el.size // r.shape[0], axis=0)
-            r -= r[0]
-        else:
-            r = np.zeros((self.elph.el.size, 3))
+        r = self.elph.ph.r[::self.elph.ph.nat // cells]
+        r = np.repeat(r, el.size // r.shape[0], axis=0)
+        r -= r[0]
 
         elphmod.el.k2r(el, H, self.elph.ph.a, r, rydberg=True)
 
