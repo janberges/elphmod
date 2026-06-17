@@ -275,7 +275,7 @@ def rand(*shape, a=48271, m=2147483647):
 
 rand.i = 1
 
-def read_xyz(xyz, error=True):
+def read_xyz(xyz, error=False):
     """Iterate over atomic configurations in *.xyz* file.
 
     Parameters

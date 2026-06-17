@@ -758,7 +758,7 @@ class Driver:
         xyz : str
             Name of *.xyz* file.
         """
-        for atom_order, r in elphmod.misc.read_xyz(xyz):
+        for atom_order, r in elphmod.misc.read_xyz(xyz, error=True):
             if len(r) != self.elph.ph.nat:
                 info("Wrong number of atoms in '%s'!" % xyz, error=True)
 

@@ -219,8 +219,7 @@ class Model:
             if r is None:
                 self.rc = np.zeros((self.size, 3))
 
-                for X, r in elphmod.misc.read_xyz('%s_centres.xyz' % seedname,
-                        error=False):
+                for X, r in elphmod.misc.read_xyz('%s_centres.xyz' % seedname):
                     X = np.array(X)
                     centers = X == 'X'
                     self.rc = r[centers]
