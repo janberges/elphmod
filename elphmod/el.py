@@ -23,6 +23,7 @@ class Model:
         Common prefix of Wannier90 output files: *seedname_hr.dat* with the
         Hamiltonian in the Wannier basis and, optionally, *seedname_wsvec.dat*
         with superlattice vectors used to symmetrize the long-range hopping.
+        *seedname_tb.dat* is preferred over *seedname_hr.dat* if present.
         Alternatively, *dat.h_mat_r* from RESPACK can be used.
     N : tuple of int, optional
         Numbers of unit cells per direction on which RESPACK data is defined.
@@ -662,13 +663,11 @@ def read_hrdat(seedname, divide_ndegen=True):
     """
     if comm.rank == 0:
         try:
-            data = open('%s_hr.dat' % seedname)
-            tb = False
-        except FileNotFoundError:
-            print('Warning: Hamiltonian read from "%s_tb.dat"!' % seedname)
-
             data = open('%s_tb.dat' % seedname)
             tb = True
+        except FileNotFoundError:
+            data = open('%s_hr.dat' % seedname)
+            tb = False
 
         # read all words of current line:
 

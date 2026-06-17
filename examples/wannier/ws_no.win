@@ -14,6 +14,7 @@ dis_num_iter 10000
 num_iter 0
 
 write_hr true
+write_tb true
 bands_plot true
 bands_num_points 100
 
