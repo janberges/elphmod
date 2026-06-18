@@ -30,11 +30,13 @@ class Model:
         This can be omitted if all numbers are even.
     a : ndarray, optional
         Bravais lattice vectors used to map RESPACK data to Wigner-Seitz cell.
-        By default, a cubic cell is assumed.
+        By default, a cubic cell is assumed. Use bohr units for consistency with
+        the mass-spring model.
     r : ndarray, optional
         Positions of orbital centers used to map RESPACK data to Wigner-Seitz
         cell. By default, all orbitals are assumed to be located at the origin
-        of the unit cell.
+        of the unit cell. Use bohr units for consistency with the mass-spring
+        model.
     divide_ndegen : bool, default True
         Divide hopping by degeneracy of Wigner-Seitz point and apply the
         abovementioned correction? Only ``True`` yields correct bands.
@@ -213,6 +215,9 @@ class Model:
             self.R, self.data, self.a, comment = read_hrdat(seedname,
                 divide_ndegen)
 
+            if self.a is not None:
+                self.a /= elphmod.misc.a0
+
             self.size = self.data.shape[1]
 
             if rydberg:
@@ -229,8 +234,8 @@ class Model:
                 for X, r in elphmod.misc.read_xyz('%s_centres.xyz' % seedname):
                     X = np.array(X)
                     centers = X == 'X'
-                    self.rc = r[centers]
-                    self.tau = r[~centers]
+                    self.rc = r[centers] / elphmod.misc.a0
+                    self.tau = r[~centers] / elphmod.misc.a0
                     self.atom_order = X[~centers]
             else:
                 self.rc = r
@@ -289,6 +294,11 @@ class Model:
                     '%s_head.xsf' % seedname if read_buffer else
                     '%s_%05d.xsf' % (seedname, 1), only_header=True)
 
+            self.a /= elphmod.misc.a0
+            r0 /= elphmod.misc.a0
+            a /= elphmod.misc.a0
+            self.tau /= elphmod.misc.a0
+
             self.dV = elphmod.bravais.volume(*a) / np.prod(shape)
 
             if not read_buffer:
@@ -309,6 +319,8 @@ class Model:
 
                     if normalize_wf:
                         my_W[my_n] /= np.sqrt(np.sum(my_W[my_n] ** 2) * self.dV)
+                    else:
+                        my_W[my_n] *= elphmod.misc.a0 ** 1.5
 
                 comm.Gatherv(my_W, (self.W, sizes * np.prod(shape)))
 

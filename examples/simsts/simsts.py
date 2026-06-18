@@ -12,7 +12,7 @@ info = elphmod.MPI.info
 
 nk = 72
 
-tip = np.array([0.0, 0.0, 3.0]) # tip position
+tip = np.array([0.0, 0.0, 3.0]) / elphmod.misc.a0 # tip position
 V = 0.1 * elphmod.misc.Ry # sample bias
 
 info('Set up and diagonalize Wannier Hamiltonian')
@@ -28,7 +28,7 @@ e -= elphmod.el.read_Fermi_level('scf.out')
 info('Set up Bravais lattice vectors')
 
 pwi = elphmod.bravais.read_pwi('scf.in')
-a = elphmod.bravais.primitives(**pwi)
+a = elphmod.bravais.primitives(**pwi, bohr=True)
 
 info('Calculate density of states')
 
@@ -58,15 +58,13 @@ if comm.rank == 0:
     W = np.empty((len(R), *el.W.shape[:3]))
     overlap = np.empty((len(R), el.size))
 
-    norm = np.sqrt(np.pi * elphmod.misc.a0 ** 3)
-
     for iR in range(len(R)):
         dx = R[iR, 0] * nx
         dy = R[iR, 1] * ny
 
         shift = np.dot(R[iR], a)
         d = np.linalg.norm(tip - shift - el.r, axis=3)
-        s = np.exp(-d / elphmod.misc.a0) / norm
+        s = np.exp(-d) / np.sqrt(np.pi)
 
         for n in range(el.size):
             W[iR, n] = el.W[n, :, :, zt]
