@@ -30,13 +30,14 @@ class Model:
         This can be omitted if all numbers are even.
     a : ndarray, optional
         Bravais lattice vectors used to map RESPACK data to Wigner-Seitz cell.
-        By default, a cubic cell is assumed. Use bohr units for consistency with
-        the mass-spring model.
+        By default, a cubic cell is assumed. Also needed for :func:`k2r` and
+        :func:`elph.q2r`. Use bohr units for consistency with the mass-spring
+        model.
     r : ndarray, optional
         Positions of orbital centers used to map RESPACK data to Wigner-Seitz
         cell. By default, all orbitals are assumed to be located at the origin
-        of the unit cell. Use bohr units for consistency with the mass-spring
-        model.
+        of the unit cell. Also needed for :func:`k2r`. Use bohr units for
+        consistency with the mass-spring model.
     divide_ndegen : bool, default True
         Divide hopping by degeneracy of Wigner-Seitz point and apply the
         abovementioned correction? Only ``True`` yields correct bands.

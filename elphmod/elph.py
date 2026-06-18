@@ -359,7 +359,8 @@ class Model:
             info('Run "sample_orig" before changing Z, Q, etc.!', error=True)
 
         if not self.ph.lr:
-            q2r(self, self.ph.nq, self.el.nk, self.g0, None, self.divide_mass)
+            q2r(self, self.ph.nq, self.el.nk, self.g0,
+                divide_mass=self.divide_mass, reuse_ws=True)
             return
 
         self.ph.prepare_long_range()
@@ -380,7 +381,8 @@ class Model:
 
         g.Bcast()
 
-        q2r(self, self.ph.nq, self.el.nk, g, None, self.divide_mass)
+        q2r(self, self.ph.nq, self.el.nk, g, divide_mass=self.divide_mass,
+            reuse_ws=True)
 
     def sample(self, *args, **kwargs):
         """Sample coupling.
@@ -1139,7 +1141,8 @@ def transform(g, q, nk, U=None, u=None, squared=False, broadcast=True,
 
     return g
 
-def q2r(elph, nq, nk, g, r=None, divide_mass=True, shared_memory=False):
+def q2r(elph, nq, nk, g, r=None, divide_mass=True, reuse_ws=False,
+        shared_memory=False):
     """Fourier-transform electron-phonon coupling from reciprocal to real space.
 
     Parameters
@@ -1151,14 +1154,16 @@ def q2r(elph, nq, nk, g, r=None, divide_mass=True, shared_memory=False):
     g : ndarray
         Electron-phonon coupling on complete uniform q- and k-point meshes.
     r : ndarray, optional
-        Positions of orbital centers. If given, the Wigner-Seitz lattice vectors
-        are determined again, whereby the distances to the displaced atom and
-        the initial orbital are are both measured from the final orbital in the
-        unit cell at the origin (first orbital index). This argument is required
-        when changing `nq` or `nk`.
+        Positions of orbital centers to overwrite :attr:`elph.el.rc`. Used to
+        determine the Wigner-Seitz points and degeneracies, where the distances
+        to the displaced atom and the initial orbital are both measured from the
+        final orbital in the unit cell at the origin (first orbital index).
     divide_mass : bool, default True
         Has input coupling been divided by square root of atomic mass? This is
         independent of ``elph.divide_mass``, which is always respected.
+    reuse_ws : bool, default False
+        Reuse stored Wigner-Seitz points and degeneracies? This only works for
+        the original `nq` and `nk`.
     shared_memory : bool, default False
         Store real-space coupling in shared memory?
     """
@@ -1190,12 +1195,19 @@ def q2r(elph, nq, nk, g, r=None, divide_mass=True, shared_memory=False):
     comm.Gatherv(my_data, (data, comm.gather(my_data.size)))
 
     if r is not None:
+        elph.el.rc = r
+
+    if not reuse_ws:
+        if elph.el.rc is None:
+            info('"q2r" requires orbital centers!', error=True)
+
         elph.Rg, ndegen_g, wslen = elphmod.bravais.wigner(*nq,
-            elph.ph.a, r, elph.ph.r)
+            elph.ph.a, elph.el.rc, elph.ph.r)
 
         elph.dg = ndegen_g.transpose(1, 2, 0)[np.newaxis]
 
-        elph.Rk, ndegen_k, wslen = elphmod.bravais.wigner(*nk, elph.ph.a, r)
+        elph.Rk, ndegen_k, wslen = elphmod.bravais.wigner(*nk,
+            elph.ph.a, elph.el.rc)
 
         elph.dk = ndegen_k.transpose()
 
