@@ -154,8 +154,8 @@ def create(prefix=None, rydberg=False, divide_mass=True):
     g = elphmod.elph.sample(coupling, q.reshape((-1, 3)), nk)
     U = elphmod.dispersion.sample(coulomb_interaction, q)
 
-    el = elphmod.el.Model(rydberg=rydberg)
-    elphmod.el.k2r(el, H, at, r, rydberg=True)
+    el = elphmod.el.Model(a=at, r=r, rydberg=rydberg)
+    elphmod.el.k2r(el, H, rydberg=True)
     el.standardize(eps=1e-10)
 
     ph = elphmod.ph.Model(amass=[M] * 2, at=at, tau=r, atom_order=['C'] * 2,
@@ -164,7 +164,7 @@ def create(prefix=None, rydberg=False, divide_mass=True):
     ph.standardize(eps=1e-10)
 
     elph = elphmod.elph.Model(el=el, ph=ph, divide_mass=divide_mass)
-    elphmod.elph.q2r(elph, nq, nk, g, r)
+    elphmod.elph.q2r(elph, nq, nk, g)
     elph.standardize(eps=1e-10)
 
     elel = elphmod.elel.Model()

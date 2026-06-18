@@ -172,8 +172,8 @@ def create(prefix=None, rydberg=False, divide_mass=True):
     D = elphmod.dispersion.sample(dynamical_matrix, q)
     g = elphmod.elph.sample(coupling, q.reshape((-1, 3)), nk)
 
-    el = elphmod.el.Model(rydberg=rydberg)
-    elphmod.el.k2r(el, H, at, r.repeat(4, axis=0), rydberg=True)
+    el = elphmod.el.Model(a=at, r=r.repeat(4, axis=0), rydberg=rydberg)
+    elphmod.el.k2r(el, H, rydberg=True)
     el.standardize(eps=1e-10)
 
     ph = elphmod.ph.Model(amass=[M], at=at, tau=r, atom_order=['Be'],
@@ -182,7 +182,7 @@ def create(prefix=None, rydberg=False, divide_mass=True):
     ph.standardize(eps=1e-10)
 
     elph = elphmod.elph.Model(el=el, ph=ph, divide_mass=divide_mass)
-    elphmod.elph.q2r(elph, nq, nk, g, r=r.repeat(el.size, axis=0))
+    elphmod.elph.q2r(elph, nq, nk, g)
     elph.standardize(eps=1e-10)
 
     if prefix is not None:
