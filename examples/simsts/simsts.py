@@ -12,8 +12,8 @@ info = elphmod.MPI.info
 
 nk = 72
 
-tip = np.array([0.0, 0.0, 3.0]) / elphmod.misc.a0 # tip position
-V = 0.1 * elphmod.misc.Ry # sample bias
+tip = np.array([0.0, 0.0, 12.0]) # tip position (bohr)
+V = 1.0 # sample bias (eV)
 
 info('Set up and diagonalize Wannier Hamiltonian')
 
