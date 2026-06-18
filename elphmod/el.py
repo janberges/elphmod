@@ -177,6 +177,8 @@ class Model:
             buffer_wf=False, check_ortho=False, rydberg=False,
             shared_memory=False):
 
+        self.a = a
+        self.rc = r
         self.divide_ndegen = divide_ndegen
         self.rydberg = rydberg
 
@@ -195,12 +197,12 @@ class Model:
             if N is None:
                 N = 2 * R[-1]
 
-            if a is None:
+            if self.a is None:
                 info('Warning: You should really define the Bravais lattice!')
-                a = elphmod.bravais.primitives(ibrav=1)
+                self.a = elphmod.bravais.primitives(ibrav=1)
 
-            if r is None:
-                r = np.zeros((self.size, 3))
+            if self.rc is None:
+                self.rc = np.zeros((self.size, 3))
 
             t = np.zeros((N[0], N[1], N[2], self.size, self.size),
                 dtype=complex)
@@ -208,7 +210,7 @@ class Model:
             for iR, (R1, R2, R3) in enumerate(R):
                 t[R1 % N[0], R2 % N[1], R3 % N[2]] = data[iR]
 
-            k2r(self, t, a, r, fft=False)
+            k2r(self, t, fft=False)
 
             supvecs = None
         else:
@@ -228,7 +230,7 @@ class Model:
             else:
                 supvecs = read_wsvecdat('%s_wsvec.dat' % seedname)
 
-            if r is None:
+            if self.rc is None:
                 self.rc = np.zeros((self.size, 3))
 
                 for X, r in elphmod.misc.read_xyz('%s_centres.xyz' % seedname):
@@ -237,8 +239,6 @@ class Model:
                     self.rc = r[centers] / elphmod.misc.a0
                     self.tau = r[~centers] / elphmod.misc.a0
                     self.atom_order = X[~centers]
-            else:
-                self.rc = r
 
         self.nk = tuple(2 * self.R[np.all(self.R[:, x] == 0,
             axis=1)].max(initial=1) for x in [[1, 2], [2, 0], [0, 1]])
