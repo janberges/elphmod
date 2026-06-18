@@ -87,9 +87,11 @@ class Model:
     r : ndarray, optional
         Cartesian positions belonging to Wannier functions if `read_xsf`.
     a : ndarray
-        Bravais lattice vectors given or read from *seedname_tb.dat*.
+        Bravais lattice vectors if `read_xsf` or *seedname_tb.dat* found.
+        Alternatively, they can be set at initialization via the parameter `a`.
     rc : ndarray
-        Positions of orbital centers given or read from *seedname_centres.xyz*.
+        Positions of orbital centers if *seedname_centres.xyz* found.
+        Alternatively, they can be set at initialization via the parameter `r`.
     tau : ndarray, optional
         Positions of basis atoms if `read_xsf` or *seedname_centres.xyz* found.
     atom_order : list of str, optional
@@ -282,9 +284,10 @@ class Model:
 
             read_buffer = buffer_wf and self.W.size and self.r.size
 
-            r0, a, self.atom_order, self.tau, shape = elphmod.misc.read_xsf(
-                '%s_head.xsf' % seedname if read_buffer else
-                '%s_%05d.xsf' % (seedname, 1), only_header=True)
+            self.a, r0, a, self.atom_order, self.tau, shape \
+                = elphmod.misc.read_xsf(
+                    '%s_head.xsf' % seedname if read_buffer else
+                    '%s_%05d.xsf' % (seedname, 1), only_header=True)
 
             self.dV = elphmod.bravais.volume(*a) / np.prod(shape)
 
@@ -315,8 +318,8 @@ class Model:
                 comm.Barrier()
 
                 if buffer_wf and comm.rank == 0:
-                    elphmod.misc.write_xsf('%s_head.xsf' % seedname, r0, a,
-                        self.atom_order, self.tau, shape, only_header=True)
+                    elphmod.misc.write_xsf('%s_head.xsf' % seedname, self.a, r0,
+                        a, self.atom_order, self.tau, shape, only_header=True)
 
                     np.save('%s_wf.npy' % seedname, self.W)
                     np.save('%s_xyz.npy' % seedname, self.r)

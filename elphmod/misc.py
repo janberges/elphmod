@@ -437,6 +437,8 @@ def read_xsf(xsf, only_header=False, comm=comm):
 
     Returns
     -------
+    a0 : ndarray
+        Primitive lattice vectors.
     r0 : ndarray
         Origin of the data grid.
     a : ndarray
@@ -453,8 +455,16 @@ def read_xsf(xsf, only_header=False, comm=comm):
     read_cube : Equivalent function for Gaussian cube format.
     write_xsf : Write file in XCrySDen format.
     """
+    a0 = np.empty((3, 3), dtype=float)
+
     if comm.rank == 0:
         lines = open(xsf)
+
+        while next(lines).strip() != 'PRIMVEC':
+            pass
+
+        for i in range(3):
+            a0[i] = list(map(float, next(lines).split()))
 
         while next(lines).strip() != 'PRIMCOORD':
             pass
@@ -487,13 +497,14 @@ def read_xsf(xsf, only_header=False, comm=comm):
             a[i] = list(map(float, next(lines).split()))
 
     comm.Bcast(n)
+    comm.Bcast(a0)
     comm.Bcast(r0)
     comm.Bcast(a)
     X = comm.bcast(X)
     comm.Bcast(tau)
 
     if only_header:
-        return r0, a, X, tau, tuple(n)
+        return a0, r0, a, X, tau, tuple(n)
 
     if comm.rank == 0:
         data = np.empty(np.prod(n))
@@ -513,15 +524,17 @@ def read_xsf(xsf, only_header=False, comm=comm):
 
     comm.Bcast(data)
 
-    return r0, a, X, tau, data
+    return a0, r0, a, X, tau, data
 
-def write_xsf(xsf, r0, a, X, tau, data, only_header=False, comm=comm):
+def write_xsf(xsf, a0, r0, a, X, tau, data, only_header=False, comm=comm):
     """Write file in XCrySDen format.
 
     Parameters
     ----------
     xsf : str
         Name of XCrySDen file.
+    a0 : ndarray
+        Primitive lattice vectors.
     r0 : ndarray
         Origin of the data grid.
     a : ndarray
@@ -543,6 +556,15 @@ def write_xsf(xsf, r0, a, X, tau, data, only_header=False, comm=comm):
         n = tuple(data) if only_header else data.shape
 
         with open(xsf, 'w') as text:
+            text.write('# written by elphmod\n')
+            text.write('CRYSTAL\n')
+
+            for vec in 'PRIMVEC', 'CONVVEC':
+                text.write('%s\n' % vec)
+
+                for i in range(3):
+                    text.write('%12.7f %11.7f %11.7f\n' % tuple(a0[i]))
+
             text.write('PRIMCOORD\n')
             text.write('%6d  1\n' % len(X))
 
