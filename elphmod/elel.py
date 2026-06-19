@@ -12,6 +12,7 @@ import elphmod.misc
 import elphmod.MPI
 
 comm = elphmod.MPI.comm
+info = elphmod.MPI.info
 
 class Model:
     r"""Localized model for electron-electron interaction.
@@ -56,6 +57,10 @@ class Model:
         Lattice vectors of unit cells if the model describes a supercell.
     N : list of tuple of int, optional
         Primitive vectors of supercell if the model describes a supercell.
+    a : ndarray
+        Bravais lattice vectors.
+    rc : ndarray
+        Positions of orbital centers.
     """
     def W(self, q1=0, q2=0, q3=0):
         r"""Set up density-density Coulomb matrix for arbitrary q point.
@@ -97,6 +102,9 @@ class Model:
     def __init__(self, uijkl=None, vijkl_full=None, vijkl_redu=None,
             nq=None, no=None, Wmat=None, a=None, r=None, angle=120):
 
+        self.a = a
+        self.rc = r
+
         self.cells = [(0, 0, 0)]
 
         if uijkl is None and Wmat is None:
@@ -109,10 +117,11 @@ class Model:
         elif nq:
             nq = np.array([nq, nq, 1])
 
-        if a is None:
-            a = np.zeros((3, 3))
-            a[:2, :2] = elphmod.bravais.translations(angle)
-            a[2, 2] = 1.0
+        if self.a is None:
+            info('Warning: You should really define the Bravais lattice!')
+            self.a = np.zeros((3, 3))
+            self.a[:2, :2] = elphmod.bravais.translations(angle)
+            self.a[2, 2] = 1.0
 
         if Wmat is not None:
             R, data = elphmod.misc.read_dat_mat(Wmat)
@@ -129,8 +138,8 @@ class Model:
 
             self.size = no
 
-        if r is None:
-            r = np.zeros((self.size, 3))
+        if self.rc is None:
+            self.rc = np.zeros((self.el.size, 3))
 
         if Wmat is not None:
             if nq is None:
@@ -143,9 +152,9 @@ class Model:
             for iR, (R1, R2, R3) in enumerate(R):
                 WR[R1 % nq[0], R2 % nq[1], R3 % nq[2]] = data[iR]
 
-            q2r(self, WR, a, r, fft=False)
+            q2r(self, WR, fft=False)
         else:
-            q2r(self, Wq, a, r)
+            q2r(self, Wq)
 
     def supercell(self, N1=1, N2=1, N3=1):
         """Map localized model for electron-electron interaction onto supercell.
@@ -342,7 +351,7 @@ def read_orbital_Coulomb_interaction(filename, nq, no, dd=False):
 
     return U
 
-def q2r(elel, W, a, r, fft=True):
+def q2r(elel, W, a=None, r=None, fft=True):
     """Interpolate electron-electron interaction on uniform q-point mesh.
 
     Parameters
@@ -352,13 +361,25 @@ def q2r(elel, W, a, r, fft=True):
     W : ndarray
         Density-density interaction matrices on complete uniform q-point mesh.
     a : ndarray
-        Bravais lattice vectors.
+        Bravais lattice vectors. This only sets :attr:`elel.a` and is kept for
+        backward compatibility.
     r : ndarray
-        Positions of orbital centers.
+        Positions of orbital centers. This only sets :attr:`elel.rc` and is kept
+        for backward compatibility.
     fft : bool
         Perform Fourier transform? If ``False``, only the mapping to the
         Wigner-Seitz cell is performed.
     """
+    if a is not None:
+        elel.a = a
+    elif elel.a is None:
+        info('"q2r" requires Bravais lattice vectors!', error=True)
+
+    if r is not None:
+        elel.rc = r
+    elif elel.rc is None:
+        info('"q2r" requires orbital centers!', error=True)
+
     nq = W.shape[:-2]
     elel.size = W.shape[-2]
 
@@ -375,7 +396,8 @@ def q2r(elel, W, a, r, fft=True):
     WR = np.reshape(WR, (*nq, elel.size, 1, elel.size, 1))
     WR = np.transpose(WR, (3, 5, 0, 1, 2, 4, 6))
 
-    elel.R, elel.data, l = elphmod.bravais.short_range_model(WR, a, r, sgn=+1)
+    elel.R, elel.data, l = elphmod.bravais.short_range_model(WR,
+        elel.a, elel.rc, sgn=+1)
 
 def read_band_Coulomb_interaction(filename, nQ, nk, binary=False, share=False):
     """Read Coulomb interaction for single band in band basis."""

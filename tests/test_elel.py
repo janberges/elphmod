@@ -19,7 +19,7 @@ class TestElectronElectron(unittest.TestCase):
 
         U = elphmod.dispersion.sample(elel.W, elphmod.models.graphene.q)
 
-        elphmod.elel.q2r(elel2, U, ph.a, ph.r)
+        elphmod.elel.q2r(elel2, U)
 
         elel2.standardize(eps=1e-10)
 
