@@ -15,6 +15,7 @@ num_iter 0
 
 write_hr true
 write_tb true
+write_xyz true
 bands_plot true
 bands_num_points 100
 
