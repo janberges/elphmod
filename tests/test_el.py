@@ -45,7 +45,7 @@ class TestElectron(unittest.TestCase):
 
             H = elphmod.dispersion.sample(el.H, elphmod.models.graphene.k)
 
-            elphmod.el.k2r(el2, H, ph.a, ph.r, rydberg=rydberg)
+            elphmod.el.k2r(el2, H, rydberg=rydberg)
             el2.standardize(eps=1e-10)
 
             self.assertTrue(np.allclose(el.data, el2.data))
@@ -55,7 +55,7 @@ class TestElectron(unittest.TestCase):
             else:
                 H /= elphmod.misc.Ry
 
-            elphmod.el.k2r(el2, H, ph.a, ph.r, rydberg=not rydberg)
+            elphmod.el.k2r(el2, H, rydberg=not rydberg)
             el2.standardize(eps=1e-10)
 
             self.assertTrue(np.allclose(el.data, el2.data))

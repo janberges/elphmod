@@ -23,7 +23,7 @@ class TestElectronPhonon(unittest.TestCase):
                 elphmod.models.graphene.nk)
 
             elphmod.elph.q2r(elph2, elphmod.models.graphene.nq,
-                elphmod.models.graphene.nk, g, ph.r, divide_mass)
+                elphmod.models.graphene.nk, g, divide_mass=divide_mass)
 
             elph2.standardize(eps=1e-10)
 
