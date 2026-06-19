@@ -167,7 +167,7 @@ def create(prefix=None, rydberg=False, divide_mass=True):
     elphmod.elph.q2r(elph, nq, nk, g)
     elph.standardize(eps=1e-10)
 
-    elel = elphmod.elel.Model(a=at, r=r)
+    elel = elphmod.elel.Model(el=el)
     elphmod.elel.q2r(elel, U * elphmod.misc.Ry)
     elel.standardize(eps=1e-10)
 

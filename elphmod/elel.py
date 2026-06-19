@@ -36,31 +36,27 @@ class Model:
     Wmat : str
         File with density-density Coulomb matrix in orbitals basis for different
         lattice vectors.
+    el : :class:`elphmod.el.Model`
+        Tight-binding model for the electrons.
     a : ndarray, optional
-        Bravais lattice vectors. By default, a 2D lattice with `angle` between
-        the first and the second basis vector is assumed.
+        Bravais lattice vectors (for backward compatibility). By default, a 2D
+        lattice with `angle` between the basis vectors is assumed.
     r : ndarray, optional
-        Positions of orbital centers. By default, all orbitals are assumed to be
-        located at the origin of the unit cell.
+        Positions of orbital centers (for backward compatibility). By default,
+        all orbitals are assumed to be located at the origin of the unit cell.
     angle : number, default 120
-        Angle between lattice vectors in degrees.
+        Angle between lattice vectors in degree (for backward compatibility).
 
     Attributes
     ----------
+    el : :class:`elphmod.el.Model`
+        Tight-binding model for the electrons.
     R : ndarray
         Lattice vectors :math:`\vec R` of Wigner-Seitz supercell.
     data : ndarray
         Corresponding density-density interaction in orbital basis.
-    size : int
-        Number of Wannier functions.
     cells : list of tuple of int, optional
         Lattice vectors of unit cells if the model describes a supercell.
-    N : list of tuple of int, optional
-        Primitive vectors of supercell if the model describes a supercell.
-    a : ndarray
-        Bravais lattice vectors.
-    rc : ndarray
-        Positions of orbital centers.
     """
     def W(self, q1=0, q2=0, q3=0):
         r"""Set up density-density Coulomb matrix for arbitrary q point.
@@ -100,10 +96,19 @@ class Model:
             return self.data[index]
 
     def __init__(self, uijkl=None, vijkl_full=None, vijkl_redu=None,
-            nq=None, no=None, Wmat=None, a=None, r=None, angle=120):
+            nq=None, no=None, Wmat=None, el=None, a=None, r=None, angle=120):
 
-        self.a = a
-        self.rc = r
+        if el is None:
+            self.el = elphmod.el.Model(a=a, r=r)
+            self.el.R = [] # to make supercell mapping work
+        else:
+            self.el = el
+
+            if self.el.a is None:
+                self.el.a = a
+
+            if self.el.rc is None:
+                self.el.rc = r
 
         self.cells = [(0, 0, 0)]
 
@@ -117,16 +122,16 @@ class Model:
         elif nq:
             nq = np.array([nq, nq, 1])
 
-        if self.a is None:
+        if self.el.a is None:
             info('Warning: You should really define the Bravais lattice!')
-            self.a = np.zeros((3, 3))
-            self.a[:2, :2] = elphmod.bravais.translations(angle)
-            self.a[2, 2] = 1.0
+            self.el.a = np.zeros((3, 3))
+            self.el.a[:2, :2] = elphmod.bravais.translations(angle)
+            self.el.a[2, 2] = 1.0
 
         if Wmat is not None:
             R, data = elphmod.misc.read_dat_mat(Wmat)
 
-            self.size = data.shape[1]
+            self.el.size = data.shape[1]
         else:
             Wq = read_orbital_Coulomb_interaction(uijkl, nq, no, dd=True)
 
@@ -136,10 +141,10 @@ class Model:
                 Wq -= read_orbital_Coulomb_interaction(vijkl_redu, nq, no,
                     dd=True)
 
-            self.size = no
+            self.el.size = no
 
-        if self.rc is None:
-            self.rc = np.zeros((self.el.size, 3))
+        if self.el.rc is None:
+            self.el.rc = np.zeros((self.el.size, 3))
 
         if Wmat is not None:
             if nq is None:
@@ -147,7 +152,7 @@ class Model:
                 self.data = data
                 return
 
-            WR = np.zeros((*nq, self.size, self.size), dtype=complex)
+            WR = np.zeros((*nq, self.el.size, self.el.size), dtype=complex)
 
             for iR, (R1, R2, R3) in enumerate(R):
                 WR[R1 % nq[0], R2 % nq[1], R3 % nq[2]] = data[iR]
@@ -171,12 +176,10 @@ class Model:
         object
             Localized model for electron-electron interaction for supercell.
         """
-        elel = Model()
+        elel = Model(el=self.el.supercell(N1, N2, N3))
 
         supercell = elphmod.bravais.supercell(N1, N2, N3)
         elel.cells = supercell[-1]
-
-        elel.size = len(elel.cells) * self.size
 
         if comm.rank == 0:
             const = dict()
@@ -185,19 +188,21 @@ class Model:
                 title='map interaction onto supercell')
 
             for i in range(len(elel.cells)):
-                A = i * self.size
+                A = i * self.el.size
 
                 for n in range(len(self.R)):
                     R, r = elphmod.bravais.to_supercell(
                         self.R[n] + elel.cells[i], supercell)
 
-                    B = r * self.size
+                    B = r * self.el.size
 
                     if R not in const:
-                        const[R] = np.zeros((elel.size, elel.size),
+                        const[R] = np.zeros((elel.el.size, elel.el.size),
                             dtype=complex)
 
-                    const[R][A:A + self.size, B:B + self.size] = self.data[n]
+                    const[R][
+                        A:A + self.el.size,
+                        B:B + self.el.size] = self.data[n]
 
                 status.update()
 
@@ -213,7 +218,8 @@ class Model:
 
         if comm.rank != 0:
             elel.R = np.empty((count, 3), dtype=int)
-            elel.data = np.empty((count, elel.size, elel.size), dtype=complex)
+            elel.data = np.empty((count, elel.el.size, elel.el.size),
+                dtype=complex)
 
         comm.Bcast(elel.R)
         comm.Bcast(elel.data)
@@ -267,7 +273,8 @@ class Model:
 
         if comm.rank != 0:
             self.R = np.empty((count, 3), dtype=int)
-            self.data = np.empty((count, self.size, self.size), dtype=complex)
+            self.data = np.empty((count, self.el.size, self.el.size),
+                dtype=complex)
 
         comm.Bcast(self.R)
         comm.Bcast(self.data)
@@ -282,8 +289,8 @@ class Model:
                 for n in range(len(self.R)):
                     data.write(('%12d' * 3 + '\n') % tuple(self.R[n]))
 
-                    for a in range(self.size):
-                        for b in range(self.size):
+                    for a in range(self.el.size):
+                        for b in range(self.el.size):
                             data.write('%5d%4d%20.10f%20.10f\n' % (a + 1, b + 1,
                                 self.data[n, a, b].real,
                                 self.data[n, a, b].imag))
@@ -361,43 +368,42 @@ def q2r(elel, W, a=None, r=None, fft=True):
     W : ndarray
         Density-density interaction matrices on complete uniform q-point mesh.
     a : ndarray
-        Bravais lattice vectors. This only sets :attr:`elel.a` and is kept for
-        backward compatibility.
-    r : ndarray
-        Positions of orbital centers. This only sets :attr:`elel.rc` and is kept
+        Bravais lattice vectors. This only sets :attr:`elel.el.a` and is kept
         for backward compatibility.
+    r : ndarray
+        Positions of orbital centers. This only sets :attr:`elel.el.rc` and is
+        kept for backward compatibility.
     fft : bool
         Perform Fourier transform? If ``False``, only the mapping to the
         Wigner-Seitz cell is performed.
     """
     if a is not None:
-        elel.a = a
-    elif elel.a is None:
+        elel.el.a = a
+    elif elel.el.a is None:
         info('"q2r" requires Bravais lattice vectors!', error=True)
 
     if r is not None:
-        elel.rc = r
-    elif elel.rc is None:
+        elel.el.rc = r
+    elif elel.el.rc is None:
         info('"q2r" requires orbital centers!', error=True)
 
     nq = W.shape[:-2]
-    elel.size = W.shape[-2]
 
     nq_orig = tuple(nq)
     nq = np.ones(3, dtype=int)
     nq[:len(nq_orig)] = nq_orig
 
     if fft:
-        Wq = np.reshape(W, (*nq, elel.size, elel.size))
+        Wq = np.reshape(W, (*nq, elel.el.size, elel.el.size))
         WR = np.fft.ifftn(Wq.conj(), axes=(0, 1, 2)).conj()
     else:
         WR = W
 
-    WR = np.reshape(WR, (*nq, elel.size, 1, elel.size, 1))
+    WR = np.reshape(WR, (*nq, elel.el.size, 1, elel.el.size, 1))
     WR = np.transpose(WR, (3, 5, 0, 1, 2, 4, 6))
 
     elel.R, elel.data, l = elphmod.bravais.short_range_model(WR,
-        elel.a, elel.rc, sgn=+1)
+        elel.el.a, elel.el.rc, sgn=+1)
 
 def read_band_Coulomb_interaction(filename, nQ, nk, binary=False, share=False):
     """Read Coulomb interaction for single band in band basis."""
