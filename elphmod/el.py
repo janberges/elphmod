@@ -215,11 +215,11 @@ class Model:
 
             supvecs = None
         else:
-            self.R, self.data, self.a, comment = read_hrdat(seedname,
+            self.R, self.data, a, comment = read_hrdat(seedname,
                 divide_ndegen)
 
-            if self.a is not None:
-                self.a /= elphmod.misc.a0
+            if a is not None:
+                self.a = a / elphmod.misc.a0
 
             self.size = self.data.shape[1]
 
