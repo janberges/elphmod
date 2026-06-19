@@ -546,6 +546,7 @@ class Driver:
         if el.a is None:
             el.a = self.elph.ph.a
 
+        if el.rc is None:
             el.rc = self.elph.ph.r[::self.elph.ph.nat // len(el.cells)]
             el.rc = np.repeat(el.rc, el.size // el.rc.shape[0], axis=0)
             el.rc -= el.rc[0]
