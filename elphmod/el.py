@@ -825,7 +825,7 @@ def read_wsvecdat(wsvecdat):
 
     return supvecs
 
-def k2r(el, H, fft=True, rydberg=False):
+def k2r(el, H, a=None, r=None, fft=True, rydberg=False):
     """Interpolate Hamiltonian matrices on uniform k-point mesh.
 
     Parameters
@@ -834,6 +834,12 @@ def k2r(el, H, fft=True, rydberg=False):
         Tight-binding model.
     H : ndarray
         Hamiltonian matrices on complete uniform k-point mesh.
+    a : ndarray
+        Bravais lattice vectors. This only sets :attr:`el.a` and is kept for
+        backward compatibility.
+    r : ndarray
+        Positions of orbital centers. This only sets :attr:`el.rc` and is kept
+        for backward compatibility.
     fft : bool
         Perform Fourier transform? If ``False``, only the mapping to the
         Wigner-Seitz cell is performed.
@@ -841,10 +847,14 @@ def k2r(el, H, fft=True, rydberg=False):
         Is input Hamiltonian given in Ry rather than eV units? This is
         independent of ``el.rydberg``, which is always respected.
     """
-    if el.a is None:
+    if a is not None:
+        el.a = a
+    elif el.a is None:
         info('"k2r" requires Bravais lattice vectors!', error=True)
 
-    if el.rc is None:
+    if r is not None:
+        el.rc = r
+    elif el.rc is None:
         info('"k2r" requires orbital centers!', error=True)
 
     nk = H.shape[:-2]

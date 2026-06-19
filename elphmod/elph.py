@@ -1141,7 +1141,8 @@ def transform(g, q, nk, U=None, u=None, squared=False, broadcast=True,
 
     return g
 
-def q2r(elph, nq, nk, g, divide_mass=True, reuse_ws=False, shared_memory=False):
+def q2r(elph, nq, nk, g, r=None, divide_mass=True, reuse_ws=False,
+        shared_memory=False):
     """Fourier-transform electron-phonon coupling from reciprocal to real space.
 
     Parameters
@@ -1152,6 +1153,9 @@ def q2r(elph, nq, nk, g, divide_mass=True, reuse_ws=False, shared_memory=False):
         Number of q and k points along axes, i.e., shapes of uniform meshes.
     g : ndarray
         Electron-phonon coupling on complete uniform q- and k-point meshes.
+    r : ndarray, optional
+        Positions of orbital centers. This only sets :attr:`elph.el.rc` and is
+        kept for backward compatibility.
     divide_mass : bool, default True
         Has input coupling been divided by square root of atomic mass? This is
         independent of ``elph.divide_mass``, which is always respected.
@@ -1191,6 +1195,9 @@ def q2r(elph, nq, nk, g, divide_mass=True, reuse_ws=False, shared_memory=False):
         data = None
 
     comm.Gatherv(my_data, (data, comm.gather(my_data.size)))
+
+    if r is not None:
+        elph.el.rc = r
 
     if not reuse_ws:
         if elph.el.rc is None:
