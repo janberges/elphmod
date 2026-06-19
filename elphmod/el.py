@@ -238,9 +238,6 @@ class Model:
                 self.tau = r[~centers] / elphmod.misc.a0
                 self.atom_order = X[~centers]
 
-            if self.rc is None:
-                self.rc = np.zeros((self.size, 3))
-
         self.nk = tuple(2 * self.R[np.all(self.R[:, x] == 0,
             axis=1)].max(initial=1) for x in [[1, 2], [2, 0], [0, 1]])
 
