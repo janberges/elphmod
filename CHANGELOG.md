@@ -3,6 +3,15 @@
 See [Git commits](https://github.com/janberges/elphmod/commits) for more
 detailed list of changes.
 
+## v0.34/2026-06-19
+
+* Orbital centers and cell vectors from Wannier90 stored in attributes
+* More consistent *q2r* and *k2r* functions and electron-electron class
+* Model input data (electrons, phonons, and coupling) for beryllium monolayer
+* Example on double Brillouin-zone plots
+* More options for model export from MD driver
+* Force correction now part of unscreening
+
 ## v0.33/2026-03-24
 
 * Export of electron-phonon model to input file for ``elphy`` code
