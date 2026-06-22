@@ -1036,7 +1036,7 @@ def read_q(fildyn0):
     with open(fildyn0) as data:
         nq = tuple(map(int, next(data).split()))
         nQ = int(next(data))
-        q = [list(map(float, line.split())) for line in data]
+        q = [list(map(float, next(data).split())) for _ in range(nQ)]
 
     return nq, q
 
@@ -1789,8 +1789,6 @@ def polarization(e, path, angle=60):
     bands = e.shape[2]
 
     mode = np.empty((len(path), bands, 3))
-
-    nat = bands // 3
 
     x = slice(0, None, 3)
     y = slice(1, None, 3)

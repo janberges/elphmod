@@ -42,8 +42,6 @@ class TestDiagrams(unittest.TestCase):
 
         gu = elph.sample(q=q, U=U, u=u)[0]
 
-        prefactor = 2 * kT / np.prod(nk)
-
         def E(H):
             """Compute grand potential or free energy for given Hamiltonian."""
 

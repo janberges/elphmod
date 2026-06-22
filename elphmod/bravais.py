@@ -2820,13 +2820,13 @@ def readPOSCAR(filename):
         Crystal structure.
     """
     with open(filename) as POSCAR:
-        title = next(POSCAR)
+        next(POSCAR) # title
 
         a = float(next(POSCAR))
 
-        t1 = np.array(list(map(float, next(POSCAR).split())))
-        t2 = np.array(list(map(float, next(POSCAR).split())))
-        t3 = np.array(list(map(float, next(POSCAR).split())))
+        t1 = a * np.array(list(map(float, next(POSCAR).split())))
+        t2 = a * np.array(list(map(float, next(POSCAR).split())))
+        t3 = a * np.array(list(map(float, next(POSCAR).split())))
 
         elements = next(POSCAR).split()
 
