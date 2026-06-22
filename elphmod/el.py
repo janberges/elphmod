@@ -1858,7 +1858,7 @@ def read_pp_density(filename):
 
         # read FFT dimensions, ntyp, nat
         tmp = cells()
-#        FFT_dim = list(map(int, tmp[:3]))
+        #FFT_dim = list(map(int, tmp[:3]))
         FFT_dim = list(map(int, tmp[:6]))
         nat, ntyp = list(map(int, tmp[6:]))
 
@@ -1875,10 +1875,10 @@ def read_pp_density(filename):
         A = elphmod.bravais.primitives(ibrav)
         A[2, 2] = celldm[2]
         uc_volume = np.linalg.det(A) * celldm[0] ** 3
-#        B1, B2, B3 = elphmod.bravais.reciprocals(*A)
-#        B = np.stack((B1, B2, B3), axis=0)
-#        print(B)
-#        print(np.linalg.det(B) * (2 * np.pi / celldm[0]) ** 3)
+        #B1, B2, B3 = elphmod.bravais.reciprocals(*A)
+        #B = np.stack((B1, B2, B3), axis=0)
+        #print(B)
+        #print(np.linalg.det(B) * (2 * np.pi / celldm[0]) ** 3)
 
         # read valence table
         at = []
@@ -2062,9 +2062,9 @@ def read_wfc(filename, ibrav, a=1.0, b=1.0, c=1.0):
         alat = a / elphmod.misc.a0
         xk = xk * alat / (2 * np.pi)
 
-#        # normalize wfcs
-#        uc_volume = np.linalg.det(A) * alat ** 3
-#        evc /= np.sqrt(uc_volume)
+        # normalize wfcs
+        #uc_volume = np.linalg.det(A) * alat ** 3
+        #evc /= np.sqrt(uc_volume)
 
         # calculate reciprocal G vectors
         g_vect = np.empty((igwx, 3))
@@ -2073,8 +2073,8 @@ def read_wfc(filename, ibrav, a=1.0, b=1.0, c=1.0):
         for ii in range(igwx):
             g_vect[ii] = (mill_g[ii, 0] * B1 + mill_g[ii, 1] * B2
                 + mill_g[ii, 2] * B3)
-#            g_vect[ii] = (mill_g[ii, 0] * b1 + mill_g[ii, 1] * b2
-#                + mill_g[ii, 2] * b3)
+            #g_vect[ii] = (mill_g[ii, 0] * b1 + mill_g[ii, 1] * b2
+            #    + mill_g[ii, 2] * b3)
 
             k_plus_G[ii] = xk + g_vect[ii]
 

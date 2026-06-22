@@ -2800,11 +2800,10 @@ def write_epw(epw, struct):
 
         data.write('/')
         data.write('\n')
-# =============================================================================
-#         data.write('%d %s\n' % (struct['nq'], struct['q_coords_type']))
-#         for (qx, qy, qz) in struct['q']:
-#             data.write('%12.9f %12.9f %12.9f\n' % (qx, qy, qz))
-# =============================================================================
+
+        #data.write('%d %s\n' % (struct['nq'], struct['q_coords_type']))
+        #for (qx, qy, qz) in struct['q']:
+        #    data.write('%12.9f %12.9f %12.9f\n' % (qx, qy, qz))
 
 def readPOSCAR(filename):
     """Read crystal structure from VASP input file.
