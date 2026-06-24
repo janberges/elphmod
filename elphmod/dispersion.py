@@ -279,16 +279,15 @@ def dispersion_full(matrix, size, angle=60, vectors=False, gauge=False,
         if order and comm.rank == 0:
             o = np.empty((points, bands), dtype=int)
 
-            main_path = [n for n in range(points) if on_main_path(n)]
-            main_order = band_order(v[main_path], V[main_path], status=False,
-                **order_kwargs)
-
             status = elphmod.misc.StatusBar(points, title='disentangle bands')
+
+            main_path = [n for n in range(points) if on_main_path(n)]
+            main_order = band_order(v[main_path], V[main_path], **order_kwargs)
 
             for n, N in zip(main_path, main_order):
                 side_path = [m for m in range(points) if on_side_path(n, m)]
                 side_order = band_order(v[side_path], V[side_path],
-                    by_mean=False, status=False, **order_kwargs)
+                    by_mean=False, **order_kwargs)
 
                 for m, M in zip(side_path, side_order):
                     o[m] = M[N]
@@ -444,7 +443,7 @@ def sample(matrix, k, **kwargs):
 
     return matrix
 
-def band_order(v, V, by_mean=True, dv=float('inf'), eps=1e-10, status=True):
+def band_order(v, V, by_mean=True, dv=float('inf'), eps=1e-10):
     """Sort bands by overlap of eigenvectors at neighboring k points.
 
     Parameters
@@ -460,8 +459,6 @@ def band_order(v, V, by_mean=True, dv=float('inf'), eps=1e-10, status=True):
         band after disentanglement.
     eps : float
         Maximum difference between eigenvalues considered degenerate.
-    status : bool
-        Show progress bar?
 
     Returns
     -------
@@ -475,8 +472,7 @@ def band_order(v, V, by_mean=True, dv=float('inf'), eps=1e-10, status=True):
     n0 = 0
     o[n0] = range(bands)
 
-    if status:
-        bar = elphmod.misc.StatusBar(points - 1, title='disentangle bands')
+    status = elphmod.misc.StatusBar(points - 1, title='disentangle bands')
 
     for n in range(1, points):
         available = set(range(bands))
@@ -495,8 +491,7 @@ def band_order(v, V, by_mean=True, dv=float('inf'), eps=1e-10, status=True):
         if np.all(np.absolute(np.diff(v[n])) > eps):
             n0 = n
 
-        if status:
-            bar.update()
+        status.update()
 
     if by_mean:
         o[:] = o[:, sorted(range(bands), key=lambda i: v[:, o[:, i]].sum())]
