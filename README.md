@@ -26,7 +26,7 @@ can be used to build and study distorted structures on supercells.
 
 You can install the latest version of elphmod from PyPI:
 
-    python3 -m pip install elphmod
+    python3 -m pip install --upgrade elphmod
 
 Or from the conda-forge channel on Anaconda Cloud:
 
