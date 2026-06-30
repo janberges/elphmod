@@ -35,8 +35,8 @@ class Model:
     r : ndarray, optional
         Orbital centers used to map RESPACK data to Wigner-Seitz cell. By
         default, all orbitals are assumed to be located at the origin of the
-        unit cell. Also needed for :func:`k2r` and :func:`elph.q2r`. Use bohr
-        units for consistency with the mass-spring model.
+        unit cell. Also needed for :func:`k2r` and :func:`elphmod.elph.q2r`. Use
+        bohr units for consistency with the mass-spring model.
     divide_ndegen : bool, default True
         Divide hopping by degeneracy of Wigner-Seitz point and apply the
         abovementioned correction? Only ``True`` yields correct bands.
