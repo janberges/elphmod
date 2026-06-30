@@ -1154,8 +1154,8 @@ def q2r(elph, nq, nk, g, r=None, divide_mass=True, reuse_ws=False,
     g : ndarray
         Electron-phonon coupling on complete uniform q- and k-point meshes.
     r : ndarray, optional
-        Positions of orbital centers. This only sets :attr:`elph.el.rc` and is
-        kept for backward compatibility.
+        Orbital centers. This only sets :attr:`elph.el.rc` and is kept for
+        backward compatibility.
     divide_mass : bool, default True
         Has input coupling been divided by square root of atomic mass? This is
         independent of ``elph.divide_mass``, which is always respected.

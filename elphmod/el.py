@@ -33,10 +33,10 @@ class Model:
         By default, a cubic cell is assumed. Also needed for :func:`k2r`. Use
         bohr units for consistency with the mass-spring model.
     r : ndarray, optional
-        Positions of orbital centers used to map RESPACK data to Wigner-Seitz
-        cell. By default, all orbitals are assumed to be located at the origin
-        of the unit cell. Also needed for :func:`k2r` and :func:`elph.q2r`. Use
-        bohr units for consistency with the mass-spring model.
+        Orbital centers used to map RESPACK data to Wigner-Seitz cell. By
+        default, all orbitals are assumed to be located at the origin of the
+        unit cell. Also needed for :func:`k2r` and :func:`elph.q2r`. Use bohr
+        units for consistency with the mass-spring model.
     divide_ndegen : bool, default True
         Divide hopping by degeneracy of Wigner-Seitz point and apply the
         abovementioned correction? Only ``True`` yields correct bands.
@@ -92,7 +92,7 @@ class Model:
         Bravais lattice vectors if `read_xsf` or *seedname_tb.dat* found.
         Alternatively, they can be set at initialization via the parameter `a`.
     rc : ndarray
-        Positions of orbital centers if *seedname_centres.xyz* found.
+        Orbital centers if *seedname_centres.xyz* found.
         Alternatively, they can be set at initialization via the parameter `r`.
     tau : ndarray, optional
         Positions of basis atoms if `read_xsf` or *seedname_centres.xyz* found.
@@ -837,8 +837,8 @@ def k2r(el, H, a=None, r=None, fft=True, rydberg=False):
         Bravais lattice vectors. This only sets :attr:`el.a` and is kept for
         backward compatibility.
     r : ndarray
-        Positions of orbital centers. This only sets :attr:`el.rc` and is kept
-        for backward compatibility.
+        Orbital centers. This only sets :attr:`el.rc` and is kept for backward
+        compatibility.
     fft : bool
         Perform Fourier transform? If ``False``, only the mapping to the
         Wigner-Seitz cell is performed.

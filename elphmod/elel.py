@@ -42,8 +42,8 @@ class Model:
         Bravais lattice vectors (for backward compatibility). By default, a 2D
         lattice with `angle` between the basis vectors is assumed.
     r : ndarray, optional
-        Positions of orbital centers (for backward compatibility). By default,
-        all orbitals are assumed to be located at the origin of the unit cell.
+        Orbital centers (for backward compatibility). By default, all orbitals
+        are assumed to be located at the origin of the unit cell.
     angle : number, default 120
         Angle between lattice vectors in degree (for backward compatibility).
 
@@ -371,8 +371,8 @@ def q2r(elel, W, a=None, r=None, fft=True):
         Bravais lattice vectors. This only sets :attr:`elel.el.a` and is kept
         for backward compatibility.
     r : ndarray
-        Positions of orbital centers. This only sets :attr:`elel.el.rc` and is
-        kept for backward compatibility.
+        Orbital centers. This only sets :attr:`elel.el.rc` and is kept for
+        backward compatibility.
     fft : bool
         Perform Fourier transform? If ``False``, only the mapping to the
         Wigner-Seitz cell is performed.
