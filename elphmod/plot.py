@@ -380,7 +380,7 @@ def rectify(image, width, height, lt, rt, lb, rb, *args, **kwargs):
 
     return image
 
-def color(data, cmap=None, minimum=None, maximum=None, comm=comm):
+def color(data, cmap=None, minimum=None, maximum=None, to8bit=False, comm=comm):
     """Colorize data using colormap from StoryLines (parallelized version).
 
     Parameters
@@ -391,6 +391,8 @@ def color(data, cmap=None, minimum=None, maximum=None, comm=comm):
         Colormap from StoryLines.
     minimum, maximum : float
         Data values corresponding to minimum and maximum of color scale.
+    to8bit : bool, default False
+        Use only 256 colors?
 
     Returns
     -------
@@ -411,6 +413,9 @@ def color(data, cmap=None, minimum=None, maximum=None, comm=comm):
 
     data = np.maximum(data, 0) # Avoid that data slightly exceeds [0, 1]
     data = np.minimum(data, 1) # because of numerical inaccuracies.
+
+    if to8bit:
+        data = np.round(data * 255) / 255
 
     shape = data.shape
     data = data.flatten()
