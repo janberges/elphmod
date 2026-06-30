@@ -1774,6 +1774,8 @@ def path(points, N=30, recvec=None, qe=False, moveG=0, **kwargs):
         labels such as ``G`` (|Ggr|), ``M``, or ``K`` may also be used. Mostly,
         the definitions follow https://lampx.tugraz.at/~hadley/ss1/bzones/.
         See also: Setyawan and Curtarolo, Comput. Mater. Sci. 49, 299 (2010).
+        The label ``,`` makes the path jump from the previous to the next point
+        without accumulating distance.
     N : float
         Number of points per :math:`2 \pi / a`.
     recvec : ndarray, optional
@@ -1803,6 +1805,14 @@ def path(points, N=30, recvec=None, qe=False, moveG=0, **kwargs):
     primitives
     reciprocals
     """
+    for i, point in enumerate(points):
+        if isinstance(point, str) and point == ',':
+            more = path(points[i + 1:], N, recvec, False, moveG, **kwargs)
+            points = points[:i]
+            break
+    else:
+        more = False
+
     labels = {
         1: { # cubic (sc)
             'M': [0.0, 0.5, 0.5],
@@ -1949,21 +1959,30 @@ def path(points, N=30, recvec=None, qe=False, moveG=0, **kwargs):
                     if i != len(corners) - 1:
                         k[corners[i] + 1] += moveG * k[corners[i] + 2]
 
+    k = 2 * np.pi * np.array(k)
+    x = np.array(x)
+    corners = np.array(corners)
+
+    if more:
+        k = np.concatenate((k, more[0]), axis=0)
+        x = np.concatenate((x, more[1] + x[-1]))
+        corners = np.concatenate((corners, more[2] + corners[-1]))
+
     if qe:
         kwargs['ktyp'] = 'crystal_b'
         kwargs['nks'] = len(corners)
         kwargs['k_points'] = np.empty((len(corners), 4))
 
         for i in range(len(corners)):
-            kwargs['k_points'][i, :3] = k[corners[i]]
+            kwargs['k_points'][i, :3] = k[corners[i]] / (2 * np.pi)
             try:
                 kwargs['k_points'][i, 3] = corners[i + 1] - corners[i]
             except IndexError:
                 kwargs['k_points'][i, 3] = 0
 
-        return 2 * np.pi * np.array(k), np.array(x), corners, kwargs
+        return k, x, corners, kwargs
     else:
-        return 2 * np.pi * np.array(k), np.array(x), corners
+        return k, x, corners
 
 def GMKG(N=30, corner_indices=False, mesh=False, angle=60, straight=True,
         lift_degen=True):
