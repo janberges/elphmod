@@ -273,7 +273,7 @@ class Model:
                 phid = np.zeros((*nq, *ph_ase.C_N.shape[1:]))
 
                 for i, R in enumerate(ph_ase.compute_lattice_vectors().T):
-                    phid[*-R % nq] += ph_ase.C_N[i] / (elphmod.misc.Ry
+                    phid[tuple(-R % nq)] += ph_ase.C_N[i] / (elphmod.misc.Ry
                         / elphmod.misc.a0 ** 2 * elphmod.misc.uRy)
 
                 phid = np.reshape(phid, (*nq, len(tau), 3, len(tau), 3))
