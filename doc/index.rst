@@ -62,6 +62,7 @@
    examples/phrenorm
    examples/phrenorm_3d
    examples/specfun
+   examples/ase_phonons
    examples/projwfc_1d
    examples/projwfc
    examples/projwfc_3d

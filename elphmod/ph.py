@@ -66,6 +66,8 @@ class Model:
     ifc : str
         Name of file with interatomic force constants to be created if `flfrc`
         is prefix of files with dynamical matrices. Used to emulate ``q2r.x``.
+    ph_ase : :class:`ase.phonons.Phonons`, optional
+        ASE class for calculating phonons using the finite-displacement method.
 
     Attributes
     ----------
@@ -203,7 +205,7 @@ class Model:
             apply_asr_simple=False, apply_zasr=False, apply_rsr=False, lr=True,
             lr2d=None, amass=None, at=None, tau=None, atom_order=None,
             alph=None, epsil=None, zeu=None, Q=None, L=None, perp=True,
-            divide_mass=True, divide_ndegen=True, ifc=None):
+            divide_mass=True, divide_ndegen=True, ifc=None, ph_ase=None):
 
         phid = nq = q0 = D0 = None
 
@@ -260,6 +262,22 @@ class Model:
 
                     q0 = q0.reshape((-1, *q0.shape[3:]))
                     D0 = D0.reshape((-1, *D0.shape[3:]))
+
+            elif ph_ase is not None:
+                amass = ph_ase.atoms.get_masses()
+                at = ph_ase.atoms.get_cell() / elphmod.misc.a0
+                tau = ph_ase.atoms.get_positions() / elphmod.misc.a0
+                atom_order = ph_ase.atoms.get_chemical_symbols()
+
+                nq = ph_ase.supercell
+                phid = np.zeros((*nq, *ph_ase.C_N.shape[1:]))
+
+                for i, R in enumerate(ph_ase.compute_lattice_vectors().T):
+                    phid[*-R % nq] += ph_ase.C_N[i] / (elphmod.misc.Ry
+                        / elphmod.misc.a0 ** 2 * elphmod.misc.uRy)
+
+                phid = np.reshape(phid, (*nq, len(tau), 3, len(tau), 3))
+                phid = np.transpose(phid, (3, 5, 0, 1, 2, 4, 6))
 
             if quadrupole_fmt is not None:
                 Q = read_quadrupole_fmt(quadrupole_fmt)
