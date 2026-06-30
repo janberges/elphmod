@@ -15,6 +15,7 @@ Also make sure to install the Python requirements before:
 (Installing PyQt5 is only necessary if the Tk interface is not available.)
 
 * `a2f.py` - Eliashberg spectral function of monolayer TaS2
+* `ase_phonons.py` - conversion of ASE's to elphmod's phonon model
 * `coulomb.py` - Coulomb interaction from VASP
 * `dos.py` - density of states via smearing and tetrahedron methods
 * `double_bz.py` - double Brillouin-zone plot of coupling of beryllium monolayer
