@@ -68,6 +68,8 @@ class Model:
         is prefix of files with dynamical matrices. Used to emulate ``q2r.x``.
     ph_ase : :class:`ase.phonons.Phonons`, optional
         ASE class for calculating phonons using the finite-displacement method.
+    ph_phonopy : :class:`phonopy.Phonopy`, optional
+        Phonopy class after computing supercell force constants.
 
     Attributes
     ----------
@@ -205,7 +207,8 @@ class Model:
             apply_asr_simple=False, apply_zasr=False, apply_rsr=False, lr=True,
             lr2d=None, amass=None, at=None, tau=None, atom_order=None,
             alph=None, epsil=None, zeu=None, Q=None, L=None, perp=True,
-            divide_mass=True, divide_ndegen=True, ifc=None, ph_ase=None):
+            divide_mass=True, divide_ndegen=True, ifc=None, ph_ase=None,
+            ph_phonopy=None):
 
         phid = nq = q0 = D0 = None
 
@@ -278,6 +281,26 @@ class Model:
 
                 phid = np.reshape(phid, (*nq, len(tau), 3, len(tau), 3))
                 phid = np.transpose(phid, (3, 5, 0, 1, 2, 4, 6))
+
+            elif ph_phonopy is not None:
+                amass = ph_phonopy.unitcell.masses
+                at = ph_phonopy.unitcell.cell / elphmod.misc.a0
+                tau = ph_phonopy.unitcell.positions / elphmod.misc.a0
+                atom_order = ph_phonopy.unitcell.symbols
+
+                supercell = ph_phonopy.supercell.supercell_matrix
+
+                if np.all(supercell == np.diag(np.diag(supercell))):
+                    nq = np.diag(supercell)[::-1]
+                else:
+                    info('Phonopy supercell matrix must be diagonal!',
+                        error=True)
+
+                phid = ph_phonopy.force_constants.reshape((len(tau), -1,
+                    len(tau), *nq, 3, 3))[:, 0] / (elphmod.misc.Ry
+                        / elphmod.misc.a0 ** 2 * elphmod.misc.uRy)
+
+                phid = np.transpose(phid, (1, 0, 2, 3, 4, 6, 5))
 
             if quadrupole_fmt is not None:
                 Q = read_quadrupole_fmt(quadrupole_fmt)
