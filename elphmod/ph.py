@@ -276,9 +276,9 @@ class Model:
                 phid = np.zeros((*nq, *ph_ase.C_N.shape[1:]))
 
                 for i, R in enumerate(ph_ase.compute_lattice_vectors().T):
-                    phid[tuple(-R % nq)] += ph_ase.C_N[i] / (elphmod.misc.Ry
-                        / elphmod.misc.a0 ** 2)
+                    phid[tuple(-R % nq)] += ph_ase.C_N[i]
 
+                phid /= elphmod.misc.Ry / elphmod.misc.a0 ** 2
                 phid = np.reshape(phid, (*nq, len(tau), 3, len(tau), 3))
                 phid = np.transpose(phid, (3, 5, 0, 1, 2, 4, 6))
 
@@ -296,10 +296,10 @@ class Model:
                     info('Phonopy supercell matrix must be diagonal!',
                         error=True)
 
-                phid = ph_phonopy.force_constants.reshape((len(tau), -1,
-                    len(tau), *nq, 3, 3))[:, 0] / (elphmod.misc.Ry
-                        / elphmod.misc.a0 ** 2)
+                phid = np.reshape(ph_phonopy.force_constants,
+                    (len(tau), -1, len(tau), *nq, 3, 3))[:, 0].copy()
 
+                phid /= elphmod.misc.Ry / elphmod.misc.a0 ** 2
                 phid = np.transpose(phid, (1, 0, 2, 3, 4, 6, 5))
 
             if quadrupole_fmt is not None:
