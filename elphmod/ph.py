@@ -267,7 +267,7 @@ class Model:
                     D0 = D0.reshape((-1, *D0.shape[3:]))
 
             elif ph_ase is not None:
-                amass = ph_ase.atoms.get_masses()
+                amass = ph_ase.atoms.get_masses() * elphmod.misc.uRy
                 at = ph_ase.atoms.get_cell() / elphmod.misc.a0
                 tau = ph_ase.atoms.get_positions() / elphmod.misc.a0
                 atom_order = ph_ase.atoms.get_chemical_symbols()
@@ -277,13 +277,13 @@ class Model:
 
                 for i, R in enumerate(ph_ase.compute_lattice_vectors().T):
                     phid[tuple(-R % nq)] += ph_ase.C_N[i] / (elphmod.misc.Ry
-                        / elphmod.misc.a0 ** 2 * elphmod.misc.uRy)
+                        / elphmod.misc.a0 ** 2)
 
                 phid = np.reshape(phid, (*nq, len(tau), 3, len(tau), 3))
                 phid = np.transpose(phid, (3, 5, 0, 1, 2, 4, 6))
 
             elif ph_phonopy is not None:
-                amass = ph_phonopy.unitcell.masses
+                amass = ph_phonopy.unitcell.masses * elphmod.misc.uRy
                 at = ph_phonopy.unitcell.cell / elphmod.misc.a0
                 tau = ph_phonopy.unitcell.positions / elphmod.misc.a0
                 atom_order = ph_phonopy.unitcell.symbols
@@ -298,7 +298,7 @@ class Model:
 
                 phid = ph_phonopy.force_constants.reshape((len(tau), -1,
                     len(tau), *nq, 3, 3))[:, 0] / (elphmod.misc.Ry
-                        / elphmod.misc.a0 ** 2 * elphmod.misc.uRy)
+                        / elphmod.misc.a0 ** 2)
 
                 phid = np.transpose(phid, (1, 0, 2, 3, 4, 6, 5))
 
