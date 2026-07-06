@@ -345,9 +345,9 @@ class Driver:
 
         Parameters
         ----------
-        u : ndarray
+        u : ndarray, optional
             Updated atomic displacements (e.g., from optimization routine).
-        show : bool
+        show : bool, default True
             Print free energy?
 
         Returns
@@ -381,9 +381,9 @@ class Driver:
 
         Parameters
         ----------
-        parameters : ndarray
+        parameters : ndarray, optional
             Dummy positional argument for optimization routines.
-        show : bool
+        show : bool, default True
             Print free energy?
 
         Returns
@@ -419,7 +419,7 @@ class Driver:
 
         Parameters
         ----------
-        parameters : ndarray
+        parameters : ndarray, optional
             Dummy positional argument for optimization routines.
         gamma_only : bool, default True
             Calculate Hessian for q = 0 only?
@@ -429,7 +429,7 @@ class Driver:
             This is done before saving the Hessian to file.
         fildyn : str, optional
             Filename to save Hessian.
-        eps : float
+        eps : float, default 1e-10
             Smallest allowed absolute value of divisor.
         kT : float, optional
             Smearing temperature. If given, it is used to calculate the double
@@ -589,7 +589,7 @@ class Driver:
 
         Parameters
         ----------
-        divide_mass : bool
+        divide_mass : bool, default True
             Divide force constants by atomic masses?
         **kwargs
             Parameters passed to :func:`elphmod.ph.q2r`.
@@ -615,7 +615,7 @@ class Driver:
 
         Parameters
         ----------
-        eps : float
+        eps : float, default 1e-10
             Phonon frequencies squared below `eps` are set to `eps`;
             corresponding couplings are set to zero.
         tol : float, optional
