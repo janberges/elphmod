@@ -85,8 +85,7 @@ i0 = np.argmin(abs(alpha))
 i1 = np.argmin(abs(alpha - 1))
 
 for i in range(len(alpha)):
-    driver.u = alpha[i] * u1
-    E[i] = driver.free_energy()
+    E[i] = driver.free_energy(alpha[i] * u1)
 
     if i == i0:
         c0 = 0.5 * u1.T.dot(driver.hessian()).dot(u1)
