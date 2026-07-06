@@ -114,6 +114,9 @@ class Driver:
         changed.
     eps : float, default 1e-10
         Matrix-element threshold for export in output units.
+    fixcom : bool, default True
+        Fix center of mass by subtracting collective translational displacement
+        component?
     shared_memory : bool, default True
         Store :attr:`d0` and :attr:`d` in shared memory?
     **kwargs
@@ -121,14 +124,12 @@ class Driver:
 
     Attributes
     ----------
-    elph, kT, f, n, nk, nq
+    elph, kT, f, n, nk, nq, fixcom
         Copies of initialization parameters.
     mu : float
         Current chemical potential.
     k, q : ndarray
         k and q meshes.
-    u : ndarray
-        Atomic displacements.
     C0 : ndarray
         Unscreened force constants.
     H0 : ndarray
@@ -149,7 +150,7 @@ class Driver:
     """
     def __init__(self, elph, kT, f, n, nx=0.0, nk=(1,), nq=(1,), supercell=None,
             unscreen=True, kT0=None, f0=None, n0=None, export=None, econv=0.5,
-            lconv=1.0, eps=1e-10, shared_memory=True, **kwargs):
+            lconv=1.0, eps=1e-10, fixcom=True, shared_memory=True, **kwargs):
 
         if not elph.el.rydberg:
             info("Initialize 'el' with 'rydberg=True'!", error=True)
@@ -198,7 +199,7 @@ class Driver:
 
             self.sparse = False
 
-        self.u = np.zeros(self.elph.ph.size)
+        self._u = np.zeros(self.elph.ph.size)
 
         self.diagonalize()
 
@@ -211,6 +212,8 @@ class Driver:
         self.kT = kT
         self.f = elphmod.occupations.smearing(f)
         self.n = n
+
+        self.fixcom = fixcom
 
         self.figure = elphmod.plot.AtomsPlot(self.elph.ph.r,
             self.elph.ph.atom_order)
@@ -246,6 +249,36 @@ class Driver:
             self.__init__(elph, self.kT, self.f, self.n * len(elph.cells),
                 self.nx * len(elph.cells), unscreen=False, **kwargs)
 
+    @property
+    def u(self):
+        """Atomic displacements."""
+        return self._u
+
+    @u.setter
+    def u(self, u):
+        u = np.reshape(u, (self.elph.ph.nat, 3))
+
+        if self.fixcom:
+            u = u - np.average(u, axis=0)
+
+        u = np.ravel(u)
+
+        changed = np.any(u != self._u)
+
+        self._u = u
+
+        if changed:
+            self.diagonalize()
+
+    @property
+    def r(self):
+        """Atomic positions."""
+        return self.elph.ph.r + self._u.reshape(self.elph.ph.r.shape)
+
+    @r.setter
+    def r(self, r):
+        self.u = np.reshape(r, self.elph.ph.r.shape) - self.elph.ph.r
+
     def random_displacements(self, amplitude=0.01, reproducible=False):
         """Displace atoms randomly from unperturbed positions.
 
@@ -258,16 +291,13 @@ class Driver:
         """
         if comm.rank == 0:
             rand = elphmod.misc.rand if reproducible else np.random.rand
-            self.u = amplitude * (1 - 2 * rand(self.u.size))
-            self.center_mass()
+            u = amplitude * (1 - 2 * rand(self.elph.ph.size))
+        else:
+            u = np.empty(self.elph.ph.size)
 
-        comm.Bcast(self.u)
+        comm.Bcast(u)
 
-    def center_mass(self):
-        """Subtract collective translational displacement component."""
-
-        self.u -= np.tile(np.average(self.u.reshape((-1, 3)), axis=0),
-            self.elph.ph.nat)
+        self.u = u
 
     def find_Fermi_level(self):
         """Update chemical potential.
@@ -301,12 +331,10 @@ class Driver:
     def diagonalize(self):
         """Diagonalize Hamiltonian of perturbed system."""
 
-        self.center_mass()
-
         if self.sparse:
-            H = self.H0 + self.u.dot(self.d0).toarray()
+            H = self.H0 + self._u.dot(self.d0).toarray()
         else:
-            H = self.H0 + np.einsum('xijkmn,x->ijkmn', self.d0[0], self.u)
+            H = self.H0 + np.einsum('xijkmn,x->ijkmn', self.d0[0], self._u)
 
         self.e, self.U = np.linalg.eigh(H)
 
@@ -333,17 +361,15 @@ class Driver:
         if u is not None:
             self.u = u
 
-        self.diagonalize()
-
         if self.figure.interactive:
             self.plot(update=True)
 
         E = elphmod.diagrams.grand_potential(self.e,
             self.kT, self.f) + self.mu * self.n
 
-        E += 0.5 * self.u.dot(self.C0[0].real).dot(self.u)
+        E += 0.5 * self._u.dot(self.C0[0].real).dot(self._u)
 
-        E += self.F0.dot(self.u)
+        E += self.F0.dot(self._u)
 
         if show:
             info('Free energy: %15.9f Ry; %16.6f s' % (E, time.time() - t0))
@@ -377,7 +403,7 @@ class Driver:
             F = elphmod.diagrams.first_order(self.e, self.d0[0], self.kT,
                 U=self.U, occupations=self.f).real
 
-        F += self.C0[0].real.dot(self.u)
+        F += self.C0[0].real.dot(self._u)
 
         F += self.F0
 
@@ -505,9 +531,7 @@ class Driver:
             b = elphmod.bravais.reciprocals(*self.elph.ph.a)
 
             elphmod.ph.write_flfrc(fildyn, (self.q[:nq].dot(b), C),
-                self.elph.ph.M, self.elph.ph.a,
-                self.elph.ph.r + self.u.reshape(self.elph.ph.r.shape),
-                self.elph.ph.atom_order)
+                self.elph.ph.M, self.elph.ph.a, self.r, self.elph.ph.atom_order)
 
         returns = C[0].real if gamma_only else C
 
@@ -577,7 +601,7 @@ class Driver:
         """
         ph = copy.deepcopy(self.elph.ph)
         ph.divide_mass = divide_mass
-        ph.r += self.u.reshape((-1, 3))
+        ph.r = self.r
 
         elphmod.ph.q2r(ph, D_full=self.hessian(gamma_only=False), nq=self.nq,
             divide_mass=False, **kwargs)
@@ -709,10 +733,8 @@ class Driver:
             Keyword arguments passed to :meth:`plot.AtomsPlot.plot`.
         """
 
-        self.figure.set_positions(self.elph.ph.r
-            + self.u.reshape(self.elph.ph.r.shape))
-
-        self.figure.set_displacements(self.u)
+        self.figure.set_positions(self.r)
+        self.figure.set_displacements(self._u)
 
         if self.basis is not None:
             rho = self.density_per_atom()
@@ -739,9 +761,7 @@ class Driver:
                 data.write(('# CELL{H}:' + ' %.10g' * 9 + '\n')
                     % tuple(self.elph.ph.a.ravel(order='F')))
 
-                pos = self.elph.ph.r + self.u.reshape(self.elph.ph.r.shape)
-
-                for X, r in zip(self.elph.ph.atom_order, pos):
+                for X, r in zip(self.elph.ph.atom_order, self.r):
                     data.write(('%8s' + ' %15.9f' * 3 + '\n')
                         % (X, r[0], r[1], r[2]))
 
@@ -765,7 +785,7 @@ class Driver:
                 if atom_order[na] != self.elph.ph.atom_order[na]:
                     info("Unexpected element in '%s'!" % xyz, error=True)
 
-            self.u = (r - self.elph.ph.r).ravel()
+            self.r = r
 
             if self.figure.interactive:
                 self.plot(update=True)
@@ -782,8 +802,7 @@ class Driver:
         """
         pw = dict()
 
-        pw['r'] = elphmod.bravais.cartesian_to_crystal(self.elph.ph.r
-            + self.u.reshape(self.elph.ph.r.shape), *self.elph.ph.a)
+        pw['r'] = elphmod.bravais.cartesian_to_crystal(self.r, *self.elph.ph.a)
 
         if self.nk.prod() == 1:
             pw['ktyp'] = 'gamma'
@@ -866,7 +885,7 @@ class Driver:
         -----
         The factor 0.5 converts Rydberg to Hartree units.
         """
-        self.u = (r - self.elph.ph.r).ravel()
+        self.r = r
 
         E = 0.5 * self.free_energy(show=False)
         F = -0.5 * self.jacobian(show=False)
