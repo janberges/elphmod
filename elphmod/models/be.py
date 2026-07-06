@@ -36,7 +36,7 @@ kz = 1.1 * eVpa2
 beta = 0.5
 
 at = elphmod.bravais.primitives(ibrav=4, a=a, c=15.0, bohr=True)
-r = np.zeros((1, 3))
+r = np.full((1, 3), 0.5)
 
 a /= elphmod.misc.a0
 

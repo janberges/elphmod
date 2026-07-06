@@ -30,7 +30,8 @@ Cz = -98.2 * Npm
 beta = 2.0
 
 at = elphmod.bravais.primitives(ibrav=4, a=a, c=15.0, bohr=True)
-r = np.dot([[2.0, 1.0, 0.0], [1.0, 2.0, 0.0]], at) / 3
+r = np.dot([[2.0, 1.0, 0.5], [1.0, 2.0, 0.5]], at)
+r[:, :2] /= 3
 
 nk = (2, 2, 1)
 nq = (2, 2, 1)
@@ -88,8 +89,8 @@ def dynamical_matrix(q1=0, q2=0, q3=0):
     return C / M
 
 tau0 = r[1] - r[0]
-tau1 = r[0]
-tau2 = -r[1]
+tau1 = tau0 + at[0]
+tau2 = tau0 - at[1]
 tau = np.linalg.norm(tau0)
 
 def coupling(q1=0, q2=0, q3=0, k1=0, k2=0, k3=0, **ignore):

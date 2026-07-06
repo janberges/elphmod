@@ -54,7 +54,7 @@ fyz = 3.0 * Npm
 beta = 5.0
 
 at = elphmod.bravais.primitives(ibrav=4, a=a, c=15.0, bohr=True)
-r = np.dot([[1.0, 2.0, 0.0], [2.0, 1.0, +0.1], [2.0, 1.0, -0.1]], at)
+r = np.dot([[1.0, 2.0, 0.5], [2.0, 1.0, 0.6], [2.0, 1.0, 0.4]], at)
 r[:, :2] /= 3
 
 a /= elphmod.misc.a0

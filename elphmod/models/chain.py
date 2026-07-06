@@ -22,7 +22,7 @@ w0 = 0.05 / elphmod.misc.Ry
 g0 = 0.02 / elphmod.misc.Ry ** 1.5
 
 at = elphmod.bravais.primitives(ibrav=8, a=a, b=c, c=c, bohr=True)
-r = np.zeros((1, 3))
+r = np.full((1, 3), 0.5)
 
 nk = (3, 1, 1) # for electrons
 nq = (2, 1, 1) # for phonons
