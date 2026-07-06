@@ -376,13 +376,13 @@ class Driver:
 
         return E
 
-    def jacobian(self, parameters=None, show=True):
+    def jacobian(self, u=None, show=True):
         """Calculate first derivative of free energy.
 
         Parameters
         ----------
-        parameters : ndarray, optional
-            Dummy positional argument for optimization routines.
+        u : ndarray, optional
+            Updated atomic displacements (e.g., from optimization routine).
         show : bool, default True
             Print free energy?
 
@@ -393,6 +393,9 @@ class Driver:
         """
         if show:
             t0 = time.time()
+
+        if u is not None:
+            self.u = u
 
         if self.sparse:
             f = self.U * self.f(self.e / self.kT)[np.newaxis] @ self.U.T
@@ -413,14 +416,14 @@ class Driver:
 
         return F
 
-    def hessian(self, parameters=None, gamma_only=True, apply_asr_simple=False,
+    def hessian(self, u=None, gamma_only=True, apply_asr_simple=False,
             fildyn=None, eps=1e-10, kT=None):
         """Calculate second derivative of free energy.
 
         Parameters
         ----------
-        parameters : ndarray, optional
-            Dummy positional argument for optimization routines.
+        u : ndarray, optional
+            Updated atomic displacements (e.g., from optimization routine).
         gamma_only : bool, default True
             Calculate Hessian for q = 0 only?
         apply_asr_simple : bool, default False
@@ -443,6 +446,9 @@ class Driver:
         ndarray, optional
             Fermi-surface average of electron-phonon coupling squared.
         """
+        if u is not None:
+            self.u = u
+
         nq = 1 if gamma_only or self.sparse else len(self.q)
 
         if self.sparse:
