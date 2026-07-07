@@ -31,6 +31,7 @@ Also make sure to install the Python requirements before:
 * `occupations.py` - occupation function, delta function, generalized entropy
 * `peierls.py` - band unfolding for the example of Peierls trimerization
 * `phonons.py` - fatband plot of phonon dispersion compared to QE reference
+* `phonopy_phonons.py` - comparison of model phonons from phonopy and elphmod
 * `skiing.py` - atomic displacements along combination of unstable phonon modes
 * `smear_tetra.py` - quantitative comparison of smearing and tetrahedron methods
 * `specfun.py` - phonon spectral function via phonon self-energy correction

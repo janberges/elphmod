@@ -2,3 +2,4 @@ matplotlib
 pyqt5
 ase
 ipi
+phonopy
