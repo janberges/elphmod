@@ -29,7 +29,7 @@ class TestMD(unittest.TestCase):
             n=elph_sparse.el.size)
 
         driver_dense.random_displacements(reproducible=True)
-        driver_sparse.u[:] = driver_dense.u
+        driver_sparse.u = driver_dense.u
 
         self.assertTrue(np.isclose(driver_dense.free_energy(show=False),
             driver_sparse.free_energy(show=False)))
@@ -51,9 +51,6 @@ class TestMD(unittest.TestCase):
 
         driver_sparse = elphmod.md.Driver(elph_sparse, kT, f,
             n=len(elph_sparse.cells))
-
-        driver_dense.diagonalize()
-        driver_sparse.diagonalize()
 
         self.assertTrue(np.allclose(driver_dense.superconductivity(),
             driver_sparse.superconductivity()))
