@@ -124,7 +124,7 @@ class Driver:
 
     Attributes
     ----------
-    elph, kT, f, n, nk, nq, fixcom
+    elph, nk, nq, fixcom
         Copies of initialization parameters.
     mu : float
         Current chemical potential.
@@ -167,10 +167,10 @@ class Driver:
 
         self.elph = copy.copy(elph)
 
-        self.kT = kT0 if kT0 is not None else kT
-        self.f = elphmod.occupations.smearing(f0 if f0 is not None else f)
+        self._kT = kT0 if kT0 is not None else kT
+        self._f = elphmod.occupations.smearing(f0 if f0 is not None else f)
 
-        self.n = n0 if n0 is not None else n
+        self._n = n0 if n0 is not None else n
         self.nx = nx
         self.mu = None
 
@@ -215,9 +215,9 @@ class Driver:
             self.C0 -= self.hessian(gamma_only=False) - self.C0
             self.F0 = -self.jacobian(show=False)
 
-        self.kT = kT
-        self.f = elphmod.occupations.smearing(f)
-        self.n = n
+        self._kT = kT
+        self._f = elphmod.occupations.smearing(f)
+        self._n = n
 
         self.find_Fermi_level()
 
@@ -245,7 +245,7 @@ class Driver:
         if export is not None:
             self.elph.ph.standardize()
 
-            self.elph.export(export, self.kT, self.n, forces=-self.F0,
+            self.elph.export(export, self._kT, self._n, forces=-self.F0,
                 supercell=(1,) if supercell is None else supercell,
                 econv=econv, lconv=lconv, eps=eps)
 
@@ -254,7 +254,7 @@ class Driver:
 
             kwargs['F0'] = np.tile(self.F0, len(elph.cells))
 
-            self.__init__(elph, self.kT, self.f, self.n * len(elph.cells),
+            self.__init__(elph, self._kT, self._f, self._n * len(elph.cells),
                 self.nx * len(elph.cells), unscreen=False, **kwargs)
 
     @property
@@ -287,6 +287,40 @@ class Driver:
     def r(self, r):
         self.u = np.reshape(r, self.elph.ph.r.shape) - self.elph.ph.r
 
+    @property
+    def kT(self):
+        """Smearing temperature in Ry."""
+        return self._kT
+
+    @kT.setter
+    def kT(self, kT):
+        if kT != self.kT:
+            self._kT = kT
+            self.find_Fermi_level()
+
+    @property
+    def f(self):
+        """Particle distribution function."""
+        return self._f
+
+    @f.setter
+    def f(self, f):
+        f = elphmod.occupations.smearing(f)
+        if f is not self.f:
+            self._f = f
+            self.find_Fermi_level()
+
+    @property
+    def n(self):
+        """Number of electrons."""
+        return self._n
+
+    @n.setter
+    def n(self, n):
+        if n != self.n:
+            self._n = n
+            self.find_Fermi_level()
+
     def random_displacements(self, amplitude=0.01, reproducible=False):
         """Displace atoms randomly from unperturbed positions.
 
@@ -315,24 +349,24 @@ class Driver:
         float
             New chemical potential.
         """
-        if self.f is elphmod.occupations.two_fermi_dirac:
-            if self.n % 2:
+        if self._f is elphmod.occupations.two_fermi_dirac:
+            if self._n % 2:
                 info('Photoexcitation requires even number of electrons!',
                     error=True)
 
-            muv = elphmod.occupations.find_Fermi_level(self.n - self.nx,
-                self.E[..., :int(self.n) // 2], self.kT,
+            muv = elphmod.occupations.find_Fermi_level(self._n - self.nx,
+                self.E[..., :int(self._n) // 2], self._kT,
                 elphmod.occupations.fermi_dirac, self.mu)
 
             muc = elphmod.occupations.find_Fermi_level(self.nx,
-                self.E[..., int(self.n) // 2:], self.kT,
+                self.E[..., int(self._n) // 2:], self._kT,
                 elphmod.occupations.fermi_dirac, self.mu)
 
-            self.f.d = (muc - muv) / (2 * self.kT)
+            self._f.d = (muc - muv) / (2 * self._kT)
             self.mu = (muc + muv) / 2
         else:
-            self.mu = elphmod.occupations.find_Fermi_level(self.n,
-                self.E, self.kT, self.f, self.mu)
+            self.mu = elphmod.occupations.find_Fermi_level(self._n,
+                self.E, self._kT, self._f, self.mu)
 
         self.e = self.E - self.mu
 
@@ -375,7 +409,7 @@ class Driver:
             self.plot(update=True)
 
         E = elphmod.diagrams.grand_potential(self.e,
-            self.kT, self.f) + self.mu * self.n
+            self._kT, self._f) + self.mu * self._n
 
         E += 0.5 * self._u.dot(self.C0[0].real).dot(self._u)
 
@@ -408,13 +442,13 @@ class Driver:
             self.u = u
 
         if self.sparse:
-            f = self.U * self.f(self.e / self.kT)[np.newaxis] @ self.U.T
+            f = self.U * self._f(self.e / self._kT)[np.newaxis] @ self.U.T
 
             F = np.array([2 * self.d0[x].multiply(f).sum()
                 for x in range(self.elph.ph.size)])
         else:
-            F = elphmod.diagrams.first_order(self.e, self.d0[0], self.kT,
-                U=self.U, occupations=self.f).real
+            F = elphmod.diagrams.first_order(self.e, self.d0[0], self._kT,
+                U=self.U, occupations=self._f).real
 
         F += self.C0[0].real.dot(self._u)
 
@@ -462,9 +496,9 @@ class Driver:
         nq = 1 if gamma_only or self.sparse else len(self.q)
 
         if self.sparse:
-            x = self.e / self.kT
-            f = 2 * self.f(x)
-            d = 2 * self.f.delta(x) / (-self.kT)
+            x = self.e / self._kT
+            f = 2 * self._f(x)
+            d = 2 * self._f.delta(x) / (-self._kT)
 
             df = np.subtract.outer(f, f)
             de = np.subtract.outer(self.e, self.e)
@@ -475,7 +509,7 @@ class Driver:
             dos = -d.sum() # = -np.trace(dfde)
 
             if kT is not None:
-                tmp = d if kT == self.kT else self.f.delta(self.e / kT) / kT
+                tmp = d if kT == self._kT else self._f.delta(self.e / kT) / kT
                 dd = np.outer(tmp, tmp)
                 dd /= dd.sum()
 
@@ -526,10 +560,10 @@ class Driver:
                     self.images.Bcast(self.d[iq].view(dtype=float))
 
             C = elphmod.diagrams.phonon_self_energy(self.q[:nq], self.e,
-                g=self.d[:nq], kT=self.kT, occupations=self.f, eps=eps)
+                g=self.d[:nq], kT=self._kT, occupations=self._f, eps=eps)
 
             C[0] += elphmod.diagrams.phonon_self_energy_fermi_shift(self.e,
-                self.d[0], kT=self.kT, occupations=self.f)
+                self.d[0], kT=self._kT, occupations=self._f)
 
         C += self.C0[:nq]
 
@@ -658,7 +692,7 @@ class Driver:
             Minimum phonon energy. Imaginary frequencies are given as negative.
         """
         if kT is None:
-            kT = self.kT
+            kT = self._kT
 
         mm12 = 1 / np.sqrt(self.elph.ph.M).repeat(3)
 
@@ -695,7 +729,7 @@ class Driver:
             comm.Barrier()
 
             g2dd, dd = elphmod.diagrams.double_fermi_surface_average(self.q,
-                self.e, self.d, kT, self.f)
+                self.e, self.d, kT, self._f)
 
             g2dd = g2dd.real / dd.sum()
 
@@ -703,7 +737,7 @@ class Driver:
         w2[dangerous] = eps
         g2dd[dangerous] = 0.0
 
-        N0 = self.f.delta(self.e / kT).sum() / kT / self.nk.prod()
+        N0 = self._f.delta(self.e / kT).sum() / kT / self.nk.prod()
 
         V = g2dd / w2
 
@@ -722,7 +756,7 @@ class Driver:
             Electron density. Should add up to the number of electrons.
         """
         return 2 * np.sum(np.average(np.reshape(abs(self.U) ** 2
-            * self.f(self.e[..., np.newaxis, :] / self.kT),
+            * self._f(self.e[..., np.newaxis, :] / self._kT),
             (-1, self.elph.el.size, self.elph.el.size)), axis=0), axis=-1)
 
     def density_per_atom(self):
