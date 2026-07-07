@@ -128,6 +128,12 @@ class Driver:
         Copies of initialization parameters.
     mu : float
         Current chemical potential.
+    E : ndarray
+        Electron eigenenergies.
+    U : ndarray
+        Electron eigenstates.
+    e : ndarray
+        Electron eigenenergies from chemical potential.
     k, q : ndarray
         k and q meshes.
     C0 : ndarray
@@ -212,6 +218,8 @@ class Driver:
         self.kT = kT
         self.f = elphmod.occupations.smearing(f)
         self.n = n
+
+        self.find_Fermi_level()
 
         self.fixcom = fixcom
 
@@ -313,18 +321,20 @@ class Driver:
                     error=True)
 
             muv = elphmod.occupations.find_Fermi_level(self.n - self.nx,
-                self.e[..., :int(self.n) // 2], self.kT,
+                self.E[..., :int(self.n) // 2], self.kT,
                 elphmod.occupations.fermi_dirac, self.mu)
 
             muc = elphmod.occupations.find_Fermi_level(self.nx,
-                self.e[..., int(self.n) // 2:], self.kT,
+                self.E[..., int(self.n) // 2:], self.kT,
                 elphmod.occupations.fermi_dirac, self.mu)
 
             self.f.d = (muc - muv) / (2 * self.kT)
             self.mu = (muc + muv) / 2
         else:
             self.mu = elphmod.occupations.find_Fermi_level(self.n,
-                self.e, self.kT, self.f, self.mu)
+                self.E, self.kT, self.f, self.mu)
+
+        self.e = self.E - self.mu
 
         return self.mu
 
@@ -336,9 +346,9 @@ class Driver:
         else:
             H = self.H0 + np.einsum('xijkmn,x->ijkmn', self.d0[0], self._u)
 
-        self.e, self.U = np.linalg.eigh(H)
+        self.E, self.U = np.linalg.eigh(H)
 
-        self.e -= self.find_Fermi_level()
+        self.find_Fermi_level()
 
     def free_energy(self, u=None, show=True):
         """Calculate free energy.
@@ -546,7 +556,8 @@ class Driver:
 
         return returns
 
-    def electrons(self, seedname=None, dk1=1, dk2=1, dk3=1, rydberg=False):
+    def electrons(self, seedname=None, dk1=1, dk2=1, dk3=1, rydberg=False,
+            from_fermi=True):
         """Set up tight-binding model for current structure.
 
         Parameters
@@ -558,13 +569,17 @@ class Driver:
             reduces the size of the Hamiltonian file.
         rydberg : bool, default False
             Keep Ry units? Otherwise they are converted to eV.
+        from_fermi : bool
+            Subtract Fermi level from electronic energies?
 
         Returns
         -------
         object
             Tight-binding model for the electrons.
         """
-        H = self.U * self.e[..., np.newaxis, :] @ self.U.conj().swapaxes(-2, -1)
+        e = self.e if from_fermi else self.E
+
+        H = self.U * e[..., np.newaxis, :] @ self.U.conj().swapaxes(-2, -1)
 
         if dk1 > 1 or dk2 > 1 or dk3 > 1:
             if not self.sparse:
