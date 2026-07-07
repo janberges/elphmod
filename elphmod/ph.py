@@ -291,16 +291,16 @@ class Model:
                 supercell = ph_phonopy.supercell.supercell_matrix
 
                 if np.all(supercell == np.diag(np.diag(supercell))):
-                    nq = np.diag(supercell)[::-1]
+                    nq = np.diag(supercell)
                 else:
                     info('Phonopy supercell matrix must be diagonal!',
                         error=True)
 
                 phid = np.reshape(ph_phonopy.force_constants,
-                    (len(tau), -1, len(tau), *nq, 3, 3))[:, 0].copy()
+                    (len(tau), -1, len(tau), *nq[::-1], 3, 3))[:, 0].copy()
 
                 phid /= elphmod.misc.Ry / elphmod.misc.a0 ** 2
-                phid = np.transpose(phid, (1, 0, 2, 3, 4, 6, 5))
+                phid = np.transpose(phid, (1, 0, 4, 3, 2, 6, 5))
 
             if quadrupole_fmt is not None:
                 Q = read_quadrupole_fmt(quadrupole_fmt)
