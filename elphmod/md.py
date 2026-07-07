@@ -259,7 +259,7 @@ class Driver:
 
     @property
     def u(self):
-        """Atomic displacements."""
+        """Atomic displacements in bohr."""
         return self._u
 
     @u.setter
@@ -280,7 +280,7 @@ class Driver:
 
     @property
     def r(self):
-        """Atomic positions."""
+        """Atomic positions in bohr."""
         return self.elph.ph.r + self._u.reshape(self.elph.ph.r.shape)
 
     @r.setter
