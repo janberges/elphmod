@@ -54,7 +54,7 @@ for supercell in ph_phonopy.supercells_with_displacements:
         * elphmod.misc.Ry / elphmod.misc.a0)
 
 ph_phonopy.forces = forces
-ph_phonopy.produce_force_constants()
+ph_phonopy.produce_force_constants(calculate_full_force_constants=False)
 
 ph_phonopy.run_band_structure(*phonopy.phonon.band_structure
     .get_band_qpoints_and_path_connections([q[corners] / (2 * np.pi)],
