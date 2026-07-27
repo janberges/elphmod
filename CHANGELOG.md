@@ -3,6 +3,13 @@
 See [Git commits](https://github.com/janberges/elphmod/commits) for more
 detailed list of changes.
 
+## v0.35/2026-07-27
+
+* QE-7.6 support (cDFPT patch)
+* Phonon models from ASE and phonopy
+* Managed attributes of MD driver (automatic diagonalization and occupations)
+* Support for discontinuous Brillouin-zone paths
+
 ## v0.34/2026-06-19
 
 * Orbital centers and cell vectors from Wannier90 stored in attributes
