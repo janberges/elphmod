@@ -19,7 +19,7 @@ driver = elphmod.md.Driver(elph, kT=0.002, f='gauss', n=elph.el.size,
 
 driver.random_displacements(reproducible=True)
 
-driver.plot(interactive=True, scale=25, elev=0)
+driver.plot(interactive=True, scale=100, elev=0)
 
 scipy.optimize.minimize(driver.free_energy, driver.u, jac=driver.jacobian,
     method='BFGS', tol=1e-8)
