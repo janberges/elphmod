@@ -21,7 +21,7 @@ mpirun projwfc.x -nk $nk < projwfc.in | tee projwfc.out
 
 mpirun pw.x -nk $nk < nscf.in | tee nscf.out
 mpirun -n 1 wannier90.x -pp C
-mpirun pw2wannier90.x < pw2w90.in | tee pw2w90.out
+mpirun pw2wannier90.x -pd true < pw2w90.in | tee pw2w90.out
 mpirun -n 1 wannier90.x C
 
 mpirun python3 projwfc_1d.py
