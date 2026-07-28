@@ -1,5 +1,6 @@
 cff-version: 1.2.0
 title: "elphmod: Python modules for electron-phonon models"
+abstract: "elphmod is a collection of Python modules to handle coupled tight-binding and mass-spring models derived from first principles. It provides interfaces with popular simulation software such as Quantum ESPRESSO, Wannier90, EPW, RESPACK, and i-PI. It helps calculate dispersions, spectra, and response functions and can be used to build and study distorted structures on supercells."
 authors:
   - given-names: "Jan"
     family-names: "Berges"
