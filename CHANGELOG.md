@@ -1,7 +1,6 @@
 # Changelog
 
-See [Git commits](https://github.com/janberges/elphmod/commits) for more
-detailed list of changes.
+See Git commit history for more detailed list of changes.
 
 ## v0.35/2026-07-27
 

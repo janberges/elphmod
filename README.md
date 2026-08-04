@@ -41,7 +41,7 @@ Using APT and pip, you can install the corresponding dependencies as follows:
 You can also download the complete repository, perform an editable installation,
 and install the requirements of examples and documentation:
 
-    git clone https://github.com/janberges/elphmod
+    git clone https://codeberg.org/janberges/elphmod
     python3 -m pip install -e elphmod
     python3 -m pip install -r elphmod/examples/requirements.txt
     python3 -m pip install -r elphmod/doc/requirements.txt
