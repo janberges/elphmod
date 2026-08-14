@@ -1935,31 +1935,26 @@ def read_rhoG_density(filename, ibrav, a=1.0, b=1.0, c=1.0):
         Miller indices.
     """
     with open(filename, 'rb') as f:
-        # Moves the cursor 4 bytes to the right
         f.seek(4)
 
         np.fromfile(f, dtype=np.int32, count=1) # gamma_only
         ngm_g = np.fromfile(f, dtype=np.int32, count=1)[0]
         np.fromfile(f, dtype=np.int32, count=1) # ispin
 
-        # Move the cursor 8 byte to the right
         f.seek(8, 1)
 
         np.fromfile(f, dtype=np.float64, count=9) # b1, b2, b3
 
-        # Move the cursor 8 byte to the right
         f.seek(8, 1)
 
         mill_g = np.fromfile(f, dtype=np.int32, count=3 * ngm_g)
         mill_g = mill_g.reshape((ngm_g, 3))
 
-        # Move the cursor 8 byte to the right
         f.seek(8, 1)
 
         rho_g = np.fromfile(f, dtype=np.complex128, count=ngm_g)
 
-        # get primitive lattice vectors
-        # (must be the same as scf output)
+        # get primitive lattice vectors (must be the same as scf output)
         A = elphmod.bravais.primitives(ibrav, a=a, b=b, c=c)
         A /= a
 
@@ -2009,7 +2004,6 @@ def read_wfc(filename, ibrav, a=1.0, b=1.0, c=1.0):
         Miller indices.
     """
     with open(filename, 'rb') as f:
-        # Moves the cursor 4 bytes to the right
         f.seek(4)
 
         np.fromfile(f, dtype=np.int32, count=1) # ik
@@ -2018,7 +2012,6 @@ def read_wfc(filename, ibrav, a=1.0, b=1.0, c=1.0):
         np.fromfile(f, dtype=np.int32, count=1) # gamma_only
         np.fromfile(f, dtype=np.float64, count=1) # scalef
 
-        # Move the cursor 8 byte to the right
         f.seek(8, 1)
 
         np.fromfile(f, dtype=np.int32, count=1) # ngw
@@ -2026,7 +2019,6 @@ def read_wfc(filename, ibrav, a=1.0, b=1.0, c=1.0):
         npol = np.fromfile(f, dtype=np.int32, count=1)[0]
         nbnd = np.fromfile(f, dtype=np.int32, count=1)[0]
 
-        # Move the cursor 8 byte to the right
         f.seek(8, 1)
 
         np.fromfile(f, dtype=np.float64, count=9) # b1, b2, b3
@@ -2044,10 +2036,9 @@ def read_wfc(filename, ibrav, a=1.0, b=1.0, c=1.0):
             f.seek(8, 1)
 
         # delta_mn = \sum_G \psi(m, G) * \psi(n, G)
-        # print((evc[1, :].conj() * evc[0, :]).sum().real)
+        #print((evc[1, :].conj() * evc[0, :]).sum().real)
 
-        # get primitive lattice vectors
-        # (must be the same as scf output)
+        # get primitive lattice vectors (must be the same as scf output)
         A = elphmod.bravais.primitives(ibrav, a=a, b=b, c=c)
         A /= a
 
