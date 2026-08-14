@@ -1869,7 +1869,7 @@ def read_pp_density(filename):
 
         # read unknown line
         tmp = cells()
-        kin_energy_cutoff = float(tmp[2])
+        #kin_energy_cutoff = float(tmp[2])
 
         # calculate unit cell and brillouin zone volume
         A = elphmod.bravais.primitives(ibrav)
@@ -1889,7 +1889,7 @@ def read_pp_density(filename):
             valence.append(float(tmp[2]))
 
         # read tau table
-        tau = table(nat)[0:4, 1:4]
+        table(nat)[0:4, 1:4]
 
         # read rho table
         # total number of real-space grid points:
@@ -1938,16 +1938,14 @@ def read_rhoG_density(filename, ibrav, a=1.0, b=1.0, c=1.0):
         # Moves the cursor 4 bytes to the right
         f.seek(4)
 
-        gamma_only = bool(np.fromfile(f, dtype=np.int32, count=1)[0])
+        np.fromfile(f, dtype=np.int32, count=1) # gamma_only
         ngm_g = np.fromfile(f, dtype=np.int32, count=1)[0]
-        ispin = np.fromfile(f, dtype=np.int32, count=1)[0]
+        np.fromfile(f, dtype=np.int32, count=1) # ispin
 
         # Move the cursor 8 byte to the right
         f.seek(8, 1)
 
-        b1 = np.fromfile(f, dtype=np.float64, count=3)
-        b2 = np.fromfile(f, dtype=np.float64, count=3)
-        b3 = np.fromfile(f, dtype=np.float64, count=3)
+        np.fromfile(f, dtype=np.float64, count=9) # b1, b2, b3
 
         # Move the cursor 8 byte to the right
         f.seek(8, 1)
@@ -2014,16 +2012,16 @@ def read_wfc(filename, ibrav, a=1.0, b=1.0, c=1.0):
         # Moves the cursor 4 bytes to the right
         f.seek(4)
 
-        ik = np.fromfile(f, dtype=np.int32, count=1)[0]
+        np.fromfile(f, dtype=np.int32, count=1) # ik
         xk = np.fromfile(f, dtype=np.float64, count=3)
-        ispin = np.fromfile(f, dtype=np.int32, count=1)[0]
-        gamma_only = bool(np.fromfile(f, dtype=np.int32, count=1)[0])
-        scalef = np.fromfile(f, dtype=np.float64, count=1)[0]
+        np.fromfile(f, dtype=np.int32, count=1) # ispin
+        np.fromfile(f, dtype=np.int32, count=1) # gamma_only
+        np.fromfile(f, dtype=np.float64, count=1) # scalef
 
         # Move the cursor 8 byte to the right
         f.seek(8, 1)
 
-        ngw = np.fromfile(f, dtype=np.int32, count=1)[0]
+        np.fromfile(f, dtype=np.int32, count=1) # ngw
         igwx = np.fromfile(f, dtype=np.int32, count=1)[0]
         npol = np.fromfile(f, dtype=np.int32, count=1)[0]
         nbnd = np.fromfile(f, dtype=np.int32, count=1)[0]
@@ -2031,9 +2029,7 @@ def read_wfc(filename, ibrav, a=1.0, b=1.0, c=1.0):
         # Move the cursor 8 byte to the right
         f.seek(8, 1)
 
-        b1 = np.fromfile(f, dtype=np.float64, count=3)
-        b2 = np.fromfile(f, dtype=np.float64, count=3)
-        b3 = np.fromfile(f, dtype=np.float64, count=3)
+        np.fromfile(f, dtype=np.float64, count=9) # b1, b2, b3
 
         f.seek(8, 1)
 
@@ -2073,8 +2069,6 @@ def read_wfc(filename, ibrav, a=1.0, b=1.0, c=1.0):
         for ii in range(igwx):
             g_vect[ii] = (mill_g[ii, 0] * B1 + mill_g[ii, 1] * B2
                 + mill_g[ii, 2] * B3)
-            #g_vect[ii] = (mill_g[ii, 0] * b1 + mill_g[ii, 1] * b2
-            #    + mill_g[ii, 2] * b3)
 
             k_plus_G[ii] = xk + g_vect[ii]
 

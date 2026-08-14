@@ -1436,13 +1436,13 @@ def read_wigner_file(name, old_ws=False, nat=None):
                 ndegen_k = ndegen_k.reshape((dims, dims, nrr_k))
 
                 if old_ws:
-                    wslen_k = np.fromfile(data, double, nrr_k)
+                    np.fromfile(data, double, nrr_k) # wslen_k
                     nrr_q, = np.fromfile(data, integer, 1)
                     irvec_q = np.fromfile(data, integer, nrr_q * 3)
                     irvec_q = irvec_q.reshape((nrr_q, 3))
                     ndegen_q = np.fromfile(data, integer, dims2 * dims2 * nrr_q)
                     ndegen_q = ndegen_q.reshape((dims2, dims2, nrr_q))
-                    wslen_q = np.fromfile(data, double, nrr_q)
+                    np.fromfile(data, double, nrr_q) # wslen_q
 
                 nrr_g, = np.fromfile(data, integer, 1)
                 irvec_g = np.fromfile(data, integer, nrr_g * 3)
@@ -1450,7 +1450,7 @@ def read_wigner_file(name, old_ws=False, nat=None):
 
                 if old_ws:
                     ndegen_g = np.fromfile(data, integer, dims2 * nrr_g)
-                    wslen_g = np.fromfile(data, double, nrr_g)
+                    np.fromfile(data, double, nrr_g) # wslen_g
                 else:
                     ndegen_g = np.fromfile(data, integer)
 
