@@ -55,7 +55,7 @@ class TestBravais(unittest.TestCase):
 
             img2 = [(k1, k2, 0) for k1, k2 in img2]
 
-            self.assertTrue(img1 == img2)
+            self.assertEqual(img1, img2)
 
     def test_irreducibles(self, nk=12):
         """Compare different functions to obtain irreducible k points."""
@@ -66,7 +66,7 @@ class TestBravais(unittest.TestCase):
 
             irr2 = [(k1, k2, 0) for k1, k2 in irr2]
 
-            self.assertTrue(irr1 == irr2)
+            self.assertEqual(irr1, irr2)
 
 if __name__ == '__main__':
     unittest.main()
