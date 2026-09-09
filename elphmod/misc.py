@@ -72,6 +72,9 @@ cmm1 = 100.0 * cSI * hSI / eVSI
 THz = 1e12 * hSI / eVSI
 """Terahertz (eV)."""
 
+kJpmol = 1e3 / (eVSI * NA)
+"""Kilojoule per mole (eV/particle)."""
+
 kB = kBSI / eVSI
 """Boltzmann constant (eV/K)."""
 
