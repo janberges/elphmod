@@ -80,6 +80,9 @@ kB = kBSI / eVSI
 uRy = uSI / (2 * meSI)
 """Atomic mass constant (2 me)."""
 
+sRy = (eVSI * Ry) / hbarSI
+"""Time unit second (Rydberg atomic units)."""
+
 ohmRy = eVSI ** 2 / 2 / hbarSI
 """Resistance unit ohm (Rydberg atomic units)."""
 
