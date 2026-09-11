@@ -112,6 +112,9 @@ class Driver:
     lconv : float, default 1.0
         Length conversion factor for export. By default, length units are not
         changed.
+    mconv : float, default 2.0
+        Mass conversion factor for export. The default converts Rydberg to
+        Hartree atomic units.
     eps : float, default 1e-10
         Matrix-element threshold for export in output units.
     fixcom : bool, default True
@@ -156,7 +159,8 @@ class Driver:
     """
     def __init__(self, elph, kT, f, n, nx=0.0, nk=(1,), nq=(1,), supercell=None,
             unscreen=True, kT0=None, f0=None, n0=None, export=None, econv=0.5,
-            lconv=1.0, eps=1e-10, fixcom=True, shared_memory=True, **kwargs):
+            lconv=1.0, mconv=2.0, eps=1e-10, fixcom=True, shared_memory=True,
+            **kwargs):
 
         if not elph.el.rydberg:
             info("Initialize 'el' with 'rydberg=True'!", error=True)
@@ -247,7 +251,7 @@ class Driver:
 
             self.elph.export(export, self._kT, self._n, forces=-self.F0,
                 supercell=(1,) if supercell is None else supercell,
-                econv=econv, lconv=lconv, eps=eps)
+                econv=econv, lconv=lconv, mconv=mconv, eps=eps)
 
         if supercell is not None:
             elph = self.elph.supercell(*supercell, sparse=True)

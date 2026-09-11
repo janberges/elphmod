@@ -816,7 +816,8 @@ class Model:
                         buf.swapaxes(-2, -1).astype(np.complex128).tofile(data)
 
     def export(self, filename, kT, n, nspin=2, strain=0.0, supercell=(1, 1, 1),
-            forces=None, econv=0.5, lconv=1.0, eps=1e-10, fmt='%18.12f'):
+            forces=None, econv=0.5, lconv=1.0, mconv=2.0, eps=1e-10,
+            fmt='%18.12f'):
         """Export model to input file for ``elphy`` code.
 
         See https://codeberg.org/janberges/elphy.
@@ -842,6 +843,9 @@ class Model:
             atomic units.
         lconv : float, default 1.0
             Length conversion factor. By default, length units are not changed.
+        mconv : float, default 2.0
+            Mass conversion factor. The default converts Rydberg to Hartree
+            atomic units.
         eps : float, default 1e-10
             Matrix-element threshold in output units.
         fmt : str, default '%18.12f'
@@ -888,9 +892,9 @@ class Model:
                 forces = np.reshape(forces, self.ph.r.shape)
 
             for i in range(self.ph.nat):
-                dat.write('%2s {0} {0} {0} {0} {0} {0}\n'.format(fmt)
-                    % (self.ph.atom_order[i], *self.ph.r[i] * lconv,
-                        *forces[i] * econv / lconv))
+                dat.write('%2s %10.3f {0} {0} {0} {0} {0} {0}\n'.format(fmt)
+                    % (self.ph.atom_order[i], self.ph.M[i] * mconv,
+                        *self.ph.r[i] * lconv, *forces[i] * econv / lconv))
 
             dat.write('%d\n' % len(R))
 
