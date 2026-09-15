@@ -185,6 +185,7 @@ class StatusBar:
 
         if self.counter == self.count:
             sys.stdout.write('\n')
+            sys.stdout.flush() # needed when running via MPICH
 
             StatusBar.in_progress = False
 
