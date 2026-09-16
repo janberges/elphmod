@@ -166,6 +166,7 @@ class StatusBar:
 
         sys.stdout.write((' %s ' % title).center(width, '_'))
         sys.stdout.write('\n')
+        sys.stdout.flush() # needed when running via MPICH
 
     def update(self):
         """Update progress bar."""
