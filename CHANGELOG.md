@@ -2,6 +2,13 @@
 
 See Git commit history for more detailed list of changes.
 
+## v0.36/2026-09-16
+
+* Export of atomic masses to input file for ``elphy`` code
+* New conversion factors (kJ/mol, Rydberg atomic time unit)
+* New unit test for MPI with shared memory and improved MPICH support
+* Removed unused variables
+
 ## v0.35/2026-07-27
 
 * QE-7.6 support (cDFPT patch)
