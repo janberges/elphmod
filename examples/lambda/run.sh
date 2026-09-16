@@ -16,15 +16,16 @@ do
     test -e $pp || wget $url/$pp
 done
 
-nk=2
+: ${NP:=2}
+: ${NK:=2}
 
-mpirun pw.x -nk $nk < pw.in | tee pw.out
-mpirun ph.x -nk $nk < ph.in | tee ph.out
-mpirun q2r.x < q2r.in | tee q2r.out
+mpirun -n $NP pw.x -nk $NK < pw.in | tee pw.out
+mpirun -n $NP ph.x -nk $NK < ph.in | tee ph.out
+mpirun -n $NP q2r.x < q2r.in | tee q2r.out
 
 ph2epw
 
-mpirun pw.x -nk $nk < nscf.in | tee nscf.out
-mpirun -n $nk epw.x -nk $nk < epw.in | tee epw.out
+mpirun -n $NP pw.x -nk $NK < nscf.in | tee nscf.out
+mpirun -n $NK epw.x -nk $NK < epw.in | tee epw.out
 
-mpirun python3 lambda.py
+mpirun -n $NP python3 lambda.py

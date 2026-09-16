@@ -7,11 +7,17 @@ eval `elphmodenv`
 
 set -e
 
+: ${NP:=2}
+: ${NK:=2}
+
 for example in *.py
 do
     echo $example
-    mpirun python3 $example
+    mpirun -n $NP python3 $example
 done
+
+export NP
+export NK
 
 for example in */run.sh
 do

@@ -13,14 +13,15 @@ url=http://www.pseudo-dojo.org/pseudos/nc-sr-04_pbe_standard
 pp=C.upf
 test -e $pp || (wget $url/$pp.gz && gunzip $pp)
 
-nk=2
+: ${NP:=2}
+: ${NK:=2}
 
-mpirun pw.x -nk $nk < scf.in | tee scf.out
-mpirun ph.x -nk $nk < ph.in | tee ph.out
+mpirun -n $NP pw.x -nk $NK < scf.in | tee scf.out
+mpirun -n $NP ph.x -nk $NK < ph.in | tee ph.out
 
 ph2epw
 
-mpirun pw.x -nk $nk < nscf.in | tee nscf.out
-mpirun -n $nk epw.x -nk $nk < epw.in | tee epw.out
+mpirun -n $NP pw.x -nk $NK < nscf.in | tee nscf.out
+mpirun -n $NK epw.x -nk $NK < epw.in | tee epw.out
 
-mpirun python3 cdw_1d.py
+mpirun -n $NP python3 cdw_1d.py

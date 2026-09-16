@@ -16,17 +16,18 @@ do
     test -e $pp || (wget $url/$pp.gz && gunzip $pp)
 done
 
-nk=2
+: ${NP:=2}
+: ${NK:=2}
 
-mpirun pw.x -nk $nk < scf.in | tee scf.out
-mpirun ph.x -nk $nk < ph.in | tee ph.out
+mpirun -n $NP pw.x -nk $NK < scf.in | tee scf.out
+mpirun -n $NP ph.x -nk $NK < ph.in | tee ph.out
 
 ph2epw
 
-mpirun pw.x -nk $nk < nscf.in | tee nscf.out
-mpirun -n $nk epw.x -nk $nk < epw.in | tee epw.out
+mpirun -n $NP pw.x -nk $NK < nscf.in | tee nscf.out
+mpirun -n $NK epw.x -nk $NK < epw.in | tee epw.out
 
-mpirun pw.x -nk $nk < scf.in | tee scf.out
-mpirun ph.x -nk $nk < phref.in | tee phref.out
+mpirun -n $NP pw.x -nk $NK < scf.in | tee scf.out
+mpirun -n $NP ph.x -nk $NK < phref.in | tee phref.out
 
-mpirun python3 quadrupole.py
+mpirun -n $NP python3 quadrupole.py

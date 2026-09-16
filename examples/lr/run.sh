@@ -16,32 +16,33 @@ do
     test -e $pp || (wget $url/$pp.gz && gunzip $pp)
 done
 
-nk=2
+: ${NP:=2}
+: ${NK:=2}
 
 python3 lr.py --prepare-q
 
-mpirun pw.x -nk $nk < pw.in | tee pw.out
-mpirun ph.x -nk $nk < ph.in | tee ph.out
+mpirun -n $NP pw.x -nk $NK < pw.in | tee pw.out
+mpirun -n $NP ph.x -nk $NK < ph.in | tee ph.out
 
 for lr in '3d' 'gaussian'
 do
-    mpirun q2r.x < q2r_$lr.in | tee q2r_$lr.out
-    mpirun matdyn.x < matdyn_$lr.in | tee matdyn_$lr.out
+    mpirun -n $NP q2r.x < q2r_$lr.in | tee q2r_$lr.out
+    mpirun -n $NP matdyn.x < matdyn_$lr.in | tee matdyn_$lr.out
 done
 
 ph2epw
 
-mpirun pw.x -nk $nk < nscf.in | tee nscf.out
+mpirun -n $NP pw.x -nk $NK < nscf.in | tee nscf.out
 
 for lr in 'no_lr' '3d' 'gaussian' 'dipole_sp' 'quadrupole'
 do
     test $lr = 'quadrupole' && mv _quadrupole.fmt quadrupole.fmt
 
-    mpirun -n $nk epw.x -nk $nk < epw_$lr.in | tee epw_$lr.out
+    mpirun -n $NK epw.x -nk $NK < epw_$lr.in | tee epw_$lr.out
 
     test $lr = 'quadrupole' && mv quadrupole.fmt _quadrupole.fmt
 
     mv work/MoS2.epmatwp $lr.epmatwp
 done
 
-mpirun python3 lr.py
+mpirun -n $NP python3 lr.py

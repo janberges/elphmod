@@ -13,15 +13,16 @@ url=http://www.pseudo-dojo.org/pseudos/nc-sr-04_pbe_standard
 pp=C.upf
 test -e $pp || (wget $url/$pp.gz && gunzip $pp)
 
-nk=2
+: ${NP:=2}
+: ${NK:=2}
 
-mpirun pw.x -nk $nk < scf.in | tee scf.out
-mpirun pw.x -nk $nk < bands.in | tee bands.out
-mpirun projwfc.x -nk $nk < projwfc.in | tee projwfc.out
+mpirun -n $NP pw.x -nk $NK < scf.in | tee scf.out
+mpirun -n $NP pw.x -nk $NK < bands.in | tee bands.out
+mpirun -n $NP projwfc.x -nk $NK < projwfc.in | tee projwfc.out
 
-mpirun pw.x -nk $nk < nscf.in | tee nscf.out
+mpirun -n $NP pw.x -nk $NK < nscf.in | tee nscf.out
 mpirun -n 1 wannier90.x -pp C
-mpirun pw2wannier90.x -pd true < pw2w90.in | tee pw2w90.out
+mpirun -n $NP pw2wannier90.x -pd true < pw2w90.in | tee pw2w90.out
 mpirun -n 1 wannier90.x C
 
-mpirun python3 projwfc_1d.py
+mpirun -n $NP python3 projwfc_1d.py

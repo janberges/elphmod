@@ -1,7 +1,9 @@
 # elphmod examples
 
 This directory contains examples that demonstrate the different functionalities
-of elphmod. To run them, the scripts `run.sh` can be used.
+of elphmod. To run them, the scripts `run.sh` can be used, where the number of
+MPI processes and QE k-point pools can be set via the environment variables `NP`
+and `NK`, respectively.
 
 The versions of the installed elphmod and of the examples must match. To ensure
 this, go to the appropriate revision of this repository:

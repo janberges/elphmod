@@ -13,13 +13,15 @@ url=http://www.pseudo-dojo.org/pseudos/nc-sr-04_pbe_standard
 pp=N.upf
 test -e $pp || (wget $url/$pp.gz && gunzip $pp)
 
-mpirun pw.x < pw.in | tee pw.out
+: ${NP:=2}
+
+mpirun -n $NP pw.x < pw.in | tee pw.out
 
 for method in dfpt cdfpt
 do
-    mpirun ph.x -ndiag 1 < $method.in | tee $method.out
+    mpirun -n $NP ph.x -ndiag 1 < $method.in | tee $method.out
     echo "&INPUT fildyn='$method.dyn' flfrc='$method.ifc' /" | mpirun -n 1 q2r.x
     cp -rT work/_ph0/N2.phsave $method.phsave
 done
 
-mpirun python3 goldstone.py
+mpirun -n $NP python3 goldstone.py

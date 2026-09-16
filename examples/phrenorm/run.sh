@@ -16,26 +16,27 @@ do
     test -e $pp || wget $url/$pp
 done
 
-nk=2
+: ${NP:=2}
+: ${NK:=2}
 
-mpirun pw.x -nk $nk < scf.in | tee scf.out
+mpirun -n $NP pw.x -nk $NK < scf.in | tee scf.out
 
 for method in dfpt cdfpt
 do
-    mpirun ph.x -nk $nk < $method.in | tee $method.out
+    mpirun -n $NP ph.x -nk $NK < $method.in | tee $method.out
 
     fildyn=$method.dyn dvscf_dir=$method.save ph2epw
 done
 
-mpirun pw.x -nk $nk < nscf.in | tee nscf.out
+mpirun -n $NP pw.x -nk $NK < nscf.in | tee nscf.out
 
 for method in dfpt cdfpt
 do
-    mpirun -n $nk epw.x -nk $nk < epw-$method.in | tee epw-$method.out
+    mpirun -n $NK epw.x -nk $NK < epw-$method.in | tee epw-$method.out
 
     mv work/TaS2.epmatwp $method.epmatwp
 done
 
-mpirun python3 phrenorm.py
-mpirun python3 defpot.py
-mpirun python3 decay.py
+mpirun -n $NP python3 phrenorm.py
+mpirun -n $NP python3 defpot.py
+mpirun -n $NP python3 decay.py

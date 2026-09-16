@@ -16,10 +16,11 @@ do
     test -e $pp || wget $url/$pp
 done
 
-nk=2
+: ${NP:=2}
+: ${NK:=2}
 
-mpirun pw.x -nk $nk < scf.in | tee scf.out
-mpirun pw.x -nk $nk < nscf.in | tee nscf.out
-mpirun pp.x -nk $nk < pp.in | tee pp.out
+mpirun -n $NP pw.x -nk $NK < scf.in | tee scf.out
+mpirun -n $NP pw.x -nk $NK < nscf.in | tee nscf.out
+mpirun -n $NP pp.x -nk $NK < pp.in | tee pp.out
 
-mpirun python3 simstm.py
+mpirun -n $NP python3 simstm.py

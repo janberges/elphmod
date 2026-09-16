@@ -16,9 +16,10 @@ do
     test -e $pp || wget $url/$pp
 done
 
-nk=2
+: ${NP:=2}
+: ${NK:=2}
 
-mpirun pw.x -nk $nk < pw.in | tee pw.out
-mpirun ph.x -nk $nk < ph.in | tee ph.out
+mpirun -n $NP pw.x -nk $NK < pw.in | tee pw.out
+mpirun -n $NP ph.x -nk $NK < ph.in | tee ph.out
 
-mpirun python3 bare.py
+mpirun -n $NP python3 bare.py

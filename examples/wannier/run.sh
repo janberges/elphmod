@@ -16,16 +16,17 @@ do
     test -e $pp || wget $url/$pp
 done
 
-nk=2
+: ${NP:=2}
+: ${NK:=2}
 
-mpirun pw.x -nk $nk < scf.in | tee scf.out
-mpirun pw.x -nk $nk < nscf.in | tee nscf.out
+mpirun -n $NP pw.x -nk $NK < scf.in | tee scf.out
+mpirun -n $NP pw.x -nk $NK < nscf.in | tee nscf.out
 
 for seedname in ws_yes ws_no
 do
     mpirun -n 1 wannier90.x -pp $seedname
-    mpirun pw2wannier90.x < $seedname.pw2w90 | tee $seedname.pw2w90.out
+    mpirun -n $NP pw2wannier90.x < $seedname.pw2w90 | tee $seedname.pw2w90.out
     mpirun -n 1 wannier90.x $seedname
 done
 
-mpirun python3 wannier.py
+mpirun -n $NP python3 wannier.py
