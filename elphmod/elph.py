@@ -1011,6 +1011,7 @@ def sample(g, q, nk=None, U=None, u=None, k=None, squared=False, broadcast=True,
 
     if u is not None:
         nph = u.shape[-1]
+        u = np.reshape(u, (len(q), -1, nph))
 
     if k is None:
         k = elphmod.bravais.mesh(*nk, flat=True)
