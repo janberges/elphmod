@@ -1026,16 +1026,16 @@ def sample(g, q, nk=None, U=None, u=None, k=None, squared=False, broadcast=True,
     status = elphmod.misc.StatusBar(sizes[comm.rank] * len(k),
         title='sample coupling')
 
-    scale = 2 * np.pi / nk
+    scale = nk / (2 * np.pi)
 
     for my_iq, iq in enumerate(range(*bounds[row.rank:row.rank + 2])):
         q1, q2, q3 = q[iq]
-        Q1, Q2, Q3 = np.round(q[iq] / scale).astype(int)
+        Q1, Q2, Q3 = np.round(q[iq] * scale).astype(int)
 
         for ik in range(len(k)):
             k1, k2, k3 = k[ik]
-            K1, K2, K3 = np.round(k[ik] / scale).astype(int)
-            KQ1, KQ2, KQ3 = np.round((k[ik] + q[iq]) / scale).astype(int) % nk
+            K1, K2, K3 = np.round(k[ik] * scale).astype(int)
+            KQ1, KQ2, KQ3 = np.round((k[ik] + q[iq]) * scale).astype(int) % nk
 
             gqk = g(q1, q2, q3, k1, k2, k3, broadcast=False, comm=col)
 
