@@ -952,7 +952,7 @@ class Model:
                                         % (self.data[rk, z, rl, c, d].real
                                             * gconv))
 
-def sample(g, q, nk=None, U=None, u=None, squared=False, broadcast=True,
+def sample(g, q, nk=None, U=None, u=None, k=None, squared=False, broadcast=True,
         shared_memory=False):
     r"""Sample coupling for given q and k points and transform to band basis.
 
@@ -976,6 +976,9 @@ def sample(g, q, nk=None, U=None, u=None, squared=False, broadcast=True,
     u : ndarray, optional
         Phonon eigenvectors for given q points.
         If present, transform from displacement to band basis.
+    k : list of tuple
+        List of k points in crystal coordinates :math:`k_i \in [0, 2 \pi)`.
+        Alternatively, the coupling is sampled for the full uniform mesh.
     squared : bool
         Sample squared complex modulus instead? This is more memory-efficient
         than sampling the complex coupling and taking the squared modulus later.
@@ -1009,10 +1012,18 @@ def sample(g, q, nk=None, U=None, u=None, squared=False, broadcast=True,
     if u is not None:
         nph = u.shape[-1]
 
-    my_g = np.empty((sizes[row.rank], nph, *nk, nel, nel),
+    if k is None:
+        k = elphmod.bravais.mesh(*nk, flat=True)
+    else:
+        k_orig = k
+        k = np.zeros((len(k_orig), 3))
+        k[:, :len(k_orig[0])] = k_orig
+        nk_orig = k.shape[:1]
+
+    my_g = np.empty((sizes[row.rank], nph, len(k), nel, nel),
         dtype=float if squared else complex)
 
-    status = elphmod.misc.StatusBar(sizes[comm.rank] * nk.prod(),
+    status = elphmod.misc.StatusBar(sizes[comm.rank] * len(k),
         title='sample coupling')
 
     scale = 2 * np.pi / nk
@@ -1021,35 +1032,28 @@ def sample(g, q, nk=None, U=None, u=None, squared=False, broadcast=True,
         q1, q2, q3 = q[iq]
         Q1, Q2, Q3 = np.round(q[iq] / scale).astype(int)
 
-        for K1 in range(nk[0]):
-            KQ1 = (K1 + Q1) % nk[0]
-            k1 = K1 * scale[0]
+        for ik in range(len(k)):
+            k1, k2, k3 = k[ik]
+            K1, K2, K3 = np.round(k[ik] / scale).astype(int)
+            KQ1, KQ2, KQ3 = np.round((k[ik] + q[iq]) / scale).astype(int) % nk
 
-            for K2 in range(nk[1]):
-                KQ2 = (K2 + Q2) % nk[1]
-                k2 = K2 * scale[1]
+            gqk = g(q1, q2, q3, k1, k2, k3, broadcast=False, comm=col)
 
-                for K3 in range(nk[2]):
-                    KQ3 = (K3 + Q3) % nk[2]
-                    k3 = K3 * scale[2]
+            if col.rank == 0:
+                if U is not None:
+                    gqk = np.einsum('am,xab,bn->xmn',
+                        U[KQ1, KQ2, KQ3].conj(), gqk, U[K1, K2, K3])
 
-                    gqk = g(q1, q2, q3, k1, k2, k3, broadcast=False, comm=col)
+                if u is not None:
+                    gqk = np.einsum('xab,xu->uab', gqk, u[iq])
 
-                    if col.rank == 0:
-                        if U is not None:
-                            gqk = np.einsum('am,xab,bn->xmn',
-                                U[KQ1, KQ2, KQ3].conj(), gqk, U[K1, K2, K3])
+                if squared:
+                    gqk *= gqk.conj()
+                    gqk = gqk.real
 
-                        if u is not None:
-                            gqk = np.einsum('xab,xu->uab', gqk, u[iq])
+                my_g[my_iq, :, ik, :, :] = gqk
 
-                        if squared:
-                            gqk *= gqk.conj()
-                            gqk = gqk.real
-
-                        my_g[my_iq, :, K1, K2, K3, :, :] = gqk
-
-                    status.update()
+            status.update()
 
     node, images, g = elphmod.MPI.shared_array((len(q), nph, *nk_orig,
         nel, nel), dtype=my_g.dtype, shared_memory=shared_memory,
