@@ -18,17 +18,12 @@ info('Set up model and sample data')
 
 el, ph, elph = elphmod.models.chain.create('data/chain', rydberg=True)
 
-k = q = np.linspace(0, 2 * np.pi, nq, endpoint=False)
+k = q = elphmod.bravais.mesh(nq)
 
 e, U = elphmod.dispersion.dispersion(el.H, q, vectors=True)
 w2, u = elphmod.dispersion.dispersion(ph.D, q, vectors=True)
 
-g2 = np.empty((len(q), ph.size, len(k), el.size, el.size))
-
-for iq in range(len(q)):
-    for ik in range(len(k)):
-        g2[iq, :, ik, :, :] = abs(np.einsum('xu,am,xab,bn->xmn', u[iq],
-            U[(ik + iq) % nq].conj(), elph.g(q1=q[iq], k1=k[ik]), U[ik])) ** 2
+g2 = elph.sample(q, U=U, u=u, squared=True)
 
 w = elphmod.ph.sgnsqrt(w2)
 w[0, :3] = eta # avoid division by zero acoustic frequency
@@ -40,7 +35,7 @@ kT = 1000 * elphmod.misc.kB / elphmod.misc.Ry
 
 omega, domega = np.linspace(1.5 * e.min(), 1.5 * e.max(), nq, retstep=True)
 
-Sigma = elphmod.diagrams.fan_migdal_self_energy(k.reshape((-1, 1)), e, w, g2,
+Sigma = elphmod.diagrams.fan_migdal_self_energy(k, e, w, g2,
     omega + 1j * eta, kT)
 
 G = 1 / (omega[np.newaxis, np.newaxis, :] - e[:, :, np.newaxis] - Sigma)
@@ -63,10 +58,10 @@ if comm.rank == 0:
 
     ax1.imshow(A[:ik, 0, ::-1].T, extent=(0.0, np.pi, omega[0], omega[-1]),
         cmap='plasma')
-    ax1.plot(k[:ik], e[:ik], 'w--')
+    ax1.plot(k[:ik, 0], e[:ik], 'w--')
     ax1.axis('auto')
 
-    ax2.plot(k[:ik], integral[:ik, 0])
+    ax2.plot(k[:ik, 0], integral[:ik, 0])
     ax2.set_ylim(0.0, 2 * el.size)
 
     plt.savefig('fan_migdal_1.png')
@@ -87,8 +82,8 @@ for ikT in range(len(kT)):
     domega = 0.1 * eta
     omega = np.arange(np.ceil(-fsthick / domega) * domega, fsthick, domega)
 
-    Sigma = elphmod.diagrams.fan_migdal_self_energy(q.reshape((-1, 1)),
-        e, w, g2, omega + 1j * eta, kT[ikT])
+    Sigma = elphmod.diagrams.fan_migdal_self_energy(q, e, w, g2,
+        omega + 1j * eta, kT[ikT])
 
     G = 1 / (omega[np.newaxis, np.newaxis, :] - e[:, :, np.newaxis] - Sigma)
 
