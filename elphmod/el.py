@@ -1235,9 +1235,10 @@ def read_projwfc_out(projwfc_out, other=True):
     Returns
     -------
     list of str
-        Common names of (pseudo) atomic orbitals listed in `projwfc_out` (in
-        that order). If spin-orbit coupling is considered, symmetry labels
-        related to the magnetic quantum number are omitted.
+        Translated names of (pseudo) atomic orbitals listed in `projwfc_out` (in
+        that order). In the noncollinear case, ``u`` and ``d`` for spin up and
+        down (without spin-orbit coupling) or the quantum numbers of the total
+        angular momentum multiplied by two (with spin-orbit coupling) are added.
     other : bool, default True
         Add name ``X-x`` to list of orbitals, which corresponds to "other"
         orbitals from :func:`read_atomic_projections`?
@@ -1272,6 +1273,19 @@ def read_projwfc_out(projwfc_out, other=True):
 
                                 orbitals.append('%s-%d%s'
                                     % (X, n, labels[l][m - 1]))
+
+                                if info[51:54] == 's_z':
+                                    sz = float(info[55:59])
+
+                                    orbitals[-1] += 'd' if sz < 0 else 'u'
+
+                            elif info[46] == 'j':
+                                j = float(info[48:51])
+                                mj = float(info[56:60])
+
+                                orbitals.append('%s-%d%s%.0f%+.0f'
+                                    % (X, n, labels[l][0][0], 2 * j, 2 * mj))
+
                             else:
                                 orbitals.append('%s-%d%s'
                                     % (X, n, labels[l][0][0]))
