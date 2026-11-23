@@ -145,7 +145,8 @@ def susceptibility2(e, kT=0.025, nmats=1000, hyb_width=1.0, hyb_height=0.0):
 
     return calculate_susceptibility
 
-def polarization(e, U, kT=0.025, eps=1e-10, subspace=None, occupations='fd'):
+def polarization(e, U, kT=0.025, eps=1e-10, subspace=None, occupations='fd',
+        exchange=False):
     r"""Calculate RPA polarization in orbital basis (density-density).
 
     .. math::
@@ -180,6 +181,9 @@ def polarization(e, U, kT=0.025, eps=1e-10, subspace=None, occupations='fd'):
         Boolean array to select k points and/or bands in cRPA target subspace.
     occupations : function
         Particle distribution as a function of energy divided by `kT`.
+    exchange : bool
+        Calculate exchange instead of density-density elements, i.e., swap
+        :math:`\alpha` and :math:`\beta` in the first and last bracket above?
 
     Returns
     -------
@@ -252,9 +256,14 @@ def polarization(e, U, kT=0.025, eps=1e-10, subspace=None, occupations='fd'):
 
                     dfde[exclude] = 0.0
 
-                UU = U[kq1, kq2, kq3, :, m].conj() * U[k1, k2, k3, :, n]
+                if exchange:
+                    UU = abs(U[k1, k2, k3, :, n]) ** 2
+                    VV = abs(U[kq1, kq2, kq3, :, m]) ** 2
+                else:
+                    UU = U[kq1, kq2, kq3, :, m].conj() * U[k1, k2, k3, :, n]
+                    VV = UU.conj()
 
-                Pi[m, n] = np.einsum('ijka,ijk,ijkb->ab', UU.conj(), dfde, UU)
+                Pi[m, n] = np.einsum('ijka,ijk,ijkb->ab', VV, dfde, UU)
 
         return prefactor * Pi.sum(axis=(0, 1))
 
@@ -263,7 +272,8 @@ def polarization(e, U, kT=0.025, eps=1e-10, subspace=None, occupations='fd'):
 def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
         occupations='fd', fluctuations=False, Delta=None, Delta_diff=False,
         Delta_occupations='gauss', Delta_kT=0.025, g=None, G=None,
-        symmetrize=True, diagonal=False, U=0.0, psi=None, comm=comm):
+        symmetrize=True, diagonal=False, U=0.0, psi=None, exchange=False,
+        comm=comm):
     r"""Calculate phonon self-energy.
 
     .. math::
@@ -320,6 +330,9 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
         Eigenvectors of Wannier Hamiltonian belonging to considered bands. If
         present, the RPA polarization in the orbital basis is calculated instead
         of the phonon self-energy in the basis of phonon modes or displacements.
+    exchange : bool
+        Calculate exchange instead of density-density elements? Only used if
+        `psi` is present.
 
     Returns
     -------
@@ -454,8 +467,12 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
                     dfde[..., m, n] *= envelope
 
         if psi is not None:
-            G = g = (psi[:, :, kq1, kq2, kq3, :, np.newaxis].conj()
-                * psi[:, :, k1, k2, k3, np.newaxis, :])
+            if exchange:
+                G = abs(psi[:, :, k1, k2, k3, np.newaxis, :]) ** 2
+                g = abs(psi[:, :, kq1, kq2, kq3, :, np.newaxis]) ** 2
+            else:
+                G = g = (psi[:, :, kq1, kq2, kq3, :, np.newaxis].conj()
+                    * psi[:, :, k1, k2, k3, np.newaxis, :])
             iq = 0
 
         for nu in np.ndindex(*phshape):

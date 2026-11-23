@@ -146,13 +146,14 @@ class TestDiagrams(unittest.TestCase):
 
         e, U = elphmod.dispersion.dispersion(el.H, k, vectors=True)
 
-        Pi1 = elphmod.dispersion.sample(elphmod.diagrams.polarization(e, U,
-            kT=kT, occupations=f), q)
+        for exchange in False, True:
+            Pi1 = elphmod.dispersion.sample(elphmod.diagrams.polarization(e, U,
+                kT=kT, occupations=f, exchange=exchange), q)
 
-        Pi2 = elphmod.diagrams.phonon_self_energy(q, e, psi=U,
-            kT=kT, occupations=f)
+            Pi2 = elphmod.diagrams.phonon_self_energy(q, e, psi=U,
+                kT=kT, occupations=f, exchange=exchange)
 
-        self.assertTrue(np.allclose(Pi1, Pi2))
+            self.assertTrue(np.allclose(Pi1, Pi2))
 
 if __name__ == '__main__':
     unittest.main()
