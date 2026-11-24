@@ -356,9 +356,9 @@ def phonon_self_energy(q, e, g2=None, kT=0.025, eps=1e-10, omega=0.0,
     e = np.reshape(e, (*nk, nbnd))
 
     if psi is not None:
-        psi = np.reshape(np.moveaxis(psi, -2, 0), (1, nbnd, *nk, nbnd))
+        psi = np.reshape(np.moveaxis(psi, -2, 0), (1, -1, *nk, nbnd))
 
-        phshape = (nbnd, nbnd)
+        phshape = psi.shape[1:2] * 2
     elif g is None:
         if g2 is None:
             g2 = np.ones((nQ, 1))
