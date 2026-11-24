@@ -21,7 +21,7 @@ for number, label in enumerate(['', '_ncl', '_soc']):
     if label == '_soc':
         d = [i for i, orbital in enumerate(orbitals) if 'd' in orbital]
 
-        proj[:, :, d] @= elphmod.el.clebsh_gordan(2).T
+        proj[:, :, d] @= elphmod.el.clebsch_gordan(2).T
         proj[:, :, d] @= elphmod.el.complex_to_real_orbitals(2).conj().T
 
         for i, orbital in zip(d, ['Ta-d%s%s' % (m, s)

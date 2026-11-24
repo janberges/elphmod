@@ -1374,7 +1374,7 @@ def proj_sum(proj, orbitals, *groups, **kwargs):
 
     return summed
 
-def clebsh_gordan(l):
+def clebsch_gordan(l):
     """Set up transform between spin-orbit-coupled and decoupled orbitals.
 
     Parameters
