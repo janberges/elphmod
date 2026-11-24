@@ -31,7 +31,7 @@ for number, label in enumerate(['', '_ncl', '_soc']):
     proj = abs(proj) ** 2
 
     width = 0.2 * elphmod.el.proj_sum(proj, orbitals,
-        'dz2{u,d,}', 'dxz{u,d,}', 'dyz{u,d,}', 'dx2-y2{u,d,}', 'dxy{u,d,}')
+        'dz2', 'dxz', 'dyz', 'dx2-y2', 'dxy')
 
     pwi = elphmod.bravais.read_pwi('scf%s.in' % label)
 
