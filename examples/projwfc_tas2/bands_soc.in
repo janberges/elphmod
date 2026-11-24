@@ -1,0 +1,46 @@
+&CONTROL
+    prefix = 'TaS2_SOC'
+    outdir = 'work'
+    pseudo_dir = '.'
+
+    calculation = 'bands'
+/
+&SYSTEM
+    ibrav = 4
+    ntyp = 2
+    nat = 3
+
+    a = 3.34
+    c = 15.0
+
+    assume_isolated = '2D'
+
+    ecutwfc = 15.0
+
+    occupations = 'smearing'
+    smearing = 'marzari-vanderbilt'
+    degauss = 0.02
+
+    noncolin = true
+    lspinorb = true
+/
+&ELECTRONS
+    conv_thr = 1e-10
+    diago_full_acc = .true.
+/
+
+ATOMIC_SPECIES
+Ta 180.95 Ta-fr.upf
+S   32.06  S-fr.upf
+
+ATOMIC_POSITIONS crystal
+S   0.3333333333  0.6666666667  0.1041893571
+Ta  0.0000000000  0.0000000000  0.0000000000
+S   0.3333333333  0.6666666667 -0.1041893571
+
+K_POINTS crystal_b
+4
+0.0000000000  0.0000000000  0.0000000000  17
+0.0000000000  0.5000000000  0.0000000000  10
+0.3333333333  0.3333333333  0.0000000000  20
+1.0000000000  0.0000000000  0.0000000000   0

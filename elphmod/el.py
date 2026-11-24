@@ -10,6 +10,7 @@ import elphmod.dispersion
 import elphmod.misc
 import elphmod.MPI
 import elphmod.occupations
+import elphmod.ph
 
 comm = elphmod.MPI.comm
 info = elphmod.MPI.info
@@ -1372,6 +1373,99 @@ def proj_sum(proj, orbitals, *groups, **kwargs):
     comm.Bcast(summed)
 
     return summed
+
+def clebsh_gordan(l):
+    """Set up transform between spin-orbit-coupled and decoupled orbitals.
+
+    Parameters
+    ----------
+    l : int
+        Angular-momentum quantum number.
+
+    Returns
+    -------
+    ndarray
+        Transformation matrix.
+    """
+    s = 0.5
+    ml_ms = [(ml, ms) for ml in range(-l, l + 1) for ms in [-s, s]]
+    j_mj = [(j, mj) for j in [l + s, l - s] for mj in np.arange(-j, j + 0.5)]
+
+    table = [
+        {
+            (+0, -1, 1, -1): +1, (+0, +1, 1, +1): +1,
+        },
+        {
+            (-1, -1, 3, -3): +3, (-1, +1, 1, -1): +2, (-1, +1, 3, -1): +1,
+            (+0, -1, 1, -1): -1, (+0, -1, 3, -1): +2, (+0, +1, 1, +1): +1,
+            (+0, +1, 3, +1): +2, (+1, -1, 1, +1): -2, (+1, -1, 3, +1): +1,
+            (+1, +1, 3, +3): +3,
+        },
+        {
+            (-2, -1, 5, -5): +5, (-2, +1, 3, -3): +4, (-2, +1, 5, -3): +1,
+            (-1, -1, 3, -3): -1, (-1, -1, 5, -3): +4, (-1, +1, 3, -1): +3,
+            (-1, +1, 5, -1): +2, (+0, -1, 3, -1): -2, (+0, -1, 5, -1): +3,
+            (+0, +1, 3, +1): +2, (+0, +1, 5, +1): +3, (+1, -1, 3, +1): -3,
+            (+1, -1, 5, +1): +2, (+1, +1, 3, +3): +1, (+1, +1, 5, +3): +4,
+            (+2, -1, 3, +3): -4, (+2, -1, 5, +3): +1, (+2, +1, 5, +5): +5,
+        },
+        {
+            (-3, -1, 7, -7): +7, (-3, +1, 5, -5): +6, (-3, +1, 7, -5): +1,
+            (-2, -1, 5, -5): -1, (-2, -1, 7, -5): +6, (-2, +1, 5, -3): +5,
+            (-2, +1, 7, -3): +2, (-1, -1, 5, -3): -2, (-1, -1, 7, -3): +5,
+            (-1, +1, 5, -1): +4, (-1, +1, 7, -1): +3, (+0, -1, 5, -1): -3,
+            (+0, -1, 7, -1): +4, (+0, +1, 5, +1): +3, (+0, +1, 7, +1): +4,
+            (+1, -1, 5, +1): -4, (+1, -1, 7, +1): +3, (+1, +1, 5, +3): +2,
+            (+1, +1, 7, +3): +5, (+2, -1, 5, +3): -5, (+2, -1, 7, +3): +2,
+            (+2, +1, 5, +5): +1, (+2, +1, 7, +5): +6, (+3, -1, 5, +5): -6,
+            (+3, -1, 7, +5): +1, (+3, +1, 7, +7): +7,
+        },
+    ]
+
+    U = np.zeros((len(ml_ms), len(j_mj)))
+
+    for m, (ml, ms) in enumerate(ml_ms):
+        for n, (j, mj) in enumerate(j_mj):
+            U[m, n] = elphmod.ph.sgnsqrt(table[l].get((ml, int(2 * ms),
+                int(2 * j), int(2 * mj)), 0) / (2 * l + 1))
+
+            #U[m, n] = sympy.physics.quantum.cg.CG(1/2, ms, l, ml, j, mj).doit()
+
+    return U
+
+def complex_to_real_orbitals(l, spin=True):
+    """Set up transform between complex and real spherical harmonics.
+
+    Parameters
+    ----------
+    l : int
+        Angular-momentum quantum number.
+    spin : bool, default True
+        Include spin degree of freedom?
+
+    Returns
+    -------
+    ndarray
+        Transformation matrix.
+    """
+    U = np.zeros((2 * l + 1, 2 * l + 1), dtype=complex)
+
+    for m in range(1, l + 1):
+        U[l + m, l + m] = (-1) ** m
+        U[l + m, l - m] = 1
+        U[l - m, l + m] = -1j * (-1) ** m
+        U[l - m, l - m] = 1j
+
+    U /= np.sqrt(2)
+
+    U[l, l] = 1.0
+
+    if spin:
+        U = U[:, np.newaxis, :, np.newaxis]
+        U = U * np.eye(2)[np.newaxis, :, np.newaxis, :]
+        U = U.reshape((4 * l + 2, 4 * l + 2))
+
+    return U
 
 def read_Fermi_level(pw_scf_out):
     """Read Fermi level from output of self-consistent PW run.

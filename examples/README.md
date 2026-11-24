@@ -63,6 +63,7 @@ patched version of Quantum ESPRESSO, see the sibling directory `patches`.
 * `projwfc` - projected band structure of graphene
 * `projwfc_1d` - projected band structure of carbon chain
 * `projwfc_3d` - projected band structure of polonium
+* `projwfc_tas2` - projected band structure of 1H-TaS2
 * `quadrupole` - optimization of quadrupole tensor for bare phonons of 1H-TaS2
 * `simstm` - simulated STM image of 1H-TaS2
 * `simsts` - simulated STS spectrum of graphene

@@ -66,6 +66,7 @@
    examples/phonopy_phonons
    examples/projwfc_1d
    examples/projwfc
+   examples/projwfc_tas2
    examples/projwfc_3d
    examples/quadrupole
    examples/skiing
