@@ -1206,7 +1206,7 @@ def read_flfrc(flfrc):
         for nt in range(ntyp):
             tmp = cells()
 
-            atm.append(tmp[1][1:3])
+            atm.append(tmp[1][1:3].strip())
             amass[nt] = float(tmp[-1])
 
         # read types and positions of individual atoms:
@@ -1227,7 +1227,7 @@ def read_flfrc(flfrc):
         atom_order = []
 
         for index in ityp:
-            atom_order.append(atm[index].strip())
+            atom_order.append(atm[index])
 
         alph = epsil = zeu = None
 
