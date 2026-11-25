@@ -183,7 +183,7 @@ def polarization(e, U, kT=0.025, eps=1e-10, subspace=None, occupations='fd',
         Particle distribution as a function of energy divided by `kT`.
     exchange : bool
         Calculate exchange instead of density-density elements, i.e., swap
-        :math:`\alpha` and :math:`\beta` in the first and last bracket above?
+        :math:`\alpha` and :math:`\beta` in the inner brackets above?
 
     Returns
     -------
